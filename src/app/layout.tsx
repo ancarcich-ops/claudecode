@@ -6,7 +6,7 @@ import { signOutAction } from "@/lib/actions";
 
 export const metadata: Metadata = {
   title: "Fairway Market",
-  description: "A no-money prediction market for golf rounds with friends.",
+  description: "A prediction market for golf rounds with friends.",
 };
 
 export const viewport: Viewport = {
@@ -33,9 +33,6 @@ export default async function RootLayout({
               <span className="text-accent text-lg shrink-0">⛳</span>
               <span className="font-semibold tracking-tight whitespace-nowrap">
                 Fairway Market
-              </span>
-              <span className="chip ml-1 hidden md:inline-flex whitespace-nowrap">
-                no money · just bragging
               </span>
             </Link>
             <nav className="flex items-center gap-1.5 sm:gap-2 shrink-0">
@@ -76,9 +73,6 @@ export default async function RootLayout({
         <main className="mx-auto max-w-6xl px-3 sm:px-4 py-5 sm:py-6">
           {children}
         </main>
-        <footer className="mx-auto max-w-6xl px-3 sm:px-4 py-8 text-[11px] text-mute">
-          Odds are entertainment-only. No wagers, no money, no payouts.
-        </footer>
       </body>
     </html>
   );
