@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { createMatchAction } from "@/lib/actions";
 import { COURSE_PRESETS } from "@/lib/courses";
+import { getActiveGroupId, listUserGroups } from "@/lib/groups";
 import NewMatchForm from "./NewMatchForm";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +26,16 @@ export default async function NewMatchPage() {
     user.displayName ??
     user.username.charAt(0).toUpperCase() + user.username.slice(1);
 
+  const groups = await listUserGroups(user.id);
+  const activeGroup = getActiveGroupId();
+  // Default the form to the user's currently-selected group if it's a real
+  // group they belong to; otherwise "public".
+  const defaultGroupId =
+    activeGroup && activeGroup !== "public" &&
+    groups.some((g) => g.id === activeGroup)
+      ? activeGroup
+      : "public";
+
   return (
     <div className="mx-auto max-w-2xl">
       <h1 className="text-xl font-semibold mb-1">Post a round</h1>
@@ -37,6 +48,8 @@ export default async function NewMatchPage() {
         defaultPlayerName={defaultName}
         recentCourses={recentCourses}
         presets={COURSE_PRESETS}
+        groups={groups.map((g) => ({ id: g.id, name: g.name }))}
+        defaultGroupId={defaultGroupId}
       />
     </div>
   );

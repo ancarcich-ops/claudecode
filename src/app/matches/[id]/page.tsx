@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { loadMatchWithOdds } from "@/lib/match";
+import { prisma } from "@/lib/db";
 import {
   completeMatchAction,
   deleteMatchAction,
@@ -30,6 +31,18 @@ export default async function MatchPage({
   const loaded = await loadMatchWithOdds(params.id);
   if (!loaded) notFound();
   const { match, odds, pars } = loaded;
+
+  // Private-group gate: if this match is scoped to a group, only members can
+  // see it. This is soft auth -- the cookie identity isn't verified -- but it
+  // prevents stumbling on someone else's private round from a shared link.
+  if (match.groupId) {
+    if (!user) notFound();
+    const isMember = await prisma.groupMember.findUnique({
+      where: { groupId_userId: { groupId: match.groupId, userId: user.id } },
+    });
+    if (!isMember) notFound();
+  }
+
   const scoringMode =
     match.scoringMode === "GROSS"
       ? "GROSS"

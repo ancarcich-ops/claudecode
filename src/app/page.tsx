@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { computeOdds, formatPct, parseParData } from "@/lib/odds";
 import { getCurrentUser } from "@/lib/auth";
+import { getActiveGroupId, visibleMatchWhere } from "@/lib/groups";
 import AutoRefresh from "@/components/AutoRefresh";
 
 export const dynamic = "force-dynamic";
@@ -28,13 +29,15 @@ async function loadMatches(where: any, orderBy: any, take?: number) {
 
 export default async function HomePage() {
   const user = await getCurrentUser();
+  const activeGroupId = getActiveGroupId();
+  const groupWhere = await visibleMatchWhere(user?.id ?? null, activeGroupId);
 
   const open = await loadMatches(
-    { status: { in: ["UPCOMING", "IN_PROGRESS"] } },
+    { ...groupWhere, status: { in: ["UPCOMING", "IN_PROGRESS"] } },
     [{ status: "asc" }, { scheduledAt: "asc" }],
   );
   const completed = await loadMatches(
-    { status: "COMPLETED" },
+    { ...groupWhere, status: "COMPLETED" },
     { completedAt: "desc" },
     6,
   );
