@@ -21,6 +21,9 @@ import {
 export async function signInAction(formData: FormData) {
   const username = String(formData.get("username") ?? "");
   const displayName = String(formData.get("displayName") ?? "").trim() || null;
+  const nextRaw = String(formData.get("next") ?? "").trim();
+  // Only honor same-origin relative redirects to avoid open-redirect abuse.
+  const next = nextRaw.startsWith("/") && !nextRaw.startsWith("//") ? nextRaw : "/";
   const user = await getOrCreateUser(username);
   if (displayName && displayName !== user.displayName) {
     await prisma.user.update({
@@ -29,7 +32,7 @@ export async function signInAction(formData: FormData) {
     });
   }
   setSession(user.id);
-  redirect("/");
+  redirect(next);
 }
 
 export async function signOutAction() {

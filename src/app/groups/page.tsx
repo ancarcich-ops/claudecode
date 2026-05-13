@@ -6,6 +6,7 @@ import {
   joinGroupAction,
   leaveGroupAction,
 } from "@/lib/actions";
+import CopyInvite from "@/components/CopyInvite";
 
 export const dynamic = "force-dynamic";
 
@@ -50,9 +51,7 @@ export default async function GroupsPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <code className="chip font-mono text-xs">
-                    {g.inviteCode}
-                  </code>
+                  <CopyInvite code={g.inviteCode} />
                   <form action={leaveGroupAction}>
                     <input type="hidden" name="groupId" value={g.id} />
                     <button
