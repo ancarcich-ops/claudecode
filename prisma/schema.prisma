@@ -1,0 +1,97 @@
+// Fairway Market - golf prediction market schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// status is stored as a plain string ("UPCOMING" | "IN_PROGRESS" | "COMPLETED")
+// because SQLite doesn't support enums.
+
+model User {
+  id          String   @id @default(cuid())
+  username    String   @unique
+  displayName String?
+  createdAt   DateTime @default(now())
+
+  createdMatches Match[]        @relation("MatchCreator")
+  playerSeats    MatchPlayer[]
+  wagers         Wager[]
+}
+
+model Match {
+  id           String      @id @default(cuid())
+  courseName   String
+  scheduledAt  DateTime
+  holes        Int         @default(18)
+  status       String      @default("UPCOMING")
+  // JSON-encoded array of pars (length == holes). Null means "treat every hole as par 4".
+  parData      String?
+  createdById  String
+  createdBy    User        @relation("MatchCreator", fields: [createdById], references: [id])
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @default(now()) @updatedAt
+  startedAt    DateTime?
+  completedAt  DateTime?
+  notes        String?
+
+  players      MatchPlayer[]
+  wagers       Wager[]
+  oddsSnapshots OddsSnapshot[]
+}
+
+model MatchPlayer {
+  id          String   @id @default(cuid())
+  matchId     String
+  match       Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  displayName String
+  handicap    Float
+  seat        Int
+
+  scores      ScoreEntry[]
+  wagers      Wager[]
+  oddsSnapshots OddsSnapshot[]
+
+  @@unique([matchId, seat])
+}
+
+model ScoreEntry {
+  id            String      @id @default(cuid())
+  matchPlayerId String
+  matchPlayer   MatchPlayer @relation(fields: [matchPlayerId], references: [id], onDelete: Cascade)
+  hole          Int
+  strokes       Int
+  createdAt     DateTime    @default(now())
+
+  @@unique([matchPlayerId, hole])
+}
+
+model Wager {
+  id              String      @id @default(cuid())
+  matchId         String
+  match           Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User        @relation(fields: [userId], references: [id])
+  pickedPlayerId  String
+  pickedPlayer    MatchPlayer @relation(fields: [pickedPlayerId], references: [id], onDelete: Cascade)
+  createdAt       DateTime    @default(now())
+
+  @@unique([matchId, userId])
+}
+
+model OddsSnapshot {
+  id            String      @id @default(cuid())
+  matchId       String
+  match         Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  matchPlayerId String
+  matchPlayer   MatchPlayer @relation(fields: [matchPlayerId], references: [id], onDelete: Cascade)
+  probability   Float
+  createdAt     DateTime    @default(now())
+
+  @@index([matchId, createdAt])
+}

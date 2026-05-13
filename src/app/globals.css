@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html, body {
+  background: #0b0f0c;
+  color: #e8f0ea;
+}
+
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  font-feature-settings: "cv02", "cv11";
+}
+
+.btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors;
+}
+.btn-primary { @apply bg-accent text-black hover:bg-accentDim; }
+.btn-ghost { @apply bg-panel2 text-ink border border-border hover:bg-panel; }
+.btn-danger { @apply bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20; }
+
+.input {
+  @apply w-full rounded-md bg-panel2 border border-border px-3 py-2 text-sm text-ink placeholder:text-mute focus:outline-none focus:ring-1 focus:ring-accent;
+}
+.label { @apply block text-xs uppercase tracking-wider text-mute mb-1; }
+.card { @apply rounded-lg border border-border bg-panel; }
+.chip { @apply inline-flex items-center rounded-full border border-border bg-panel2 px-2 py-0.5 text-xs text-mute; }
+.tag-up { @apply text-accent; }
+.tag-down { @apply text-danger; }
+
+/* Recharts label colors when rendered on dark bg */
+.recharts-cartesian-axis-tick-value tspan { fill: #8aa094 !important; }
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: #161f1b !important;
+  border: 1px solid #1f2a25 !important;
+  border-radius: 8px;
+}
