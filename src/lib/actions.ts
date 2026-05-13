@@ -41,6 +41,7 @@ export async function createMatchAction(formData: FormData) {
   const holesRaw = Number(formData.get("holes") ?? 18);
   const holes: 9 | 18 = holesRaw === 9 ? 9 : 18;
   const notes = String(formData.get("notes") ?? "").trim() || null;
+  const parDataRaw = String(formData.get("parData") ?? "").trim();
 
   if (!courseName) throw new Error("Course name required");
   if (!scheduledAtRaw) throw new Error("Tee time required");
@@ -56,6 +57,26 @@ export async function createMatchAction(formData: FormData) {
   if (drafts.some((p) => Number.isNaN(p.handicap)))
     throw new Error("Handicaps must be numbers");
 
+  // parData arrives as a JSON-encoded number array from the autocomplete-
+  // matched course preset. Validate it - bad/missing values fall back to
+  // the engine's standard default.
+  let parData: string | null = null;
+  if (parDataRaw) {
+    try {
+      const parsed = JSON.parse(parDataRaw);
+      if (
+        Array.isArray(parsed) &&
+        parsed.length === holes &&
+        parsed.every((p) => Number.isFinite(p) && p >= 3 && p <= 6)
+      ) {
+        parData = JSON.stringify(parsed.map((p) => Math.round(p)));
+      }
+    } catch {
+      parData = null;
+    }
+  }
+  if (!parData) parData = JSON.stringify(defaultPars(holes));
+
   // Look up users by username (case-insensitive); link player seats when match.
   const lookup = await prisma.user.findMany({
     where: { username: { in: drafts.map((d) => d.displayName.toLowerCase()) } },
@@ -68,7 +89,7 @@ export async function createMatchAction(formData: FormData) {
       scheduledAt: new Date(scheduledAtRaw),
       holes,
       notes,
-      parData: JSON.stringify(defaultPars(holes)),
+      parData,
       createdById: user.id,
       players: {
         create: drafts.map((p, i) => {

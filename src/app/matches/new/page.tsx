@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { createMatchAction } from "@/lib/actions";
+import { COURSE_PRESETS } from "@/lib/courses";
 import NewMatchForm from "./NewMatchForm";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,6 @@ export default async function NewMatchPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  // Courses this user has used before, most-recent first.
   const recent = await prisma.match.findMany({
     where: { createdById: user.id },
     select: { courseName: true, scheduledAt: true },
@@ -36,6 +36,7 @@ export default async function NewMatchPage() {
         action={createMatchAction}
         defaultPlayerName={defaultName}
         recentCourses={recentCourses}
+        presets={COURSE_PRESETS}
       />
     </div>
   );
