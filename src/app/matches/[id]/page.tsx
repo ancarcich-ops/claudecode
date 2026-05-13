@@ -45,11 +45,30 @@ export default async function MatchPage({
     row[snap.matchPlayerId] = snap.probability;
     rowMap.set(t, row);
   }
-  const series = Array.from(rowMap.values()).sort((a, b) => a.t - b.t);
+  const allRows = Array.from(rowMap.values()).sort((a, b) => a.t - b.t);
+
+  // Two compressions so the chart only stretches when odds actually move:
+  //  1. Drop a snapshot if every player's probability matches the previous
+  //     one (a repeat wager / no-op edit shouldn't add a new step).
+  //  2. Skip the trailing "now" point unless current odds differ from the
+  //     last kept snapshot.
+  const probsEqual = (a: Row, b: Row) =>
+    match.players.every(
+      (p) => Math.abs((a[p.id] ?? 0) - (b[p.id] ?? 0)) < 5e-4,
+    );
+
+  const series: Row[] = [];
+  for (const row of allRows) {
+    if (series.length === 0 || !probsEqual(series[series.length - 1], row)) {
+      series.push(row);
+    }
+  }
   if (series.length > 0) {
-    const last: Row = { t: Date.now() } as Row;
-    for (const p of match.players) last[p.id] = odds.probabilities[p.id] ?? 0;
-    series.push(last);
+    const current: Row = { t: Date.now() } as Row;
+    for (const p of match.players) current[p.id] = odds.probabilities[p.id] ?? 0;
+    if (!probsEqual(series[series.length - 1], current)) {
+      series.push(current);
+    }
   }
 
   const wagerCounts: Record<string, number> = {};
