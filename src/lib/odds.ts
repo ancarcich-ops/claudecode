@@ -20,12 +20,17 @@ export type PlayerInput = {
   scoresByHole: Record<number, number>;
 };
 
+export type ScoringMode = "NET" | "GROSS" | "CUSTOM";
+
 export type OddsInput = {
   status: "UPCOMING" | "IN_PROGRESS" | "COMPLETED";
   holes: number;
   // Per-hole pars (1-indexed by position, length == holes). If omitted,
   // engine assumes par 4 for every hole.
   pars?: number[];
+  // NET/CUSTOM subtract the per-player allowance (handicap or agreed strokes)
+  // from gross to determine the winner. GROSS uses raw strokes. Default NET.
+  scoringMode?: ScoringMode;
   players: PlayerInput[];
 };
 
@@ -101,6 +106,7 @@ function liveProbabilities(
   players: PlayerInput[],
   totalHoles: number,
   pars: number[],
+  scoringMode: ScoringMode,
 ): { probs: number[]; netScores: (number | null)[]; holesPlayed: number } {
   const maxHolesPlayed = Math.max(
     0,
@@ -139,7 +145,8 @@ function liveProbabilities(
 
     const projectedRemaining = remainingPar + holesRemaining * blendedRate;
     const projectedTotal = strokesSoFar + projectedRemaining;
-    const projectedNet = projectedTotal - p.handicap;
+    const allowance = scoringMode === "GROSS" ? 0 : p.handicap;
+    const projectedNet = projectedTotal - allowance;
     projectedNets.push(projectedNet);
     reportedNets.push(projectedNet);
   }
@@ -154,10 +161,12 @@ function liveProbabilities(
 
 function completedProbabilities(
   players: PlayerInput[],
+  scoringMode: ScoringMode,
 ): { probs: number[]; netScores: (number | null)[] } {
   const nets = players.map((p) => {
     const total = Object.values(p.scoresByHole).reduce((a, b) => a + b, 0);
-    return total - p.handicap;
+    const allowance = scoringMode === "GROSS" ? 0 : p.handicap;
+    return total - allowance;
   });
   const min = Math.min(...nets);
   const winners: number[] = nets.map((n) =>
@@ -172,6 +181,7 @@ function completedProbabilities(
 
 export function computeOdds(input: OddsInput): OddsOutput {
   const { players, holes, status } = input;
+  const scoringMode: ScoringMode = input.scoringMode ?? "NET";
   const n = players.length;
   const pars = resolvePars(holes, input.pars);
   const coursePar = pars.reduce((a, b) => a + b, 0);
@@ -181,7 +191,7 @@ export function computeOdds(input: OddsInput): OddsOutput {
   const totalWagers = players.reduce((a, p) => a + p.wagerCount, 0);
 
   if (status === "COMPLETED") {
-    const { probs, netScores } = completedProbabilities(players);
+    const { probs, netScores } = completedProbabilities(players, scoringMode);
     return {
       probabilities: zip(players, probs),
       components: {
@@ -204,6 +214,7 @@ export function computeOdds(input: OddsInput): OddsOutput {
       players,
       holes,
       pars,
+      scoringMode,
     );
     const liveWeight = Math.min(0.95, holesPlayed / holes);
     const remaining = 1 - liveWeight;

@@ -27,6 +27,7 @@ model Match {
   scheduledAt  DateTime
   holes        Int         @default(18)
   status       String      @default("UPCOMING")
+  scoringMode  String      @default("NET")
   parData      String?
   createdById  String
   createdBy    User        @relation("MatchCreator", fields: [createdById], references: [id])

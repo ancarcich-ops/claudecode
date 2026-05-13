@@ -1,5 +1,10 @@
 import { prisma } from "./db";
-import { computeOdds, parseParData, type PlayerInput } from "./odds";
+import {
+  computeOdds,
+  parseParData,
+  type PlayerInput,
+  type ScoringMode,
+} from "./odds";
 
 export async function loadMatchWithOdds(matchId: string) {
   const match = await prisma.match.findUnique({
@@ -28,10 +33,18 @@ export async function loadMatchWithOdds(matchId: string) {
     scoresByHole: Object.fromEntries(p.scores.map((s) => [s.hole, s.strokes])),
   }));
 
+  const scoringMode: ScoringMode =
+    match.scoringMode === "GROSS"
+      ? "GROSS"
+      : match.scoringMode === "CUSTOM"
+        ? "CUSTOM"
+        : "NET";
+
   const odds = computeOdds({
     status: match.status as "UPCOMING" | "IN_PROGRESS" | "COMPLETED",
     holes: match.holes,
     pars,
+    scoringMode,
     players: playerInputs,
   });
 

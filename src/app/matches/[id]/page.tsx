@@ -30,6 +30,21 @@ export default async function MatchPage({
   const loaded = await loadMatchWithOdds(params.id);
   if (!loaded) notFound();
   const { match, odds, pars } = loaded;
+  const scoringMode =
+    match.scoringMode === "GROSS"
+      ? "GROSS"
+      : match.scoringMode === "CUSTOM"
+        ? "CUSTOM"
+        : "NET";
+  const modeLabel =
+    scoringMode === "GROSS"
+      ? "Gross"
+      : scoringMode === "CUSTOM"
+        ? "Custom strokes"
+        : "Net";
+  const strokeFieldLabel =
+    scoringMode === "CUSTOM" ? "strokes" : scoringMode === "GROSS" ? "hcp" : "hcp";
+  const projLabel = scoringMode === "GROSS" ? "proj total" : "proj net";
 
   const myWager = user
     ? match.wagers.find((w) => w.userId === user.id) ?? null
@@ -107,6 +122,8 @@ export default async function MatchPage({
             })}
             {" · "}
             {match.holes}H · par {odds.meta.coursePar}
+            {" · "}
+            {modeLabel}
             {" · "}
             @{match.createdBy.username}
           </div>
@@ -197,7 +214,9 @@ export default async function MatchPage({
                       handicap={p.handicap}
                     />
                   ) : (
-                    <span className="chip">hcp {p.handicap}</span>
+                    <span className="chip">
+                      {strokeFieldLabel} {p.handicap}
+                    </span>
                   )}
                 </div>
                 <div className="font-mono tabular-nums text-lg">
@@ -219,7 +238,7 @@ export default async function MatchPage({
                 </span>
                 {p.netScore !== null && (
                   <span className="font-mono">
-                    proj net {p.netScore.toFixed(1)}
+                    {projLabel} {p.netScore.toFixed(1)}
                   </span>
                 )}
               </div>

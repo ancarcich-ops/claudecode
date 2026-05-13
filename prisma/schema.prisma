@@ -28,6 +28,10 @@ model Match {
   scheduledAt  DateTime
   holes        Int         @default(18)
   status       String      @default("UPCOMING")
+  // "NET" (handicap applied), "GROSS" (raw scores), or "CUSTOM" (group-decided strokes per player).
+  // Stored on the player's `handicap` field regardless of mode; this flag decides whether the
+  // scoring math subtracts it and whether the UI labels it Handicap or Strokes.
+  scoringMode  String      @default("NET")
   // JSON-encoded array of pars (length == holes). Null means "treat every hole as par 4".
   parData      String?
   createdById  String
