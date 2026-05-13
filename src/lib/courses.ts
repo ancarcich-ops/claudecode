@@ -136,6 +136,24 @@ export const COURSE_PRESETS: CoursePreset[] = [
     pars: p(18, 72),
   },
   {
+    id: "woodley-lakes",
+    name: "Woodley Lakes Golf Course",
+    city: "Van Nuys",
+    region: "LA",
+    access: "municipal",
+    holes: 18,
+    pars: p(18, 72),
+  },
+  {
+    id: "los-verdes",
+    name: "Los Verdes Golf Course",
+    city: "Rancho Palos Verdes",
+    region: "LA",
+    access: "municipal",
+    holes: 18,
+    pars: p(18, 71),
+  },
+  {
     id: "balboa-gc",
     name: "Sepulveda Balboa Course",
     city: "Encino",
@@ -232,7 +250,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
     region: "LA",
     access: "public",
     holes: 18,
-    pars: p(18, 72),
+    pars: [4, 5, 3, 4, 4, 4, 3, 5, 4, 4, 4, 3, 5, 3, 4, 5, 4, 4],
   },
   {
     id: "sand-canyon-cc-valley-desert",
