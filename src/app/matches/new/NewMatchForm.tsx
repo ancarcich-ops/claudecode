@@ -120,18 +120,23 @@ export default function NewMatchForm({
           </datalist>
 
           {matchedPreset ? (
-            <div className="mt-2 flex items-center justify-between text-xs rounded-md border border-accent/30 bg-accent/5 px-3 py-2">
-              <div className="text-mute">
+            <div className="mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs rounded-md border border-accent/30 bg-accent/5 px-3 py-2">
+              <div className="text-mute leading-relaxed">
                 <span className="text-accent font-medium">
                   {matchedPreset.name}
-                </span>{" "}
-                · {matchedPreset.city} · {matchedPreset.region} ·{" "}
-                <span className="text-ink">
-                  par {matchedPreset.pars.reduce((a, b) => a + b, 0)}
-                </span>{" "}
-                · {matchedPreset.holes}H · {matchedPreset.access}
+                </span>
+                <span className="block sm:inline">
+                  <span className="hidden sm:inline"> · </span>
+                  {matchedPreset.city} · {matchedPreset.region} ·{" "}
+                  <span className="text-ink">
+                    par {matchedPreset.pars.reduce((a, b) => a + b, 0)}
+                  </span>{" "}
+                  · {matchedPreset.holes}H · {matchedPreset.access}
+                </span>
               </div>
-              <span className="chip">pars autofilled</span>
+              <span className="chip self-start sm:self-auto shrink-0">
+                pars autofilled
+              </span>
             </div>
           ) : (
             <p className="text-[11px] text-mute mt-1">
@@ -201,13 +206,13 @@ export default function NewMatchForm({
         </div>
         <div className="space-y-2">
           {players.map((p, i) => (
-            <div key={i} className="grid grid-cols-12 gap-2 items-center">
+            <div key={i} className="flex gap-2 items-center">
               <input
                 name="playerName"
                 value={p.name}
                 onChange={(e) => setPlayer(i, { name: e.target.value })}
                 placeholder={`Player ${i + 1}`}
-                className="input col-span-7"
+                className="input flex-1 min-w-0"
                 maxLength={32}
                 required
               />
@@ -217,17 +222,19 @@ export default function NewMatchForm({
                 step="0.1"
                 value={p.handicap}
                 onChange={(e) => setPlayer(i, { handicap: e.target.value })}
-                placeholder="Handicap"
-                className="input col-span-3"
+                placeholder="Hcp"
+                className="input w-16 shrink-0 text-center"
                 required
               />
               <button
                 type="button"
-                className="btn btn-ghost col-span-2"
+                className="btn btn-ghost px-2 shrink-0"
                 onClick={() => removePlayer(i)}
                 disabled={players.length <= 2}
+                aria-label={`Remove player ${i + 1}`}
+                title="Remove player"
               >
-                Remove
+                <RemoveIcon />
               </button>
             </div>
           ))}
@@ -246,11 +253,33 @@ export default function NewMatchForm({
         />
       )}
 
-      <div className="flex justify-end">
-        <button className="btn btn-primary" type="submit">
+      <div className="flex sm:justify-end">
+        <button
+          className="btn btn-primary w-full sm:w-auto"
+          type="submit"
+        >
           Open market
         </button>
       </div>
     </form>
+  );
+}
+
+function RemoveIcon() {
+  return (
+    <svg
+      aria-hidden
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
   );
 }
