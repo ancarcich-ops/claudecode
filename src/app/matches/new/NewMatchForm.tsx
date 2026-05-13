@@ -4,6 +4,28 @@ import { useMemo, useState } from "react";
 import type { CoursePreset } from "@/lib/courses";
 
 type PlayerRow = { name: string; handicap: string };
+type ScoringMode = "NET" | "GROSS" | "CUSTOM";
+
+const MODE_COPY: Record<
+  ScoringMode,
+  { label: string; field: string; help: string }
+> = {
+  NET: {
+    label: "Net (handicap)",
+    field: "Handicap",
+    help: "Lowest gross minus handicap wins. Lower handicap = market favorite at open.",
+  },
+  GROSS: {
+    label: "Gross (straight up)",
+    field: "Hcp",
+    help: "Lowest raw score wins. Handicaps are informational only.",
+  },
+  CUSTOM: {
+    label: "Custom strokes",
+    field: "Strokes",
+    help: "Group decides the stroke allowance for each player. Lowest gross minus strokes wins.",
+  },
+};
 
 export default function NewMatchForm({
   action,
@@ -22,6 +44,8 @@ export default function NewMatchForm({
   ]);
   const [courseName, setCourseName] = useState("");
   const [holes, setHoles] = useState<9 | 18>(18);
+  const [scoringMode, setScoringMode] = useState<ScoringMode>("NET");
+  const modeCopy = MODE_COPY[scoringMode];
 
   const presetByName = useMemo(() => {
     const m = new Map<string, CoursePreset>();
@@ -178,6 +202,32 @@ export default function NewMatchForm({
           </div>
         </div>
         <div>
+          <label className="label">Scoring</label>
+          <input type="hidden" name="scoringMode" value={scoringMode} />
+          <div className="grid grid-cols-3 gap-2">
+            {(Object.keys(MODE_COPY) as ScoringMode[]).map((m) => {
+              const active = scoringMode === m;
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setScoringMode(m)}
+                  className={
+                    "rounded-md border px-2 py-2 text-xs leading-tight transition " +
+                    (active
+                      ? "border-accent bg-accent/10 text-ink"
+                      : "border-border text-mute hover:text-ink")
+                  }
+                  aria-pressed={active}
+                >
+                  {MODE_COPY[m].label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-[11px] text-mute mt-1.5">{modeCopy.help}</p>
+        </div>
+        <div>
           <label className="label" htmlFor="notes">
             Notes <span className="text-mute normal-case">(optional)</span>
           </label>
@@ -222,7 +272,9 @@ export default function NewMatchForm({
                 step="0.1"
                 value={p.handicap}
                 onChange={(e) => setPlayer(i, { handicap: e.target.value })}
-                placeholder="Hcp"
+                placeholder={modeCopy.field}
+                title={modeCopy.field}
+                aria-label={modeCopy.field}
                 className="input w-16 shrink-0 text-center"
                 required
               />
@@ -240,8 +292,8 @@ export default function NewMatchForm({
           ))}
         </div>
         <p className="text-xs text-mute mt-3">
-          Lower handicap = market favorite at open. Crowd wagers and live
-          scoring shift the line from there.
+          {modeCopy.help} Crowd wagers and live scoring shift the line from
+          there.
         </p>
       </div>
 

@@ -42,6 +42,11 @@ export async function createMatchAction(formData: FormData) {
   const holes: 9 | 18 = holesRaw === 9 ? 9 : 18;
   const notes = String(formData.get("notes") ?? "").trim() || null;
   const parDataRaw = String(formData.get("parData") ?? "").trim();
+  const scoringModeRaw = String(formData.get("scoringMode") ?? "NET");
+  const scoringMode =
+    scoringModeRaw === "GROSS" || scoringModeRaw === "CUSTOM"
+      ? scoringModeRaw
+      : "NET";
 
   if (!courseName) throw new Error("Course name required");
   if (!scheduledAtRaw) throw new Error("Tee time required");
@@ -90,6 +95,7 @@ export async function createMatchAction(formData: FormData) {
       holes,
       notes,
       parData,
+      scoringMode,
       createdById: user.id,
       players: {
         create: drafts.map((p, i) => {
