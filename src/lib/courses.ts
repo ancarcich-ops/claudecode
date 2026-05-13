@@ -481,6 +481,24 @@ export const COURSE_PRESETS: CoursePreset[] = [
     holes: 18,
     pars: p(18, 72),
   },
+  {
+    id: "goose-creek",
+    name: "Goose Creek Golf Club",
+    city: "Jurupa Valley",
+    region: "IE",
+    access: "public",
+    holes: 18,
+    pars: [4, 3, 4, 5, 3, 4, 5, 4, 3, 4, 3, 5, 4, 4, 4, 3, 5, 4],
+  },
+  {
+    id: "hidden-valley",
+    name: "Hidden Valley Golf Club",
+    city: "Norco",
+    region: "IE",
+    access: "public",
+    holes: 18,
+    pars: [5, 4, 4, 4, 3, 5, 4, 3, 4, 4, 5, 4, 3, 4, 5, 3, 4, 4],
+  },
 ];
 
 export function findPresetByName(name: string): CoursePreset | undefined {
