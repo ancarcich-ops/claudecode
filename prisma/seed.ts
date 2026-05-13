@@ -2,14 +2,21 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+const PARS_18 = [4, 4, 3, 5, 4, 4, 3, 4, 5, 4, 4, 3, 5, 4, 4, 3, 4, 5];
+
 async function main() {
-  const usernames = ["bryson", "rory", "jt", "morikawa"];
+  const seed: { username: string; displayName: string }[] = [
+    { username: "bryson", displayName: "Bryson" },
+    { username: "rory", displayName: "Rory" },
+    { username: "jt", displayName: "JT" },
+    { username: "morikawa", displayName: "Morikawa" },
+  ];
   const users = await Promise.all(
-    usernames.map((u) =>
+    seed.map((s) =>
       prisma.user.upsert({
-        where: { username: u },
-        update: {},
-        create: { username: u },
+        where: { username: s.username },
+        update: { displayName: s.displayName },
+        create: { username: s.username, displayName: s.displayName },
       }),
     ),
   );
@@ -21,6 +28,7 @@ async function main() {
       scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
       holes: 18,
       status: "UPCOMING",
+      parData: JSON.stringify(PARS_18),
       createdById: users[0].id,
       notes: "Front-9 skins, $5 closeouts (just talk).",
       players: {
@@ -57,6 +65,7 @@ async function main() {
       startedAt: new Date(Date.now() - 60 * 60 * 1000),
       holes: 18,
       status: "IN_PROGRESS",
+      parData: JSON.stringify(PARS_18),
       createdById: users[1].id,
       players: {
         create: [

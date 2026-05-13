@@ -4,12 +4,13 @@
 // Three signals are blended:
 //   1. Model prior from handicap differential (always available).
 //   2. Crowd signal from wager counts (Laplace-smoothed share).
-//   3. Live signal from in-progress scoring vs handicap-adjusted pace.
+//   3. Live signal from in-progress scoring vs handicap-adjusted pace,
+//      using per-hole par data when available.
 //
 // Blend weights shift as more information arrives:
 //   UPCOMING: model dominates until wagers stack up.
 //   IN_PROGRESS: live grows linearly with holes completed.
-//   COMPLETED: deterministic — winner = lowest net score (1.0 vs 0.0).
+//   COMPLETED: deterministic - winner = lowest net score (1.0 vs 0.0).
 
 export type PlayerInput = {
   id: string;
@@ -22,6 +23,9 @@ export type PlayerInput = {
 export type OddsInput = {
   status: "UPCOMING" | "IN_PROGRESS" | "COMPLETED";
   holes: number;
+  // Per-hole pars (1-indexed by position, length == holes). If omitted,
+  // engine assumes par 4 for every hole.
+  pars?: number[];
   players: PlayerInput[];
 };
 
@@ -37,6 +41,7 @@ export type OddsOutput = {
     holesPlayed: number;
     totalWagers: number;
     netScores: Record<string, number | null>;
+    coursePar: number;
   };
 };
 
@@ -53,6 +58,15 @@ function normalize(values: number[]): number[] {
   const sum = values.reduce((a, b) => a + b, 0);
   if (sum <= 0) return values.map(() => 1 / values.length);
   return values.map((v) => v / sum);
+}
+
+function resolvePars(holes: number, pars?: number[]): number[] {
+  if (!pars || pars.length === 0) return Array(holes).fill(4);
+  if (pars.length === holes) return pars;
+  // Tolerate mismatch by trimming or padding with 4s.
+  const out = pars.slice(0, holes);
+  while (out.length < holes) out.push(4);
+  return out;
 }
 
 // Handicap prior: lower handicap = better. We model expected net-par strokes
@@ -72,16 +86,21 @@ function crowdProbabilities(players: PlayerInput[]): number[] {
   return normalize(raw);
 }
 
-// Live: project final net score from current pace, then softmax.
-// For each player: holes_played strokes are known. Remaining holes are
-// projected at the player's *expected per-hole rate* implied by their
-// handicap (par + handicap/holes). Net = projected_total - handicap.
-// Lower net = better, so we feed -net into softmax with a tight
-// temperature so a 2-stroke lead with few holes left is decisive.
+// Live: project final net score from current pace using per-hole pars.
+// For each player:
+//   strokes_so_far   = sum of strokes on holes played
+//   par_so_far       = sum of pars on holes played
+//   diff_per_hole    = (strokes_so_far - par_so_far) / holes_played
+//   prior_diff       = handicap / totalHoles   (their expected over-par rate)
+//   blended_rate     = lerp(prior_diff, diff_per_hole, holes_played/totalHoles)
+//   remaining        = sum of pars on holes left + remaining * blended_rate
+//   projected_total  = strokes_so_far + remaining
+//   net              = projected_total - handicap
+// Softmax(-net) with a temperature that tightens as holes are played.
 function liveProbabilities(
   players: PlayerInput[],
   totalHoles: number,
-  parPerHole = 4,
+  pars: number[],
 ): { probs: number[]; netScores: (number | null)[]; holesPlayed: number } {
   const maxHolesPlayed = Math.max(
     0,
@@ -97,21 +116,34 @@ function liveProbabilities(
   const reportedNets: (number | null)[] = [];
 
   for (const p of players) {
-    const holesPlayed = Object.keys(p.scoresByHole).length;
-    const strokesSoFar = Object.values(p.scoresByHole).reduce(
-      (a, b) => a + b,
+    const playedHoles = Object.keys(p.scoresByHole)
+      .map(Number)
+      .filter((h) => h >= 1 && h <= totalHoles);
+    const holesPlayed = playedHoles.length;
+    const strokesSoFar = playedHoles.reduce(
+      (s, h) => s + (p.scoresByHole[h] ?? 0),
+      0,
+    );
+    const parSoFar = playedHoles.reduce((s, h) => s + (pars[h - 1] ?? 4), 0);
+    const remainingPar = pars.reduce(
+      (s, par, i) => (playedHoles.includes(i + 1) ? s : s + par),
       0,
     );
     const holesRemaining = totalHoles - holesPlayed;
-    const expectedRemainingRate = parPerHole + p.handicap / totalHoles;
-    const projectedTotal =
-      strokesSoFar + holesRemaining * expectedRemainingRate;
+
+    const priorRate = p.handicap / totalHoles; // expected over-par per hole
+    const observedRate =
+      holesPlayed > 0 ? (strokesSoFar - parSoFar) / holesPlayed : priorRate;
+    const blend = holesPlayed / totalHoles;
+    const blendedRate = (1 - blend) * priorRate + blend * observedRate;
+
+    const projectedRemaining = remainingPar + holesRemaining * blendedRate;
+    const projectedTotal = strokesSoFar + projectedRemaining;
     const projectedNet = projectedTotal - p.handicap;
     projectedNets.push(projectedNet);
     reportedNets.push(projectedNet);
   }
 
-  // Confidence ramps as more holes are played: temperature shrinks from 4 to 1.
   const t = 4 - 3 * (maxHolesPlayed / totalHoles);
   const probs = softmax(
     projectedNets.map((n) => -n),
@@ -141,6 +173,8 @@ function completedProbabilities(
 export function computeOdds(input: OddsInput): OddsOutput {
   const { players, holes, status } = input;
   const n = players.length;
+  const pars = resolvePars(holes, input.pars);
+  const coursePar = pars.reduce((a, b) => a + b, 0);
 
   const model = modelProbabilities(players);
   const crowd = crowdProbabilities(players);
@@ -160,6 +194,7 @@ export function computeOdds(input: OddsInput): OddsOutput {
         holesPlayed: holes,
         totalWagers,
         netScores: zipNullable(players, netScores),
+        coursePar,
       },
     };
   }
@@ -168,10 +203,10 @@ export function computeOdds(input: OddsInput): OddsOutput {
     const { probs: live, netScores, holesPlayed } = liveProbabilities(
       players,
       holes,
+      pars,
     );
     const liveWeight = Math.min(0.95, holesPlayed / holes);
     const remaining = 1 - liveWeight;
-    // Of the remaining weight, give the crowd up to 0.5 once it has volume.
     const crowdWeight =
       remaining * Math.min(0.7, totalWagers / (totalWagers + 4));
     const modelWeight = remaining - crowdWeight;
@@ -192,6 +227,7 @@ export function computeOdds(input: OddsInput): OddsOutput {
         holesPlayed,
         totalWagers,
         netScores: zipNullable(players, netScores),
+        coursePar,
       },
     };
   }
@@ -215,6 +251,7 @@ export function computeOdds(input: OddsInput): OddsOutput {
       holesPlayed: 0,
       totalWagers,
       netScores: Object.fromEntries(players.map((p) => [p.id, null])),
+      coursePar,
     },
   };
 }
@@ -232,4 +269,35 @@ function zipNullable(
 
 export function formatPct(p: number): string {
   return `${(p * 100).toFixed(0)}%`;
+}
+
+// Build a reasonable default par array. Most courses are par-72/36, with a
+// mix of 4s, a few 3s, a few 5s. Good enough for first-pass odds.
+export function defaultPars(holes: 9 | 18): number[] {
+  if (holes === 9) return [4, 4, 3, 5, 4, 4, 3, 4, 5];
+  return [4, 4, 3, 5, 4, 4, 3, 4, 5, 4, 4, 3, 5, 4, 4, 3, 4, 5];
+}
+
+export function parseParData(json: string | null, holes: number): number[] {
+  if (!json) return Array(holes).fill(4);
+  try {
+    const parsed = JSON.parse(json);
+    if (!Array.isArray(parsed)) return Array(holes).fill(4);
+    return resolveLength(parsed.map((v) => clampPar(Number(v))), holes);
+  } catch {
+    return Array(holes).fill(4);
+  }
+}
+
+function resolveLength(arr: number[], holes: number): number[] {
+  const out = arr.slice(0, holes);
+  while (out.length < holes) out.push(4);
+  return out;
+}
+
+function clampPar(v: number): number {
+  if (!Number.isFinite(v)) return 4;
+  if (v < 3) return 3;
+  if (v > 6) return 6;
+  return Math.round(v);
 }

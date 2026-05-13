@@ -1,15 +1,14 @@
-// Fairway Market - golf prediction market schema
+// Fairway Market - Postgres variant of the schema.
+// Used for production deploys (Vercel + Neon/Supabase/Vercel Postgres).
+// `npm run use:postgres` copies this over prisma/schema.prisma before build.
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
-// status is stored as a plain string ("UPCOMING" | "IN_PROGRESS" | "COMPLETED")
-// because SQLite doesn't support enums.
 
 model User {
   id          String   @id @default(cuid())
@@ -28,7 +27,6 @@ model Match {
   scheduledAt  DateTime
   holes        Int         @default(18)
   status       String      @default("UPCOMING")
-  // JSON-encoded array of pars (length == holes). Null means "treat every hole as par 4".
   parData      String?
   createdById  String
   createdBy    User        @relation("MatchCreator", fields: [createdById], references: [id])

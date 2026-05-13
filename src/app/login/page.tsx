@@ -30,6 +30,24 @@ export default async function LoginPage() {
               maxLength={20}
               pattern="[A-Za-z0-9._-]+"
             />
+            <p className="text-[11px] text-mute mt-1">
+              Letters, numbers, dots, underscores, hyphens.
+            </p>
+          </div>
+          <div>
+            <label className="label" htmlFor="displayName">
+              Display name <span className="text-mute normal-case">(optional)</span>
+            </label>
+            <input
+              id="displayName"
+              name="displayName"
+              className="input"
+              placeholder="Bryson"
+              maxLength={32}
+            />
+            <p className="text-[11px] text-mute mt-1">
+              What friends see on the scorecard. Defaults to your username.
+            </p>
           </div>
           <button className="btn btn-primary w-full" type="submit">
             Enter the clubhouse

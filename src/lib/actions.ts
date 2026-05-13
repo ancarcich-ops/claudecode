@@ -11,10 +11,18 @@ import {
   setSession,
 } from "./auth";
 import { recordOddsSnapshot } from "./match";
+import { defaultPars } from "./odds";
 
 export async function signInAction(formData: FormData) {
   const username = String(formData.get("username") ?? "");
+  const displayName = String(formData.get("displayName") ?? "").trim() || null;
   const user = await getOrCreateUser(username);
+  if (displayName && displayName !== user.displayName) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { displayName },
+    });
+  }
   setSession(user.id);
   redirect("/");
 }
@@ -30,7 +38,8 @@ export async function createMatchAction(formData: FormData) {
   const user = await requireUser();
   const courseName = String(formData.get("courseName") ?? "").trim();
   const scheduledAtRaw = String(formData.get("scheduledAt") ?? "");
-  const holes = Number(formData.get("holes") ?? 18);
+  const holesRaw = Number(formData.get("holes") ?? 18);
+  const holes: 9 | 18 = holesRaw === 9 ? 9 : 18;
   const notes = String(formData.get("notes") ?? "").trim() || null;
 
   if (!courseName) throw new Error("Course name required");
@@ -47,21 +56,30 @@ export async function createMatchAction(formData: FormData) {
   if (drafts.some((p) => Number.isNaN(p.handicap)))
     throw new Error("Handicaps must be numbers");
 
+  // Look up users by username (case-insensitive); link player seats when match.
+  const lookup = await prisma.user.findMany({
+    where: { username: { in: drafts.map((d) => d.displayName.toLowerCase()) } },
+  });
+  const userByName = new Map(lookup.map((u) => [u.username, u]));
+
   const match = await prisma.match.create({
     data: {
       courseName,
       scheduledAt: new Date(scheduledAtRaw),
-      holes: holes === 9 ? 9 : 18,
+      holes,
       notes,
+      parData: JSON.stringify(defaultPars(holes)),
       createdById: user.id,
       players: {
-        create: drafts.map((p, i) => ({
-          displayName: p.displayName,
-          handicap: p.handicap,
-          seat: i,
-          // Link to user if a known username matches the displayName.
-          userId: undefined,
-        })),
+        create: drafts.map((p, i) => {
+          const u = userByName.get(p.displayName.toLowerCase());
+          return {
+            displayName: p.displayName,
+            handicap: p.handicap,
+            seat: i,
+            userId: u?.id,
+          };
+        }),
       },
     },
     include: { players: true },
@@ -80,7 +98,7 @@ export async function placeWagerAction(formData: FormData) {
   const match = await prisma.match.findUnique({ where: { id: matchId } });
   if (!match) throw new Error("Match not found");
   if (match.status === "COMPLETED")
-    throw new Error("Match already completed");
+    throw new Error("Market closed - match already final");
 
   await prisma.wager.upsert({
     where: { matchId_userId: { matchId, userId: user.id } },
@@ -88,6 +106,10 @@ export async function placeWagerAction(formData: FormData) {
     create: { matchId, userId: user.id, pickedPlayerId },
   });
 
+  await prisma.match.update({
+    where: { id: matchId },
+    data: { updatedAt: new Date() },
+  });
   await recordOddsSnapshot(matchId);
   revalidatePath(`/matches/${matchId}`);
   revalidatePath("/");
@@ -99,6 +121,29 @@ export async function startMatchAction(formData: FormData) {
   await prisma.match.update({
     where: { id: matchId },
     data: { status: "IN_PROGRESS", startedAt: new Date() },
+  });
+  await recordOddsSnapshot(matchId);
+  revalidatePath(`/matches/${matchId}`);
+  revalidatePath("/");
+}
+
+export async function reopenMatchAction(formData: FormData) {
+  const user = await requireUser();
+  const matchId = String(formData.get("matchId"));
+  const match = await prisma.match.findUnique({
+    where: { id: matchId },
+    include: { players: { include: { scores: true } } },
+  });
+  if (!match) throw new Error("Match not found");
+  if (match.createdById !== user.id) throw new Error("Not your match");
+  const anyScores = match.players.some((p) => p.scores.length > 0);
+  await prisma.match.update({
+    where: { id: matchId },
+    data: {
+      status: anyScores ? "IN_PROGRESS" : "UPCOMING",
+      completedAt: null,
+      startedAt: anyScores ? match.startedAt ?? new Date() : null,
+    },
   });
   await recordOddsSnapshot(matchId);
   revalidatePath(`/matches/${matchId}`);
@@ -140,15 +185,61 @@ export async function logScoreAction(formData: FormData) {
     });
   }
 
-  // Auto-advance to IN_PROGRESS on first score.
   const match = await prisma.match.findUnique({ where: { id: matchId } });
   if (match && match.status === "UPCOMING") {
     await prisma.match.update({
       where: { id: matchId },
       data: { status: "IN_PROGRESS", startedAt: new Date() },
     });
+  } else if (match) {
+    await prisma.match.update({
+      where: { id: matchId },
+      data: { updatedAt: new Date() },
+    });
   }
 
+  await recordOddsSnapshot(matchId);
+  revalidatePath(`/matches/${matchId}`);
+}
+
+export async function updateHandicapAction(formData: FormData) {
+  const user = await requireUser();
+  const matchId = String(formData.get("matchId"));
+  const matchPlayerId = String(formData.get("matchPlayerId"));
+  const handicap = Number(formData.get("handicap"));
+  if (!Number.isFinite(handicap)) throw new Error("Handicap must be a number");
+
+  const match = await prisma.match.findUnique({ where: { id: matchId } });
+  if (!match) throw new Error("Match not found");
+  if (match.createdById !== user.id) throw new Error("Not your match");
+  await prisma.matchPlayer.update({
+    where: { id: matchPlayerId },
+    data: { handicap },
+  });
+  await prisma.match.update({
+    where: { id: matchId },
+    data: { updatedAt: new Date() },
+  });
+  await recordOddsSnapshot(matchId);
+  revalidatePath(`/matches/${matchId}`);
+}
+
+export async function updateParsAction(formData: FormData) {
+  const user = await requireUser();
+  const matchId = String(formData.get("matchId"));
+  const parsRaw = formData.getAll("par").map((v) => Number(v));
+  const match = await prisma.match.findUnique({ where: { id: matchId } });
+  if (!match) throw new Error("Match not found");
+  if (match.createdById !== user.id) throw new Error("Not your match");
+  if (parsRaw.length !== match.holes)
+    throw new Error(`Need ${match.holes} pars, got ${parsRaw.length}`);
+  if (parsRaw.some((p) => !Number.isFinite(p) || p < 3 || p > 6))
+    throw new Error("Pars must be 3, 4, 5, or 6");
+
+  await prisma.match.update({
+    where: { id: matchId },
+    data: { parData: JSON.stringify(parsRaw) },
+  });
   await recordOddsSnapshot(matchId);
   revalidatePath(`/matches/${matchId}`);
 }
@@ -164,5 +255,4 @@ export async function deleteMatchAction(formData: FormData) {
   redirect("/");
 }
 
-// Re-export for convenience in pages that need to check session.
 export { getCurrentUser };

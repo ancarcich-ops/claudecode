@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { computeOdds, formatPct } from "@/lib/odds";
+import { computeOdds, formatPct, parseParData } from "@/lib/odds";
 import { getCurrentUser } from "@/lib/auth";
+import AutoRefresh from "@/components/AutoRefresh";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +41,7 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-10">
+      <AutoRefresh endpoint="/api/markets/state" />
       {!user && (
         <div className="card p-6 flex items-center justify-between gap-4">
           <div>
@@ -114,6 +116,7 @@ function MatchGrid({
         const odds = computeOdds({
           status: m.status as "UPCOMING" | "IN_PROGRESS" | "COMPLETED",
           holes: m.holes,
+          pars: parseParData(m.parData, m.holes),
           players: m.players.map((p) => ({
             id: p.id,
             handicap: p.handicap,

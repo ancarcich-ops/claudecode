@@ -1,17 +1,23 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { loadMatchWithOdds } from "@/lib/match";
 import {
   completeMatchAction,
   deleteMatchAction,
   placeWagerAction,
+  reopenMatchAction,
   startMatchAction,
+  updateHandicapAction,
+  updateParsAction,
 } from "@/lib/actions";
 import { formatPct } from "@/lib/odds";
 import { colorForSeat } from "@/lib/colors";
+import AutoRefresh from "@/components/AutoRefresh";
 import OddsChart from "./OddsChart";
 import ScoreSheet from "./ScoreSheet";
 import WagerForm from "./WagerForm";
+import ParsEditor from "./ParsEditor";
+import HandicapInput from "./HandicapInput";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +29,7 @@ export default async function MatchPage({
   const user = await getCurrentUser();
   const loaded = await loadMatchWithOdds(params.id);
   if (!loaded) notFound();
-  const { match, odds } = loaded;
+  const { match, odds, pars } = loaded;
 
   const myWager = user
     ? match.wagers.find((w) => w.userId === user.id) ?? null
@@ -31,7 +37,6 @@ export default async function MatchPage({
   const isCreator = !!user && match.createdById === user.id;
   const isCompleted = match.status === "COMPLETED";
 
-  // Chart series: group snapshots by createdAt timestamp.
   type Row = { t: number } & Record<string, number>;
   const rowMap = new Map<number, Row>();
   for (const snap of match.oddsSnapshots) {
@@ -41,14 +46,12 @@ export default async function MatchPage({
     rowMap.set(t, row);
   }
   const series = Array.from(rowMap.values()).sort((a, b) => a.t - b.t);
-  // Always end the line at the current computed odds.
   if (series.length > 0) {
     const last: Row = { t: Date.now() } as Row;
     for (const p of match.players) last[p.id] = odds.probabilities[p.id] ?? 0;
     series.push(last);
   }
 
-  // Aggregate per-player wager counts and net scores for display.
   const wagerCounts: Record<string, number> = {};
   for (const w of match.wagers) {
     wagerCounts[w.pickedPlayerId] = (wagerCounts[w.pickedPlayerId] ?? 0) + 1;
@@ -63,13 +66,13 @@ export default async function MatchPage({
     wagerCount: wagerCounts[p.id] ?? 0,
     probability: odds.probabilities[p.id] ?? 0,
     netScore: odds.meta.netScores[p.id] ?? null,
-    scores: match.players
-      .find((mp) => mp.id === p.id)!
-      .scores.sort((a, b) => a.hole - b.hole),
+    scores: p.scores.slice().sort((a, b) => a.hole - b.hole),
   }));
 
   return (
     <div className="space-y-6">
+      <AutoRefresh endpoint={`/api/matches/${match.id}/state`} />
+
       <header className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -84,7 +87,7 @@ export default async function MatchPage({
               minute: "2-digit",
             })}
             {" · "}
-            {match.holes} holes
+            {match.holes} holes · par {odds.meta.coursePar}
             {" · "}
             posted by @{match.createdBy.username}
           </div>
@@ -94,7 +97,7 @@ export default async function MatchPage({
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <StatusBadge status={match.status} />
           {isCreator && match.status === "UPCOMING" && (
             <form action={startMatchAction}>
@@ -106,6 +109,12 @@ export default async function MatchPage({
             <form action={completeMatchAction}>
               <input type="hidden" name="matchId" value={match.id} />
               <button className="btn btn-ghost">Mark final</button>
+            </form>
+          )}
+          {isCreator && match.status !== "UPCOMING" && (
+            <form action={reopenMatchAction}>
+              <input type="hidden" name="matchId" value={match.id} />
+              <button className="btn btn-ghost">Reopen</button>
             </form>
           )}
           {isCreator && (
@@ -141,14 +150,23 @@ export default async function MatchPage({
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
           {playerMeta.map((p) => (
             <div key={p.id} className="border border-border rounded-md p-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                   <span
-                    className="inline-block w-2.5 h-2.5 rounded-full"
+                    className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
                     style={{ background: p.color }}
                   />
-                  <span className="font-medium">{p.displayName}</span>
-                  <span className="chip">hcp {p.handicap}</span>
+                  <span className="font-medium truncate">{p.displayName}</span>
+                  {isCreator ? (
+                    <HandicapInput
+                      action={updateHandicapAction}
+                      matchId={match.id}
+                      matchPlayerId={p.id}
+                      handicap={p.handicap}
+                    />
+                  ) : (
+                    <span className="chip">hcp {p.handicap}</span>
+                  )}
                 </div>
                 <div className="font-mono tabular-nums text-lg">
                   {formatPct(p.probability)}
@@ -233,11 +251,23 @@ export default async function MatchPage({
           <ScoreSheet
             matchId={match.id}
             holes={match.holes}
+            pars={pars}
             players={playerMeta}
             locked={isCompleted}
           />
         )}
       </section>
+
+      {isCreator && (
+        <section className="card p-4">
+          <ParsEditor
+            action={updateParsAction}
+            matchId={match.id}
+            holes={match.holes}
+            pars={pars}
+          />
+        </section>
+      )}
     </div>
   );
 }

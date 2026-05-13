@@ -6,13 +6,15 @@ type PlayerRow = { name: string; handicap: string };
 
 export default function NewMatchForm({
   action,
-  defaultUsername,
+  defaultPlayerName,
+  recentCourses,
 }: {
   action: (formData: FormData) => Promise<void>;
-  defaultUsername: string;
+  defaultPlayerName: string;
+  recentCourses: string[];
 }) {
   const [players, setPlayers] = useState<PlayerRow[]>([
-    { name: defaultUsername, handicap: "12" },
+    { name: defaultPlayerName, handicap: "12" },
     { name: "", handicap: "15" },
   ]);
 
@@ -29,7 +31,7 @@ export default function NewMatchForm({
       rows.length > 2 ? rows.filter((_, idx) => idx !== i) : rows,
     );
 
-  // Local default tee time: now + 1 day, rounded to next 30 mins.
+  // Default tee time: tomorrow, rounded to next 30 mins.
   const defaultTee = (() => {
     const d = new Date();
     d.setDate(d.getDate() + 1);
@@ -54,8 +56,21 @@ export default function NewMatchForm({
             name="courseName"
             className="input"
             placeholder="Pebble Beach Golf Links"
+            list="course-history"
             required
           />
+          {recentCourses.length > 0 && (
+            <datalist id="course-history">
+              {recentCourses.map((c) => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
+          )}
+          {recentCourses.length > 0 && (
+            <p className="text-[11px] text-mute mt-1">
+              Recent: {recentCourses.slice(0, 4).join(" · ")}
+            </p>
+          )}
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -117,6 +132,7 @@ export default function NewMatchForm({
                 onChange={(e) => setPlayer(i, { name: e.target.value })}
                 placeholder={`Player ${i + 1}`}
                 className="input col-span-7"
+                maxLength={32}
                 required
               />
               <input
@@ -141,8 +157,8 @@ export default function NewMatchForm({
           ))}
         </div>
         <p className="text-xs text-mute mt-3">
-          Lower handicap = market favorite at open. Crowd wagers shift the line
-          from there.
+          Lower handicap = market favorite at open. Crowd wagers and live
+          scoring shift the line from there.
         </p>
       </div>
 
