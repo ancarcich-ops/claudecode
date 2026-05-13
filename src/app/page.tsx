@@ -43,17 +43,20 @@ export default async function HomePage() {
     <div className="space-y-10">
       <AutoRefresh endpoint="/api/markets/state" />
       {!user && (
-        <div className="card p-6 flex items-center justify-between gap-4">
+        <div className="card p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold">
               The prediction market for your foursome.
             </h2>
             <p className="text-sm text-mute mt-1">
-              Post your upcoming round. Friends call who wins. Odds move like a
-              market. No money, just the trash talk.
+              Post your upcoming round. Friends call who wins. Odds move like
+              a market. No money, just the trash talk.
             </p>
           </div>
-          <Link href="/login" className="btn btn-primary shrink-0">
+          <Link
+            href="/login"
+            className="btn btn-primary shrink-0 self-start sm:self-auto"
+          >
             Sign in to play
           </Link>
         </div>

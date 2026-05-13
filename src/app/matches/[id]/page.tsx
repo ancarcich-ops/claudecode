@@ -92,23 +92,23 @@ export default async function MatchPage({
     <div className="space-y-6">
       <AutoRefresh endpoint={`/api/matches/${match.id}/state`} />
 
-      <header className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
+      <header className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight truncate">
             {match.courseName}
           </h1>
-          <div className="text-sm text-mute mt-1">
+          <div className="text-xs sm:text-sm text-mute mt-1">
             {new Date(match.scheduledAt).toLocaleString(undefined, {
-              weekday: "long",
+              weekday: "short",
               month: "short",
               day: "numeric",
               hour: "numeric",
               minute: "2-digit",
             })}
             {" · "}
-            {match.holes} holes · par {odds.meta.coursePar}
+            {match.holes}H · par {odds.meta.coursePar}
             {" · "}
-            posted by @{match.createdBy.username}
+            @{match.createdBy.username}
           </div>
           {match.notes && (
             <div className="text-sm text-mute mt-2 italic">
@@ -116,41 +116,54 @@ export default async function MatchPage({
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 flex-wrap justify-end shrink-0">
           <StatusBadge status={match.status} />
           {isCreator && match.status === "UPCOMING" && (
             <form action={startMatchAction}>
               <input type="hidden" name="matchId" value={match.id} />
-              <button className="btn btn-ghost">Start round</button>
+              <button className="btn btn-ghost px-2.5 whitespace-nowrap">
+                Start
+              </button>
             </form>
           )}
           {isCreator && match.status === "IN_PROGRESS" && (
             <form action={completeMatchAction}>
               <input type="hidden" name="matchId" value={match.id} />
-              <button className="btn btn-ghost">Mark final</button>
+              <button className="btn btn-ghost px-2.5 whitespace-nowrap">
+                Mark final
+              </button>
             </form>
           )}
           {isCreator && match.status !== "UPCOMING" && (
             <form action={reopenMatchAction}>
               <input type="hidden" name="matchId" value={match.id} />
-              <button className="btn btn-ghost">Reopen</button>
+              <button className="btn btn-ghost px-2.5 whitespace-nowrap">
+                Reopen
+              </button>
             </form>
           )}
           {isCreator && (
             <form action={deleteMatchAction}>
               <input type="hidden" name="matchId" value={match.id} />
-              <button className="btn btn-danger">Delete</button>
+              <button
+                className="btn btn-danger px-2.5 whitespace-nowrap"
+                aria-label="Delete match"
+                title="Delete match"
+              >
+                <TrashIcon />
+                <span className="hidden sm:inline">Delete</span>
+              </button>
             </form>
           )}
         </div>
       </header>
 
       <section className="card p-4">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
           <h2 className="text-sm uppercase tracking-wider text-mute">
             Market
           </h2>
-          <div className="text-xs text-mute font-mono">
+          <div className="text-[11px] sm:text-xs text-mute font-mono whitespace-nowrap">
             model {(odds.weights.model * 100).toFixed(0)}% · crowd{" "}
             {(odds.weights.crowd * 100).toFixed(0)}% · live{" "}
             {(odds.weights.live * 100).toFixed(0)}%
@@ -304,9 +317,34 @@ function StatusBadge({ status }: { status: string }) {
   };
   return (
     <span
-      className={`text-xs px-2.5 py-1 rounded-full ${map[status] ?? ""}`}
+      className={`text-xs px-2.5 py-1 rounded-full whitespace-nowrap ${
+        map[status] ?? ""
+      }`}
     >
       {label[status] ?? status}
     </span>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg
+      aria-hidden
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="shrink-0"
+    >
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+      <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+    </svg>
   );
 }
