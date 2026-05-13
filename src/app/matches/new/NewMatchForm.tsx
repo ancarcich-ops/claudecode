@@ -8,22 +8,25 @@ type ScoringMode = "NET" | "GROSS" | "CUSTOM";
 
 const MODE_COPY: Record<
   ScoringMode,
-  { label: string; field: string; help: string }
+  { label: string; sub: string; field: string; help: string }
 > = {
   NET: {
-    label: "Net (handicap)",
-    field: "Handicap",
-    help: "Lowest gross minus handicap wins. Lower handicap = market favorite at open.",
+    label: "Net",
+    sub: "Handicap",
+    field: "Hcp",
+    help: "Lowest gross minus handicap wins. Lower handicap is the market favorite at open.",
   },
   GROSS: {
-    label: "Gross (straight up)",
+    label: "Gross",
+    sub: "Straight up",
     field: "Hcp",
     help: "Lowest raw score wins. Handicaps are informational only.",
   },
   CUSTOM: {
-    label: "Custom strokes",
+    label: "Custom",
+    sub: "Group strokes",
     field: "Strokes",
-    help: "Group decides the stroke allowance for each player. Lowest gross minus strokes wins.",
+    help: "Group sets the stroke allowance per player. Lowest gross minus strokes wins.",
   },
 };
 
@@ -207,20 +210,26 @@ export default function NewMatchForm({
           <div className="grid grid-cols-3 gap-2">
             {(Object.keys(MODE_COPY) as ScoringMode[]).map((m) => {
               const active = scoringMode === m;
+              const c = MODE_COPY[m];
               return (
                 <button
                   key={m}
                   type="button"
                   onClick={() => setScoringMode(m)}
                   className={
-                    "rounded-md border px-2 py-2 text-xs leading-tight transition " +
+                    "flex flex-col items-center justify-center gap-0.5 rounded-md border px-2 py-2 transition min-h-[3.25rem] " +
                     (active
                       ? "border-accent bg-accent/10 text-ink"
                       : "border-border text-mute hover:text-ink")
                   }
                   aria-pressed={active}
                 >
-                  {MODE_COPY[m].label}
+                  <span className="text-sm font-medium leading-none">
+                    {c.label}
+                  </span>
+                  <span className="text-[10px] leading-none opacity-70">
+                    {c.sub}
+                  </span>
                 </button>
               );
             })}
@@ -275,7 +284,7 @@ export default function NewMatchForm({
                 placeholder={modeCopy.field}
                 title={modeCopy.field}
                 aria-label={modeCopy.field}
-                className="input w-16 shrink-0 text-center"
+                className="input w-20 shrink-0 text-center px-2"
                 required
               />
               <button
@@ -292,8 +301,7 @@ export default function NewMatchForm({
           ))}
         </div>
         <p className="text-xs text-mute mt-3">
-          {modeCopy.help} Crowd wagers and live scoring shift the line from
-          there.
+          Crowd wagers and live scoring shift the line from there.
         </p>
       </div>
 
