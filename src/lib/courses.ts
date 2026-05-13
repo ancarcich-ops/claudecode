@@ -6,7 +6,7 @@
 // hole in the "Course pars" editor on the match page.
 
 export type CourseAccess = "public" | "private" | "resort" | "municipal";
-export type CourseRegion = "LA" | "OC";
+export type CourseRegion = "LA" | "OC" | "IE";
 
 export type CoursePreset = {
   id: string;
@@ -222,6 +222,24 @@ export const COURSE_PRESETS: CoursePreset[] = [
     city: "Moorpark",
     region: "LA",
     access: "public",
+    holes: 18,
+    pars: p(18, 72),
+  },
+  {
+    id: "angeles-national",
+    name: "Angeles National Golf Club",
+    city: "Sunland",
+    region: "LA",
+    access: "public",
+    holes: 18,
+    pars: p(18, 72),
+  },
+  {
+    id: "sand-canyon-cc",
+    name: "Sand Canyon Country Club",
+    city: "Canyon Country",
+    region: "LA",
+    access: "private",
     holes: 18,
     pars: p(18, 72),
   },
@@ -451,6 +469,17 @@ export const COURSE_PRESETS: CoursePreset[] = [
     access: "private",
     holes: 18,
     pars: p(18, 71),
+  },
+
+  // --- Inland Empire ---
+  {
+    id: "oak-quarry",
+    name: "Oak Quarry Golf Club",
+    city: "Riverside",
+    region: "IE",
+    access: "public",
+    holes: 18,
+    pars: p(18, 72),
   },
 ];
 

@@ -135,7 +135,7 @@ export default function NewMatchForm({
             </div>
           ) : (
             <p className="text-[11px] text-mute mt-1">
-              Pick from {presets.length} LA + OC courses, or type any name.
+              Pick from {presets.length} SoCal courses, or type any name.
               Hole pars autofill when you match a preset (always editable
               later).
             </p>
