@@ -50,7 +50,7 @@ export default async function HomePage() {
             </h2>
             <p className="text-sm text-mute mt-1">
               Post your upcoming round. Friends call who wins. Odds move like
-              a market. No money, just the trash talk.
+              a market.
             </p>
           </div>
           <Link

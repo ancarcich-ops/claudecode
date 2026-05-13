@@ -1,9 +1,9 @@
 # Fairway Market
 
-A Polymarket-style prediction market for friendly golf rounds. No money, just
-bragging rights. Players post upcoming rounds (course, tee time, handicaps),
-friends "call" who wins, and odds move like a market — driven by a hybrid of
-the handicap prior, the crowd's calls, and (once play starts) live scoring.
+A Polymarket-style prediction market for golf rounds. Players post upcoming
+rounds (course, tee time, handicaps), friends "call" who wins, and odds move
+like a market — driven by a hybrid of the handicap prior, the crowd's calls,
+and (once play starts) live scoring.
 
 ## Stack
 
