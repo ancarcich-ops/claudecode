@@ -1,4 +1,4 @@
-// Fairway Market - golf prediction market schema
+// Sticks - golf prediction market schema
 generator client {
   provider = "prisma-client-js"
 }

@@ -1,4 +1,4 @@
-# Fairway Market
+# Sticks
 
 A Polymarket-style prediction market for golf rounds. Players post upcoming
 rounds (course, tee time, handicaps), friends "call" who wins, and odds move
