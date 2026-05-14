@@ -10,14 +10,59 @@ import CopyInvite from "@/components/CopyInvite";
 
 export const dynamic = "force-dynamic";
 
-export default async function GroupsPage() {
+function Banner({ children, tone }: { children: React.ReactNode; tone: "ok" | "err" }) {
+  const classes =
+    tone === "ok"
+      ? "border-accent/40 bg-accent/10 text-accent"
+      : "border-danger/40 bg-danger/10 text-danger";
+  return (
+    <div className={`rounded-md border px-3 py-2 text-sm ${classes}`}>
+      {children}
+    </div>
+  );
+}
+
+export default async function GroupsPage({
+  searchParams,
+}: {
+  searchParams: { error?: string; code?: string; joined?: string };
+}) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
   const groups = await listUserGroups(user.id);
 
+  const banner = (() => {
+    if (searchParams.joined) {
+      const g = groups.find((x) => x.id === searchParams.joined);
+      if (g) return { tone: "ok" as const, msg: `Joined ${g.name}.` };
+      return null;
+    }
+    if (searchParams.error === "invalid") {
+      const code = (searchParams.code ?? "").toUpperCase();
+      return {
+        tone: "err" as const,
+        msg: `Invite code ${code || ""} doesn't match any group. Double-check the link.`,
+      };
+    }
+    if (searchParams.error === "db") {
+      return {
+        tone: "err" as const,
+        msg: "We had trouble reaching the database. Try the link again in a minute.",
+      };
+    }
+    if (searchParams.error === "join") {
+      return {
+        tone: "err" as const,
+        msg: "Something went wrong saving your membership. Try clicking the link again.",
+      };
+    }
+    return null;
+  })();
+
   return (
     <div className="mx-auto max-w-2xl space-y-6">
+      {banner && <Banner tone={banner.tone}>{banner.msg}</Banner>}
       <div>
         <h1 className="text-xl font-semibold mb-1">Groups</h1>
         <p className="text-sm text-mute">
