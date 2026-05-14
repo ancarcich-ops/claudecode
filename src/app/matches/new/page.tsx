@@ -46,6 +46,7 @@ export default async function NewMatchPage() {
       <NewMatchForm
         action={createMatchAction}
         defaultPlayerName={defaultName}
+        currentUserId={user.id}
         recentCourses={recentCourses}
         presets={COURSE_PRESETS}
         groups={groups.map((g) => ({ id: g.id, name: g.name }))}

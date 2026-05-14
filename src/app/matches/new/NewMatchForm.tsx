@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import type { CoursePreset } from "@/lib/courses";
+import PlayerNameInput from "@/components/PlayerNameInput";
 
-type PlayerRow = { name: string; handicap: string };
+type PlayerRow = { name: string; handicap: string; userId: string | null };
 type ScoringMode = "NET" | "GROSS" | "CUSTOM";
 
 const MODE_COPY: Record<
@@ -33,6 +34,7 @@ const MODE_COPY: Record<
 export default function NewMatchForm({
   action,
   defaultPlayerName,
+  currentUserId,
   recentCourses,
   presets,
   groups,
@@ -40,14 +42,15 @@ export default function NewMatchForm({
 }: {
   action: (formData: FormData) => Promise<void>;
   defaultPlayerName: string;
+  currentUserId: string;
   recentCourses: string[];
   presets: CoursePreset[];
   groups: { id: string; name: string }[];
   defaultGroupId: string;
 }) {
   const [players, setPlayers] = useState<PlayerRow[]>([
-    { name: defaultPlayerName, handicap: "12" },
-    { name: "", handicap: "15" },
+    { name: defaultPlayerName, handicap: "12", userId: currentUserId },
+    { name: "", handicap: "15", userId: null },
   ]);
   const [courseName, setCourseName] = useState("");
   const [holes, setHoles] = useState<9 | 18>(18);
@@ -83,7 +86,10 @@ export default function NewMatchForm({
 
   const addPlayer = () =>
     players.length < 6 &&
-    setPlayers((rows) => [...rows, { name: "", handicap: "18" }]);
+    setPlayers((rows) => [
+      ...rows,
+      { name: "", handicap: "18", userId: null },
+    ]);
   const removePlayer = (i: number) =>
     setPlayers((rows) =>
       rows.length > 2 ? rows.filter((_, idx) => idx !== i) : rows,
@@ -299,15 +305,14 @@ export default function NewMatchForm({
         </div>
         <div className="space-y-2">
           {players.map((p, i) => (
-            <div key={i} className="flex gap-2 items-center">
-              <input
-                name="playerName"
+            <div key={i} className="flex gap-2 items-start">
+              <PlayerNameInput
                 value={p.name}
-                onChange={(e) => setPlayer(i, { name: e.target.value })}
+                userId={p.userId}
+                onChange={(next) =>
+                  setPlayer(i, { name: next.name, userId: next.userId })
+                }
                 placeholder={`Player ${i + 1}`}
-                className="input flex-1 min-w-0"
-                maxLength={32}
-                required
               />
               <input
                 name="playerHandicap"

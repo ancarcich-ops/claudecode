@@ -40,7 +40,11 @@ export async function signOutAction() {
   redirect("/login");
 }
 
-type PlayerDraft = { displayName: string; handicap: number };
+type PlayerDraft = {
+  displayName: string;
+  handicap: number;
+  explicitUserId?: string | null;
+};
 
 export async function createGroupAction(formData: FormData) {
   const user = await requireUser();
@@ -139,9 +143,18 @@ export async function createMatchAction(formData: FormData) {
 
   const names = formData.getAll("playerName").map((v) => String(v).trim());
   const hcps = formData.getAll("playerHandicap").map((v) => Number(v));
+  // playerUserId comes in as a parallel hidden input from PlayerNameInput.
+  // Empty string = unlinked (user typed a name freely).
+  const explicitUserIds = formData
+    .getAll("playerUserId")
+    .map((v) => String(v).trim());
 
   const drafts: PlayerDraft[] = names
-    .map((name, i) => ({ displayName: name, handicap: hcps[i] }))
+    .map((name, i) => ({
+      displayName: name,
+      handicap: hcps[i],
+      explicitUserId: explicitUserIds[i] || null,
+    }))
     .filter((p) => p.displayName.length > 0);
 
   if (drafts.length < 2) throw new Error("Need at least two players");
@@ -180,11 +193,23 @@ export async function createMatchAction(formData: FormData) {
     if (membership) groupId = groupIdRaw;
   }
 
-  // Look up users by username (case-insensitive); link player seats when match.
+  // Resolve userIds for each seat. Priority:
+  //   1. Explicit userId from the autocomplete (the user picked from the list)
+  //   2. Fallback: username == displayName (case-insensitive) for hand-typed
+  //      entries that happen to match an account, preserving prior behavior.
+  const explicitIds = drafts
+    .map((d) => d.explicitUserId)
+    .filter((v): v is string => !!v);
   const lookup = await prisma.user.findMany({
-    where: { username: { in: drafts.map((d) => d.displayName.toLowerCase()) } },
+    where: {
+      OR: [
+        { id: { in: explicitIds } },
+        { username: { in: drafts.map((d) => d.displayName.toLowerCase()) } },
+      ],
+    },
   });
-  const userByName = new Map(lookup.map((u) => [u.username, u]));
+  const userById = new Map(lookup.map((u) => [u.id, u]));
+  const userByName = new Map(lookup.map((u) => [u.username.toLowerCase(), u]));
 
   const match = await prisma.match.create({
     data: {
@@ -198,12 +223,16 @@ export async function createMatchAction(formData: FormData) {
       groupId,
       players: {
         create: drafts.map((p, i) => {
-          const u = userByName.get(p.displayName.toLowerCase());
+          const explicit = p.explicitUserId
+            ? userById.get(p.explicitUserId)
+            : undefined;
+          const byName = userByName.get(p.displayName.toLowerCase());
+          const linked = explicit ?? byName;
           return {
             displayName: p.displayName,
             handicap: p.handicap,
             seat: i,
-            userId: u?.id,
+            userId: linked?.id,
           };
         }),
       },
