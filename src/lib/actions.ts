@@ -12,10 +12,18 @@ import {
 } from "./auth";
 import { recordOddsSnapshot } from "./match";
 import { defaultPars } from "./odds";
+import {
+  generateInviteCode,
+  setActiveGroupCookie,
+  type GroupFilter,
+} from "./groups";
 
 export async function signInAction(formData: FormData) {
   const username = String(formData.get("username") ?? "");
   const displayName = String(formData.get("displayName") ?? "").trim() || null;
+  const nextRaw = String(formData.get("next") ?? "").trim();
+  // Only honor same-origin relative redirects to avoid open-redirect abuse.
+  const next = nextRaw.startsWith("/") && !nextRaw.startsWith("//") ? nextRaw : "/";
   const user = await getOrCreateUser(username);
   if (displayName && displayName !== user.displayName) {
     await prisma.user.update({
@@ -24,7 +32,7 @@ export async function signInAction(formData: FormData) {
     });
   }
   setSession(user.id);
-  redirect("/");
+  redirect(next);
 }
 
 export async function signOutAction() {
@@ -33,6 +41,84 @@ export async function signOutAction() {
 }
 
 type PlayerDraft = { displayName: string; handicap: number };
+
+export async function createGroupAction(formData: FormData) {
+  const user = await requireUser();
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) throw new Error("Group name required");
+  if (name.length > 40) throw new Error("Group name too long");
+
+  // Try a few times in the (extremely unlikely) event of an invite-code collision.
+  let group;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const code = generateInviteCode();
+    try {
+      group = await prisma.group.create({
+        data: {
+          name,
+          inviteCode: code,
+          createdById: user.id,
+          members: { create: { userId: user.id, role: "owner" } },
+        },
+      });
+      break;
+    } catch {
+      // unique-constraint retry
+    }
+  }
+  if (!group) throw new Error("Could not generate a unique invite code");
+
+  setActiveGroupCookie(group.id);
+  revalidatePath("/");
+  redirect("/groups");
+}
+
+export async function joinGroupAction(formData: FormData) {
+  const user = await requireUser();
+  const codeRaw = String(formData.get("inviteCode") ?? "").trim().toUpperCase();
+  if (!codeRaw) throw new Error("Invite code required");
+
+  const group = await prisma.group.findUnique({
+    where: { inviteCode: codeRaw },
+  });
+  if (!group) throw new Error("Invalid invite code");
+
+  await prisma.groupMember.upsert({
+    where: { groupId_userId: { groupId: group.id, userId: user.id } },
+    update: {},
+    create: { groupId: group.id, userId: user.id },
+  });
+
+  setActiveGroupCookie(group.id);
+  revalidatePath("/");
+  redirect("/groups");
+}
+
+export async function leaveGroupAction(formData: FormData) {
+  const user = await requireUser();
+  const groupId = String(formData.get("groupId") ?? "");
+  if (!groupId) return;
+  await prisma.groupMember
+    .delete({
+      where: { groupId_userId: { groupId, userId: user.id } },
+    })
+    .catch(() => {});
+  // Clear the active-group cookie if it pointed at the group we just left.
+  setActiveGroupCookie("");
+  revalidatePath("/");
+  redirect("/groups");
+}
+
+export async function selectGroupAction(formData: FormData) {
+  await requireUser();
+  const raw = String(formData.get("groupId") ?? "");
+  // Allowed values: "" (all), "public", or a real group id. We don't verify
+  // membership here -- visibleMatchWhere() degrades gracefully if the user
+  // isn't a member, and they'd see nothing.
+  const value: GroupFilter = raw === "public" ? "public" : raw;
+  setActiveGroupCookie(value);
+  revalidatePath("/");
+}
 
 export async function createMatchAction(formData: FormData) {
   const user = await requireUser();
@@ -82,6 +168,18 @@ export async function createMatchAction(formData: FormData) {
   }
   if (!parData) parData = JSON.stringify(defaultPars(holes));
 
+  // Optional group scoping. Empty string / "public" -> public (groupId null).
+  // Any other value must be a group the user is a member of, otherwise we
+  // silently drop it back to public rather than 500.
+  const groupIdRaw = String(formData.get("groupId") ?? "").trim();
+  let groupId: string | null = null;
+  if (groupIdRaw && groupIdRaw !== "public") {
+    const membership = await prisma.groupMember.findUnique({
+      where: { groupId_userId: { groupId: groupIdRaw, userId: user.id } },
+    });
+    if (membership) groupId = groupIdRaw;
+  }
+
   // Look up users by username (case-insensitive); link player seats when match.
   const lookup = await prisma.user.findMany({
     where: { username: { in: drafts.map((d) => d.displayName.toLowerCase()) } },
@@ -97,6 +195,7 @@ export async function createMatchAction(formData: FormData) {
       parData,
       scoringMode,
       createdById: user.id,
+      groupId,
       players: {
         create: drafts.map((p, i) => {
           const u = userByName.get(p.displayName.toLowerCase());

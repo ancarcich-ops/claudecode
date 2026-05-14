@@ -2,9 +2,21 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { signInAction } from "@/lib/actions";
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: { next?: string };
+}) {
   const user = await getCurrentUser();
-  if (user) redirect("/");
+  // Same-origin relative redirects only.
+  const next =
+    searchParams.next &&
+    searchParams.next.startsWith("/") &&
+    !searchParams.next.startsWith("//")
+      ? searchParams.next
+      : "/";
+
+  if (user) redirect(next);
 
   return (
     <div className="mx-auto max-w-md mt-16">
@@ -15,6 +27,7 @@ export default async function LoginPage() {
           exist. No password, no email.
         </p>
         <form action={signInAction} className="space-y-3">
+          <input type="hidden" name="next" value={next} />
           <div>
             <label className="label" htmlFor="username">
               Username

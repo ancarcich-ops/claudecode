@@ -35,11 +35,15 @@ export default function NewMatchForm({
   defaultPlayerName,
   recentCourses,
   presets,
+  groups,
+  defaultGroupId,
 }: {
   action: (formData: FormData) => Promise<void>;
   defaultPlayerName: string;
   recentCourses: string[];
   presets: CoursePreset[];
+  groups: { id: string; name: string }[];
+  defaultGroupId: string;
 }) {
   const [players, setPlayers] = useState<PlayerRow[]>([
     { name: defaultPlayerName, handicap: "12" },
@@ -235,6 +239,36 @@ export default function NewMatchForm({
             })}
           </div>
           <p className="text-[11px] text-mute mt-1.5">{modeCopy.help}</p>
+        </div>
+        <div>
+          <label className="label" htmlFor="groupId">
+            Visible to
+          </label>
+          <select
+            id="groupId"
+            name="groupId"
+            className="input"
+            defaultValue={defaultGroupId}
+          >
+            <option value="public">Public - anyone signed in</option>
+            {groups.length > 0 && (
+              <optgroup label="My groups">
+                {groups.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name} (members only)
+                  </option>
+                ))}
+              </optgroup>
+            )}
+          </select>
+          {groups.length === 0 && (
+            <p className="text-[11px] text-mute mt-1">
+              Want a private round?{" "}
+              <a className="text-accent" href="/groups">
+                Create a group →
+              </a>
+            </p>
+          )}
         </div>
         <div>
           <label className="label" htmlFor="notes">

@@ -24,6 +24,11 @@ export type CoursePreset = {
 const PAR_18_72 = [4, 4, 3, 5, 4, 4, 3, 4, 5, 4, 4, 3, 5, 4, 4, 3, 4, 5];
 const PAR_18_71 = [4, 4, 3, 5, 4, 4, 3, 4, 5, 4, 4, 3, 4, 4, 4, 3, 4, 5];
 const PAR_18_70 = [4, 4, 3, 4, 4, 4, 3, 4, 5, 4, 4, 3, 4, 4, 4, 3, 4, 5];
+// Executive layouts. Par 59 = 13 par-3s + 5 par-4s (3*13 + 4*5 = 59).
+// Par 64 = 12 par-3s + 6 par-4s (3*12 + 4*6 = 60)... not 64. So par 64
+// uses 8 par-3s + 10 par-4s (3*8 + 4*10 = 64).
+const PAR_18_64 = [3, 4, 3, 3, 4, 4, 4, 3, 4, 4, 3, 3, 3, 3, 4, 3, 4, 4];
+const PAR_18_59 = [3, 4, 3, 4, 3, 3, 3, 4, 3, 3, 4, 3, 3, 4, 3, 3, 3, 3];
 const PAR_9_36 = [4, 4, 3, 5, 4, 4, 3, 4, 5];
 const PAR_9_35 = [4, 4, 3, 4, 4, 4, 3, 4, 5];
 const PAR_9_33 = [4, 4, 3, 4, 3, 4, 4, 3, 4];
@@ -38,6 +43,8 @@ function p(holes: 9 | 18, total: number): number[] {
     if (total === 72) return PAR_18_72;
     if (total === 71) return PAR_18_71;
     if (total === 70) return PAR_18_70;
+    if (total === 64) return PAR_18_64;
+    if (total === 59) return PAR_18_59;
   }
   // Fallback - all par 4s padded to the right length.
   return Array(holes).fill(4);
@@ -172,13 +179,40 @@ export const COURSE_PRESETS: CoursePreset[] = [
     pars: p(18, 72),
   },
   {
+    id: "el-dorado-park",
+    name: "El Dorado Park Golf Course",
+    city: "Long Beach",
+    region: "LA",
+    access: "municipal",
+    holes: 18,
+    pars: [4, 4, 3, 5, 4, 4, 5, 4, 3, 5, 4, 3, 4, 4, 4, 4, 3, 5],
+  },
+  {
+    id: "heartwell-gc",
+    name: "Heartwell Golf Course",
+    city: "Long Beach",
+    region: "LA",
+    access: "municipal",
+    holes: 18,
+    pars: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
+  },
+  {
+    id: "rio-hondo",
+    name: "Rio Hondo Golf Club",
+    city: "Downey",
+    region: "LA",
+    access: "municipal",
+    holes: 18,
+    pars: p(18, 71),
+  },
+  {
     id: "westchester-gc",
     name: "Westchester Golf Course",
     city: "Westchester",
     region: "LA",
     access: "municipal",
     holes: 18,
-    pars: p(18, 64),
+    pars: [3, 4, 3, 3, 4, 4, 4, 3, 4, 4, 3, 3, 3, 3, 5, 3, 4, 4],
   },
   {
     id: "penmar-gc",
@@ -324,7 +358,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
     region: "OC",
     access: "public",
     holes: 18,
-    pars: p(18, 72),
+    pars: [5, 4, 4, 4, 3, 4, 3, 5, 4, 4, 5, 4, 5, 3, 4, 3, 4, 4],
   },
   {
     id: "tustin-ranch",
@@ -342,7 +376,25 @@ export const COURSE_PRESETS: CoursePreset[] = [
     region: "OC",
     access: "public",
     holes: 18,
-    pars: p(18, 72),
+    pars: [4, 4, 4, 5, 4, 5, 3, 3, 4, 3, 4, 4, 5, 4, 4, 3, 4, 5],
+  },
+  {
+    id: "coyote-hills",
+    name: "Coyote Hills Golf Course",
+    city: "Fullerton",
+    region: "OC",
+    access: "public",
+    holes: 18,
+    pars: p(18, 71),
+  },
+  {
+    id: "birch-hills",
+    name: "Birch Hills Golf Course",
+    city: "Brea",
+    region: "OC",
+    access: "public",
+    holes: 18,
+    pars: p(18, 59),
   },
   {
     id: "arroyo-trabuco",

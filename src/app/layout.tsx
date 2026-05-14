@@ -3,6 +3,8 @@ import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { signOutAction } from "@/lib/actions";
+import { getActiveGroupId, listUserGroups } from "@/lib/groups";
+import GroupSwitcher from "@/components/GroupSwitcher";
 
 export const metadata: Metadata = {
   title: "Fairway Market",
@@ -21,6 +23,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const user = await getCurrentUser();
+  const groups = user ? await listUserGroups(user.id) : [];
+  const activeGroupId = getActiveGroupId();
   return (
     <html lang="en">
       <body>
@@ -38,6 +42,20 @@ export default async function RootLayout({
             <nav className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               {user ? (
                 <>
+                  <GroupSwitcher
+                    groups={groups.map((g) => ({ id: g.id, name: g.name }))}
+                    active={activeGroupId}
+                  />
+                  <Link
+                    href="/groups"
+                    className="btn btn-ghost px-2.5 sm:px-3 whitespace-nowrap text-xs"
+                    title="Manage groups"
+                  >
+                    <span className="hidden sm:inline">Groups</span>
+                    <span className="sm:hidden" aria-hidden>
+                      ⚑
+                    </span>
+                  </Link>
                   <Link
                     href="/matches/new"
                     className="btn btn-primary px-2.5 sm:px-3 whitespace-nowrap"
