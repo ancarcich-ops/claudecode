@@ -26,11 +26,17 @@ export function setActiveGroupCookie(value: GroupFilter) {
 }
 
 export async function listUserGroups(userId: string) {
-  return prisma.group.findMany({
-    where: { members: { some: { userId } } },
-    orderBy: { createdAt: "asc" },
-    include: { _count: { select: { members: true, matches: true } } },
-  });
+  try {
+    return await prisma.group.findMany({
+      where: { members: { some: { userId } } },
+      orderBy: { createdAt: "asc" },
+      include: { _count: { select: { members: true, matches: true } } },
+    });
+  } catch {
+    // If the Group table isn't there yet (mid-deploy or unmigrated DB),
+    // degrade gracefully rather than 500ing every page.
+    return [];
+  }
 }
 
 // Code is 6 chars, uppercase alphanumeric without easily-confused glyphs
@@ -51,29 +57,50 @@ export function generateInviteCode(): string {
 // - "" (default): public matches + any group the user is in
 // - "public":     only matches with groupId == null
 // - <groupId>:    only that group's matches, and only if the user is a member
+//
+// Note: SQL `IN (NULL, ...)` does NOT match NULL rows because NULL is never
+// equal to anything in three-valued logic, so we use `OR` to combine null
+// matches with the group-id list.
+type MatchWhere = {
+  groupId?: string | null;
+  OR?: { groupId: string | null | { in: string[] } }[];
+};
+
 export async function visibleMatchWhere(
   userId: string | null,
   filter: GroupFilter,
-): Promise<{ groupId?: { in: (string | null)[] } | null | string }> {
+): Promise<MatchWhere> {
   if (filter === "public") {
     return { groupId: null };
   }
 
   if (filter && filter !== "public") {
     if (!userId) return { groupId: null };
-    const isMember = await prisma.groupMember.findUnique({
-      where: { groupId_userId: { groupId: filter, userId } },
-    });
-    if (!isMember) return { groupId: null };
-    return { groupId: filter };
+    try {
+      const isMember = await prisma.groupMember.findUnique({
+        where: { groupId_userId: { groupId: filter, userId } },
+      });
+      if (!isMember) return { groupId: null };
+      return { groupId: filter };
+    } catch {
+      return { groupId: null };
+    }
   }
 
   // Default: public + user's groups.
   if (!userId) return { groupId: null };
-  const memberships = await prisma.groupMember.findMany({
-    where: { userId },
-    select: { groupId: true },
-  });
-  const groupIds = memberships.map((m) => m.groupId);
-  return { groupId: { in: [null, ...groupIds] } };
+  let groupIds: string[] = [];
+  try {
+    const memberships = await prisma.groupMember.findMany({
+      where: { userId },
+      select: { groupId: true },
+    });
+    groupIds = memberships.map((m) => m.groupId);
+  } catch {
+    return { groupId: null };
+  }
+  if (groupIds.length === 0) return { groupId: null };
+  return {
+    OR: [{ groupId: null }, { groupId: { in: groupIds } }],
+  };
 }
