@@ -7,7 +7,7 @@ import { getActiveGroupId, listUserGroups } from "@/lib/groups";
 import GroupSwitcher from "@/components/GroupSwitcher";
 
 export const metadata: Metadata = {
-  title: "Fairway Market",
+  title: "Sticks",
   description: "A prediction market for golf rounds with friends.",
 };
 
@@ -36,7 +36,7 @@ export default async function RootLayout({
             >
               <span className="text-accent text-lg shrink-0">⛳</span>
               <span className="font-semibold tracking-tight whitespace-nowrap">
-                Fairway Market
+                Sticks
               </span>
             </Link>
             <nav className="flex items-center gap-1.5 sm:gap-2 shrink-0">

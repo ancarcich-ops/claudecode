@@ -1,4 +1,4 @@
-# Deploying Fairway Market
+# Deploying Sticks
 
 Two-step deploy: stand up a free hosted Postgres (Neon), then point Vercel
 at your GitHub repo. About 10 minutes end-to-end.
@@ -36,7 +36,8 @@ and Supabase both work the same way.
 
 4. Click **Deploy**. First build takes ~2 minutes.
 
-When it's done, Vercel gives you a URL like `fairway-market.vercel.app`.
+When it's done, Vercel gives you a URL like `sticks.vercel.app` (whatever
+you named your Vercel project).
 
 ## 3. (Optional) Seed your production database
 

@@ -1,4 +1,4 @@
-// Fairway Market - Postgres variant of the schema.
+// Sticks - Postgres variant of the schema.
 // Used for production deploys (Vercel + Neon/Supabase/Vercel Postgres).
 // `npm run use:postgres` copies this over prisma/schema.prisma before build.
 generator client {
