@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { listUserGroups } from "@/lib/groups";
 import {
@@ -85,28 +86,24 @@ export default async function GroupsPage({
             {groups.map((g) => (
               <li
                 key={g.id}
-                className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2"
+                className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2 hover:border-accent/40 transition-colors"
               >
-                <div className="min-w-0">
-                  <div className="text-sm font-medium truncate">{g.name}</div>
+                <Link
+                  href={`/groups/${g.id}`}
+                  className="min-w-0 flex-1 -mx-1 -my-1 px-1 py-1 rounded"
+                >
+                  <div className="text-sm font-medium truncate">
+                    {g.name}{" "}
+                    <span className="text-mute text-xs font-normal">→</span>
+                  </div>
                   <div className="text-xs text-mute">
                     {g._count.members} member{g._count.members === 1 ? "" : "s"}{" "}
                     · {g._count.matches} match
                     {g._count.matches === 1 ? "" : "es"}
                   </div>
-                </div>
+                </Link>
                 <div className="flex items-center gap-2 shrink-0">
                   <CopyInvite code={g.inviteCode} />
-                  <form action={leaveGroupAction}>
-                    <input type="hidden" name="groupId" value={g.id} />
-                    <button
-                      type="submit"
-                      className="btn btn-ghost text-xs"
-                      title="Leave this group"
-                    >
-                      Leave
-                    </button>
-                  </form>
                 </div>
               </li>
             ))}
