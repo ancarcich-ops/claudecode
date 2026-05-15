@@ -30,6 +30,7 @@ import {
   type WolfConfig,
   type WolfPushRule,
 } from "./sideGames";
+import { findOrCreateCourseByName } from "./course";
 
 export async function signInAction(formData: FormData) {
   const username = String(formData.get("username") ?? "");
@@ -597,6 +598,58 @@ export async function updateWolfConfigAction(formData: FormData) {
     data: { config: stringifyWolfConfig(next) },
   });
   revalidatePath(`/matches/${sg.matchId}`);
+}
+
+// On-course: record the GPS coords of a hole's green center. Lazily creates
+// the Course row if this is the first contribution for that course name.
+// Any signed-in user can mark a green -- we trust them like we trust score
+// entries. If a hole is already mapped, overwriting is allowed (corrections
+// happen) but the previous contributor's id is preserved.
+export async function markGreenCenterAction(formData: FormData) {
+  const user = await requireUser();
+  const courseName = String(formData.get("courseName") ?? "").trim();
+  const hole = Number(formData.get("hole"));
+  const lat = Number(formData.get("lat"));
+  const lng = Number(formData.get("lng"));
+  if (!courseName) throw new Error("Course name required");
+  if (!Number.isFinite(hole) || hole < 1 || hole > 36) {
+    throw new Error("Invalid hole number");
+  }
+  if (
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng) ||
+    Math.abs(lat) > 90 ||
+    Math.abs(lng) > 180
+  ) {
+    throw new Error("Invalid coordinates");
+  }
+  const course = await findOrCreateCourseByName(courseName);
+  const existing = await prisma.courseHole.findUnique({
+    where: { courseId_hole: { courseId: course.id, hole } },
+  });
+  if (existing) {
+    await prisma.courseHole.update({
+      where: { id: existing.id },
+      data: {
+        greenLat: lat,
+        greenLng: lng,
+        // Preserve original contributor on overwrite.
+      },
+    });
+  } else {
+    await prisma.courseHole.create({
+      data: {
+        courseId: course.id,
+        hole,
+        greenLat: lat,
+        greenLng: lng,
+        contributedById: user.id,
+      },
+    });
+  }
+  // The match page renders the on-course mode based on this data, so we
+  // could revalidate by matchId, but the matchId isn't in the form. The
+  // client component refreshes on its own after the action.
 }
 
 export async function deleteMatchAction(formData: FormData) {
