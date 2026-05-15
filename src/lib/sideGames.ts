@@ -15,7 +15,8 @@ export type SideGameKind =
   | "SKINS"
   | "NASSAU"
   | "BBB"
-  | "SNAKE";
+  | "SNAKE"
+  | "WOLF";
 
 // Per-hole event kinds. Stored in SideGameEvent.kind for BBB rows.
 export const BBB_EVENT_KINDS = ["BINGO", "BANGO", "BONGO"] as const;
@@ -30,6 +31,13 @@ export type SnakeEventKind = (typeof SNAKE_EVENT_KINDS)[number];
 
 export function isSnakeEventKind(s: string): s is SnakeEventKind {
   return (SNAKE_EVENT_KINDS as readonly string[]).includes(s);
+}
+
+export const WOLF_EVENT_KINDS = ["PARTNER", "LONE_WOLF", "HOLE_WINNER"] as const;
+export type WolfEventKind = (typeof WOLF_EVENT_KINDS)[number];
+
+export function isWolfEventKind(s: string): s is WolfEventKind {
+  return (WOLF_EVENT_KINDS as readonly string[]).includes(s);
 }
 
 export const ALL_SIDE_GAMES: {
@@ -67,13 +75,18 @@ export const ALL_SIDE_GAMES: {
     blurb:
       "Every 3-putt passes the snake. Whoever holds it at the end loses.",
   },
+  {
+    kind: "WOLF",
+    label: "Wolf",
+    blurb:
+      "Rotating wolf per hole picks a partner or goes solo. Win lone = +4.",
+  },
 ];
 
 // Future kinds: surfaced in the UI as 'coming soon' so users can see the
-// roadmap without us implementing them yet.
-export const COMING_SOON_SIDE_GAMES = [
-  { kind: "WOLF", label: "Wolf", blurb: "Rotating partners, weekly format." },
-];
+// roadmap without us implementing them yet. (Empty now -- all six games
+// are wired in.)
+export const COMING_SOON_SIDE_GAMES: { kind: string; label: string; blurb: string }[] = [];
 
 export type LiveScorePlayer = {
   id: string;
@@ -479,25 +492,186 @@ export function runningSnake(
   return { rows, current: { ...totals }, throughHole: through };
 }
 
-// Dispatch: compute all enabled side games for a match. BBB needs the extra
-// `bbbEvents` input since it's not derivable from strokes alone.
+// ---- Wolf ---------------------------------------------------------------
+// Wolf rotates by seat order: player at seat ((hole - 1) % N) is the Wolf
+// for hole N. Per hole the Wolf either picks a PARTNER (2v2) or goes
+// LONE_WOLF (1 v N-1). HOLE_WINNER points to any player on the winning
+// team; scoring derives team membership from PARTNER/LONE_WOLF.
+//
+// Scoring (most common amateur variant):
+//   Partner team wins:  Wolf and partner each +2
+//   Opponents win:      each opponent +1
+//   Lone Wolf wins:     Wolf +4
+//   Lone Wolf loses:    each opponent +1
+//
+// Pre-declared Lone Wolf (double stakes) is intentionally skipped in v1.
+
+export type WolfEvent = {
+  hole: number;
+  kind: WolfEventKind;
+  matchPlayerId: string | null;
+};
+
+export type WolfPlayer = LiveScorePlayer & { seat: number };
+
+export function wolfForHole(
+  players: WolfPlayer[],
+  hole: number,
+): WolfPlayer | null {
+  if (players.length === 0) return null;
+  const sorted = [...players].sort((a, b) => a.seat - b.seat);
+  return sorted[(hole - 1) % sorted.length];
+}
+
+type WolfHole = {
+  hole: number;
+  wolfId: string;
+  partnerId: string | null;
+  isLoneWolf: boolean;
+  winnerId: string | null;
+};
+
+function shapeWolfHoles(
+  players: WolfPlayer[],
+  holes: number,
+  events: WolfEvent[],
+): WolfHole[] {
+  const byHole = new Map<number, WolfEvent[]>();
+  for (const e of events) {
+    if (!byHole.has(e.hole)) byHole.set(e.hole, []);
+    byHole.get(e.hole)!.push(e);
+  }
+  const out: WolfHole[] = [];
+  for (let h = 1; h <= holes; h++) {
+    const wolf = wolfForHole(players, h);
+    if (!wolf) continue;
+    const es = byHole.get(h) ?? [];
+    const partner = es.find((e) => e.kind === "PARTNER");
+    const lone = es.find((e) => e.kind === "LONE_WOLF");
+    const winner = es.find((e) => e.kind === "HOLE_WINNER");
+    out.push({
+      hole: h,
+      wolfId: wolf.id,
+      partnerId: partner?.matchPlayerId ?? null,
+      isLoneWolf: !!lone,
+      winnerId: winner?.matchPlayerId ?? null,
+    });
+  }
+  return out;
+}
+
+function scoreWolfHole(
+  shaped: WolfHole,
+  playerIds: string[],
+): Record<string, number> {
+  const pts: Record<string, number> = Object.fromEntries(
+    playerIds.map((id) => [id, 0]),
+  );
+  if (!shaped.winnerId) return pts;
+  if (shaped.isLoneWolf) {
+    if (shaped.winnerId === shaped.wolfId) {
+      pts[shaped.wolfId] = 4;
+    } else {
+      for (const id of playerIds) {
+        if (id !== shaped.wolfId) pts[id] = 1;
+      }
+    }
+    return pts;
+  }
+  if (shaped.partnerId) {
+    const wolfTeam = new Set([shaped.wolfId, shaped.partnerId]);
+    if (wolfTeam.has(shaped.winnerId)) {
+      pts[shaped.wolfId] = 2;
+      pts[shaped.partnerId] = 2;
+    } else {
+      for (const id of playerIds) {
+        if (!wolfTeam.has(id)) pts[id] = 1;
+      }
+    }
+  }
+  return pts;
+}
+
+export function computeWolf(
+  players: WolfPlayer[],
+  holes: number,
+  events: WolfEvent[],
+): Leaderboard {
+  const ids = players.map((p) => p.id);
+  const totals: Record<string, number> = Object.fromEntries(
+    ids.map((id) => [id, 0]),
+  );
+  let resolvedHoles = 0;
+  for (const shaped of shapeWolfHoles(players, holes, events)) {
+    if (!shaped.winnerId) continue;
+    resolvedHoles++;
+    const add = scoreWolfHole(shaped, ids);
+    for (const id of ids) totals[id] += add[id] ?? 0;
+  }
+  const rows = players.map((p) => ({
+    playerId: p.id,
+    player: p.displayName,
+    numeric: totals[p.id] ?? 0,
+    value: `${totals[p.id] ?? 0} pt${(totals[p.id] ?? 0) === 1 ? "" : "s"}`,
+  }));
+  return {
+    key: "WOLF",
+    kind: "WOLF",
+    title: "Wolf",
+    subtitle:
+      resolvedHoles === 0
+        ? "No holes resolved yet"
+        : `${resolvedHoles}/${holes} resolved`,
+    rows: rankRows(rows, true),
+  };
+}
+
+export function runningWolf(
+  players: WolfPlayer[],
+  holes: number,
+  events: WolfEvent[],
+): RunningSeries {
+  const ids = players.map((p) => p.id);
+  const totals: Record<string, number> = Object.fromEntries(
+    ids.map((id) => [id, 0]),
+  );
+  const rows: ({ hole: number } & Record<string, number>)[] = [];
+  let lastResolved = 0;
+  for (const shaped of shapeWolfHoles(players, holes, events)) {
+    if (shaped.winnerId) {
+      const add = scoreWolfHole(shaped, ids);
+      for (const id of ids) totals[id] += add[id] ?? 0;
+      rows.push({ hole: shaped.hole, ...totals });
+      lastResolved = shaped.hole;
+    }
+  }
+  return { rows, current: { ...totals }, throughHole: lastResolved };
+}
+
+// Dispatch: compute all enabled side games for a match. BBB / Snake / Wolf
+// need their event lists since they're not derivable from strokes alone.
 export function computeAllSideGames(input: {
   enabled: SideGameKind[];
   players: LiveScorePlayer[];
+  // Seat-aware players (only needed for Wolf rotation; ignored elsewhere).
+  wolfPlayers?: WolfPlayer[];
   pars: number[];
   holes: number;
   scoringMode: ScoringMode;
   bbbEvents?: BbbEvent[];
   snakeEvents?: SnakeEvent[];
+  wolfEvents?: WolfEvent[];
 }): { kind: SideGameKind; leaderboards: Leaderboard[] }[] {
   const {
     enabled,
     players,
+    wolfPlayers = [],
     pars,
     holes,
     scoringMode,
     bbbEvents = [],
     snakeEvents = [],
+    wolfEvents = [],
   } = input;
   const out: { kind: SideGameKind; leaderboards: Leaderboard[] }[] = [];
   for (const kind of enabled) {
@@ -518,6 +692,11 @@ export function computeAllSideGames(input: {
       out.push({ kind, leaderboards: [computeBbb(players, bbbEvents)] });
     } else if (kind === "SNAKE") {
       out.push({ kind, leaderboards: [computeSnake(players, snakeEvents)] });
+    } else if (kind === "WOLF") {
+      out.push({
+        kind,
+        leaderboards: [computeWolf(wolfPlayers, holes, wolfEvents)],
+      });
     }
   }
   return out;
@@ -529,7 +708,8 @@ export function isSideGameKind(s: string): s is SideGameKind {
     s === "SKINS" ||
     s === "NASSAU" ||
     s === "BBB" ||
-    s === "SNAKE"
+    s === "SNAKE" ||
+    s === "WOLF"
   );
 }
 

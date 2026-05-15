@@ -18,15 +18,18 @@ import {
   isSideGameKind,
   isBbbEventKind,
   isSnakeEventKind,
+  isWolfEventKind,
   ALL_SIDE_GAMES,
   runningStableford,
   runningSkins,
   runningNassauSegment,
   runningBbb,
   runningSnake,
+  runningWolf,
   type SideGameKind,
   type BbbEvent,
   type SnakeEvent,
+  type WolfEvent,
 } from "@/lib/sideGames";
 import MatchChartTabs, {
   type SideGameSeries,
@@ -34,6 +37,7 @@ import MatchChartTabs, {
 import MatchActionsMenu, { type MatchAction } from "./MatchActionsMenu";
 import BBBEditor from "./BBBEditor";
 import SnakeEditor from "./SnakeEditor";
+import WolfEditor from "./WolfEditor";
 import AutoRefresh from "@/components/AutoRefresh";
 import ScoreSheet from "./ScoreSheet";
 import WagerForm from "./WagerForm";
@@ -157,6 +161,23 @@ export default async function MatchPage({
       hole: e.hole,
       matchPlayerId: e.matchPlayerId as string,
     }));
+  const wolfGame = (match.sideGames ?? []).find((sg) => sg.kind === "WOLF");
+  const wolfEvents: WolfEvent[] = (wolfGame?.events ?? [])
+    .filter((e) => isWolfEventKind(e.kind))
+    .map((e) => ({
+      hole: e.hole,
+      kind: e.kind as WolfEvent["kind"],
+      matchPlayerId: e.matchPlayerId ?? null,
+    }));
+  const seatedWolfPlayers = match.players.map((p) => ({
+    id: p.id,
+    seat: p.seat,
+    displayName: p.displayName,
+    handicap: p.handicap,
+    scoresByHole: Object.fromEntries(
+      p.scores.map((s) => [s.hole, s.strokes]),
+    ),
+  }));
   const sideGameSections = computeAllSideGames({
     enabled: enabledKinds,
     players: match.players.map((p) => ({
@@ -167,11 +188,13 @@ export default async function MatchPage({
         p.scores.map((s) => [s.hole, s.strokes]),
       ),
     })),
+    wolfPlayers: seatedWolfPlayers,
     pars,
     holes: match.holes,
     scoringMode,
     bbbEvents,
     snakeEvents,
+    wolfEvents,
   });
   const sideGameLabel: Record<SideGameKind, string> = Object.fromEntries(
     ALL_SIDE_GAMES.map((g) => [g.kind, g.label]),
@@ -230,6 +253,9 @@ export default async function MatchPage({
   }
   if (enabledKinds.includes("SNAKE")) {
     sgSeries.snake = runningSnake(sgPlayers, match.holes, snakeEvents);
+  }
+  if (enabledKinds.includes("WOLF")) {
+    sgSeries.wolf = runningWolf(seatedWolfPlayers, match.holes, wolfEvents);
   }
 
   return (
@@ -466,6 +492,56 @@ export default async function MatchPage({
               for (const e of snakeEvents) {
                 if (!out[e.hole]) out[e.hole] = new Set();
                 out[e.hole].add(e.matchPlayerId);
+              }
+              return out;
+            })()}
+            locked={isCompleted}
+          />
+        </section>
+      )}
+
+      {wolfGame && user && (
+        <section className="card p-4">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <h2 className="text-sm uppercase tracking-wider text-mute">
+              Wolf · partners &amp; winners
+            </h2>
+            <span className="text-[11px] text-mute">
+              Wolf rotates by seat each hole
+            </span>
+          </div>
+          <WolfEditor
+            sideGameId={wolfGame.id}
+            holes={match.holes}
+            players={match.players.map((p) => ({
+              id: p.id,
+              displayName: p.displayName,
+              seat: p.seat,
+            }))}
+            byHole={(() => {
+              const out: Record<
+                number,
+                {
+                  hole: number;
+                  partnerId: string | null;
+                  isLoneWolf: boolean;
+                  winnerId: string | null;
+                }
+              > = {};
+              for (const e of wolfEvents) {
+                if (!out[e.hole]) {
+                  out[e.hole] = {
+                    hole: e.hole,
+                    partnerId: null,
+                    isLoneWolf: false,
+                    winnerId: null,
+                  };
+                }
+                if (e.kind === "PARTNER")
+                  out[e.hole].partnerId = e.matchPlayerId;
+                if (e.kind === "LONE_WOLF") out[e.hole].isLoneWolf = true;
+                if (e.kind === "HOLE_WINNER")
+                  out[e.hole].winnerId = e.matchPlayerId;
               }
               return out;
             })()}

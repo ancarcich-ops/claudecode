@@ -21,6 +21,7 @@ import {
   isBbbEventKind,
   isSideGameKind,
   isSnakeEventKind,
+  isWolfEventKind,
 } from "./sideGames";
 
 export async function signInAction(formData: FormData) {
@@ -434,7 +435,8 @@ export async function recordSideGameEventAction(formData: FormData) {
   }
   const bbb = isBbbEventKind(kind);
   const snake = isSnakeEventKind(kind);
-  if (!bbb && !snake) throw new Error("Unsupported event kind");
+  const wolf = isWolfEventKind(kind);
+  if (!bbb && !snake && !wolf) throw new Error("Unsupported event kind");
 
   // Confirm the side game belongs to a match we can find (used to invalidate
   // the right path on revalidate).
@@ -469,6 +471,28 @@ export async function recordSideGameEventAction(formData: FormData) {
       await prisma.sideGameEvent.create({
         data: { sideGameId, hole, kind, matchPlayerId },
       });
+    }
+  } else if (wolf) {
+    // Wolf: PARTNER and LONE_WOLF are mutually exclusive per hole (only one
+    // Wolf choice can be active). HOLE_WINNER is its own single-award kind.
+    if (kind === "PARTNER" || kind === "LONE_WOLF") {
+      await prisma.sideGameEvent.deleteMany({
+        where: { sideGameId, hole, kind: { in: ["PARTNER", "LONE_WOLF"] } },
+      });
+      if (matchPlayerId) {
+        await prisma.sideGameEvent.create({
+          data: { sideGameId, hole, kind, matchPlayerId },
+        });
+      }
+    } else if (kind === "HOLE_WINNER") {
+      await prisma.sideGameEvent.deleteMany({
+        where: { sideGameId, hole, kind },
+      });
+      if (matchPlayerId) {
+        await prisma.sideGameEvent.create({
+          data: { sideGameId, hole, kind, matchPlayerId },
+        });
+      }
     }
   }
 
