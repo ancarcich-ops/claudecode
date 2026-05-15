@@ -16,16 +16,20 @@ import { colorForSeat } from "@/lib/colors";
 import {
   computeAllSideGames,
   isSideGameKind,
+  isBbbEventKind,
   ALL_SIDE_GAMES,
   runningStableford,
   runningSkins,
   runningNassauSegment,
+  runningBbb,
   type SideGameKind,
+  type BbbEvent,
 } from "@/lib/sideGames";
 import MatchChartTabs, {
   type SideGameSeries,
 } from "./MatchChartTabs";
 import MatchActionsMenu, { type MatchAction } from "./MatchActionsMenu";
+import BBBEditor from "./BBBEditor";
 import AutoRefresh from "@/components/AutoRefresh";
 import ScoreSheet from "./ScoreSheet";
 import WagerForm from "./WagerForm";
@@ -133,6 +137,15 @@ export default async function MatchPage({
   const enabledKinds: SideGameKind[] = (match.sideGames ?? [])
     .map((sg) => sg.kind)
     .filter(isSideGameKind);
+  // BBB events live on the SideGame row; pull and normalize.
+  const bbbGame = (match.sideGames ?? []).find((sg) => sg.kind === "BBB");
+  const bbbEvents: BbbEvent[] = (bbbGame?.events ?? [])
+    .filter((e) => isBbbEventKind(e.kind))
+    .map((e) => ({
+      hole: e.hole,
+      kind: e.kind as BbbEvent["kind"],
+      matchPlayerId: e.matchPlayerId ?? null,
+    }));
   const sideGameSections = computeAllSideGames({
     enabled: enabledKinds,
     players: match.players.map((p) => ({
@@ -146,6 +159,7 @@ export default async function MatchPage({
     pars,
     holes: match.holes,
     scoringMode,
+    bbbEvents,
   });
   const sideGameLabel: Record<SideGameKind, string> = Object.fromEntries(
     ALL_SIDE_GAMES.map((g) => [g.kind, g.label]),
@@ -198,6 +212,9 @@ export default async function MatchPage({
       1,
       18,
     );
+  }
+  if (enabledKinds.includes("BBB")) {
+    sgSeries.bbb = runningBbb(sgPlayers, match.holes, bbbEvents);
   }
 
   return (
@@ -378,6 +395,39 @@ export default async function MatchPage({
           />
         )}
       </section>
+
+      {bbbGame && user && (
+        <section className="card p-4">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <h2 className="text-sm uppercase tracking-wider text-mute">
+              Bingo Bango Bongo · events
+            </h2>
+            <span className="text-[11px] text-mute">
+              Tap a cell to assign the point
+            </span>
+          </div>
+          <BBBEditor
+            sideGameId={bbbGame.id}
+            holes={match.holes}
+            players={match.players.map((p) => ({
+              id: p.id,
+              displayName: p.displayName,
+            }))}
+            events={(() => {
+              const out: Record<
+                number,
+                Partial<Record<"BINGO" | "BANGO" | "BONGO", string | null>>
+              > = {};
+              for (const e of bbbEvents) {
+                if (!out[e.hole]) out[e.hole] = {};
+                out[e.hole]![e.kind] = e.matchPlayerId;
+              }
+              return out;
+            })()}
+            locked={isCompleted}
+          />
+        </section>
+      )}
 
       {sideGameSections.length > 0 && (
         <section className="card p-4">

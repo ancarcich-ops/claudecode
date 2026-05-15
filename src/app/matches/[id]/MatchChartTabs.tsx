@@ -14,7 +14,8 @@ export type ChartTabId =
   | "SKINS"
   | "NASSAU_F9"
   | "NASSAU_B9"
-  | "NASSAU_TOTAL";
+  | "NASSAU_TOTAL"
+  | "BBB";
 
 export type SideGameSeries = {
   stableford?: { rows: SgRow[] };
@@ -22,6 +23,7 @@ export type SideGameSeries = {
   nassauF9?: { rows: SgRow[] };
   nassauB9?: { rows: SgRow[] };
   nassauTotal?: { rows: SgRow[] };
+  bbb?: { rows: SgRow[] };
 };
 
 export default function MatchChartTabs({
@@ -42,6 +44,7 @@ export default function MatchChartTabs({
   if (sideGames.nassauB9) tabs.push({ id: "NASSAU_B9", label: "Nassau · B9" });
   if (sideGames.nassauTotal)
     tabs.push({ id: "NASSAU_TOTAL", label: "Nassau · Total" });
+  if (sideGames.bbb) tabs.push({ id: "BBB", label: "BBB" });
 
   const [active, setActive] = useState<ChartTabId>("ODDS");
 
@@ -129,6 +132,15 @@ export default function MatchChartTabs({
           valueFormatter={(n) =>
             n === 0 ? "E" : n > 0 ? `+${n}` : `${n}`
           }
+        />
+      )}
+      {active === "BBB" && sideGames.bbb && (
+        <SideGameChart
+          rows={sideGames.bbb.rows}
+          players={players}
+          yLabel="points (cumulative)"
+          valueFormatter={(n) => `${n} pt${n === 1 ? "" : "s"}`}
+          yDomain={[0, "auto"]}
         />
       )}
     </div>

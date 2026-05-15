@@ -79,8 +79,24 @@ model SideGame {
   config    String?
   createdAt DateTime @default(now())
 
+  events    SideGameEvent[]
+
   @@unique([matchId, kind])
   @@index([matchId])
+}
+
+model SideGameEvent {
+  id            String       @id @default(cuid())
+  sideGameId    String
+  sideGame      SideGame     @relation(fields: [sideGameId], references: [id], onDelete: Cascade)
+  hole          Int
+  kind          String
+  matchPlayerId String?
+  matchPlayer   MatchPlayer? @relation(fields: [matchPlayerId], references: [id], onDelete: SetNull)
+  createdAt     DateTime     @default(now())
+
+  @@unique([sideGameId, hole, kind, matchPlayerId])
+  @@index([sideGameId, hole])
 }
 
 model MatchPlayer {
@@ -96,6 +112,7 @@ model MatchPlayer {
   scores      ScoreEntry[]
   wagers      Wager[]
   oddsSnapshots OddsSnapshot[]
+  sideGameEvents SideGameEvent[]
 
   @@unique([matchId, seat])
 }

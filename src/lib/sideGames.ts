@@ -10,7 +10,19 @@
 // capture yet (partner rotation, on-green / closest-pin events, 3-putts).
 // Those land in phase 2 once we add a per-hole event recorder.
 
-export type SideGameKind = "STABLEFORD" | "SKINS" | "NASSAU";
+export type SideGameKind =
+  | "STABLEFORD"
+  | "SKINS"
+  | "NASSAU"
+  | "BBB";
+
+// Per-hole event kinds. Stored in SideGameEvent.kind for BBB rows.
+export const BBB_EVENT_KINDS = ["BINGO", "BANGO", "BONGO"] as const;
+export type BbbEventKind = (typeof BBB_EVENT_KINDS)[number];
+
+export function isBbbEventKind(s: string): s is BbbEventKind {
+  return (BBB_EVENT_KINDS as readonly string[]).includes(s);
+}
 
 export const ALL_SIDE_GAMES: {
   kind: SideGameKind;
@@ -35,17 +47,18 @@ export const ALL_SIDE_GAMES: {
     blurb: "Three bets in one: front 9, back 9, and total.",
     requires18: true,
   },
+  {
+    kind: "BBB",
+    label: "Bingo Bango Bongo",
+    blurb:
+      "Three per-hole points: first on the green, closest once on, first in the hole.",
+  },
 ];
 
 // Future kinds: surfaced in the UI as 'coming soon' so users can see the
 // roadmap without us implementing them yet.
 export const COMING_SOON_SIDE_GAMES = [
   { kind: "WOLF", label: "Wolf", blurb: "Rotating partners, weekly format." },
-  {
-    kind: "BBB",
-    label: "Bingo Bango Bongo",
-    blurb: "Per-hole events: first on, closest once on, first in.",
-  },
   { kind: "SNAKE", label: "Snake", blurb: "Last player to 3-putt holds it." },
 ];
 
@@ -304,15 +317,82 @@ export function computeNassau(
   ];
 }
 
-// Dispatch: compute all enabled side games for a match.
+// ---- Bingo Bango Bongo --------------------------------------------------
+// Source data is a list of per-hole event awards. Each event row points to
+// one player who scored the event on that hole. Scoring is +1 per event
+// awarded; no handicap or par math involved.
+
+export type BbbEvent = {
+  hole: number;
+  kind: BbbEventKind;
+  matchPlayerId: string | null;
+};
+
+export function computeBbb(
+  players: LiveScorePlayer[],
+  events: BbbEvent[],
+): Leaderboard {
+  const counts: Record<string, number> = Object.fromEntries(
+    players.map((p) => [p.id, 0]),
+  );
+  for (const e of events) {
+    if (e.matchPlayerId && e.matchPlayerId in counts) {
+      counts[e.matchPlayerId] += 1;
+    }
+  }
+  const rows = players.map((p) => ({
+    playerId: p.id,
+    player: p.displayName,
+    numeric: counts[p.id] ?? 0,
+    value: `${counts[p.id] ?? 0} pt${(counts[p.id] ?? 0) === 1 ? "" : "s"}`,
+  }));
+  const totalAwarded = Object.values(counts).reduce((a, b) => a + b, 0);
+  return {
+    key: "BBB",
+    kind: "BBB",
+    title: "Bingo Bango Bongo",
+    subtitle: totalAwarded === 0 ? "No events awarded yet" : undefined,
+    rows: rankRows(rows, true),
+  };
+}
+
+export function runningBbb(
+  players: LiveScorePlayer[],
+  holes: number,
+  events: BbbEvent[],
+): RunningSeries {
+  const through = Math.min(
+    holes,
+    events.length === 0
+      ? 0
+      : Math.max(...events.map((e) => e.hole)),
+  );
+  const rows: ({ hole: number } & Record<string, number>)[] = [];
+  const totals: Record<string, number> = Object.fromEntries(
+    players.map((p) => [p.id, 0]),
+  );
+  for (let h = 1; h <= through; h++) {
+    for (const e of events) {
+      if (e.hole === h && e.matchPlayerId && e.matchPlayerId in totals) {
+        totals[e.matchPlayerId] += 1;
+      }
+    }
+    rows.push({ hole: h, ...totals });
+  }
+  return { rows, current: { ...totals }, throughHole: through };
+}
+
+// Dispatch: compute all enabled side games for a match. BBB needs the extra
+// `bbbEvents` input since it's not derivable from strokes alone.
 export function computeAllSideGames(input: {
   enabled: SideGameKind[];
   players: LiveScorePlayer[];
   pars: number[];
   holes: number;
   scoringMode: ScoringMode;
+  bbbEvents?: BbbEvent[];
 }): { kind: SideGameKind; leaderboards: Leaderboard[] }[] {
-  const { enabled, players, pars, holes, scoringMode } = input;
+  const { enabled, players, pars, holes, scoringMode, bbbEvents = [] } = input;
   const out: { kind: SideGameKind; leaderboards: Leaderboard[] }[] = [];
   for (const kind of enabled) {
     if (kind === "STABLEFORD") {
@@ -328,13 +408,20 @@ export function computeAllSideGames(input: {
     } else if (kind === "NASSAU") {
       const lbs = computeNassau(players, pars, holes, scoringMode);
       if (lbs.length > 0) out.push({ kind, leaderboards: lbs });
+    } else if (kind === "BBB") {
+      out.push({ kind, leaderboards: [computeBbb(players, bbbEvents)] });
     }
   }
   return out;
 }
 
 export function isSideGameKind(s: string): s is SideGameKind {
-  return s === "STABLEFORD" || s === "SKINS" || s === "NASSAU";
+  return (
+    s === "STABLEFORD" ||
+    s === "SKINS" ||
+    s === "NASSAU" ||
+    s === "BBB"
+  );
 }
 
 // ---- Running (hole-by-hole) series for charts ---------------------------

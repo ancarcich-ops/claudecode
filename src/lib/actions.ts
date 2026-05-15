@@ -17,7 +17,7 @@ import {
   setActiveGroupCookie,
   type GroupFilter,
 } from "./groups";
-import { isSideGameKind } from "./sideGames";
+import { isBbbEventKind, isSideGameKind } from "./sideGames";
 
 export async function signInAction(formData: FormData) {
   const username = String(formData.get("username") ?? "");
@@ -412,6 +412,46 @@ export async function updateParsAction(formData: FormData) {
   });
   await recordOddsSnapshot(matchId);
   revalidatePath(`/matches/${matchId}`);
+}
+
+// Record a per-hole side-game event. Single-award kinds (BINGO/BANGO/BONGO,
+// SNAKE_HOLDER, WOLF HOLE_WINNER, etc.) overwrite the previous winner for
+// that (sideGame, hole, kind). Empty matchPlayerId clears the award.
+export async function recordSideGameEventAction(formData: FormData) {
+  await requireUser();
+  const sideGameId = String(formData.get("sideGameId") ?? "");
+  const hole = Number(formData.get("hole"));
+  const kind = String(formData.get("kind") ?? "");
+  const matchPlayerId =
+    String(formData.get("matchPlayerId") ?? "").trim() || null;
+
+  if (!sideGameId || !Number.isFinite(hole) || hole < 1 || !kind) {
+    throw new Error("Invalid side-game event");
+  }
+  // Only BBB events are wired through this action for now; Snake/Wolf
+  // additions will allow their kinds the same way.
+  if (!isBbbEventKind(kind)) throw new Error("Unsupported event kind");
+
+  // Confirm the side game belongs to a match we can find (used to invalidate
+  // the right path on revalidate).
+  const sg = await prisma.sideGame.findUnique({
+    where: { id: sideGameId },
+    select: { matchId: true },
+  });
+  if (!sg) throw new Error("Side game not found");
+
+  // Single-award kinds: delete any existing rows for this (game, hole, kind)
+  // and create the new one if a player was picked.
+  await prisma.sideGameEvent.deleteMany({
+    where: { sideGameId, hole, kind },
+  });
+  if (matchPlayerId) {
+    await prisma.sideGameEvent.create({
+      data: { sideGameId, hole, kind, matchPlayerId },
+    });
+  }
+
+  revalidatePath(`/matches/${sg.matchId}`);
 }
 
 export async function deleteMatchAction(formData: FormData) {
