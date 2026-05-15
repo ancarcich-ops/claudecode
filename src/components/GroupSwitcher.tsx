@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { selectGroupAction, signOutAction } from "@/lib/actions";
@@ -99,6 +100,15 @@ export default function GroupSwitcher({
             </>
           )}
           <div className="border-t border-border mt-1" />
+          <Link
+            href="/groups"
+            onClick={() => setOpen(false)}
+            className="block w-full text-left px-3 py-2 text-sm text-ink hover:bg-panel2"
+            role="menuitem"
+          >
+            Manage groups
+          </Link>
+          <div className="border-t border-border" />
           <div className="px-3 pt-2 pb-1 text-[11px] text-mute truncate">
             Signed in as <span className="text-ink">@{username}</span>
           </div>
