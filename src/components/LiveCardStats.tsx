@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import RollingNumber from "./RollingNumber";
+import PlayerAvatar from "./Avatar";
 
 type Player = {
   id: string;
@@ -126,10 +127,13 @@ export default function LiveCardStats({
           return (
             <li key={p.id} className="text-sm">
               <div className="flex items-center justify-between gap-2">
-                <span className="truncate">
-                  {p.displayName}{" "}
-                  <span className="text-mute text-xs">
-                    · hcp {p.handicap}
+                <span className="flex items-center gap-1.5 min-w-0">
+                  <PlayerAvatar seed={p.id} size={18} />
+                  <span className="truncate">
+                    {p.displayName}{" "}
+                    <span className="text-mute text-xs">
+                      · hcp {p.handicap}
+                    </span>
                   </span>
                 </span>
                 <RollingNumber
