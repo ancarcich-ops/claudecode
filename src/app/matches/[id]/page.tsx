@@ -17,10 +17,15 @@ import {
   computeAllSideGames,
   isSideGameKind,
   ALL_SIDE_GAMES,
+  runningStableford,
+  runningSkins,
+  runningNassauSegment,
   type SideGameKind,
 } from "@/lib/sideGames";
+import MatchChartTabs, {
+  type SideGameSeries,
+} from "./MatchChartTabs";
 import AutoRefresh from "@/components/AutoRefresh";
-import OddsChart from "./OddsChart";
 import ScoreSheet from "./ScoreSheet";
 import WagerForm from "./WagerForm";
 import ParsEditor from "./ParsEditor";
@@ -145,6 +150,55 @@ export default async function MatchPage({
     ALL_SIDE_GAMES.map((g) => [g.kind, g.label]),
   ) as Record<SideGameKind, string>;
 
+  // Hole-by-hole running series for the chart tabs. Only built for enabled
+  // side games; the tab control hides any kind whose series is undefined.
+  const sgPlayers = match.players.map((p) => ({
+    id: p.id,
+    displayName: p.displayName,
+    handicap: p.handicap,
+    scoresByHole: Object.fromEntries(
+      p.scores.map((s) => [s.hole, s.strokes]),
+    ),
+  }));
+  const sgSeries: SideGameSeries = {};
+  if (enabledKinds.includes("STABLEFORD")) {
+    sgSeries.stableford = runningStableford(
+      sgPlayers,
+      pars,
+      match.holes,
+      scoringMode,
+    );
+  }
+  if (enabledKinds.includes("SKINS")) {
+    sgSeries.skins = runningSkins(sgPlayers, pars, match.holes, scoringMode);
+  }
+  if (enabledKinds.includes("NASSAU") && match.holes === 18) {
+    sgSeries.nassauF9 = runningNassauSegment(
+      sgPlayers,
+      pars,
+      match.holes,
+      scoringMode,
+      1,
+      9,
+    );
+    sgSeries.nassauB9 = runningNassauSegment(
+      sgPlayers,
+      pars,
+      match.holes,
+      scoringMode,
+      10,
+      18,
+    );
+    sgSeries.nassauTotal = runningNassauSegment(
+      sgPlayers,
+      pars,
+      match.holes,
+      scoringMode,
+      1,
+      18,
+    );
+  }
+
   return (
     <div className="space-y-6">
       <AutoRefresh endpoint={`/api/matches/${match.id}/state`} />
@@ -229,13 +283,14 @@ export default async function MatchPage({
           </div>
         </div>
 
-        <OddsChart
-          series={series}
+        <MatchChartTabs
+          oddsSeries={series}
           players={playerMeta.map((p) => ({
             id: p.id,
             displayName: p.displayName,
             color: p.color,
           }))}
+          sideGames={sgSeries}
         />
 
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">

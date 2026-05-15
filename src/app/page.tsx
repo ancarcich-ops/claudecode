@@ -4,6 +4,13 @@ import { computeOdds, formatPct, parseParData } from "@/lib/odds";
 import { getCurrentUser } from "@/lib/auth";
 import { getActiveGroupId, visibleMatchWhere } from "@/lib/groups";
 import AutoRefresh from "@/components/AutoRefresh";
+import LiveCardStats from "@/components/LiveCardStats";
+import {
+  computeStableford,
+  computeSkins,
+  isSideGameKind,
+  type SideGameKind,
+} from "@/lib/sideGames";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +30,7 @@ async function loadMatches(where: any, orderBy: any, take?: number) {
         },
       },
       _count: { select: { wagers: true } },
+      sideGames: true,
     },
   });
 }
@@ -180,11 +188,12 @@ function diffColor(diff: number): string {
 
 function LiveCard({ match: m }: { match: GridMatch }) {
   const pars = parseParData(m.parData, m.holes);
+  const scoringMode = m.scoringMode as "NET" | "GROSS" | "CUSTOM";
   const odds = computeOdds({
     status: "IN_PROGRESS",
     holes: m.holes,
     pars,
-    scoringMode: m.scoringMode as "NET" | "GROSS" | "CUSTOM",
+    scoringMode,
     players: m.players.map((p) => ({
       id: p.id,
       handicap: p.handicap,
@@ -201,10 +210,35 @@ function LiveCard({ match: m }: { match: GridMatch }) {
     0,
   );
 
-  const sorted = [...m.players].sort(
-    (a, b) =>
-      (odds.probabilities[b.id] ?? 0) - (odds.probabilities[a.id] ?? 0),
-  );
+  // Current side-game totals per player. We compute these as one-off
+  // leaderboards (not running series) since the home card shows snapshots.
+  const enabledKinds: SideGameKind[] = (m.sideGames ?? [])
+    .map((sg) => sg.kind)
+    .filter(isSideGameKind);
+  const sgPlayers = m.players.map((p) => ({
+    id: p.id,
+    displayName: p.displayName,
+    handicap: p.handicap,
+    scoresByHole: Object.fromEntries(
+      p.scores.map((s) => [s.hole, s.strokes]),
+    ),
+  }));
+  const sideGamesData: {
+    stableford?: Record<string, number>;
+    skins?: Record<string, number>;
+  } = {};
+  if (enabledKinds.includes("STABLEFORD")) {
+    const lb = computeStableford(sgPlayers, pars, m.holes, scoringMode);
+    sideGamesData.stableford = Object.fromEntries(
+      lb.rows.map((r) => [r.playerId, r.numeric]),
+    );
+  }
+  if (enabledKinds.includes("SKINS")) {
+    const lb = computeSkins(sgPlayers, pars, m.holes, scoringMode);
+    sideGamesData.skins = Object.fromEntries(
+      lb.rows.map((r) => [r.playerId, r.numeric]),
+    );
+  }
 
   return (
     <Link
@@ -234,50 +268,16 @@ function LiveCard({ match: m }: { match: GridMatch }) {
         {" · "}
         {m._count.wagers} wagers
       </div>
-      <ul className="space-y-2">
-        {sorted.map((p) => {
-          const pct = odds.probabilities[p.id] ?? 0;
-          const score = playerLiveScore(p, pars);
-          return (
-            <li key={p.id} className="text-sm">
-              <div className="flex items-center justify-between gap-2">
-                <span className="truncate">
-                  {p.displayName}{" "}
-                  <span className="text-mute text-xs">
-                    · hcp {p.handicap}
-                  </span>
-                </span>
-                <span className="font-mono tabular-nums text-accent shrink-0">
-                  {formatPct(pct)}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="h-1.5 flex-1 bg-panel2 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-accent/80"
-                    style={{ width: `${pct * 100}%` }}
-                  />
-                </div>
-                {score ? (
-                  <span
-                    className={
-                      "text-[11px] font-mono tabular-nums shrink-0 " +
-                      diffColor(score.diff)
-                    }
-                    title={`${score.strokes} strokes thru ${score.holes}`}
-                  >
-                    {score.strokes} · {fmtDiff(score.diff)}
-                  </span>
-                ) : (
-                  <span className="text-[11px] text-mute font-mono shrink-0">
-                    —
-                  </span>
-                )}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+      <LiveCardStats
+        players={m.players.map((p) => ({
+          id: p.id,
+          displayName: p.displayName,
+          handicap: p.handicap,
+          probability: odds.probabilities[p.id] ?? 0,
+          liveScore: playerLiveScore(p, pars),
+        }))}
+        sideGames={sideGamesData}
+      />
     </Link>
   );
 }
