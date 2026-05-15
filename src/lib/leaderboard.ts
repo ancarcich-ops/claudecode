@@ -69,19 +69,41 @@ function awardLeaders(
 export async function computeGroupLeaderboard(
   groupId: string,
 ): Promise<GroupLeaderboard> {
-  const [matches, members] = await Promise.all([
-    prisma.match.findMany({
-      where: { groupId, status: "COMPLETED" },
-      include: {
-        players: { include: { scores: true } },
-        sideGames: { include: { events: true } },
+  const members = await prisma.groupMember.findMany({
+    where: { groupId },
+    include: { user: true },
+  });
+  const memberUserIds = new Set(members.map((m) => m.userId));
+
+  // Eligible matches: completed AND include at least one group member as
+  // a linked player. After fetching we filter for the "two-or-more from
+  // this group" rule -- a Big Dogs match with 3 Big Dogs + 1 outsider
+  // counts only for Big Dogs; a 2+2 split match counts for both groups.
+  // Personal stats (future feature) bypass this filter and count every
+  // match a player was in.
+  const candidates = await prisma.match.findMany({
+    where: {
+      status: "COMPLETED",
+      players: {
+        some: {
+          user: { groupMemberships: { some: { groupId } } },
+        },
       },
-    }),
-    prisma.groupMember.findMany({
-      where: { groupId },
-      include: { user: true },
-    }),
-  ]);
+    },
+    include: {
+      players: { include: { scores: true } },
+      sideGames: { include: { events: true } },
+    },
+  });
+  const matches = candidates.filter((m) => {
+    const distinctMembersInMatch = new Set<string>();
+    for (const p of m.players) {
+      if (p.userId && memberUserIds.has(p.userId)) {
+        distinctMembersInMatch.add(p.userId);
+      }
+    }
+    return distinctMembersInMatch.size >= 2;
+  });
 
   const stats = new Map<string, LeaderboardRow>();
   for (const m of members) {
