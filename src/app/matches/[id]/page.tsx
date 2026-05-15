@@ -44,6 +44,7 @@ import WolfSettings from "./WolfSettings";
 import WinCelebration from "@/components/WinCelebration";
 import OnCourseMode from "./OnCourseMode";
 import { getCourseHazardsByName, getCourseHolesByName } from "@/lib/course";
+import { getWindForCoord } from "@/lib/weather";
 import AutoRefresh from "@/components/AutoRefresh";
 import ScoreSheet from "./ScoreSheet";
 import WagerForm from "./WagerForm";
@@ -159,6 +160,16 @@ export default async function MatchPage({
     getCourseHolesByName(match.courseName),
     getCourseHazardsByName(match.courseName),
   ]);
+  // Pull a wind reading at the course's most-confident location. We use
+  // any hole's green center we already know -- the course bounds are tiny
+  // (~1km), so any hole's coord is representative. Skipped on courses
+  // with no marked greens yet.
+  const anyGreen = Object.values(holeGeoByHole).find(
+    (h) => h.greenLat != null && h.greenLng != null,
+  );
+  const wind = anyGreen
+    ? await getWindForCoord(anyGreen.greenLat as number, anyGreen.greenLng as number)
+    : null;
   const myMatchPlayer = user
     ? match.players.find((p) => p.userId === user.id)
     : null;
@@ -492,6 +503,9 @@ export default async function MatchPage({
             holeGeoByHole={holeGeoByHole}
             hazardsByHole={hazardsByHole}
             myMatchPlayerId={myMatchPlayer?.id ?? null}
+            wind={
+              wind ? { speedMph: wind.speedMph, fromDeg: wind.fromDeg } : null
+            }
           />
         </section>
       )}
