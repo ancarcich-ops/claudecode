@@ -89,7 +89,7 @@ export default async function GroupsPage({
                 className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2 hover:border-accent/40 transition-colors"
               >
                 <Link
-                  href={`/groups/${g.id}`}
+                  href={`/groups/${g.slug ?? g.id}`}
                   className="min-w-0 flex-1 -mx-1 -my-1 px-1 py-1 rounded"
                 >
                   <div className="text-sm font-medium truncate">

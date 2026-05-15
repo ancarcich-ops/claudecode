@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { leaveGroupAction } from "@/lib/actions";
+import { findGroupByIdOrSlug } from "@/lib/groups";
 import CopyInvite from "@/components/CopyInvite";
 
 export const dynamic = "force-dynamic";
@@ -15,8 +16,12 @@ export default async function GroupDetailPage({
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
+  // Resolve cuid or slug. findGroupByIdOrSlug lazy-backfills the slug
+  // for legacy rows so links from this page are pretty.
+  const resolved = await findGroupByIdOrSlug(params.id);
+  if (!resolved) notFound();
   const group = await prisma.group.findUnique({
-    where: { id: params.id },
+    where: { id: resolved.id },
     include: {
       members: {
         orderBy: { joinedAt: "asc" },
@@ -46,7 +51,7 @@ export default async function GroupDetailPage({
             {group.name}
           </h1>
           <Link
-            href={`/groups/${group.id}/leaderboard`}
+            href={`/groups/${group.slug ?? group.id}/leaderboard`}
             className="btn btn-ghost text-xs whitespace-nowrap shrink-0"
           >
             Leaderboard →

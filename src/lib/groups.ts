@@ -51,6 +51,63 @@ export function generateInviteCode(): string {
   return out;
 }
 
+// URL-safe slug from a group's display name. Lowercase, dashes for spaces,
+// strip everything else. Capped at 32 chars. Empty result falls back to "g".
+export function slugifyGroupName(name: string): string {
+  const base = name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 32);
+  return base || "g";
+}
+
+// Find the lowest unused slug starting from `base`. Tries `base`, then
+// `base-2`, `base-3`, etc. Caller wraps the eventual insert in a try/catch
+// in case of a race; the unique constraint is the source of truth.
+export async function uniqueGroupSlug(base: string): Promise<string> {
+  let candidate = base;
+  let n = 2;
+  // Bounded loop: practically returns on the first or second try.
+  while (n < 1000) {
+    const existing = await prisma.group.findUnique({
+      where: { slug: candidate },
+      select: { id: true },
+    });
+    if (!existing) return candidate;
+    candidate = `${base}-${n++}`;
+  }
+  // Fallback if a name is somehow catastrophically common: append a
+  // chunk of the invite-code alphabet for entropy.
+  return `${base}-${generateInviteCode().toLowerCase()}`;
+}
+
+// Look up a group by either its cuid or its slug. Backfills the slug
+// lazily so groups created before slugs existed don't stay null forever.
+export async function findGroupByIdOrSlug(identifier: string) {
+  if (!identifier) return null;
+  const group = await prisma.group.findFirst({
+    where: { OR: [{ id: identifier }, { slug: identifier }] },
+  });
+  if (!group) return null;
+  if (group.slug) return group;
+  // Backfill on read. Race-safe: another concurrent request may win the
+  // update; we re-read and use whichever slug landed.
+  const slug = await uniqueGroupSlug(slugifyGroupName(group.name));
+  try {
+    return await prisma.group.update({
+      where: { id: group.id },
+      data: { slug },
+    });
+  } catch {
+    const fresh = await prisma.group.findUnique({ where: { id: group.id } });
+    return fresh ?? group;
+  }
+}
+
 // Returns a Prisma `where` clause restricting Match results to what the user
 // should see given their active group filter.
 //
