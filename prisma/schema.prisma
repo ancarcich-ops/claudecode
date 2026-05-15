@@ -22,6 +22,23 @@ model User {
   wagers           Wager[]
   createdGroups    Group[]       @relation("GroupCreator")
   groupMemberships GroupMember[]
+  sessions         Session[]
+}
+
+// Server-side session tokens. Replaces the legacy 'cookie carries the
+// User.id' model so a leaked / guessed user id can't be replayed as the
+// owner. Each sign-in mints a fresh random token; sign-out deletes its row.
+model Session {
+  id        String   @id @default(cuid())
+  // Random, opaque, unique. Stored in the fm_session cookie.
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model Group {
