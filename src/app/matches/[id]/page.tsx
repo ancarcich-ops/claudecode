@@ -17,19 +17,23 @@ import {
   computeAllSideGames,
   isSideGameKind,
   isBbbEventKind,
+  isSnakeEventKind,
   ALL_SIDE_GAMES,
   runningStableford,
   runningSkins,
   runningNassauSegment,
   runningBbb,
+  runningSnake,
   type SideGameKind,
   type BbbEvent,
+  type SnakeEvent,
 } from "@/lib/sideGames";
 import MatchChartTabs, {
   type SideGameSeries,
 } from "./MatchChartTabs";
 import MatchActionsMenu, { type MatchAction } from "./MatchActionsMenu";
 import BBBEditor from "./BBBEditor";
+import SnakeEditor from "./SnakeEditor";
 import AutoRefresh from "@/components/AutoRefresh";
 import ScoreSheet from "./ScoreSheet";
 import WagerForm from "./WagerForm";
@@ -137,7 +141,7 @@ export default async function MatchPage({
   const enabledKinds: SideGameKind[] = (match.sideGames ?? [])
     .map((sg) => sg.kind)
     .filter(isSideGameKind);
-  // BBB events live on the SideGame row; pull and normalize.
+  // BBB and Snake events live on their SideGame rows; pull and normalize.
   const bbbGame = (match.sideGames ?? []).find((sg) => sg.kind === "BBB");
   const bbbEvents: BbbEvent[] = (bbbGame?.events ?? [])
     .filter((e) => isBbbEventKind(e.kind))
@@ -145,6 +149,13 @@ export default async function MatchPage({
       hole: e.hole,
       kind: e.kind as BbbEvent["kind"],
       matchPlayerId: e.matchPlayerId ?? null,
+    }));
+  const snakeGame = (match.sideGames ?? []).find((sg) => sg.kind === "SNAKE");
+  const snakeEvents: SnakeEvent[] = (snakeGame?.events ?? [])
+    .filter((e) => isSnakeEventKind(e.kind) && e.matchPlayerId)
+    .map((e) => ({
+      hole: e.hole,
+      matchPlayerId: e.matchPlayerId as string,
     }));
   const sideGameSections = computeAllSideGames({
     enabled: enabledKinds,
@@ -160,6 +171,7 @@ export default async function MatchPage({
     holes: match.holes,
     scoringMode,
     bbbEvents,
+    snakeEvents,
   });
   const sideGameLabel: Record<SideGameKind, string> = Object.fromEntries(
     ALL_SIDE_GAMES.map((g) => [g.kind, g.label]),
@@ -215,6 +227,9 @@ export default async function MatchPage({
   }
   if (enabledKinds.includes("BBB")) {
     sgSeries.bbb = runningBbb(sgPlayers, match.holes, bbbEvents);
+  }
+  if (enabledKinds.includes("SNAKE")) {
+    sgSeries.snake = runningSnake(sgPlayers, match.holes, snakeEvents);
   }
 
   return (
@@ -421,6 +436,36 @@ export default async function MatchPage({
               for (const e of bbbEvents) {
                 if (!out[e.hole]) out[e.hole] = {};
                 out[e.hole]![e.kind] = e.matchPlayerId;
+              }
+              return out;
+            })()}
+            locked={isCompleted}
+          />
+        </section>
+      )}
+
+      {snakeGame && user && (
+        <section className="card p-4">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <h2 className="text-sm uppercase tracking-wider text-mute">
+              Snake · 3-putts
+            </h2>
+            <span className="text-[11px] text-mute">
+              Tap a name to toggle a 3-putt on that hole
+            </span>
+          </div>
+          <SnakeEditor
+            sideGameId={snakeGame.id}
+            holes={match.holes}
+            players={match.players.map((p) => ({
+              id: p.id,
+              displayName: p.displayName,
+            }))}
+            threePuttsByHole={(() => {
+              const out: Record<number, Set<string>> = {};
+              for (const e of snakeEvents) {
+                if (!out[e.hole]) out[e.hole] = new Set();
+                out[e.hole].add(e.matchPlayerId);
               }
               return out;
             })()}
