@@ -80,14 +80,37 @@ model SideGame {
   id        String   @id @default(cuid())
   matchId   String
   match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  // STABLEFORD | SKINS | NASSAU (phase 1). WOLF, BBB, SNAKE later.
+  // STABLEFORD | SKINS | NASSAU | BBB | SNAKE | WOLF
   kind      String
   // JSON for per-game config (e.g. Stableford variant, skin stake).
   config    String?
   createdAt DateTime @default(now())
 
+  events    SideGameEvent[]
+
   @@unique([matchId, kind])
   @@index([matchId])
+}
+
+// Per-hole events for games that need data beyond the stroke count -- BBB
+// (bingo/bango/bongo awards), Snake (3-putts and snake holder), Wolf
+// (partner choice, hole winner). One row per (game, hole, kind, player)
+// so e.g. multiple players can 3-putt on the same hole.
+model SideGameEvent {
+  id            String       @id @default(cuid())
+  sideGameId    String
+  sideGame      SideGame     @relation(fields: [sideGameId], references: [id], onDelete: Cascade)
+  hole          Int
+  // BBB: BINGO | BANGO | BONGO
+  // Snake: THREE_PUTT | SNAKE_HOLDER
+  // Wolf: PARTNER | LONE_WOLF | HOLE_WINNER
+  kind          String
+  matchPlayerId String?
+  matchPlayer   MatchPlayer? @relation(fields: [matchPlayerId], references: [id], onDelete: SetNull)
+  createdAt     DateTime     @default(now())
+
+  @@unique([sideGameId, hole, kind, matchPlayerId])
+  @@index([sideGameId, hole])
 }
 
 model MatchPlayer {
@@ -103,6 +126,7 @@ model MatchPlayer {
   scores      ScoreEntry[]
   wagers      Wager[]
   oddsSnapshots OddsSnapshot[]
+  sideGameEvents SideGameEvent[]
 
   @@unique([matchId, seat])
 }
