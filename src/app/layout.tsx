@@ -26,6 +26,12 @@ export const metadata: Metadata = {
     icon: "/icon.svg",
     apple: "/apple-icon.svg",
   },
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Sticks",
+    statusBarStyle: "black-translucent",
+  },
 };
 
 export const viewport: Viewport = {

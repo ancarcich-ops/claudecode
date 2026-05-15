@@ -38,10 +38,11 @@ export default async function NewMatchPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="text-xl font-semibold mb-1">Post a round</h1>
+      <h1 className="font-display text-2xl font-semibold tracking-tight mb-1">
+        Open the line.
+      </h1>
       <p className="text-sm text-mute mb-6">
-        Tell the market what&apos;s on the tee. Odds open the moment you
-        publish.
+        Course, tee time, players. Odds move the second you publish.
       </p>
       <NewMatchForm
         action={createMatchAction}

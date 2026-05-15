@@ -1,0 +1,23 @@
+{
+  "name": "Sticks",
+  "short_name": "Sticks",
+  "description": "All your games. One round.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b0f0c",
+  "theme_color": "#0b0f0c",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "180x180",
+      "purpose": "maskable"
+    }
+  ]
+}

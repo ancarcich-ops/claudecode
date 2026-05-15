@@ -21,10 +21,12 @@ export default async function LoginPage({
   return (
     <div className="mx-auto max-w-md mt-16">
       <div className="card p-6">
-        <h1 className="text-xl font-semibold mb-1">Sign in</h1>
+        <h1 className="font-display text-2xl font-semibold tracking-tight mb-1">
+          Open the line.
+        </h1>
         <p className="text-sm text-mute mb-5">
-          Pick a username. We&apos;ll create your account if it doesn&apos;t
-          exist. No password, no email.
+          Pick a handle. No password, no email — just a name your group
+          recognizes on the scorecard.
         </p>
         <form action={signInAction} className="space-y-3">
           <input type="hidden" name="next" value={next} />
@@ -63,7 +65,7 @@ export default async function LoginPage({
             </p>
           </div>
           <button className="btn btn-primary w-full" type="submit">
-            Enter the clubhouse
+            Open the line →
           </button>
         </form>
       </div>
