@@ -43,6 +43,10 @@ export type HoleGeo = {
   hole: number;
   greenLat: number | null;
   greenLng: number | null;
+  greenFrontLat: number | null;
+  greenFrontLng: number | null;
+  greenBackLat: number | null;
+  greenBackLng: number | null;
   distanceYds: number | null;
 };
 
@@ -62,8 +66,49 @@ export async function getCourseHolesByName(
       hole: h.hole,
       greenLat: h.greenLat,
       greenLng: h.greenLng,
+      greenFrontLat: h.greenFrontLat,
+      greenFrontLng: h.greenFrontLng,
+      greenBackLat: h.greenBackLat,
+      greenBackLng: h.greenBackLng,
       distanceYds: h.distanceYds,
     };
   }
   return out;
+}
+
+// Compute the three working green distances. If front/back coords aren't
+// user-set, we derive them from the center along the player->green axis
+// (±8 yards each side) so the UI always shows three numbers once at least
+// the center is mapped.
+//
+// Returns null entries when the corresponding coord can't be computed
+// (no center, no player position, etc).
+export function deriveGreenDistances(
+  player: { lat: number; lng: number } | null,
+  geo: HoleGeo | null | undefined,
+): { front: number | null; center: number | null; back: number | null } {
+  if (!geo || !player) return { front: null, center: null, back: null };
+  const c =
+    geo.greenLat != null && geo.greenLng != null
+      ? { lat: geo.greenLat, lng: geo.greenLng }
+      : null;
+  if (!c) return { front: null, center: null, back: null };
+  const center = distanceYards(player, c);
+  // Front: prefer user-set; else center - 8y along the player->green line
+  const front =
+    geo.greenFrontLat != null && geo.greenFrontLng != null
+      ? distanceYards(player, {
+          lat: geo.greenFrontLat,
+          lng: geo.greenFrontLng,
+        })
+      : Math.max(0, center - 8);
+  // Back: prefer user-set; else center + 8y
+  const back =
+    geo.greenBackLat != null && geo.greenBackLng != null
+      ? distanceYards(player, {
+          lat: geo.greenBackLat,
+          lng: geo.greenBackLng,
+        })
+      : center + 8;
+  return { front, center, back };
 }

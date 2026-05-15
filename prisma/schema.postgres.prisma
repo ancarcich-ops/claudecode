@@ -183,6 +183,10 @@ model CourseHole {
   hole      Int
   greenLat  Float?
   greenLng  Float?
+  greenFrontLat  Float?
+  greenFrontLng  Float?
+  greenBackLat   Float?
+  greenBackLng   Float?
   distanceYds Int?
   contributedById String?
   createdAt DateTime @default(now())

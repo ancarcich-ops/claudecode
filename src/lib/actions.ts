@@ -600,17 +600,22 @@ export async function updateWolfConfigAction(formData: FormData) {
   revalidatePath(`/matches/${sg.matchId}`);
 }
 
-// On-course: record the GPS coords of a hole's green center. Lazily creates
-// the Course row if this is the first contribution for that course name.
-// Any signed-in user can mark a green -- we trust them like we trust score
-// entries. If a hole is already mapped, overwriting is allowed (corrections
-// happen) but the previous contributor's id is preserved.
+// On-course: record the GPS coords of a green point. Accepts a 'position'
+// field of 'center' (default), 'front', or 'back' so the front-of-green
+// and back-of-green refinements can be marked separately.
+//
+// Lazily creates the Course row if this is the first contribution for that
+// course name. Any signed-in user can mark a green -- we trust them like
+// we trust score entries.
 export async function markGreenCenterAction(formData: FormData) {
   const user = await requireUser();
   const courseName = String(formData.get("courseName") ?? "").trim();
   const hole = Number(formData.get("hole"));
   const lat = Number(formData.get("lat"));
   const lng = Number(formData.get("lng"));
+  const positionRaw = String(formData.get("position") ?? "center").trim();
+  const position =
+    positionRaw === "front" || positionRaw === "back" ? positionRaw : "center";
   if (!courseName) throw new Error("Course name required");
   if (!Number.isFinite(hole) || hole < 1 || hole > 36) {
     throw new Error("Invalid hole number");
@@ -624,32 +629,29 @@ export async function markGreenCenterAction(formData: FormData) {
     throw new Error("Invalid coordinates");
   }
   const course = await findOrCreateCourseByName(courseName);
+  const dataFor = (pos: "center" | "front" | "back") => {
+    if (pos === "front") return { greenFrontLat: lat, greenFrontLng: lng };
+    if (pos === "back") return { greenBackLat: lat, greenBackLng: lng };
+    return { greenLat: lat, greenLng: lng };
+  };
   const existing = await prisma.courseHole.findUnique({
     where: { courseId_hole: { courseId: course.id, hole } },
   });
   if (existing) {
     await prisma.courseHole.update({
       where: { id: existing.id },
-      data: {
-        greenLat: lat,
-        greenLng: lng,
-        // Preserve original contributor on overwrite.
-      },
+      data: dataFor(position),
     });
   } else {
     await prisma.courseHole.create({
       data: {
         courseId: course.id,
         hole,
-        greenLat: lat,
-        greenLng: lng,
         contributedById: user.id,
+        ...dataFor(position),
       },
     });
   }
-  // The match page renders the on-course mode based on this data, so we
-  // could revalidate by matchId, but the matchId isn't in the form. The
-  // client component refreshes on its own after the action.
 }
 
 export async function deleteMatchAction(formData: FormData) {

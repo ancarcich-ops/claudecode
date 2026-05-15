@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { distanceYards, type HoleGeo } from "@/lib/course";
+import { deriveGreenDistances, type HoleGeo } from "@/lib/course";
 import { logScoreAction, markGreenCenterAction } from "@/lib/actions";
 
 // Mobile-first "on the course" view. Replaces the full match-detail UI
@@ -103,17 +103,16 @@ export default function OnCourseMode({
   const par = pars[hole - 1] ?? 4;
   const geo = holeGeoByHole[hole];
   const greenSet = geo && geo.greenLat != null && geo.greenLng != null;
-  const distance =
-    greenSet && pos
-      ? Math.round(
-          distanceYards(
-            { lat: pos.coords.latitude, lng: pos.coords.longitude },
-            { lat: geo.greenLat as number, lng: geo.greenLng as number },
-          ),
-        )
-      : null;
+  const playerPos = pos
+    ? { lat: pos.coords.latitude, lng: pos.coords.longitude }
+    : null;
+  const { front, center, back } = deriveGreenDistances(playerPos, geo ?? null);
   const accuracyYd =
     pos != null ? Math.round(pos.coords.accuracy * 1.0936133) : null;
+  // Whether the user has actually marked front/back vs them being
+  // derived from center ± 8y.
+  const frontMarked = !!(geo?.greenFrontLat != null && geo?.greenFrontLng != null);
+  const backMarked = !!(geo?.greenBackLat != null && geo?.greenBackLng != null);
 
   const submitScore = (strokes: number) => {
     if (!myMatchPlayerId) return;
@@ -133,13 +132,14 @@ export default function OnCourseMode({
     });
   };
 
-  const markGreen = () => {
+  const markGreen = (position: "center" | "front" | "back" = "center") => {
     if (!pos) return;
     const fd = new FormData();
     fd.set("courseName", courseName);
     fd.set("hole", String(hole));
     fd.set("lat", String(pos.coords.latitude));
     fd.set("lng", String(pos.coords.longitude));
+    fd.set("position", position);
     startTransition(async () => {
       await markGreenCenterAction(fd);
       router.refresh();
@@ -230,7 +230,7 @@ export default function OnCourseMode({
               </div>
               <button
                 type="button"
-                onClick={markGreen}
+                onClick={() => markGreen("center")}
                 disabled={pending}
                 className="btn btn-primary"
               >
@@ -244,23 +244,80 @@ export default function OnCourseMode({
             </motion.div>
           ) : (
             <motion.div
-              key={`d-${distance}`}
+              key={`d-${center}`}
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 1.04 }}
               transition={{ type: "spring", stiffness: 320, damping: 26 }}
-              className="space-y-2"
+              className="space-y-3"
             >
               <div className="text-[10px] uppercase tracking-wider text-mute">
-                To green center
+                To green
               </div>
-              <div className="font-display text-7xl sm:text-8xl font-bold tracking-tight tabular-nums text-accent">
-                {distance}
-                <span className="text-3xl text-mute font-normal ml-1">y</span>
+              <div className="flex items-baseline justify-center gap-4 sm:gap-6">
+                <div className="text-center">
+                  <div className="text-[10px] uppercase tracking-wider text-mute">
+                    Front
+                  </div>
+                  <div className="font-display text-3xl sm:text-4xl font-semibold tabular-nums text-ink">
+                    {front != null ? Math.round(front) : "—"}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-[10px] uppercase tracking-wider text-accent">
+                    Center
+                  </div>
+                  <div className="font-display text-6xl sm:text-7xl font-bold tabular-nums text-accent">
+                    {center != null ? Math.round(center) : "—"}
+                    <span className="text-2xl text-mute font-normal ml-1">y</span>
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-[10px] uppercase tracking-wider text-mute">
+                    Back
+                  </div>
+                  <div className="font-display text-3xl sm:text-4xl font-semibold tabular-nums text-ink">
+                    {back != null ? Math.round(back) : "—"}
+                  </div>
+                </div>
               </div>
-              {accuracyYd != null && (
-                <div className="text-[10px] text-mute">
-                  GPS accuracy ± {accuracyYd}y
+              <div className="flex items-center justify-center gap-2 text-[10px] text-mute">
+                {(!frontMarked || !backMarked) && (
+                  <>
+                    <span>
+                      {!frontMarked && !backMarked
+                        ? "Front / back estimated"
+                        : !frontMarked
+                          ? "Front estimated"
+                          : "Back estimated"}
+                    </span>
+                    <span aria-hidden>·</span>
+                  </>
+                )}
+                {accuracyYd != null && <span>± {accuracyYd}y GPS</span>}
+              </div>
+              {(!frontMarked || !backMarked) && (
+                <div className="flex items-center justify-center gap-2 pt-1">
+                  {!frontMarked && (
+                    <button
+                      type="button"
+                      onClick={() => markGreen("front")}
+                      disabled={pending}
+                      className="btn btn-ghost text-[11px]"
+                    >
+                      Mark front here
+                    </button>
+                  )}
+                  {!backMarked && (
+                    <button
+                      type="button"
+                      onClick={() => markGreen("back")}
+                      disabled={pending}
+                      className="btn btn-ghost text-[11px]"
+                    >
+                      Mark back here
+                    </button>
+                  )}
                 </div>
               )}
             </motion.div>
