@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { loadMatchWithOdds } from "@/lib/match";
 import { prisma } from "@/lib/db";
+import { canViewMatch } from "@/lib/groups";
 import {
   completeMatchAction,
   deleteMatchAction,
@@ -58,15 +59,16 @@ export default async function MatchPage({
   if (!loaded) notFound();
   const { match, odds, pars } = loaded;
 
-  // Private-group gate: if this match is scoped to a group, only members can
-  // see it. This is soft auth -- the cookie identity isn't verified -- but it
-  // prevents stumbling on someone else's private round from a shared link.
-  if (match.groupId) {
-    if (!user) notFound();
-    const isMember = await prisma.groupMember.findUnique({
-      where: { groupId_userId: { groupId: match.groupId, userId: user.id } },
-    });
-    if (!isMember) notFound();
+  // Visibility gate: mirrors visibleMatchWhere's cross-group rules. A user
+  // can view a match if it's public, or they're in its posted-to group, or
+  // they share any group with one of the match's linked players.
+  if (
+    !(await canViewMatch(user?.id ?? null, {
+      groupId: match.groupId,
+      players: match.players.map((p) => ({ userId: p.userId })),
+    }))
+  ) {
+    notFound();
   }
 
   const scoringMode =
