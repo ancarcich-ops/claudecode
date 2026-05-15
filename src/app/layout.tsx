@@ -47,8 +47,7 @@ export default async function RootLayout({
                     aria-label="Post a new match"
                   >
                     <span aria-hidden>+</span>
-                    <span className="hidden sm:inline">New match</span>
-                    <span className="sm:hidden">New</span>
+                    <span>New match</span>
                   </Link>
                   <GroupSwitcher
                     groups={groups.map((g) => ({ id: g.id, name: g.name }))}
