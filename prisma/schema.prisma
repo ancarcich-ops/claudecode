@@ -212,6 +212,14 @@ model CourseHole {
   // while standing on the green. WGS84 lat/lng.
   greenLat  Float?
   greenLng  Float?
+  // Front and back of green -- optional refinements. UI displays three
+  // distances (F/C/B) when at least the center is mapped; falls back to
+  // computing front/back from center +/- 8y along the player->green line
+  // when not yet user-marked.
+  greenFrontLat  Float?
+  greenFrontLng  Float?
+  greenBackLat   Float?
+  greenBackLng   Float?
   // Optional published yardage (back tee) -- not used for GPS distance
   // but handy as a sanity-check / fallback display.
   distanceYds Int?
