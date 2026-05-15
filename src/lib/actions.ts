@@ -44,12 +44,12 @@ export async function signInAction(formData: FormData) {
       data: { displayName },
     });
   }
-  setSession(user.id);
+  await setSession(user.id);
   redirect(next);
 }
 
 export async function signOutAction() {
-  clearSession();
+  await clearSession();
   redirect("/login");
 }
 
