@@ -270,7 +270,10 @@ export default function OnCourseMode({
   };
 
   return (
-    <div className="fixed inset-0 z-40 bg-bg flex flex-col">
+    // z-50 so it covers the mobile bottom tab bar (z-40). overflow-y-auto
+    // so on short viewports (or when score buttons sit below the fold)
+    // the panel is reachable without fighting the parent page scroll.
+    <div className="fixed inset-0 z-50 bg-bg flex flex-col overflow-y-auto overscroll-contain">
       {/* Top bar */}
       <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border">
         <div className="min-w-0">
@@ -555,7 +558,11 @@ export default function OnCourseMode({
 
       {/* Score entry (only if user is linked to a seat) */}
       {myMatchPlayerId && (
-        <div className="border-t border-border p-3">
+        // pb-[env(safe-area-inset-bottom)] keeps the buttons clear of the
+        // iOS home indicator. mt-auto pushes the panel to the bottom of
+        // the scroll container when content above is shorter than the
+        // viewport.
+        <div className="border-t border-border p-3 mt-auto pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <div className="text-[10px] uppercase tracking-wider text-mute text-center mb-2">
             Log your score
           </div>

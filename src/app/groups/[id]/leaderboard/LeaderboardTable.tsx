@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { LeaderboardRow } from "@/lib/leaderboard";
+import PlayerAvatar from "@/components/Avatar";
 
 type ColumnKey =
   | "displayName"
@@ -124,14 +125,33 @@ export default function LeaderboardTable({
                 className="border-t border-border hover:bg-panel2/30"
               >
                 <td className="py-2 px-2 sticky left-0 bg-panel">
-                  <div className="font-medium truncate max-w-[10rem]">
-                    {displayName}
-                    {isYou && (
-                      <span className="text-mute font-normal"> (you)</span>
-                    )}
-                  </div>
-                  <div className="text-[10px] text-mute truncate">
-                    @{r.username}
+                  <div className="flex items-center gap-2">
+                    <PlayerAvatar
+                      seed={r.avatarSeed ?? r.username}
+                      variant={
+                        (r.avatarVariant as
+                          | "beam"
+                          | "marble"
+                          | "sunset"
+                          | "pixel"
+                          | "ring"
+                          | "bauhaus"
+                          | null) ?? "beam"
+                      }
+                      avatarUrl={r.avatarUrl}
+                      size={24}
+                    />
+                    <div className="min-w-0">
+                      <div className="font-medium truncate max-w-[8rem] sm:max-w-[10rem]">
+                        {displayName}
+                        {isYou && (
+                          <span className="text-mute font-normal"> (you)</span>
+                        )}
+                      </div>
+                      <div className="text-[10px] text-mute truncate">
+                        @{r.username}
+                      </div>
+                    </div>
                   </div>
                 </td>
                 <td className="py-2 px-2 text-right font-mono tabular-nums text-mute">
