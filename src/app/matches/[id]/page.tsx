@@ -43,7 +43,7 @@ import WolfEditor from "./WolfEditor";
 import WolfSettings from "./WolfSettings";
 import WinCelebration from "@/components/WinCelebration";
 import OnCourseMode from "./OnCourseMode";
-import { getCourseHolesByName } from "@/lib/course";
+import { getCourseHazardsByName, getCourseHolesByName } from "@/lib/course";
 import AutoRefresh from "@/components/AutoRefresh";
 import ScoreSheet from "./ScoreSheet";
 import WagerForm from "./WagerForm";
@@ -155,7 +155,10 @@ export default async function MatchPage({
   // On-course GPS data: per-hole green coordinates for this course, plus
   // the signed-in user's match-player id (if any) so they can log scores
   // directly from the on-course view.
-  const holeGeoByHole = await getCourseHolesByName(match.courseName);
+  const [holeGeoByHole, hazardsByHole] = await Promise.all([
+    getCourseHolesByName(match.courseName),
+    getCourseHazardsByName(match.courseName),
+  ]);
   const myMatchPlayer = user
     ? match.players.find((p) => p.userId === user.id)
     : null;
@@ -487,6 +490,7 @@ export default async function MatchPage({
               displayName: p.displayName,
             }))}
             holeGeoByHole={holeGeoByHole}
+            hazardsByHole={hazardsByHole}
             myMatchPlayerId={myMatchPlayer?.id ?? null}
           />
         </section>

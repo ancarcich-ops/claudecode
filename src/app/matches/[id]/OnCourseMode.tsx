@@ -3,8 +3,19 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { deriveGreenDistances, type HoleGeo } from "@/lib/course";
-import { logScoreAction, markGreenCenterAction } from "@/lib/actions";
+import {
+  deriveGreenDistances,
+  distanceToLayup,
+  distanceYards,
+  type HazardGeo,
+  type HoleGeo,
+} from "@/lib/course";
+import {
+  deleteHazardAction,
+  logScoreAction,
+  markGreenCenterAction,
+  markHazardAction,
+} from "@/lib/actions";
 
 // Mobile-first "on the course" view. Replaces the full match-detail UI
 // when active. Tracks the user's GPS, computes distance to the current
@@ -23,6 +34,67 @@ import { logScoreAction, markGreenCenterAction } from "@/lib/actions";
 
 type Player = { id: string; displayName: string };
 
+function labelForKind(kind: "WATER" | "SAND" | "OOB" | "OTHER"): string {
+  switch (kind) {
+    case "WATER":
+      return "Water";
+    case "SAND":
+      return "Bunker";
+    case "OOB":
+      return "OB";
+    default:
+      return "Hazard";
+  }
+}
+
+function HazardChip({
+  kind,
+}: {
+  kind: "WATER" | "SAND" | "OOB" | "OTHER";
+}) {
+  const tone = {
+    WATER: "bg-blue-500/10 text-blue-300 border-blue-500/30",
+    SAND: "bg-gold/10 text-gold border-gold/30",
+    OOB: "bg-danger/10 text-danger border-danger/30",
+    OTHER: "bg-panel2 text-mute border-border",
+  }[kind];
+  return (
+    <span
+      className={
+        "inline-block w-2 h-2 rounded-full border " + tone
+      }
+      aria-label={labelForKind(kind)}
+    />
+  );
+}
+
+function HazardMarkButton({
+  kind,
+  onClick,
+  disabled,
+}: {
+  kind: "WATER" | "SAND" | "OOB";
+  onClick: () => void;
+  disabled: boolean;
+}) {
+  const label = {
+    WATER: "+W",
+    SAND: "+B",
+    OOB: "+OB",
+  }[kind];
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={`Mark ${labelForKind(kind).toLowerCase()} here`}
+      className="btn btn-ghost text-[10px] h-6 px-1.5 py-0 disabled:opacity-30"
+    >
+      {label}
+    </button>
+  );
+}
+
 export default function OnCourseMode({
   matchId,
   courseName,
@@ -31,6 +103,7 @@ export default function OnCourseMode({
   pars,
   players,
   holeGeoByHole,
+  hazardsByHole,
   myMatchPlayerId,
 }: {
   matchId: string;
@@ -40,6 +113,7 @@ export default function OnCourseMode({
   pars: number[];
   players: Player[];
   holeGeoByHole: Record<number, HoleGeo>;
+  hazardsByHole: Record<number, HazardGeo[]>;
   // When the signed-in user is also a linked player in this match,
   // this is their seat id so we can log their own score in one tap.
   myMatchPlayerId: string | null;
@@ -129,6 +203,49 @@ export default function OnCourseMode({
       try {
         window.dispatchEvent(new CustomEvent("sticks:sound:score"));
       } catch {}
+    });
+  };
+
+  // Per-hole hazards, decorated with distance from current player position.
+  // Sorted by distance asc so the closest threat is on top.
+  const holeHazards = (hazardsByHole[hole] ?? [])
+    .map((h) => {
+      const d = playerPos
+        ? distanceYards(playerPos, { lat: h.lat, lng: h.lng })
+        : null;
+      // Layup distance only meaningful if we know where the green is too.
+      const layup =
+        playerPos && geo?.greenLat != null && geo?.greenLng != null
+          ? distanceToLayup(
+              playerPos,
+              { lat: geo.greenLat, lng: geo.greenLng },
+              { lat: h.lat, lng: h.lng },
+            )
+          : null;
+      return { ...h, distance: d, layup };
+    })
+    .sort((a, b) => (a.distance ?? 1e9) - (b.distance ?? 1e9));
+
+  const markHazard = (kind: "WATER" | "SAND" | "OOB" | "OTHER") => {
+    if (!pos) return;
+    const fd = new FormData();
+    fd.set("courseName", courseName);
+    fd.set("hole", String(hole));
+    fd.set("lat", String(pos.coords.latitude));
+    fd.set("lng", String(pos.coords.longitude));
+    fd.set("kind", kind);
+    startTransition(async () => {
+      await markHazardAction(fd);
+      router.refresh();
+    });
+  };
+
+  const removeHazard = (id: string) => {
+    const fd = new FormData();
+    fd.set("hazardId", id);
+    startTransition(async () => {
+      await deleteHazardAction(fd);
+      router.refresh();
     });
   };
 
@@ -324,6 +441,76 @@ export default function OnCourseMode({
           )}
         </AnimatePresence>
       </div>
+
+      {/* Hazards on this hole */}
+      {pos && (holeHazards.length > 0 || greenSet) && (
+        <div className="border-t border-border px-4 py-2">
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="text-[10px] uppercase tracking-wider text-mute">
+              Hazards
+            </div>
+            <div className="flex items-center gap-1">
+              <HazardMarkButton
+                kind="WATER"
+                onClick={() => markHazard("WATER")}
+                disabled={pending}
+              />
+              <HazardMarkButton
+                kind="SAND"
+                onClick={() => markHazard("SAND")}
+                disabled={pending}
+              />
+              <HazardMarkButton
+                kind="OOB"
+                onClick={() => markHazard("OOB")}
+                disabled={pending}
+              />
+            </div>
+          </div>
+          {holeHazards.length === 0 ? (
+            <div className="text-[11px] text-mute">
+              None marked. Drop a pin if you spot one for the next round.
+            </div>
+          ) : (
+            <ul className="space-y-1">
+              {holeHazards.map((h) => (
+                <li
+                  key={h.id}
+                  className="flex items-center justify-between gap-2 text-sm"
+                >
+                  <span className="flex items-center gap-1.5 min-w-0">
+                    <HazardChip kind={h.kind} />
+                    <span className="text-mute text-xs truncate">
+                      {h.label ?? labelForKind(h.kind)}
+                    </span>
+                  </span>
+                  <span className="font-mono tabular-nums text-xs shrink-0">
+                    <span className="text-ink">
+                      {h.distance != null ? Math.round(h.distance) : "—"}y
+                    </span>
+                    {h.layup != null && (
+                      <span className="text-mute">
+                        {" · lay "}
+                        <span className="text-accent">{Math.round(h.layup)}y</span>
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removeHazard(h.id)}
+                      disabled={pending}
+                      aria-label="Remove hazard"
+                      className="ml-2 text-mute hover:text-danger"
+                      title="Remove"
+                    >
+                      ×
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {/* Score entry (only if user is linked to a seat) */}
       {myMatchPlayerId && (
