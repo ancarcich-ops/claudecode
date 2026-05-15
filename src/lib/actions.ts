@@ -11,6 +11,7 @@ import {
   setSession,
 } from "./auth";
 import { recordOddsSnapshot } from "./match";
+import { computeAndPersistMatchWinners } from "./matchWinners";
 import { defaultPars } from "./odds";
 import {
   generateInviteCode,
@@ -327,6 +328,8 @@ export async function reopenMatchAction(formData: FormData) {
       status: anyScores ? "IN_PROGRESS" : "UPCOMING",
       completedAt: null,
       startedAt: anyScores ? match.startedAt ?? new Date() : null,
+      // Clear the snapshot -- the match is no longer final.
+      winnerSummary: null,
     },
   });
   await recordOddsSnapshot(matchId);
@@ -342,6 +345,9 @@ export async function completeMatchAction(formData: FormData) {
     data: { status: "COMPLETED", completedAt: new Date() },
   });
   await recordOddsSnapshot(matchId);
+  // Snapshot per-game winners so leaderboard queries can skip the engine
+  // for historical matches.
+  await computeAndPersistMatchWinners(matchId);
   revalidatePath(`/matches/${matchId}`);
   revalidatePath("/");
 }
