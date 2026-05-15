@@ -568,9 +568,16 @@ function scoreWolfHole(
     playerIds.map((id) => [id, 0]),
   );
   if (!shaped.winnerId) return pts;
+  const N = playerIds.length;
+  // Player-count-aware scoring:
+  //   3 players (always solo): wolf win = 2; others win = 1 each
+  //   4 players solo:          wolf win = 3; others win = 1 each
+  //   4 players partner:       team wins = 2 each; either team scores +2
+  //   5+ (fallback):           wolf solo win = N - 1; others 1 each
+  //                            partner: team wins = 2 each; opponents 1 each
   if (shaped.isLoneWolf) {
     if (shaped.winnerId === shaped.wolfId) {
-      pts[shaped.wolfId] = 4;
+      pts[shaped.wolfId] = N - 1; // 2 for N=3, 3 for N=4, scales for N=5+
     } else {
       for (const id of playerIds) {
         if (id !== shaped.wolfId) pts[id] = 1;
@@ -584,8 +591,12 @@ function scoreWolfHole(
       pts[shaped.wolfId] = 2;
       pts[shaped.partnerId] = 2;
     } else {
+      // For N=4 (the standard partner-Wolf size), opponents win 2 each so
+      // the round always settles 4 points per resolved partner-hole. For
+      // 5+ players, fall back to 1 each so the pot doesn't inflate.
+      const opponentPts = N === 4 ? 2 : 1;
       for (const id of playerIds) {
-        if (!wolfTeam.has(id)) pts[id] = 1;
+        if (!wolfTeam.has(id)) pts[id] = opponentPts;
       }
     }
   }
