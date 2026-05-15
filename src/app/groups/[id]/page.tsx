@@ -41,7 +41,17 @@ export default async function GroupDetailPage({
         <Link href="/groups" className="text-xs text-mute hover:text-ink">
           ← All groups
         </Link>
-        <h1 className="text-xl font-semibold mt-1">{group.name}</h1>
+        <div className="flex items-start justify-between gap-3 mt-1">
+          <h1 className="text-xl font-semibold flex-1 min-w-0 truncate">
+            {group.name}
+          </h1>
+          <Link
+            href={`/groups/${group.id}/leaderboard`}
+            className="btn btn-ghost text-xs whitespace-nowrap shrink-0"
+          >
+            Leaderboard →
+          </Link>
+        </div>
         <p className="text-sm text-mute mt-1">
           {group.members.length} member
           {group.members.length === 1 ? "" : "s"} · {matchCount} match
