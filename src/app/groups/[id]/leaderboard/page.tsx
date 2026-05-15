@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { findGroupByIdOrSlug } from "@/lib/groups";
 import { computeGroupLeaderboard } from "@/lib/leaderboard";
 import LeaderboardTable from "./LeaderboardTable";
+import EmptyIllustration from "@/components/EmptyIllustration";
 
 export const dynamic = "force-dynamic";
 
@@ -100,9 +101,11 @@ export default async function GroupLeaderboardPage({
       </div>
 
       {!anyWinsLogged ? (
-        <div className="card p-6 text-sm text-mute">
-          Once a match in this group finishes, the leaderboard fills in.
-        </div>
+        <EmptyIllustration
+          kind="noLeaderboard"
+          title="No closed lines yet."
+          body="Once a match in this group wraps up, wins start posting here."
+        />
       ) : (
         <LeaderboardTable
           rows={lb.rows}
