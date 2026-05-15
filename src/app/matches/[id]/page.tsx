@@ -25,6 +25,7 @@ import {
 import MatchChartTabs, {
   type SideGameSeries,
 } from "./MatchChartTabs";
+import MatchActionsMenu, { type MatchAction } from "./MatchActionsMenu";
 import AutoRefresh from "@/components/AutoRefresh";
 import ScoreSheet from "./ScoreSheet";
 import WagerForm from "./WagerForm";
@@ -203,72 +204,44 @@ export default async function MatchPage({
     <div className="space-y-6">
       <AutoRefresh endpoint={`/api/matches/${match.id}/state`} />
 
-      <header className="flex items-start justify-between gap-3 flex-wrap">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight truncate">
+      <header>
+        <div className="flex items-center gap-2 min-w-0">
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight truncate flex-1 min-w-0">
             {match.courseName}
           </h1>
-          <div className="text-xs sm:text-sm text-mute mt-1">
-            {new Date(match.scheduledAt).toLocaleString(undefined, {
-              weekday: "short",
-              month: "short",
-              day: "numeric",
-              hour: "numeric",
-              minute: "2-digit",
-            })}
-            {" · "}
-            {match.holes}H · par {odds.meta.coursePar}
-            {" · "}
-            {modeLabel}
-            {" · "}
-            @{match.createdBy.username}
-          </div>
-          {match.notes && (
-            <div className="text-sm text-mute mt-2 italic">
-              &ldquo;{match.notes}&rdquo;
-            </div>
-          )}
-        </div>
-        <div className="flex items-center gap-1.5 flex-wrap justify-end shrink-0">
           <StatusBadge status={match.status} />
-          {isCreator && match.status === "UPCOMING" && (
-            <form action={startMatchAction}>
-              <input type="hidden" name="matchId" value={match.id} />
-              <button className="btn btn-ghost px-2.5 whitespace-nowrap">
-                Start
-              </button>
-            </form>
-          )}
-          {isCreator && match.status === "IN_PROGRESS" && (
-            <form action={completeMatchAction}>
-              <input type="hidden" name="matchId" value={match.id} />
-              <button className="btn btn-ghost px-2.5 whitespace-nowrap">
-                Mark final
-              </button>
-            </form>
-          )}
-          {isCreator && match.status !== "UPCOMING" && (
-            <form action={reopenMatchAction}>
-              <input type="hidden" name="matchId" value={match.id} />
-              <button className="btn btn-ghost px-2.5 whitespace-nowrap">
-                Reopen
-              </button>
-            </form>
-          )}
           {isCreator && (
-            <form action={deleteMatchAction}>
-              <input type="hidden" name="matchId" value={match.id} />
-              <button
-                className="btn btn-danger px-2.5 whitespace-nowrap"
-                aria-label="Delete match"
-                title="Delete match"
-              >
-                <TrashIcon />
-                <span className="hidden sm:inline">Delete</span>
-              </button>
-            </form>
+            <MatchActionsMenu
+              matchId={match.id}
+              actions={creatorActions(match.status, {
+                startMatchAction,
+                completeMatchAction,
+                reopenMatchAction,
+                deleteMatchAction,
+              })}
+            />
           )}
         </div>
+        <div className="text-xs sm:text-sm text-mute mt-1">
+          {new Date(match.scheduledAt).toLocaleString(undefined, {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+          })}
+          {" · "}
+          {match.holes}H · par {odds.meta.coursePar}
+          {" · "}
+          {modeLabel}
+          {" · "}
+          @{match.createdBy.username}
+        </div>
+        {match.notes && (
+          <div className="text-sm text-mute mt-2 italic">
+            &ldquo;{match.notes}&rdquo;
+          </div>
+        )}
       </header>
 
       <section className="card p-4">
@@ -481,6 +454,32 @@ export default async function MatchPage({
   );
 }
 
+type CreatorActionFns = {
+  startMatchAction: (fd: FormData) => Promise<void>;
+  completeMatchAction: (fd: FormData) => Promise<void>;
+  reopenMatchAction: (fd: FormData) => Promise<void>;
+  deleteMatchAction: (fd: FormData) => Promise<void>;
+};
+
+function creatorActions(status: string, fns: CreatorActionFns): MatchAction[] {
+  const out: MatchAction[] = [];
+  if (status === "UPCOMING") {
+    out.push({ label: "Start match", action: fns.startMatchAction });
+  }
+  if (status === "IN_PROGRESS") {
+    out.push({ label: "Mark final", action: fns.completeMatchAction });
+  }
+  if (status !== "UPCOMING") {
+    out.push({ label: "Reopen", action: fns.reopenMatchAction });
+  }
+  out.push({
+    label: "Delete match",
+    action: fns.deleteMatchAction,
+    tone: "danger",
+  });
+  return out;
+}
+
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
     UPCOMING: "bg-panel2 text-mute border border-border",
@@ -503,25 +502,3 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function TrashIcon() {
-  return (
-    <svg
-      aria-hidden
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="shrink-0"
-    >
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-      <path d="M10 11v6" />
-      <path d="M14 11v6" />
-      <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
-    </svg>
-  );
-}
