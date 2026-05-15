@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { findGroupByIdOrSlug } from "@/lib/groups";
 import { computeGroupLeaderboard } from "@/lib/leaderboard";
+import LeaderboardTable from "./LeaderboardTable";
 
 export const dynamic = "force-dynamic";
 
@@ -103,82 +104,24 @@ export default async function GroupLeaderboardPage({
           Once a match in this group finishes, the leaderboard fills in.
         </div>
       ) : (
-        <div className="card p-1 sm:p-2 overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-mute">
-                <th className="text-left font-medium uppercase tracking-wider text-[10px] py-2 px-2 sticky left-0 bg-panel">
-                  Player
-                </th>
-                <th
-                  className="text-right font-medium uppercase tracking-wider text-[10px] py-2 px-2"
-                  title="Total matches played"
-                >
-                  GP
-                </th>
-                {visible.map((c) => (
-                  <th
-                    key={String(c.key)}
-                    className="text-right font-medium uppercase tracking-wider text-[10px] py-2 px-2"
-                    title={c.hint}
-                  >
-                    {c.label}
-                  </th>
-                ))}
-                <th
-                  className="text-right font-medium uppercase tracking-wider text-[10px] py-2 px-2 text-accent"
-                  title="Total wins across all game types"
-                >
-                  All
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {lb.rows.map((r) => {
-                const isYou = r.userId === user.id;
-                const displayName = r.displayName ?? r.username;
-                return (
-                  <tr
-                    key={r.userId}
-                    className="border-t border-border hover:bg-panel2/30"
-                  >
-                    <td className="py-2 px-2 sticky left-0 bg-panel">
-                      <div className="font-medium truncate max-w-[10rem]">
-                        {displayName}
-                        {isYou && (
-                          <span className="text-mute font-normal"> (you)</span>
-                        )}
-                      </div>
-                      <div className="text-[10px] text-mute truncate">
-                        @{r.username}
-                      </div>
-                    </td>
-                    <td className="py-2 px-2 text-right font-mono tabular-nums text-mute">
-                      {r.matchesPlayed}
-                    </td>
-                    {visible.map((c) => {
-                      const v = r[c.key] as number;
-                      return (
-                        <td
-                          key={String(c.key)}
-                          className={
-                            "py-2 px-2 text-right font-mono tabular-nums " +
-                            (v === 0 ? "text-mute/40" : "")
-                          }
-                        >
-                          {v}
-                        </td>
-                      );
-                    })}
-                    <td className="py-2 px-2 text-right font-mono tabular-nums text-accent">
-                      {r.totalWins}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <LeaderboardTable
+          rows={lb.rows}
+          meUserId={user.id}
+          columns={visible.map((c) => ({
+            key: c.key as
+              | "mainWins"
+              | "stablefordWins"
+              | "skinsWins"
+              | "nassauWins"
+              | "bbbWins"
+              | "snakeWins"
+              | "wolfWins",
+            label: c.label,
+            hint: c.hint,
+            numeric: true,
+            show: c.show,
+          }))}
+        />
       )}
 
       {/* Current champions per game type */}
