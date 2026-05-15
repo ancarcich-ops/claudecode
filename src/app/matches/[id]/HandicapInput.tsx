@@ -28,7 +28,10 @@ export default function HandicapInput({
   };
 
   return (
-    <label className="chip gap-1" title="Edit handicap (creator only)">
+    <label
+      className="chip gap-0.5 px-1.5"
+      title="Edit handicap (creator only)"
+    >
       hcp
       <input
         type="number"
@@ -40,7 +43,8 @@ export default function HandicapInput({
         onKeyDown={(e) => {
           if (e.key === "Enter") (e.target as HTMLInputElement).blur();
         }}
-        className="w-12 bg-transparent text-ink text-right focus:outline-none focus:ring-1 focus:ring-accent rounded-sm"
+        size={3}
+        className="w-9 bg-transparent text-ink text-center focus:outline-none focus:ring-1 focus:ring-accent rounded-sm appearance-none [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
       />
     </label>
   );
