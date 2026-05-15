@@ -47,7 +47,13 @@ export type HoleGeo = {
   greenFrontLng: number | null;
   greenBackLat: number | null;
   greenBackLng: number | null;
+  teeLat: number | null;
+  teeLng: number | null;
+  // Parsed polygon (array of {lat,lng}) if we have one, else null.
+  greenPolygon: { lat: number; lng: number }[] | null;
+  fairwayPolygon: { lat: number; lng: number }[] | null;
   distanceYds: number | null;
+  source: string | null;
 };
 
 export async function getCourseHolesByName(
@@ -70,10 +76,37 @@ export async function getCourseHolesByName(
       greenFrontLng: h.greenFrontLng,
       greenBackLat: h.greenBackLat,
       greenBackLng: h.greenBackLng,
+      teeLat: h.teeLat,
+      teeLng: h.teeLng,
+      greenPolygon: parsePolygon(h.greenPolygonJson),
+      fairwayPolygon: parsePolygon(h.fairwayPolygonJson),
       distanceYds: h.distanceYds,
+      source: h.source,
     };
   }
   return out;
+}
+
+function parsePolygon(
+  json: string | null,
+): { lat: number; lng: number }[] | null {
+  if (!json) return null;
+  try {
+    const arr = JSON.parse(json);
+    if (!Array.isArray(arr)) return null;
+    const out: { lat: number; lng: number }[] = [];
+    for (const p of arr) {
+      if (Array.isArray(p) && p.length >= 2) {
+        const lat = Number(p[0]);
+        const lng = Number(p[1]);
+        if (Number.isFinite(lat) && Number.isFinite(lng))
+          out.push({ lat, lng });
+      }
+    }
+    return out.length > 2 ? out : null;
+  } catch {
+    return null;
+  }
 }
 
 export type HazardKind = "WATER" | "SAND" | "OOB" | "OTHER";

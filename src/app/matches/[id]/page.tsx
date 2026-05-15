@@ -156,6 +156,15 @@ export default async function MatchPage({
   // On-course GPS data: per-hole green coordinates for this course, plus
   // the signed-in user's match-player id (if any) so they can log scores
   // directly from the on-course view.
+  // Lazy-seed course data from OpenStreetMap the first time anyone opens
+  // a match for this course. importCourseFromOsm is idempotent + caches
+  // forever, so subsequent visits are no-ops. Awaited so the first visitor
+  // sees the populated map (adds ~2-5s to that one render).
+  const { importCourseFromOsm } = await import("@/lib/actions");
+  await importCourseFromOsm(match.courseName, match.holes).catch(() => {
+    // Network fail / OSM down -- proceed with whatever data we have.
+  });
+
   const [holeGeoByHole, hazardsByHole] = await Promise.all([
     getCourseHolesByName(match.courseName),
     getCourseHazardsByName(match.courseName),
