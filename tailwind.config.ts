@@ -17,7 +17,32 @@ const config: Config = {
         gold: "#fbbf24",
       },
       fontFamily: {
-        mono: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
+        // Bricolage Grotesque -- wordmark + headlines
+        display: [
+          "var(--font-display)",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
+        ],
+        // Geist -- body / UI default. globals.css applies font-sans on body
+        // so the whole app picks it up. Variables come from `geist` npm pkg.
+        sans: [
+          "var(--font-geist-sans)",
+          "ui-sans-serif",
+          "system-ui",
+          "-apple-system",
+          "Segoe UI",
+          "Roboto",
+          "sans-serif",
+        ],
+        // Geist Mono -- tabular numerics across charts, scorecards, chips
+        mono: [
+          "var(--font-geist-mono)",
+          "ui-monospace",
+          "SFMono-Regular",
+          "Menlo",
+          "monospace",
+        ],
       },
     },
   },

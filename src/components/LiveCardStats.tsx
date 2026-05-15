@@ -130,22 +130,27 @@ export default function LiveCardStats({
                 {active === "ODDS" &&
                   (p.liveScore ? (
                     <span
-                      className={
-                        "text-[11px] font-mono tabular-nums shrink-0 " +
-                        (p.liveScore.diff < 0
-                          ? "text-accent"
-                          : p.liveScore.diff === 0
-                            ? "text-gold"
-                            : "text-mute")
-                      }
+                      className="text-[11px] font-mono tabular-nums shrink-0 flex items-baseline gap-1"
                       title={`${p.liveScore.strokes} strokes thru ${p.liveScore.holes}`}
                     >
-                      {p.liveScore.strokes} ·{" "}
-                      {p.liveScore.diff === 0
-                        ? "E"
-                        : p.liveScore.diff > 0
-                          ? `+${p.liveScore.diff}`
-                          : `${p.liveScore.diff}`}
+                      <span
+                        className={
+                          p.liveScore.diff < 0
+                            ? "text-accent"
+                            : p.liveScore.diff === 0
+                              ? "text-gold"
+                              : "text-mute"
+                        }
+                      >
+                        {p.liveScore.diff === 0
+                          ? "E"
+                          : p.liveScore.diff > 0
+                            ? `+${p.liveScore.diff}`
+                            : `${p.liveScore.diff}`}
+                      </span>
+                      <span className="text-mute/70">v par</span>
+                      <span className="text-mute">·</span>
+                      <span className="text-mute">{p.liveScore.strokes} strokes</span>
                     </span>
                   ) : (
                     <span className="text-[11px] text-mute font-mono shrink-0">

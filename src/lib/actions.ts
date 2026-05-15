@@ -343,11 +343,28 @@ export async function completeMatchAction(formData: FormData) {
 }
 
 export async function logScoreAction(formData: FormData) {
-  await requireUser();
+  const user = await requireUser();
   const matchId = String(formData.get("matchId"));
   const matchPlayerId = String(formData.get("matchPlayerId"));
   const hole = Number(formData.get("hole"));
   const strokesRaw = formData.get("strokes");
+
+  // Permission gate: only the match creator OR a player linked to one of
+  // the seats in this match can log/clear scores. Anyone else viewing the
+  // match (group members, public viewers) can read but not write.
+  const matchPerm = await prisma.match.findUnique({
+    where: { id: matchId },
+    select: {
+      createdById: true,
+      players: { select: { userId: true } },
+    },
+  });
+  if (!matchPerm) throw new Error("Match not found");
+  const isCreator = matchPerm.createdById === user.id;
+  const isLinkedPlayer = matchPerm.players.some((p) => p.userId === user.id);
+  if (!isCreator && !isLinkedPlayer) {
+    throw new Error("Only players in this match can log scores");
+  }
 
   // Empty string clears a score.
   if (strokesRaw === null || String(strokesRaw).trim() === "") {
@@ -428,7 +445,7 @@ export async function updateParsAction(formData: FormData) {
 // SNAKE_HOLDER, WOLF HOLE_WINNER, etc.) overwrite the previous winner for
 // that (sideGame, hole, kind). Empty matchPlayerId clears the award.
 export async function recordSideGameEventAction(formData: FormData) {
-  await requireUser();
+  const user = await requireUser();
   const sideGameId = String(formData.get("sideGameId") ?? "");
   const hole = Number(formData.get("hole"));
   const kind = String(formData.get("kind") ?? "");
@@ -443,13 +460,26 @@ export async function recordSideGameEventAction(formData: FormData) {
   const wolf = isWolfEventKind(kind);
   if (!bbb && !snake && !wolf) throw new Error("Unsupported event kind");
 
-  // Confirm the side game belongs to a match we can find (used to invalidate
-  // the right path on revalidate).
+  // Confirm the side game belongs to a match we can find AND that the
+  // signed-in user is allowed to write (creator or a linked player).
   const sg = await prisma.sideGame.findUnique({
     where: { id: sideGameId },
-    select: { matchId: true },
+    select: {
+      matchId: true,
+      match: {
+        select: {
+          createdById: true,
+          players: { select: { userId: true } },
+        },
+      },
+    },
   });
   if (!sg) throw new Error("Side game not found");
+  const isCreator = sg.match.createdById === user.id;
+  const isLinkedPlayer = sg.match.players.some((p) => p.userId === user.id);
+  if (!isCreator && !isLinkedPlayer) {
+    throw new Error("Only players in this match can record events");
+  }
 
   if (bbb) {
     // Single-award kinds: delete any existing rows for this (game, hole, kind)
