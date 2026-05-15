@@ -35,6 +35,20 @@ body {
   .tag-down { @apply text-danger; }
 }
 
+/* Live match card: gentle pulsing glow so in-progress rounds visually
+   pop out of the upcoming/settled list. Pure decoration; falls back
+   to the static ring if reduced-motion is preferred. */
+@keyframes live-glow {
+  0%, 100% { box-shadow: 0 0 18px -2px rgba(52, 211, 153, 0.18); }
+  50%      { box-shadow: 0 0 32px -2px rgba(52, 211, 153, 0.42); }
+}
+.live-card {
+  animation: live-glow 2.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-card { animation: none; box-shadow: 0 0 24px -4px rgba(52, 211, 153, 0.28); }
+}
+
 /* Recharts label colors when rendered on dark bg */
 .recharts-cartesian-axis-tick-value tspan { fill: #8aa094 !important; }
 .recharts-tooltip-wrapper .recharts-default-tooltip {

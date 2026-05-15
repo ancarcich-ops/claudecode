@@ -36,6 +36,9 @@ export default async function HomePage() {
     { ...groupWhere, status: { in: ["UPCOMING", "IN_PROGRESS"] } },
     [{ status: "asc" }, { scheduledAt: "asc" }],
   );
+  const live = open.filter((m) => m.status === "IN_PROGRESS");
+  const upcoming = open.filter((m) => m.status === "UPCOMING");
+
   const completed = await loadMatches(
     { ...groupWhere, status: "COMPLETED" },
     { completedAt: "desc" },
@@ -65,9 +68,24 @@ export default async function HomePage() {
         </div>
       )}
 
+      {live.length > 0 && (
+        <section>
+          <SectionHeader
+            title="Live now"
+            accent
+            count={live.length}
+          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {live.map((m) => (
+              <LiveCard key={m.id} match={m} />
+            ))}
+          </div>
+        </section>
+      )}
+
       <section>
-        <SectionHeader title="Live & upcoming" />
-        {open.length === 0 ? (
+        <SectionHeader title="Upcoming" />
+        {upcoming.length === 0 && live.length === 0 ? (
           <EmptyCard>
             No open matches yet.{" "}
             {user ? (
@@ -80,8 +98,10 @@ export default async function HomePage() {
               </Link>
             )}
           </EmptyCard>
+        ) : upcoming.length === 0 ? (
+          <EmptyCard>Nothing upcoming. Post the next round.</EmptyCard>
         ) : (
-          <MatchGrid matches={open} />
+          <MatchGrid matches={upcoming} />
         )}
       </section>
 
@@ -97,16 +117,169 @@ export default async function HomePage() {
   );
 }
 
-function SectionHeader({ title }: { title: string }) {
+function SectionHeader({
+  title,
+  accent,
+  count,
+}: {
+  title: string;
+  accent?: boolean;
+  count?: number;
+}) {
   return (
-    <div className="flex items-center justify-between mb-3">
-      <h2 className="text-sm uppercase tracking-wider text-mute">{title}</h2>
+    <div className="flex items-center gap-2 mb-3">
+      {accent && (
+        <span
+          className="inline-block w-2 h-2 rounded-full bg-accent animate-pulse"
+          aria-hidden
+        />
+      )}
+      <h2
+        className={
+          "text-sm uppercase tracking-wider " +
+          (accent ? "text-accent font-medium" : "text-mute")
+        }
+      >
+        {title}
+      </h2>
+      {typeof count === "number" && (
+        <span className="text-xs text-mute">{count}</span>
+      )}
     </div>
   );
 }
 
 function EmptyCard({ children }: { children: React.ReactNode }) {
   return <div className="card p-6 text-sm text-mute">{children}</div>;
+}
+
+// Score helpers for live cards. Computed per-player from raw ScoreEntry rows.
+function playerLiveScore(
+  p: GridMatch["players"][number],
+  pars: number[],
+): { holes: number; strokes: number; diff: number } | null {
+  if (p.scores.length === 0) return null;
+  const strokes = p.scores.reduce((s, x) => s + x.strokes, 0);
+  const parThrough = p.scores.reduce(
+    (s, x) => s + (pars[x.hole - 1] ?? 4),
+    0,
+  );
+  return { holes: p.scores.length, strokes, diff: strokes - parThrough };
+}
+
+function fmtDiff(diff: number): string {
+  if (diff === 0) return "E";
+  return diff > 0 ? `+${diff}` : `${diff}`;
+}
+
+function diffColor(diff: number): string {
+  if (diff < 0) return "text-accent";
+  if (diff === 0) return "text-gold";
+  return "text-mute";
+}
+
+function LiveCard({ match: m }: { match: GridMatch }) {
+  const pars = parseParData(m.parData, m.holes);
+  const odds = computeOdds({
+    status: "IN_PROGRESS",
+    holes: m.holes,
+    pars,
+    scoringMode: m.scoringMode as "NET" | "GROSS" | "CUSTOM",
+    players: m.players.map((p) => ({
+      id: p.id,
+      handicap: p.handicap,
+      wagerCount: p._count.wagers,
+      scoresByHole: Object.fromEntries(
+        p.scores.map((s) => [s.hole, s.strokes]),
+      ),
+    })),
+  });
+
+  // Match-level "thru X" is the max holes any player has logged.
+  const maxThru = m.players.reduce(
+    (max, p) => Math.max(max, p.scores.length),
+    0,
+  );
+
+  const sorted = [...m.players].sort(
+    (a, b) =>
+      (odds.probabilities[b.id] ?? 0) - (odds.probabilities[a.id] ?? 0),
+  );
+
+  return (
+    <Link
+      href={`/matches/${m.id}`}
+      className="card p-4 block live-card border-accent/40 hover:border-accent/60 transition-colors"
+    >
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-sm font-semibold truncate">{m.courseName}</div>
+        <span className="text-xs px-2 py-0.5 rounded-full bg-accent/15 text-accent font-medium inline-flex items-center gap-1.5">
+          <span
+            className="inline-block w-1.5 h-1.5 rounded-full bg-accent animate-pulse"
+            aria-hidden
+          />
+          Live · thru {maxThru}
+        </span>
+      </div>
+      <div className="text-xs text-mute mb-3">
+        {new Date(m.scheduledAt).toLocaleString(undefined, {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        })}
+        {" · "}
+        {m.holes} holes
+        {" · "}
+        {m._count.wagers} wagers
+      </div>
+      <ul className="space-y-2">
+        {sorted.map((p) => {
+          const pct = odds.probabilities[p.id] ?? 0;
+          const score = playerLiveScore(p, pars);
+          return (
+            <li key={p.id} className="text-sm">
+              <div className="flex items-center justify-between gap-2">
+                <span className="truncate">
+                  {p.displayName}{" "}
+                  <span className="text-mute text-xs">
+                    · hcp {p.handicap}
+                  </span>
+                </span>
+                <span className="font-mono tabular-nums text-accent shrink-0">
+                  {formatPct(pct)}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-1.5 flex-1 bg-panel2 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-accent/80"
+                    style={{ width: `${pct * 100}%` }}
+                  />
+                </div>
+                {score ? (
+                  <span
+                    className={
+                      "text-[11px] font-mono tabular-nums shrink-0 " +
+                      diffColor(score.diff)
+                    }
+                    title={`${score.strokes} strokes thru ${score.holes}`}
+                  >
+                    {score.strokes} · {fmtDiff(score.diff)}
+                  </span>
+                ) : (
+                  <span className="text-[11px] text-mute font-mono shrink-0">
+                    —
+                  </span>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </Link>
+  );
 }
 
 function MatchGrid({
