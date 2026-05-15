@@ -27,13 +27,15 @@ export default function ChartTooltip({
 }) {
   if (!active || !payload || payload.length === 0) return null;
 
-  const seen = new Set<string>();
-  const unique = payload.filter((p) => {
-    const k = String(p.dataKey);
-    if (seen.has(k) || p.value == null) return false;
-    seen.add(k);
-    return true;
-  });
+  // Keep the *last* entry per dataKey so we get the Line's stroke color
+  // instead of the Area's gradient-URL fill. Areas render first and are
+  // earlier in the payload; Lines render on top and have the real color.
+  const byKey = new Map<string, Payload>();
+  for (const p of payload) {
+    if (p.value == null) continue;
+    byKey.set(String(p.dataKey), p);
+  }
+  const unique = Array.from(byKey.values());
   if (unique.length === 0) return null;
 
   return (
