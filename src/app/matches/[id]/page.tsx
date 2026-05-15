@@ -576,6 +576,7 @@ export default async function MatchPage({
                   hole: number;
                   partnerId: string | null;
                   isLoneWolf: boolean;
+                  isPreLoneWolf: boolean;
                   winnerId: string | null;
                   isPush: boolean;
                 }
@@ -586,6 +587,7 @@ export default async function MatchPage({
                     hole: e.hole,
                     partnerId: null,
                     isLoneWolf: false,
+                    isPreLoneWolf: false,
                     winnerId: null,
                     isPush: false,
                   };
@@ -593,6 +595,10 @@ export default async function MatchPage({
                 if (e.kind === "PARTNER")
                   out[e.hole].partnerId = e.matchPlayerId;
                 if (e.kind === "LONE_WOLF") out[e.hole].isLoneWolf = true;
+                if (e.kind === "PRE_LONE_WOLF") {
+                  out[e.hole].isLoneWolf = true;
+                  out[e.hole].isPreLoneWolf = true;
+                }
                 if (e.kind === "HOLE_WINNER")
                   out[e.hole].winnerId = e.matchPlayerId;
                 if (e.kind === "PUSH") out[e.hole].isPush = true;

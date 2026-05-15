@@ -36,6 +36,7 @@ export function isSnakeEventKind(s: string): s is SnakeEventKind {
 export const WOLF_EVENT_KINDS = [
   "PARTNER",
   "LONE_WOLF",
+  "PRE_LONE_WOLF",
   "HOLE_WINNER",
   "PUSH",
 ] as const;
@@ -584,6 +585,8 @@ type WolfHole = {
   wolfId: string;
   partnerId: string | null;
   isLoneWolf: boolean;
+  // Pre-declared lone wolf (called before any tee shot) -- doubles the stake.
+  isPreLoneWolf: boolean;
   winnerId: string | null;
   isPush: boolean;
 };
@@ -606,13 +609,15 @@ function shapeWolfHoles(
     const es = byHole.get(h) ?? [];
     const partner = es.find((e) => e.kind === "PARTNER");
     const lone = es.find((e) => e.kind === "LONE_WOLF");
+    const preLone = es.find((e) => e.kind === "PRE_LONE_WOLF");
     const winner = es.find((e) => e.kind === "HOLE_WINNER");
     const push = es.some((e) => e.kind === "PUSH");
     out.push({
       hole: h,
       wolfId: wolf.id,
       partnerId: partner?.matchPlayerId ?? null,
-      isLoneWolf: !!lone,
+      isLoneWolf: !!lone || !!preLone,
+      isPreLoneWolf: !!preLone,
       winnerId: winner?.matchPlayerId ?? null,
       isPush: push,
     });
@@ -636,11 +641,14 @@ function scoreWolfHole(
   //   5+ (fallback):           wolf solo win = N - 1; others 1 each
   //                            partner: winning team = 2 each; losing = 0
   if (shaped.isLoneWolf) {
+    // Pre-declared (called BEFORE any tee shot) doubles the stake -- standard
+    // golf-bar Wolf rule.
+    const multiplier = shaped.isPreLoneWolf ? 2 : 1;
     if (shaped.winnerId === shaped.wolfId) {
-      pts[shaped.wolfId] = N - 1; // 2 for N=3, 3 for N=4, scales for N=5+
+      pts[shaped.wolfId] = (N - 1) * multiplier;
     } else {
       for (const id of playerIds) {
-        if (id !== shaped.wolfId) pts[id] = 1;
+        if (id !== shaped.wolfId) pts[id] = 1 * multiplier;
       }
     }
     return pts;
