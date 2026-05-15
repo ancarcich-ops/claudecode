@@ -24,6 +24,13 @@ export default async function RootLayout({
   const user = await getCurrentUser();
   const groups = user ? await listUserGroups(user.id) : [];
   const activeGroupId = getActiveGroupId();
+  // The leaderboard link only makes sense when a specific group is the
+  // active filter -- "All my groups" and "Public only" don't map to a
+  // single leaderboard page.
+  const activeGroup =
+    activeGroupId && activeGroupId !== "public"
+      ? groups.find((g) => g.id === activeGroupId) ?? null
+      : null;
   return (
     <html lang="en">
       <body>
@@ -42,6 +49,12 @@ export default async function RootLayout({
               {user ? (
                 <>
                   <Link
+                    href="/"
+                    className="btn btn-ghost px-2.5 sm:px-3 whitespace-nowrap text-xs"
+                  >
+                    Home
+                  </Link>
+                  <Link
                     href="/matches/new"
                     className="btn btn-primary px-2.5 sm:px-3 whitespace-nowrap"
                     aria-label="Post a new match"
@@ -49,6 +62,14 @@ export default async function RootLayout({
                     <span aria-hidden>+</span>
                     <span>New match</span>
                   </Link>
+                  {activeGroup && (
+                    <Link
+                      href={`/groups/${activeGroup.slug ?? activeGroup.id}/leaderboard`}
+                      className="btn btn-ghost px-2.5 sm:px-3 whitespace-nowrap text-xs"
+                    >
+                      Leaderboard
+                    </Link>
+                  )}
                   <GroupSwitcher
                     groups={groups.map((g) => ({ id: g.id, name: g.name }))}
                     active={activeGroupId}
