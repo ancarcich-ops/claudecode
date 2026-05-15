@@ -111,17 +111,23 @@ export async function findGroupByIdOrSlug(identifier: string) {
 // Returns a Prisma `where` clause restricting Match results to what the user
 // should see given their active group filter.
 //
-// - "" (default): public matches + any group the user is in
+// - "" (default): public matches + any match in / linked-into one of the
+//                 user's groups
 // - "public":     only matches with groupId == null
-// - <groupId>:    only that group's matches, and only if the user is a member
+// - <groupId>:    matches posted to that group OR any match with a player
+//                 who's a member of that group ("cross-group visibility").
+//                 Requires user to be a member of <groupId>.
+//
+// Cross-group visibility: a match posted to Big Dogs with T-Bone (a Birdie
+// Boy) as a player appears in the Birdie Boys feed too. Privacy implication
+// accepted: matches leak across groups via shared players.
 //
 // Note: SQL `IN (NULL, ...)` does NOT match NULL rows because NULL is never
 // equal to anything in three-valued logic, so we use `OR` to combine null
-// matches with the group-id list.
-type MatchWhere = {
-  groupId?: string | null;
-  OR?: { groupId: string | null | { in: string[] } }[];
-};
+// matches with group-id matches.
+// Loosely typed since the Prisma where types are large; the runtime shapes
+// we build below are valid against `Prisma.MatchWhereInput`.
+type MatchWhere = Record<string, unknown>;
 
 export async function visibleMatchWhere(
   userId: string | null,
@@ -138,13 +144,29 @@ export async function visibleMatchWhere(
         where: { groupId_userId: { groupId: filter, userId } },
       });
       if (!isMember) return { groupId: null };
-      return { groupId: filter };
+      // Cross-group visibility: any match posted to <filter>, OR any match
+      // with at least one player linked to a user who's a member of <filter>.
+      return {
+        OR: [
+          { groupId: filter },
+          {
+            players: {
+              some: {
+                user: {
+                  groupMemberships: { some: { groupId: filter } },
+                },
+              },
+            },
+          },
+        ],
+      };
     } catch {
       return { groupId: null };
     }
   }
 
-  // Default: public + user's groups.
+  // Default: public + all groups the user is in + cross-group matches that
+  // include any player who's a member of one of those groups.
   if (!userId) return { groupId: null };
   let groupIds: string[] = [];
   try {
@@ -158,6 +180,60 @@ export async function visibleMatchWhere(
   }
   if (groupIds.length === 0) return { groupId: null };
   return {
-    OR: [{ groupId: null }, { groupId: { in: groupIds } }],
+    OR: [
+      { groupId: null },
+      { groupId: { in: groupIds } },
+      {
+        players: {
+          some: {
+            user: {
+              groupMemberships: {
+                some: { groupId: { in: groupIds } },
+              },
+            },
+          },
+        },
+      },
+    ],
   };
+}
+
+// Match-detail access gate. Returns true if the signed-in user is allowed
+// to view a match -- mirrors the cross-group visibility rules so anyone
+// who can see the match in their feed can also open the detail page.
+export async function canViewMatch(
+  userId: string | null,
+  match: {
+    groupId: string | null;
+    players: { userId: string | null }[];
+  },
+): Promise<boolean> {
+  // Public matches are open to anyone signed in.
+  if (!match.groupId) return true;
+  if (!userId) return false;
+
+  // Direct membership of the match's posted-to group.
+  const direct = await prisma.groupMember.findUnique({
+    where: { groupId_userId: { groupId: match.groupId, userId } },
+  });
+  if (direct) return true;
+
+  // Cross-group: any group the viewer shares with a player in the match.
+  const playerUserIds = match.players
+    .map((p) => p.userId)
+    .filter((id): id is string => !!id);
+  if (playerUserIds.length === 0) return false;
+
+  // Find a shared group: any group the viewer is in that has at least one
+  // member who's a player in this match.
+  const sharedMembership = await prisma.groupMember.findFirst({
+    where: {
+      userId,
+      group: {
+        members: { some: { userId: { in: playerUserIds } } },
+      },
+    },
+    select: { groupId: true },
+  });
+  return !!sharedMembership;
 }
