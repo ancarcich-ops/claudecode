@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { getActiveGroupId, visibleMatchWhere } from "@/lib/groups";
 import AutoRefresh from "@/components/AutoRefresh";
 import LiveCardStats from "@/components/LiveCardStats";
+import { StaggerGroup, StaggerItem } from "@/components/Stagger";
 import {
   computeStableford,
   computeSkins,
@@ -83,11 +84,13 @@ export default async function HomePage() {
             accent
             count={live.length}
           />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {live.map((m) => (
-              <LiveCard key={m.id} match={m} />
+              <StaggerItem key={m.id}>
+                <LiveCard match={m} />
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerGroup>
         </section>
       )}
 
@@ -290,7 +293,7 @@ function MatchGrid({
   settled?: boolean;
 }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 gap-3">
       {matches.map((m) => {
         const odds = computeOdds({
           status: m.status as "UPCOMING" | "IN_PROGRESS" | "COMPLETED",
@@ -312,8 +315,8 @@ function MatchGrid({
         );
 
         return (
+          <StaggerItem key={m.id}>
           <Link
-            key={m.id}
             href={`/matches/${m.id}`}
             className="card p-4 hover:border-accent/40 transition-colors block"
           >
@@ -369,9 +372,10 @@ function MatchGrid({
               </div>
             )}
           </Link>
+          </StaggerItem>
         );
       })}
-    </div>
+    </StaggerGroup>
   );
 }
 

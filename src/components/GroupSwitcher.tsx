@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import { selectGroupAction, signOutAction } from "@/lib/actions";
 
 export type GroupOption = { id: string; name: string; slug: string | null };
@@ -102,10 +103,15 @@ export default function GroupSwitcher({
         <span className="truncate">{activeLabel}</span>
         <span aria-hidden className="opacity-60">▾</span>
       </button>
+      <AnimatePresence>
       {open && (
-        <div
-          className="absolute right-0 top-full mt-1 z-30 min-w-[14rem] rounded-md border border-border bg-panel shadow-lg overflow-hidden"
+        <motion.div
+          className="absolute right-0 top-full mt-1 z-30 min-w-[14rem] rounded-md border border-border bg-panel shadow-lg overflow-hidden origin-top-right"
           role="menu"
+          initial={{ opacity: 0, y: -4, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -4, scale: 0.96 }}
+          transition={{ type: "spring", stiffness: 380, damping: 28 }}
         >
           <div className="text-[10px] uppercase tracking-wider text-mute px-3 pt-2 pb-1">
             View
@@ -175,8 +181,9 @@ export default function GroupSwitcher({
               Sign out
             </button>
           </form>
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </div>
   );
 }
