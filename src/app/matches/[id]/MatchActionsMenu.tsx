@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 
 export type MatchAction = {
   label: string;
@@ -19,6 +19,7 @@ export default function MatchActionsMenu({
   actions: MatchAction[];
 }) {
   const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -57,13 +58,25 @@ export default function MatchActionsMenu({
           role="menu"
         >
           {actions.map((a, i) => (
-            <form key={`${a.label}-${i}`} action={a.action}>
+            <form
+              key={`${a.label}-${i}`}
+              action={(fd) => {
+                // Wrap the server action in a transition so React keeps the
+                // form mounted while the request is in flight. Closing the
+                // menu eagerly in onClick was unmounting the form before
+                // the submission completed, silently cancelling the action.
+                startTransition(async () => {
+                  await a.action(fd);
+                  setOpen(false);
+                });
+              }}
+            >
               <input type="hidden" name="matchId" value={matchId} />
               <button
                 type="submit"
-                onClick={() => setOpen(false)}
+                disabled={pending}
                 className={
-                  "block w-full text-left px-3 py-2 text-sm " +
+                  "block w-full text-left px-3 py-2 text-sm disabled:opacity-50 " +
                   (a.tone === "danger"
                     ? "text-danger hover:bg-danger/10"
                     : "text-ink hover:bg-panel2")
