@@ -15,6 +15,12 @@ model User {
   id          String   @id @default(cuid())
   username    String   @unique
   displayName String?
+  // Avatar customization. avatarUrl wins when set (real uploaded photo).
+  // Otherwise the boring-avatars generator uses avatarSeed (defaults to id)
+  // and avatarVariant (defaults to 'beam').
+  avatarSeed    String?
+  avatarVariant String?
+  avatarUrl     String?
   createdAt   DateTime @default(now())
 
   createdMatches   Match[]       @relation("MatchCreator")
