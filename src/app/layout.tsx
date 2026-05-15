@@ -2,7 +2,6 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
-import { signOutAction } from "@/lib/actions";
 import { getActiveGroupId, listUserGroups } from "@/lib/groups";
 import GroupSwitcher from "@/components/GroupSwitcher";
 
@@ -42,19 +41,11 @@ export default async function RootLayout({
             <nav className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               {user ? (
                 <>
-                  <GroupSwitcher
-                    groups={groups.map((g) => ({ id: g.id, name: g.name }))}
-                    active={activeGroupId}
-                  />
                   <Link
                     href="/groups"
                     className="btn btn-ghost px-2.5 sm:px-3 whitespace-nowrap text-xs"
-                    title="Manage groups"
                   >
-                    <span className="hidden sm:inline">Groups</span>
-                    <span className="sm:hidden" aria-hidden>
-                      ⚑
-                    </span>
+                    Groups
                   </Link>
                   <Link
                     href="/matches/new"
@@ -65,20 +56,11 @@ export default async function RootLayout({
                     <span className="hidden sm:inline">New match</span>
                     <span className="sm:hidden">New</span>
                   </Link>
-                  <span className="chip whitespace-nowrap hidden sm:inline-flex max-w-[10rem] truncate">
-                    @{user.username}
-                  </span>
-                  <form action={signOutAction}>
-                    <button
-                      className="btn btn-ghost px-2.5 sm:px-3 whitespace-nowrap"
-                      type="submit"
-                      aria-label="Sign out"
-                      title="Sign out"
-                    >
-                      <SignOutIcon />
-                      <span className="hidden sm:inline">Sign out</span>
-                    </button>
-                  </form>
+                  <GroupSwitcher
+                    groups={groups.map((g) => ({ id: g.id, name: g.name }))}
+                    active={activeGroupId}
+                    username={user.username}
+                  />
                 </>
               ) : (
                 <Link href="/login" className="btn btn-primary whitespace-nowrap">
@@ -93,26 +75,5 @@ export default async function RootLayout({
         </main>
       </body>
     </html>
-  );
-}
-
-function SignOutIcon() {
-  return (
-    <svg
-      aria-hidden
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="shrink-0"
-    >
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-      <polyline points="16 17 21 12 16 7" />
-      <line x1="21" y1="12" x2="9" y2="12" />
-    </svg>
   );
 }
