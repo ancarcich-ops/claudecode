@@ -7,6 +7,7 @@ import AutoRefresh from "@/components/AutoRefresh";
 import LiveCardStats from "@/components/LiveCardStats";
 import { StaggerGroup, StaggerItem } from "@/components/Stagger";
 import EmptyIllustration from "@/components/EmptyIllustration";
+import PlayerAvatar from "@/components/Avatar";
 import {
   computeStableford,
   computeSkins,
@@ -29,6 +30,18 @@ async function loadMatches(where: any, orderBy: any, take?: number) {
         include: {
           scores: true,
           _count: { select: { wagers: true } },
+          // Pull the player-user's avatar customization so cards can
+          // render the real photo / picked variant, not just the default
+          // seeded boring-avatar.
+          user: {
+            select: {
+              id: true,
+              username: true,
+              avatarSeed: true,
+              avatarVariant: true,
+              avatarUrl: true,
+            },
+          },
         },
       },
       _count: { select: { wagers: true } },
@@ -283,6 +296,9 @@ function LiveCard({ match: m }: { match: GridMatch }) {
           handicap: p.handicap,
           probability: odds.probabilities[p.id] ?? 0,
           liveScore: playerLiveScore(p, pars),
+          avatarSeed: p.user?.avatarSeed ?? null,
+          avatarVariant: p.user?.avatarVariant ?? null,
+          avatarUrl: p.user?.avatarUrl ?? null,
         }))}
         sideGames={sideGamesData}
       />
@@ -348,10 +364,27 @@ function MatchGrid({
                 return (
                   <li key={p.id} className="text-sm">
                     <div className="flex items-center justify-between">
-                      <span className="truncate">
-                        {p.displayName}{" "}
-                        <span className="text-mute text-xs">
-                          · hcp {p.handicap}
+                      <span className="flex items-center gap-1.5 min-w-0">
+                        <PlayerAvatar
+                          seed={p.user?.avatarSeed ?? p.id}
+                          variant={
+                            (p.user?.avatarVariant as
+                              | "beam"
+                              | "marble"
+                              | "sunset"
+                              | "pixel"
+                              | "ring"
+                              | "bauhaus"
+                              | undefined) ?? "beam"
+                          }
+                          avatarUrl={p.user?.avatarUrl ?? null}
+                          size={16}
+                        />
+                        <span className="truncate">
+                          {p.displayName}{" "}
+                          <span className="text-mute text-xs">
+                            · hcp {p.handicap}
+                          </span>
                         </span>
                       </span>
                       <span className="font-mono tabular-nums text-accent">

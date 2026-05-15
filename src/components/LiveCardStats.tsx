@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import RollingNumber from "./RollingNumber";
-import PlayerAvatar from "./Avatar";
+import PlayerAvatar, { isVariant } from "./Avatar";
 
 type Player = {
   id: string;
@@ -10,6 +10,10 @@ type Player = {
   handicap: number;
   probability: number;
   liveScore: { holes: number; strokes: number; diff: number } | null;
+  // Avatar customization (null when the seat isn't linked to a user account).
+  avatarSeed?: string | null;
+  avatarVariant?: string | null;
+  avatarUrl?: string | null;
 };
 
 type SideGames = {
@@ -128,7 +132,22 @@ export default function LiveCardStats({
             <li key={p.id} className="text-sm">
               <div className="flex items-center justify-between gap-2">
                 <span className="flex items-center gap-1.5 min-w-0">
-                  <PlayerAvatar seed={p.id} size={18} />
+                  <PlayerAvatar
+                    seed={p.avatarSeed ?? p.id}
+                    variant={
+                      isVariant(p.avatarVariant ?? "beam")
+                        ? (p.avatarVariant as
+                            | "beam"
+                            | "marble"
+                            | "sunset"
+                            | "pixel"
+                            | "ring"
+                            | "bauhaus")
+                        : "beam"
+                    }
+                    avatarUrl={p.avatarUrl ?? null}
+                    size={18}
+                  />
                   <span className="truncate">
                     {p.displayName}{" "}
                     <span className="text-mute text-xs">

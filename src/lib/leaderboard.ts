@@ -25,6 +25,9 @@ export type LeaderboardRow = {
   userId: string;
   username: string;
   displayName: string | null;
+  avatarSeed: string | null;
+  avatarVariant: string | null;
+  avatarUrl: string | null;
   matchesPlayed: number;
   // One column per game type. A "win" = leader (ties = co-winners).
   mainWins: number;
@@ -164,6 +167,9 @@ export async function computeGroupLeaderboard(
       userId: m.userId,
       username: m.user.username,
       displayName: m.user.displayName,
+      avatarSeed: m.user.avatarSeed,
+      avatarVariant: m.user.avatarVariant,
+      avatarUrl: m.user.avatarUrl,
       matchesPlayed: 0,
       mainWins: 0,
       stablefordWins: 0,
