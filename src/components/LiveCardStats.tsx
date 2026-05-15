@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import RollingNumber from "./RollingNumber";
 
 type Player = {
   id: string;
@@ -62,18 +63,33 @@ export default function LiveCardStats({
   };
   const ceiling = maxFor(active);
 
-  const valueOf = (p: Player): { value: number; display: string } => {
+  const valueOf = (
+    p: Player,
+  ): {
+    value: number;
+    raw: number;
+    format: (n: number) => string;
+  } => {
     if (active === "STABLEFORD" && sideGames.stableford) {
       const v = sideGames.stableford[p.id] ?? 0;
-      return { value: v / ceiling, display: `${v} pt${v === 1 ? "" : "s"}` };
+      return {
+        value: v / ceiling,
+        raw: v,
+        format: (n) => `${Math.round(n)} pt${Math.round(n) === 1 ? "" : "s"}`,
+      };
     }
     if (active === "SKINS" && sideGames.skins) {
       const v = sideGames.skins[p.id] ?? 0;
-      return { value: v / ceiling, display: `${v} skin${v === 1 ? "" : "s"}` };
+      return {
+        value: v / ceiling,
+        raw: v,
+        format: (n) => `${Math.round(n)} skin${Math.round(n) === 1 ? "" : "s"}`,
+      };
     }
     return {
       value: p.probability,
-      display: `${(p.probability * 100).toFixed(0)}%`,
+      raw: p.probability * 100,
+      format: (n) => `${Math.round(n)}%`,
     };
   };
 
@@ -116,9 +132,11 @@ export default function LiveCardStats({
                     · hcp {p.handicap}
                   </span>
                 </span>
-                <span className="font-mono tabular-nums text-accent shrink-0">
-                  {v.display}
-                </span>
+                <RollingNumber
+                  value={v.raw}
+                  format={v.format}
+                  className="font-mono tabular-nums text-accent shrink-0"
+                />
               </div>
               <div className="flex items-center gap-2">
                 <div className="h-1.5 flex-1 bg-panel2 rounded-full overflow-hidden">

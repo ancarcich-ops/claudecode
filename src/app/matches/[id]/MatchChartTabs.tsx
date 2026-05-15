@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import OddsChart from "./OddsChart";
 import SideGameChart from "./SideGameChart";
 
@@ -76,13 +77,18 @@ export default function MatchChartTabs({
                 aria-selected={isActive}
                 onClick={() => setActive(t.id)}
                 className={
-                  "text-xs px-2.5 py-1 rounded-full border whitespace-nowrap transition-colors " +
-                  (isActive
-                    ? "border-accent bg-accent/10 text-accent"
-                    : "border-border text-mute hover:text-ink")
+                  "relative text-xs px-2.5 py-1 rounded-full whitespace-nowrap transition-colors " +
+                  (isActive ? "text-accent" : "text-mute hover:text-ink")
                 }
               >
-                {t.label}
+                {isActive && (
+                  <motion.span
+                    layoutId="chart-tab-active"
+                    className="absolute inset-0 rounded-full border border-accent bg-accent/10"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10">{t.label}</span>
               </button>
             );
           })}

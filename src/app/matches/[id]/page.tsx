@@ -41,6 +41,7 @@ import BBBEditor from "./BBBEditor";
 import SnakeEditor from "./SnakeEditor";
 import WolfEditor from "./WolfEditor";
 import WolfSettings from "./WolfSettings";
+import WinCelebration from "@/components/WinCelebration";
 import AutoRefresh from "@/components/AutoRefresh";
 import ScoreSheet from "./ScoreSheet";
 import WagerForm from "./WagerForm";
@@ -277,6 +278,7 @@ export default async function MatchPage({
   return (
     <div className="space-y-6">
       <AutoRefresh endpoint={`/api/matches/${match.id}/state`} />
+      <WinCelebration matchId={match.id} status={match.status} />
 
       <header>
         <div className="flex items-center gap-2 min-w-0">
