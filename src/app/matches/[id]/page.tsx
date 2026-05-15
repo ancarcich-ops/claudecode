@@ -88,6 +88,11 @@ export default async function MatchPage({
     : null;
   const isCreator = !!user && match.createdById === user.id;
   const isCompleted = match.status === "COMPLETED";
+  // Score-edit permission: creator + any user linked to a seat. Non-players
+  // see the scorecard but can't edit. Server action enforces the same gate.
+  const isLinkedPlayer =
+    !!user && match.players.some((p) => p.userId === user.id);
+  const canLogScores = !isCompleted && (isCreator || isLinkedPlayer);
 
   type Row = { t: number } & Record<string, number>;
   const rowMap = new Map<number, Row>();
@@ -427,13 +432,21 @@ export default async function MatchPage({
             Sign in to log scores during the round.
           </div>
         ) : (
-          <ScoreSheet
-            matchId={match.id}
-            holes={match.holes}
-            pars={pars}
-            players={playerMeta}
-            locked={isCompleted}
-          />
+          <>
+            {!canLogScores && !isCompleted && (
+              <div className="text-xs text-mute mb-3">
+                Read-only — only the creator and players in this match can log
+                scores.
+              </div>
+            )}
+            <ScoreSheet
+              matchId={match.id}
+              holes={match.holes}
+              pars={pars}
+              players={playerMeta}
+              locked={!canLogScores}
+            />
+          </>
         )}
       </section>
 
@@ -465,7 +478,7 @@ export default async function MatchPage({
               }
               return out;
             })()}
-            locked={isCompleted}
+            locked={!canLogScores}
           />
         </section>
       )}
@@ -495,7 +508,7 @@ export default async function MatchPage({
               }
               return out;
             })()}
-            locked={isCompleted}
+            locked={!canLogScores}
           />
         </section>
       )}
@@ -545,7 +558,7 @@ export default async function MatchPage({
               }
               return out;
             })()}
-            locked={isCompleted}
+            locked={!canLogScores}
           />
         </section>
       )}

@@ -59,19 +59,19 @@ export default async function HomePage() {
       {!user && (
         <div className="card p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold">
-              The prediction market for your foursome.
+            <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight leading-tight">
+              All your games.{" "}
+              <span className="text-accent">One round.</span>
             </h2>
-            <p className="text-sm text-mute mt-1">
-              Post your upcoming round. Friends call who wins. Odds move like
-              a market.
+            <p className="text-sm text-mute mt-2">
+              Wolf, Skins, Bingo Bango Bongo — same scorecard.
             </p>
           </div>
           <Link
             href="/login"
             className="btn btn-primary shrink-0 self-start sm:self-auto"
           >
-            Sign in to play
+            Open the line →
           </Link>
         </div>
       )}
@@ -95,10 +95,10 @@ export default async function HomePage() {
         <SectionHeader title="Upcoming" />
         {upcoming.length === 0 && live.length === 0 ? (
           <EmptyCard>
-            No open matches yet.{" "}
+            Quiet Saturday.{" "}
             {user ? (
               <Link className="text-accent" href="/matches/new">
-                Post one →
+                Post a tee time so the market opens →
               </Link>
             ) : (
               <Link className="text-accent" href="/login">
@@ -107,7 +107,7 @@ export default async function HomePage() {
             )}
           </EmptyCard>
         ) : upcoming.length === 0 ? (
-          <EmptyCard>Nothing upcoming. Post the next round.</EmptyCard>
+          <EmptyCard>Nothing on the tee. Open the next line.</EmptyCard>
         ) : (
           <MatchGrid matches={upcoming} />
         )}
@@ -116,7 +116,7 @@ export default async function HomePage() {
       <section>
         <SectionHeader title="Settled" />
         {completed.length === 0 ? (
-          <EmptyCard>No completed matches yet.</EmptyCard>
+          <EmptyCard>No closed lines yet.</EmptyCard>
         ) : (
           <MatchGrid matches={completed} settled />
         )}

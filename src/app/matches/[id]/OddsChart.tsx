@@ -80,7 +80,7 @@ export default function OddsChart({
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart
           data={series}
-          margin={{ top: 8, right: 16, bottom: 4, left: -12 }}
+          margin={{ top: 8, right: 16, bottom: 4, left: 4 }}
         >
           <defs>
             {players.map((p) => (
@@ -122,7 +122,7 @@ export default function OddsChart({
             stroke="transparent"
             tickLine={false}
             axisLine={false}
-            width={38}
+            width={44}
           />
           <ReferenceLine
             y={0.5}

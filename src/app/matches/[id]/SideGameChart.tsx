@@ -80,7 +80,7 @@ export default function SideGameChart({
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart
           data={rows}
-          margin={{ top: 8, right: 16, bottom: 4, left: -8 }}
+          margin={{ top: 8, right: 16, bottom: 4, left: 8 }}
         >
           <defs>
             {players.map((p) => (
@@ -123,7 +123,7 @@ export default function SideGameChart({
             stroke="transparent"
             tickLine={false}
             axisLine={false}
-            width={34}
+            width={40}
           />
           <Tooltip
             cursor={{ stroke: "#1f2a25", strokeWidth: 1 }}

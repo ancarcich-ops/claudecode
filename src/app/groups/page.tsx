@@ -78,8 +78,7 @@ export default async function GroupsPage({
         </h2>
         {groups.length === 0 ? (
           <p className="text-sm text-mute">
-            You haven&apos;t joined any groups yet. Create one below, or join
-            with an invite code.
+            No groups yet. Spin one up below or drop in an invite code.
           </p>
         ) : (
           <ul className="space-y-2">
