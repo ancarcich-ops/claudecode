@@ -51,6 +51,52 @@ export type GroupLeaderboard = {
   hasBbb: boolean;
   hasSnake: boolean;
   hasWolf: boolean;
+  // Phase 2 extras (computed in the same pass for free)
+  headToHead: HeadToHead;
+  courseRecords: CourseRecord[];
+  champions: GroupChampion[];
+  streaks: StreakRow[];
+};
+
+// Pairwise head-to-head matrix: for each ordered (A, B), how many times A
+// beat B in a main-game result they both played. Ties on a hole don't count
+// (neither winner-of-each-other), but ties for the round contribute to neither
+// side.
+export type HeadToHead = {
+  // Sorted list of users that appear in at least one head-to-head
+  users: { userId: string; displayName: string; username: string }[];
+  // wins[a][b] = number of times a finished lower-net than b
+  wins: Record<string, Record<string, number>>;
+};
+
+export type CourseRecord = {
+  courseName: string;
+  bestUserId: string;
+  bestDisplayName: string;
+  bestUsername: string;
+  gross: number;
+  net: number;
+  matchId: string;
+  scheduledAt: Date;
+};
+
+export type GroupChampion = {
+  kind: "MAIN" | "STABLEFORD" | "SKINS" | "NASSAU" | "BBB" | "SNAKE" | "WOLF";
+  label: string;
+  // The most recent leader(s) for this game type across the group's matches.
+  // Co-winners on ties.
+  winners: { userId: string; displayName: string; username: string }[];
+  matchId: string;
+  courseName: string;
+  scheduledAt: Date;
+};
+
+export type StreakRow = {
+  userId: string;
+  displayName: string;
+  username: string;
+  currentMainStreak: number;
+  bestMainStreak: number;
 };
 
 // Bump count for every leader (handles ties).
@@ -95,7 +141,7 @@ export async function computeGroupLeaderboard(
       sideGames: { include: { events: true } },
     },
   });
-  const matches = candidates.filter((m) => {
+  const matchesUnsorted = candidates.filter((m) => {
     const distinctMembersInMatch = new Set<string>();
     for (const p of m.players) {
       if (p.userId && memberUserIds.has(p.userId)) {
@@ -103,6 +149,13 @@ export async function computeGroupLeaderboard(
       }
     }
     return distinctMembersInMatch.size >= 2;
+  });
+  // Sort chronologically so streak tracking + 'current champion' (most-recent
+  // winner overwrites prior) work without a second pass.
+  const matches = matchesUnsorted.sort((a, b) => {
+    const at = (a.completedAt ?? a.scheduledAt).getTime();
+    const bt = (b.completedAt ?? b.scheduledAt).getTime();
+    return at - bt;
   });
 
   const stats = new Map<string, LeaderboardRow>();
@@ -130,6 +183,25 @@ export async function computeGroupLeaderboard(
   let hasBbb = false;
   let hasSnake = false;
   let hasWolf = false;
+
+  // Phase 2 collectors
+  const h2hWins = new Map<string, Map<string, number>>();
+  for (const m of members) {
+    const inner = new Map<string, number>();
+    for (const m2 of members) {
+      if (m.userId !== m2.userId) inner.set(m2.userId, 0);
+    }
+    h2hWins.set(m.userId, inner);
+  }
+  const courseBest = new Map<string, CourseRecord>();
+  const championByKind = new Map<GroupChampion["kind"], GroupChampion>();
+  const streakState = new Map<
+    string,
+    { current: number; best: number; lastWon: boolean }
+  >();
+  for (const m of members) {
+    streakState.set(m.userId, { current: 0, best: 0, lastWon: false });
+  }
 
   for (const match of matches) {
     if (match.players.length === 0) continue;
@@ -160,6 +232,7 @@ export async function computeGroupLeaderboard(
       };
     });
     const scored = nets.filter((n) => n.hasScores);
+    const mainWinnerUserIds = new Set<string>();
     if (scored.length > 0) {
       const min = Math.min(...scored.map((n) => n.net));
       for (const n of scored) {
@@ -167,6 +240,88 @@ export async function computeGroupLeaderboard(
         if (!n.userId) continue;
         const row = stats.get(n.userId);
         if (row) row.mainWins++;
+        mainWinnerUserIds.add(n.userId);
+      }
+
+      // Phase 2: head-to-head -- A beats B when A.net < B.net, both members.
+      const memberScored = scored.filter(
+        (n) => n.userId && memberUserIds.has(n.userId),
+      );
+      for (const a of memberScored) {
+        for (const b of memberScored) {
+          if (a.userId === b.userId) continue;
+          if (a.net < b.net) {
+            h2hWins.get(a.userId!)?.set(
+              b.userId!,
+              (h2hWins.get(a.userId!)?.get(b.userId!) ?? 0) + 1,
+            );
+          }
+        }
+      }
+
+      // Phase 2: course record -- best gross by a group member at this course.
+      for (const p of match.players) {
+        if (!p.userId || !memberUserIds.has(p.userId)) continue;
+        if (p.scores.length === 0) continue;
+        const gross = p.scores.reduce((s, x) => s + x.strokes, 0);
+        const allowance = scoringMode === "GROSS" ? 0 : p.handicap;
+        const net = gross - allowance;
+        const cur = courseBest.get(match.courseName);
+        if (!cur || gross < cur.gross) {
+          const memberRow = stats.get(p.userId);
+          courseBest.set(match.courseName, {
+            courseName: match.courseName,
+            bestUserId: p.userId,
+            bestDisplayName:
+              memberRow?.displayName ?? memberRow?.username ?? "Unknown",
+            bestUsername: memberRow?.username ?? "",
+            gross,
+            net,
+            matchId: match.id,
+            scheduledAt: match.scheduledAt,
+          });
+        }
+      }
+
+      // Phase 2: main-game champion (latest match's winners overwrites)
+      if (mainWinnerUserIds.size > 0) {
+        const winners = Array.from(mainWinnerUserIds)
+          .filter((uid) => memberUserIds.has(uid))
+          .map((uid) => {
+            const r = stats.get(uid);
+            return {
+              userId: uid,
+              displayName: r?.displayName ?? r?.username ?? "Unknown",
+              username: r?.username ?? "",
+            };
+          });
+        if (winners.length > 0) {
+          championByKind.set("MAIN", {
+            kind: "MAIN",
+            label: "Main game",
+            winners,
+            matchId: match.id,
+            courseName: match.courseName,
+            scheduledAt: match.scheduledAt,
+          });
+        }
+      }
+    }
+
+    // Phase 2: streaks -- per member, every match they were a scored player.
+    if (scored.length > 0) {
+      for (const p of match.players) {
+        if (!p.userId || !memberUserIds.has(p.userId)) continue;
+        if (p.scores.length === 0) continue;
+        const s = streakState.get(p.userId)!;
+        if (mainWinnerUserIds.has(p.userId)) {
+          s.current = s.lastWon ? s.current + 1 : 1;
+          s.lastWon = true;
+          if (s.current > s.best) s.best = s.current;
+        } else {
+          s.current = 0;
+          s.lastWon = false;
+        }
       }
     }
 
@@ -189,6 +344,34 @@ export async function computeGroupLeaderboard(
       ),
     }));
 
+    const recordChampion = (
+      kind: GroupChampion["kind"],
+      label: string,
+      lb: Leaderboard,
+    ) => {
+      const winners = lb.rows
+        .filter((r) => r.isLeader)
+        .map((r) => matchPlayerToUserId.get(r.playerId))
+        .filter((uid): uid is string => !!uid && memberUserIds.has(uid))
+        .map((uid) => {
+          const row = stats.get(uid);
+          return {
+            userId: uid,
+            displayName: row?.displayName ?? row?.username ?? "Unknown",
+            username: row?.username ?? "",
+          };
+        });
+      if (winners.length === 0) return;
+      championByKind.set(kind, {
+        kind,
+        label,
+        winners,
+        matchId: match.id,
+        courseName: match.courseName,
+        scheduledAt: match.scheduledAt,
+      });
+    };
+
     for (const sg of match.sideGames) {
       const bump = (column: keyof Pick<
         LeaderboardRow,
@@ -207,17 +390,20 @@ export async function computeGroupLeaderboard(
         hasStableford = true;
         const lb = computeStableford(sgPlayers, pars, match.holes, scoringMode);
         awardLeaders(lb, matchPlayerToUserId, bump("stablefordWins"));
+        recordChampion("STABLEFORD", "Stableford", lb);
       } else if (sg.kind === "SKINS") {
         hasSkins = true;
         const lb = computeSkins(sgPlayers, pars, match.holes, scoringMode);
         awardLeaders(lb, matchPlayerToUserId, bump("skinsWins"));
+        recordChampion("SKINS", "Skins", lb);
       } else if (sg.kind === "NASSAU" && match.holes === 18) {
         hasNassau = true;
-        // Use the Total segment as the headline "Nassau win". F9 and B9
-        // are independent sub-bets we can surface separately in phase 2.
         const segments = computeNassau(sgPlayers, pars, match.holes, scoringMode);
         const total = segments.find((s) => s.key === "NASSAU_TOTAL");
-        if (total) awardLeaders(total, matchPlayerToUserId, bump("nassauWins"));
+        if (total) {
+          awardLeaders(total, matchPlayerToUserId, bump("nassauWins"));
+          recordChampion("NASSAU", "Nassau · Total", total);
+        }
       } else if (sg.kind === "BBB") {
         hasBbb = true;
         const events: BbbEvent[] = sg.events
@@ -229,6 +415,7 @@ export async function computeGroupLeaderboard(
           }));
         const lb = computeBbb(sgPlayers, events);
         awardLeaders(lb, matchPlayerToUserId, bump("bbbWins"));
+        recordChampion("BBB", "Bingo Bango Bongo", lb);
       } else if (sg.kind === "SNAKE") {
         hasSnake = true;
         const events: SnakeEvent[] = sg.events
@@ -239,6 +426,7 @@ export async function computeGroupLeaderboard(
           }));
         const lb = computeSnake(sgPlayers, events);
         awardLeaders(lb, matchPlayerToUserId, bump("snakeWins"));
+        recordChampion("SNAKE", "Snake", lb);
       } else if (sg.kind === "WOLF") {
         hasWolf = true;
         const events: WolfEvent[] = sg.events
@@ -250,6 +438,7 @@ export async function computeGroupLeaderboard(
           }));
         const lb = computeWolf(seatedPlayers, match.holes, events);
         awardLeaders(lb, matchPlayerToUserId, bump("wolfWins"));
+        recordChampion("WOLF", "Wolf", lb);
       }
     }
   }
@@ -273,6 +462,61 @@ export async function computeGroupLeaderboard(
     return a.username.localeCompare(b.username);
   });
 
+  // Head-to-head: shape the inner Map for JSON-friendly output. Drop users
+  // who never appeared in a head-to-head together so the matrix is tight.
+  const h2hUserSet = new Set<string>();
+  for (const [a, inner] of h2hWins) {
+    for (const [b, wins] of inner) {
+      if (wins > 0) {
+        h2hUserSet.add(a);
+        h2hUserSet.add(b);
+      }
+    }
+  }
+  const h2hUsers = Array.from(h2hUserSet)
+    .map((uid) => {
+      const r = stats.get(uid);
+      return {
+        userId: uid,
+        displayName: r?.displayName ?? r?.username ?? "Unknown",
+        username: r?.username ?? "",
+      };
+    })
+    .sort((a, b) => a.displayName.localeCompare(b.displayName));
+  const h2hWinsOut: Record<string, Record<string, number>> = {};
+  for (const a of h2hUsers) {
+    h2hWinsOut[a.userId] = {};
+    for (const b of h2hUsers) {
+      if (a.userId === b.userId) continue;
+      h2hWinsOut[a.userId][b.userId] =
+        h2hWins.get(a.userId)?.get(b.userId) ?? 0;
+    }
+  }
+
+  const courseRecords = Array.from(courseBest.values()).sort((a, b) =>
+    a.courseName.localeCompare(b.courseName),
+  );
+  const champions = Array.from(championByKind.values());
+
+  const streakRows: StreakRow[] = members
+    .map((m) => {
+      const s = streakState.get(m.userId)!;
+      return {
+        userId: m.userId,
+        displayName: m.user.displayName ?? m.user.username,
+        username: m.user.username,
+        currentMainStreak: s.current,
+        bestMainStreak: s.best,
+      };
+    })
+    .filter((r) => r.bestMainStreak > 0)
+    .sort(
+      (a, b) =>
+        b.currentMainStreak - a.currentMainStreak ||
+        b.bestMainStreak - a.bestMainStreak ||
+        a.displayName.localeCompare(b.displayName),
+    );
+
   return {
     rows,
     completedMatches: matches.length,
@@ -283,5 +527,9 @@ export async function computeGroupLeaderboard(
     hasBbb,
     hasSnake,
     hasWolf,
+    headToHead: { users: h2hUsers, wins: h2hWinsOut },
+    courseRecords,
+    champions,
+    streaks: streakRows,
   };
 }
