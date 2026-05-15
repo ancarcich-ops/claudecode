@@ -72,6 +72,9 @@ model Match {
   startedAt    DateTime?
   completedAt  DateTime?
   notes        String?
+  // JSON: per-game-kind list of winner userIds, persisted on completion.
+  // null for in-progress / not-yet-completed matches. Leaderboard fast path.
+  winnerSummary String?
 
   players      MatchPlayer[]
   wagers       Wager[]

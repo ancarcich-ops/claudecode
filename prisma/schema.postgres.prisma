@@ -65,6 +65,7 @@ model Match {
   startedAt    DateTime?
   completedAt  DateTime?
   notes        String?
+  winnerSummary String?
 
   players      MatchPlayer[]
   wagers       Wager[]
