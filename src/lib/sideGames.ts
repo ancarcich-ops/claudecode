@@ -33,11 +33,53 @@ export function isSnakeEventKind(s: string): s is SnakeEventKind {
   return (SNAKE_EVENT_KINDS as readonly string[]).includes(s);
 }
 
-export const WOLF_EVENT_KINDS = ["PARTNER", "LONE_WOLF", "HOLE_WINNER"] as const;
+export const WOLF_EVENT_KINDS = [
+  "PARTNER",
+  "LONE_WOLF",
+  "HOLE_WINNER",
+  "PUSH",
+] as const;
 export type WolfEventKind = (typeof WOLF_EVENT_KINDS)[number];
 
 export function isWolfEventKind(s: string): s is WolfEventKind {
   return (WOLF_EVENT_KINDS as readonly string[]).includes(s);
+}
+
+// Per-match Wolf configuration. Stored as JSON on SideGame.config when
+// the creator deviates from defaults; absent means use defaults.
+//   rotation: optional list of matchPlayerId in turn order. Wolf for hole
+//             N is rotation[(N-1) % rotation.length]. Defaults to seat
+//             order.
+//   pushRule: how pushed holes (HOLE_WINNER missing, PUSH recorded) score.
+//             - NO_POINTS (default): pushed hole awards nothing, move on.
+//             - ROLLOVER: a push increments a carry counter; the next
+//               resolved hole's points are multiplied by (1 + carry).
+export type WolfPushRule = "NO_POINTS" | "ROLLOVER";
+export type WolfConfig = {
+  rotation?: string[];
+  pushRule?: WolfPushRule;
+};
+
+export function parseWolfConfig(s: string | null | undefined): WolfConfig {
+  if (!s) return {};
+  try {
+    const v = JSON.parse(s);
+    if (typeof v !== "object" || v === null) return {};
+    const out: WolfConfig = {};
+    if (Array.isArray(v.rotation) && v.rotation.every((x: unknown) => typeof x === "string")) {
+      out.rotation = v.rotation;
+    }
+    if (v.pushRule === "ROLLOVER" || v.pushRule === "NO_POINTS") {
+      out.pushRule = v.pushRule;
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+export function stringifyWolfConfig(c: WolfConfig): string {
+  return JSON.stringify(c);
 }
 
 export const ALL_SIDE_GAMES: {
@@ -517,10 +559,24 @@ export type WolfPlayer = LiveScorePlayer & { seat: number };
 export function wolfForHole(
   players: WolfPlayer[],
   hole: number,
+  rotation?: string[],
 ): WolfPlayer | null {
   if (players.length === 0) return null;
-  const sorted = [...players].sort((a, b) => a.seat - b.seat);
-  return sorted[(hole - 1) % sorted.length];
+  // If a custom rotation is provided, use it. Drop any ids no longer in the
+  // player list (e.g. someone got removed after the rotation was set), and
+  // fall back to seat order if the result is empty.
+  let ordered: WolfPlayer[] = [];
+  if (rotation && rotation.length > 0) {
+    const byId = new Map(players.map((p) => [p.id, p]));
+    for (const id of rotation) {
+      const p = byId.get(id);
+      if (p) ordered.push(p);
+    }
+  }
+  if (ordered.length === 0) {
+    ordered = [...players].sort((a, b) => a.seat - b.seat);
+  }
+  return ordered[(hole - 1) % ordered.length];
 }
 
 type WolfHole = {
@@ -529,12 +585,14 @@ type WolfHole = {
   partnerId: string | null;
   isLoneWolf: boolean;
   winnerId: string | null;
+  isPush: boolean;
 };
 
 function shapeWolfHoles(
   players: WolfPlayer[],
   holes: number,
   events: WolfEvent[],
+  rotation?: string[],
 ): WolfHole[] {
   const byHole = new Map<number, WolfEvent[]>();
   for (const e of events) {
@@ -543,18 +601,20 @@ function shapeWolfHoles(
   }
   const out: WolfHole[] = [];
   for (let h = 1; h <= holes; h++) {
-    const wolf = wolfForHole(players, h);
+    const wolf = wolfForHole(players, h, rotation);
     if (!wolf) continue;
     const es = byHole.get(h) ?? [];
     const partner = es.find((e) => e.kind === "PARTNER");
     const lone = es.find((e) => e.kind === "LONE_WOLF");
     const winner = es.find((e) => e.kind === "HOLE_WINNER");
+    const push = es.some((e) => e.kind === "PUSH");
     out.push({
       hole: h,
       wolfId: wolf.id,
       partnerId: partner?.matchPlayerId ?? null,
       isLoneWolf: !!lone,
       winnerId: winner?.matchPlayerId ?? null,
+      isPush: push,
     });
   }
   return out;
@@ -604,36 +664,81 @@ function scoreWolfHole(
   return pts;
 }
 
+// Single pass over shaped Wolf holes that applies the push rule. Returns
+// per-player running totals plus a hole-by-hole snapshot for the chart.
+function tallyWolfHoles(
+  shaped: WolfHole[],
+  playerIds: string[],
+  pushRule: WolfPushRule,
+): {
+  totals: Record<string, number>;
+  rows: ({ hole: number } & Record<string, number>)[];
+  resolvedHoles: number;
+  lastResolved: number;
+} {
+  const totals: Record<string, number> = Object.fromEntries(
+    playerIds.map((id) => [id, 0]),
+  );
+  const rows: ({ hole: number } & Record<string, number>)[] = [];
+  let resolvedHoles = 0;
+  let lastResolved = 0;
+  let carry = 0; // # of pushed holes awaiting payout (ROLLOVER mode only)
+  for (const shaped_ of shaped) {
+    if (shaped_.isPush) {
+      // Pushed hole. Either drag the stake forward or zero it.
+      if (pushRule === "ROLLOVER") {
+        carry += 1;
+        // No row emitted -- the chart line stays flat through pushes.
+      }
+      continue;
+    }
+    if (!shaped_.winnerId) continue;
+    const add = scoreWolfHole(shaped_, playerIds);
+    const multiplier = pushRule === "ROLLOVER" ? 1 + carry : 1;
+    for (const id of playerIds) totals[id] += (add[id] ?? 0) * multiplier;
+    carry = 0;
+    resolvedHoles++;
+    lastResolved = shaped_.hole;
+    rows.push({ hole: shaped_.hole, ...totals });
+  }
+  return { totals, rows, resolvedHoles, lastResolved };
+}
+
 export function computeWolf(
   players: WolfPlayer[],
   holes: number,
   events: WolfEvent[],
+  config: WolfConfig = {},
 ): Leaderboard {
   const ids = players.map((p) => p.id);
-  const totals: Record<string, number> = Object.fromEntries(
-    ids.map((id) => [id, 0]),
-  );
-  let resolvedHoles = 0;
-  for (const shaped of shapeWolfHoles(players, holes, events)) {
-    if (!shaped.winnerId) continue;
-    resolvedHoles++;
-    const add = scoreWolfHole(shaped, ids);
-    for (const id of ids) totals[id] += add[id] ?? 0;
-  }
+  const pushRule = config.pushRule ?? "NO_POINTS";
+  const shaped = shapeWolfHoles(players, holes, events, config.rotation);
+  const { totals, resolvedHoles } = tallyWolfHoles(shaped, ids, pushRule);
+  const pushed = shaped.filter((s) => s.isPush).length;
   const rows = players.map((p) => ({
     playerId: p.id,
     player: p.displayName,
     numeric: totals[p.id] ?? 0,
     value: `${totals[p.id] ?? 0} pt${(totals[p.id] ?? 0) === 1 ? "" : "s"}`,
   }));
+  const parts: string[] = [];
+  if (resolvedHoles === 0 && pushed === 0) {
+    parts.push("No holes resolved yet");
+  } else {
+    parts.push(`${resolvedHoles}/${holes} resolved`);
+    if (pushed > 0) {
+      parts.push(
+        `${pushed} push${pushed === 1 ? "" : "es"}${
+          pushRule === "ROLLOVER" ? " · rolling over" : ""
+        }`,
+      );
+    }
+  }
   return {
     key: "WOLF",
     kind: "WOLF",
     title: "Wolf",
-    subtitle:
-      resolvedHoles === 0
-        ? "No holes resolved yet"
-        : `${resolvedHoles}/${holes} resolved`,
+    subtitle: parts.join(" · "),
     rows: rankRows(rows, true),
   };
 }
@@ -642,21 +747,12 @@ export function runningWolf(
   players: WolfPlayer[],
   holes: number,
   events: WolfEvent[],
+  config: WolfConfig = {},
 ): RunningSeries {
   const ids = players.map((p) => p.id);
-  const totals: Record<string, number> = Object.fromEntries(
-    ids.map((id) => [id, 0]),
-  );
-  const rows: ({ hole: number } & Record<string, number>)[] = [];
-  let lastResolved = 0;
-  for (const shaped of shapeWolfHoles(players, holes, events)) {
-    if (shaped.winnerId) {
-      const add = scoreWolfHole(shaped, ids);
-      for (const id of ids) totals[id] += add[id] ?? 0;
-      rows.push({ hole: shaped.hole, ...totals });
-      lastResolved = shaped.hole;
-    }
-  }
+  const pushRule = config.pushRule ?? "NO_POINTS";
+  const shaped = shapeWolfHoles(players, holes, events, config.rotation);
+  const { totals, rows, lastResolved } = tallyWolfHoles(shaped, ids, pushRule);
   return { rows, current: { ...totals }, throughHole: lastResolved };
 }
 
@@ -673,6 +769,7 @@ export function computeAllSideGames(input: {
   bbbEvents?: BbbEvent[];
   snakeEvents?: SnakeEvent[];
   wolfEvents?: WolfEvent[];
+  wolfConfig?: WolfConfig;
 }): { kind: SideGameKind; leaderboards: Leaderboard[] }[] {
   const {
     enabled,
@@ -684,6 +781,7 @@ export function computeAllSideGames(input: {
     bbbEvents = [],
     snakeEvents = [],
     wolfEvents = [],
+    wolfConfig = {},
   } = input;
   const out: { kind: SideGameKind; leaderboards: Leaderboard[] }[] = [];
   for (const kind of enabled) {
@@ -707,7 +805,7 @@ export function computeAllSideGames(input: {
     } else if (kind === "WOLF") {
       out.push({
         kind,
-        leaderboards: [computeWolf(wolfPlayers, holes, wolfEvents)],
+        leaderboards: [computeWolf(wolfPlayers, holes, wolfEvents, wolfConfig)],
       });
     }
   }

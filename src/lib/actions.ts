@@ -24,6 +24,10 @@ import {
   isSideGameKind,
   isSnakeEventKind,
   isWolfEventKind,
+  parseWolfConfig,
+  stringifyWolfConfig,
+  type WolfConfig,
+  type WolfPushRule,
 } from "./sideGames";
 
 export async function signInAction(formData: FormData) {
@@ -519,18 +523,69 @@ export async function recordSideGameEventAction(formData: FormData) {
           data: { sideGameId, hole, kind, matchPlayerId },
         });
       }
-    } else if (kind === "HOLE_WINNER") {
+    } else if (kind === "HOLE_WINNER" || kind === "PUSH") {
+      // Wolf hole outcome: one of WIN (HOLE_WINNER) / PUSH / nothing.
+      // Mutex across both kinds -- setting either clears both first.
       await prisma.sideGameEvent.deleteMany({
-        where: { sideGameId, hole, kind },
+        where: { sideGameId, hole, kind: { in: ["HOLE_WINNER", "PUSH"] } },
       });
-      if (matchPlayerId) {
+      if (kind === "HOLE_WINNER" && matchPlayerId) {
         await prisma.sideGameEvent.create({
           data: { sideGameId, hole, kind, matchPlayerId },
+        });
+      } else if (kind === "PUSH") {
+        // PUSH carries no matchPlayerId.
+        await prisma.sideGameEvent.create({
+          data: { sideGameId, hole, kind },
         });
       }
     }
   }
 
+  revalidatePath(`/matches/${sg.matchId}`);
+}
+
+// Update the per-match Wolf config (rotation, push rule). Creator-only.
+export async function updateWolfConfigAction(formData: FormData) {
+  const user = await requireUser();
+  const sideGameId = String(formData.get("sideGameId") ?? "");
+  const pushRuleRaw = String(formData.get("pushRule") ?? "");
+  const rotationRaw = String(formData.get("rotation") ?? "");
+  if (!sideGameId) throw new Error("Missing side-game id");
+
+  const sg = await prisma.sideGame.findUnique({
+    where: { id: sideGameId },
+    select: {
+      matchId: true,
+      kind: true,
+      config: true,
+      match: { select: { createdById: true } },
+    },
+  });
+  if (!sg) throw new Error("Side game not found");
+  if (sg.kind !== "WOLF") throw new Error("Not a Wolf game");
+  if (sg.match.createdById !== user.id)
+    throw new Error("Only the match creator can change Wolf settings");
+
+  const current = parseWolfConfig(sg.config);
+  const next: WolfConfig = { ...current };
+
+  if (pushRuleRaw === "NO_POINTS" || pushRuleRaw === "ROLLOVER") {
+    next.pushRule = pushRuleRaw as WolfPushRule;
+  }
+  if (rotationRaw) {
+    // Comma-separated matchPlayerIds.
+    const ids = rotationRaw
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    next.rotation = ids;
+  }
+
+  await prisma.sideGame.update({
+    where: { id: sideGameId },
+    data: { config: stringifyWolfConfig(next) },
+  });
   revalidatePath(`/matches/${sg.matchId}`);
 }
 

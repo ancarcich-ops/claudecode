@@ -12,14 +12,29 @@ type WolfHoleState = {
   partnerId: string | null;
   isLoneWolf: boolean;
   winnerId: string | null;
+  isPush: boolean;
 };
 
 // Sentinel value in the partner select for the lone-wolf option.
 const LONE = "__LONE__";
 
-function wolfForHole(players: Player[], hole: number): Player {
-  const sorted = [...players].sort((a, b) => a.seat - b.seat);
-  return sorted[(hole - 1) % sorted.length];
+function wolfForHole(
+  players: Player[],
+  hole: number,
+  rotation?: string[],
+): Player {
+  let ordered: Player[] = [];
+  if (rotation && rotation.length > 0) {
+    const byId = new Map(players.map((p) => [p.id, p]));
+    for (const id of rotation) {
+      const p = byId.get(id);
+      if (p) ordered.push(p);
+    }
+  }
+  if (ordered.length === 0) {
+    ordered = [...players].sort((a, b) => a.seat - b.seat);
+  }
+  return ordered[(hole - 1) % ordered.length];
 }
 
 export default function WolfEditor({
@@ -27,12 +42,16 @@ export default function WolfEditor({
   holes,
   players,
   byHole,
+  rotation,
   locked,
 }: {
   sideGameId: string;
   holes: number;
   players: Player[];
   byHole: Record<number, WolfHoleState>;
+  // Optional custom rotation (matchPlayerId list). Empty array = use seat
+  // order, same as runtime default.
+  rotation: string[];
   locked: boolean;
 }) {
   const router = useRouter();
@@ -40,7 +59,7 @@ export default function WolfEditor({
 
   const send = (
     hole: number,
-    kind: "PARTNER" | "LONE_WOLF" | "HOLE_WINNER",
+    kind: "PARTNER" | "LONE_WOLF" | "HOLE_WINNER" | "PUSH",
     matchPlayerId: string,
   ) => {
     const fd = new FormData();
@@ -74,11 +93,17 @@ export default function WolfEditor({
     hole: number,
     wolf: Player,
     partnerId: string | null,
-    isLoneWolf: boolean,
-    side: "" | "WOLF" | "OTHERS",
+    _isLoneWolf: boolean,
+    side: "" | "WOLF" | "OTHERS" | "PUSH",
   ) => {
     if (side === "") {
+      // Clear both kinds by sending HOLE_WINNER with no player; the action
+      // wipes both HOLE_WINNER and PUSH for the hole.
       send(hole, "HOLE_WINNER", "");
+      return;
+    }
+    if (side === "PUSH") {
+      send(hole, "PUSH", "");
       return;
     }
     if (side === "WOLF") {
@@ -94,12 +119,14 @@ export default function WolfEditor({
     send(hole, "HOLE_WINNER", opponents[0].id);
   };
 
-  // Reconstruct "which side won" from the stored winnerId + team membership.
+  // Reconstruct "which side won" (or pushed) from the stored events.
   const winnerSide = (
     state: WolfHoleState | undefined,
     wolf: Player,
-  ): "" | "WOLF" | "OTHERS" => {
-    if (!state || !state.winnerId) return "";
+  ): "" | "WOLF" | "OTHERS" | "PUSH" => {
+    if (!state) return "";
+    if (state.isPush) return "PUSH";
+    if (!state.winnerId) return "";
     const wolfTeam = new Set<string>([wolf.id]);
     if (state.partnerId) wolfTeam.add(state.partnerId);
     return wolfTeam.has(state.winnerId) ? "WOLF" : "OTHERS";
@@ -126,7 +153,7 @@ export default function WolfEditor({
         </thead>
         <tbody>
           {Array.from({ length: holes }, (_, i) => i + 1).map((h) => {
-            const wolf = wolfForHole(players, h);
+            const wolf = wolfForHole(players, h, rotation);
             const state = byHole[h];
             const partnerValue = state?.isLoneWolf
               ? LONE
@@ -173,18 +200,24 @@ export default function WolfEditor({
                         wolf,
                         state?.partnerId ?? null,
                         state?.isLoneWolf ?? false,
-                        e.target.value as "" | "WOLF" | "OTHERS",
+                        e.target.value as "" | "WOLF" | "OTHERS" | "PUSH",
                       )
                     }
-                    disabled={pending || locked || !choiceMade}
+                    // Push is a valid outcome even without a Wolf-choice
+                    // (e.g. abandoned hole), so always allow Push;
+                    // Wolf-team / Others still need a choice first.
+                    disabled={pending || locked}
                     aria-label={`Hole ${h} winner`}
                     className="input h-8 py-0 px-1.5 text-xs w-full min-w-0"
                   >
                     <option value="">—</option>
-                    <option value="WOLF">
+                    <option value="WOLF" disabled={!choiceMade}>
                       {state?.isLoneWolf ? "Wolf won" : "Wolf team"}
                     </option>
-                    <option value="OTHERS">Others</option>
+                    <option value="OTHERS" disabled={!choiceMade}>
+                      Others
+                    </option>
+                    <option value="PUSH">Push</option>
                   </select>
                 </td>
               </tr>
