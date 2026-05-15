@@ -20,6 +20,7 @@ export async function loadMatchWithOdds(matchId: string) {
       },
       wagers: { include: { user: true, pickedPlayer: true } },
       oddsSnapshots: { orderBy: { createdAt: "asc" } },
+      sideGames: true,
     },
   });
   if (!match) return null;
