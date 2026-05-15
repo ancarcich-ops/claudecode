@@ -17,6 +17,7 @@ import {
   setActiveGroupCookie,
   type GroupFilter,
 } from "./groups";
+import { isSideGameKind } from "./sideGames";
 
 export async function signInAction(formData: FormData) {
   const username = String(formData.get("username") ?? "");
@@ -181,6 +182,17 @@ export async function createMatchAction(formData: FormData) {
   }
   if (!parData) parData = JSON.stringify(defaultPars(holes));
 
+  // Side games: parallel checkboxes on the new-match form. Filter to the
+  // recognized phase-1 kinds; Nassau is implicitly disabled for 9-hole rounds.
+  const sideGameRaw = formData.getAll("sideGame").map((v) => String(v));
+  const sideGameKinds = Array.from(
+    new Set(
+      sideGameRaw
+        .filter(isSideGameKind)
+        .filter((k) => !(k === "NASSAU" && holes !== 18)),
+    ),
+  );
+
   // Optional group scoping. Empty string / "public" -> public (groupId null).
   // Any other value must be a group the user is a member of, otherwise we
   // silently drop it back to public rather than 500.
@@ -235,6 +247,9 @@ export async function createMatchAction(formData: FormData) {
             userId: linked?.id,
           };
         }),
+      },
+      sideGames: {
+        create: sideGameKinds.map((kind) => ({ kind })),
       },
     },
     include: { players: true },

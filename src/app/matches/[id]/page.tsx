@@ -13,6 +13,12 @@ import {
 } from "@/lib/actions";
 import { formatPct } from "@/lib/odds";
 import { colorForSeat } from "@/lib/colors";
+import {
+  computeAllSideGames,
+  isSideGameKind,
+  ALL_SIDE_GAMES,
+  type SideGameKind,
+} from "@/lib/sideGames";
 import AutoRefresh from "@/components/AutoRefresh";
 import OddsChart from "./OddsChart";
 import ScoreSheet from "./ScoreSheet";
@@ -115,6 +121,29 @@ export default async function MatchPage({
     netScore: odds.meta.netScores[p.id] ?? null,
     scores: p.scores.slice().sort((a, b) => a.hole - b.hole),
   }));
+
+  // Side-game leaderboards. Filter persisted kinds against the known set in
+  // case a kind was deprecated since this match was created.
+  const enabledKinds: SideGameKind[] = (match.sideGames ?? [])
+    .map((sg) => sg.kind)
+    .filter(isSideGameKind);
+  const sideGameSections = computeAllSideGames({
+    enabled: enabledKinds,
+    players: match.players.map((p) => ({
+      id: p.id,
+      displayName: p.displayName,
+      handicap: p.handicap,
+      scoresByHole: Object.fromEntries(
+        p.scores.map((s) => [s.hole, s.strokes]),
+      ),
+    })),
+    pars,
+    holes: match.holes,
+    scoringMode,
+  });
+  const sideGameLabel: Record<SideGameKind, string> = Object.fromEntries(
+    ALL_SIDE_GAMES.map((g) => [g.kind, g.label]),
+  ) as Record<SideGameKind, string>;
 
   return (
     <div className="space-y-6">
@@ -321,6 +350,67 @@ export default async function MatchPage({
           />
         )}
       </section>
+
+      {sideGameSections.length > 0 && (
+        <section className="card p-4">
+          <h2 className="text-sm uppercase tracking-wider text-mute mb-3">
+            Side games
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {sideGameSections.map((sg) => (
+              <div
+                key={sg.kind}
+                className="border border-border rounded-md p-3"
+              >
+                <div className="text-xs uppercase tracking-wider text-accent font-medium mb-2">
+                  {sideGameLabel[sg.kind] ?? sg.kind}
+                </div>
+                <div className="space-y-3">
+                  {sg.leaderboards.map((lb) => (
+                    <div key={lb.key}>
+                      {sg.leaderboards.length > 1 && (
+                        <div className="text-[11px] text-mute mb-1">
+                          {lb.title}
+                        </div>
+                      )}
+                      {lb.subtitle && sg.leaderboards.length === 1 && (
+                        <div className="text-[11px] text-mute mb-1">
+                          {lb.subtitle}
+                        </div>
+                      )}
+                      <ul className="space-y-1">
+                        {lb.rows.map((r, i) => (
+                          <li
+                            key={r.playerId}
+                            className="flex items-center justify-between text-sm"
+                          >
+                            <span
+                              className={
+                                "truncate " +
+                                (r.isLeader ? "text-ink font-medium" : "text-mute")
+                              }
+                            >
+                              {i + 1}. {r.player}
+                            </span>
+                            <span
+                              className={
+                                "font-mono tabular-nums shrink-0 " +
+                                (r.isLeader ? "text-accent" : "text-mute")
+                              }
+                            >
+                              {r.value}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {isCreator && (
         <section className="card p-4">

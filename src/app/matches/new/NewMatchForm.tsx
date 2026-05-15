@@ -3,6 +3,11 @@
 import { useMemo, useState } from "react";
 import type { CoursePreset } from "@/lib/courses";
 import PlayerNameInput from "@/components/PlayerNameInput";
+import {
+  ALL_SIDE_GAMES,
+  COMING_SOON_SIDE_GAMES,
+  type SideGameKind,
+} from "@/lib/sideGames";
 
 type PlayerRow = { name: string; handicap: string; userId: string | null };
 type ScoringMode = "NET" | "GROSS" | "CUSTOM";
@@ -52,6 +57,15 @@ export default function NewMatchForm({
     { name: defaultPlayerName, handicap: "12", userId: currentUserId },
     { name: "", handicap: "15", userId: null },
   ]);
+  const [sideGames, setSideGames] = useState<Set<SideGameKind>>(new Set());
+
+  const toggleSideGame = (kind: SideGameKind) =>
+    setSideGames((curr) => {
+      const next = new Set(curr);
+      if (next.has(kind)) next.delete(kind);
+      else next.add(kind);
+      return next;
+    });
   const [courseName, setCourseName] = useState("");
   const [holes, setHoles] = useState<9 | 18>(18);
   const [scoringMode, setScoringMode] = useState<ScoringMode>("NET");
@@ -342,6 +356,74 @@ export default function NewMatchForm({
         <p className="text-xs text-mute mt-3">
           Crowd wagers and live scoring shift the line from there.
         </p>
+      </div>
+
+      <div className="card p-5">
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="text-sm uppercase tracking-wider text-mute">
+            Side games
+          </h2>
+          <span className="text-[11px] text-mute">{sideGames.size} on</span>
+        </div>
+        <p className="text-[11px] text-mute mb-3">
+          Track extra games alongside the main {modeCopy.label.toLowerCase()}{" "}
+          match. Leaderboards update live as scores come in.
+        </p>
+        <div className="space-y-2">
+          {ALL_SIDE_GAMES.map((g) => {
+            const disabledByHoles = g.requires18 && holes !== 18;
+            const active = sideGames.has(g.kind);
+            return (
+              <label
+                key={g.kind}
+                className={
+                  "flex items-start gap-3 rounded-md border px-3 py-2 cursor-pointer transition-colors " +
+                  (disabledByHoles
+                    ? "border-border opacity-50 cursor-not-allowed"
+                    : active
+                      ? "border-accent/50 bg-accent/5"
+                      : "border-border hover:border-accent/30")
+                }
+              >
+                <input
+                  type="checkbox"
+                  name="sideGame"
+                  value={g.kind}
+                  checked={active && !disabledByHoles}
+                  onChange={() => !disabledByHoles && toggleSideGame(g.kind)}
+                  disabled={disabledByHoles}
+                  className="mt-0.5 shrink-0 accent-accent"
+                />
+                <div className="min-w-0">
+                  <div className="text-sm font-medium">{g.label}</div>
+                  <div className="text-[11px] text-mute">
+                    {disabledByHoles ? "Needs 18 holes" : g.blurb}
+                  </div>
+                </div>
+              </label>
+            );
+          })}
+          {COMING_SOON_SIDE_GAMES.map((g) => (
+            <div
+              key={g.kind}
+              className="flex items-start gap-3 rounded-md border border-border px-3 py-2 opacity-50"
+            >
+              <input
+                type="checkbox"
+                disabled
+                className="mt-0.5 shrink-0"
+                aria-label={`${g.label} (coming soon)`}
+              />
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium flex items-center justify-between gap-2">
+                  <span>{g.label}</span>
+                  <span className="chip text-[10px]">Coming soon</span>
+                </div>
+                <div className="text-[11px] text-mute">{g.blurb}</div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {parsToSubmit && (
