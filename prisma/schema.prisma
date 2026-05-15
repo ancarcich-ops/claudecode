@@ -201,6 +201,32 @@ model Course {
   createdAt DateTime     @default(now())
 
   holes     CourseHole[]
+  hazards   CourseHazard[]
+}
+
+// On-course hazard. v1 stores a single 'representative point' per hazard:
+// the center of a water carry, the front edge of a fairway bunker, etc.
+// Distance-to-hazard is then point-to-point. Polygonal hazards come later
+// when we need to compute carry over a shaped pond.
+model CourseHazard {
+  id        String   @id @default(cuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  // Which hole the hazard belongs to (1..36). Hazards visible in the
+  // on-course view for that hole. A hazard that spans two holes gets
+  // two rows.
+  hole      Int
+  // WATER | SAND | OOB (out of bounds) | OTHER. UI swaps the icon/color
+  // by kind but treats them identically for distance.
+  kind      String
+  // Free-text label so users can disambiguate ("front bunker", "lake left").
+  label     String?
+  lat       Float
+  lng       Float
+  contributedById String?
+  createdAt DateTime @default(now())
+
+  @@index([courseId, hole])
 }
 
 model CourseHole {

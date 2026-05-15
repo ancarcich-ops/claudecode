@@ -654,6 +654,57 @@ export async function markGreenCenterAction(formData: FormData) {
   }
 }
 
+// Mark a course hazard with the user's current GPS. v1 stores a single
+// representative point per hazard; polygons come later. Caller passes the
+// kind ('water' / 'sand' / 'oob' / 'other') and an optional label.
+export async function markHazardAction(formData: FormData) {
+  const user = await requireUser();
+  const courseName = String(formData.get("courseName") ?? "").trim();
+  const hole = Number(formData.get("hole"));
+  const lat = Number(formData.get("lat"));
+  const lng = Number(formData.get("lng"));
+  const kindRaw = String(formData.get("kind") ?? "OTHER").toUpperCase();
+  const kind =
+    kindRaw === "WATER" || kindRaw === "SAND" || kindRaw === "OOB"
+      ? kindRaw
+      : "OTHER";
+  const label = String(formData.get("label") ?? "").trim() || null;
+  if (!courseName) throw new Error("Course name required");
+  if (!Number.isFinite(hole) || hole < 1 || hole > 36)
+    throw new Error("Invalid hole number");
+  if (
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng) ||
+    Math.abs(lat) > 90 ||
+    Math.abs(lng) > 180
+  ) {
+    throw new Error("Invalid coordinates");
+  }
+  const course = await findOrCreateCourseByName(courseName);
+  await prisma.courseHazard.create({
+    data: {
+      courseId: course.id,
+      hole,
+      kind,
+      label,
+      lat,
+      lng,
+      contributedById: user.id,
+    },
+  });
+}
+
+// Remove a hazard (mistakes happen, water moves... etc). Anyone signed in
+// can delete; bring this back to creator-only if it becomes a problem.
+export async function deleteHazardAction(formData: FormData) {
+  await requireUser();
+  const hazardId = String(formData.get("hazardId") ?? "");
+  if (!hazardId) return;
+  await prisma.courseHazard
+    .delete({ where: { id: hazardId } })
+    .catch(() => {});
+}
+
 export async function deleteMatchAction(formData: FormData) {
   const user = await requireUser();
   const matchId = String(formData.get("matchId"));

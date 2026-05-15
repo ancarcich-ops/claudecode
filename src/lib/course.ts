@@ -76,6 +76,83 @@ export async function getCourseHolesByName(
   return out;
 }
 
+export type HazardKind = "WATER" | "SAND" | "OOB" | "OTHER";
+
+export function isHazardKind(s: string): s is HazardKind {
+  return s === "WATER" || s === "SAND" || s === "OOB" || s === "OTHER";
+}
+
+export type HazardGeo = {
+  id: string;
+  hole: number;
+  kind: HazardKind;
+  label: string | null;
+  lat: number;
+  lng: number;
+};
+
+// Return all hazards for a course, indexed by hole.
+export async function getCourseHazardsByName(
+  name: string,
+): Promise<Record<number, HazardGeo[]>> {
+  const trimmed = name.trim();
+  if (!trimmed) return {};
+  const course = await prisma.course.findUnique({
+    where: { name: trimmed },
+    include: { hazards: true },
+  });
+  if (!course) return {};
+  const out: Record<number, HazardGeo[]> = {};
+  for (const h of course.hazards) {
+    if (!isHazardKind(h.kind)) continue;
+    if (!out[h.hole]) out[h.hole] = [];
+    out[h.hole].push({
+      id: h.id,
+      hole: h.hole,
+      kind: h.kind,
+      label: h.label,
+      lat: h.lat,
+      lng: h.lng,
+    });
+  }
+  return out;
+}
+
+// Layup helper: given the player's current position, a target green center,
+// and a hazard point that sits roughly between them, compute the distance
+// the player needs to stop *before* the hazard. Strategy: project the
+// hazard onto the player->green line and report player-to-projection minus
+// a 5y buffer. If the projection is behind the player (negative t) or past
+// the green (t > 1), the hazard isn't in play and we return null.
+export function distanceToLayup(
+  player: { lat: number; lng: number },
+  green: { lat: number; lng: number },
+  hazard: { lat: number; lng: number },
+  bufferYards = 5,
+): number | null {
+  // Convert all three to a local meter-based frame centered on the player.
+  // For sub-mile distances on a sphere, an equirectangular projection is
+  // plenty accurate.
+  const R = 6371000;
+  const toRadLocal = (d: number) => (d * Math.PI) / 180;
+  const cosLat = Math.cos(toRadLocal(player.lat));
+  const toXY = (p: { lat: number; lng: number }) => ({
+    x: toRadLocal(p.lng - player.lng) * R * cosLat,
+    y: toRadLocal(p.lat - player.lat) * R,
+  });
+  const G = toXY(green);
+  const H = toXY(hazard);
+  const lenG2 = G.x * G.x + G.y * G.y;
+  if (lenG2 < 1e-3) return null;
+  const t = (H.x * G.x + H.y * G.y) / lenG2;
+  if (t <= 0 || t >= 1) return null;
+  const projX = G.x * t;
+  const projY = G.y * t;
+  const meters = Math.sqrt(projX * projX + projY * projY);
+  const yards = meters * 1.0936133;
+  return Math.max(0, yards - bufferYards);
+}
+
 // Compute the three working green distances. If front/back coords aren't
 // user-set, we derive them from the center along the player->green axis
 // (±8 yards each side) so the UI always shows three numbers once at least

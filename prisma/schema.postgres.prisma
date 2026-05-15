@@ -169,11 +169,27 @@ model OddsSnapshot {
 }
 
 model Course {
-  id        String       @id @default(cuid())
-  name      String       @unique
-  createdAt DateTime     @default(now())
+  id        String         @id @default(cuid())
+  name      String         @unique
+  createdAt DateTime       @default(now())
 
   holes     CourseHole[]
+  hazards   CourseHazard[]
+}
+
+model CourseHazard {
+  id        String   @id @default(cuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  hole      Int
+  kind      String
+  label     String?
+  lat       Float
+  lng       Float
+  contributedById String?
+  createdAt DateTime @default(now())
+
+  @@index([courseId, hole])
 }
 
 model CourseHole {
