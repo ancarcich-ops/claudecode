@@ -26,6 +26,7 @@ import {
   runningBbb,
   runningSnake,
   runningWolf,
+  parseWolfConfig,
   type SideGameKind,
   type BbbEvent,
   type SnakeEvent,
@@ -38,6 +39,7 @@ import MatchActionsMenu, { type MatchAction } from "./MatchActionsMenu";
 import BBBEditor from "./BBBEditor";
 import SnakeEditor from "./SnakeEditor";
 import WolfEditor from "./WolfEditor";
+import WolfSettings from "./WolfSettings";
 import AutoRefresh from "@/components/AutoRefresh";
 import ScoreSheet from "./ScoreSheet";
 import WagerForm from "./WagerForm";
@@ -174,6 +176,7 @@ export default async function MatchPage({
       kind: e.kind as WolfEvent["kind"],
       matchPlayerId: e.matchPlayerId ?? null,
     }));
+  const wolfConfig = parseWolfConfig(wolfGame?.config ?? null);
   const seatedWolfPlayers = match.players.map((p) => ({
     id: p.id,
     seat: p.seat,
@@ -200,6 +203,7 @@ export default async function MatchPage({
     bbbEvents,
     snakeEvents,
     wolfEvents,
+    wolfConfig,
   });
   const sideGameLabel: Record<SideGameKind, string> = Object.fromEntries(
     ALL_SIDE_GAMES.map((g) => [g.kind, g.label]),
@@ -260,7 +264,12 @@ export default async function MatchPage({
     sgSeries.snake = runningSnake(sgPlayers, match.holes, snakeEvents);
   }
   if (enabledKinds.includes("WOLF")) {
-    sgSeries.wolf = runningWolf(seatedWolfPlayers, match.holes, wolfEvents);
+    sgSeries.wolf = runningWolf(
+      seatedWolfPlayers,
+      match.holes,
+      wolfEvents,
+      wolfConfig,
+    );
   }
 
   return (
@@ -513,6 +522,30 @@ export default async function MatchPage({
         </section>
       )}
 
+      {wolfGame && user && isCreator && (
+        <section className="card p-4">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <h2 className="text-sm uppercase tracking-wider text-mute">
+              Wolf · settings
+            </h2>
+            <span className="text-[11px] text-mute">
+              Creator only
+            </span>
+          </div>
+          <WolfSettings
+            sideGameId={wolfGame.id}
+            players={match.players.map((p) => ({
+              id: p.id,
+              displayName: p.displayName,
+              seat: p.seat,
+            }))}
+            rotation={wolfConfig.rotation ?? []}
+            pushRule={wolfConfig.pushRule ?? "NO_POINTS"}
+            locked={isCompleted}
+          />
+        </section>
+      )}
+
       {wolfGame && user && (
         <section className="card p-4">
           <div className="flex items-center justify-between gap-2 mb-3">
@@ -520,7 +553,9 @@ export default async function MatchPage({
               Wolf · partners &amp; winners
             </h2>
             <span className="text-[11px] text-mute">
-              Wolf rotates by seat each hole
+              {wolfConfig.rotation && wolfConfig.rotation.length > 0
+                ? "Custom rotation"
+                : "Wolf rotates by seat each hole"}
             </span>
           </div>
           <WolfEditor
@@ -531,6 +566,7 @@ export default async function MatchPage({
               displayName: p.displayName,
               seat: p.seat,
             }))}
+            rotation={wolfConfig.rotation ?? []}
             byHole={(() => {
               const out: Record<
                 number,
@@ -539,6 +575,7 @@ export default async function MatchPage({
                   partnerId: string | null;
                   isLoneWolf: boolean;
                   winnerId: string | null;
+                  isPush: boolean;
                 }
               > = {};
               for (const e of wolfEvents) {
@@ -548,6 +585,7 @@ export default async function MatchPage({
                     partnerId: null,
                     isLoneWolf: false,
                     winnerId: null,
+                    isPush: false,
                   };
                 }
                 if (e.kind === "PARTNER")
@@ -555,6 +593,7 @@ export default async function MatchPage({
                 if (e.kind === "LONE_WOLF") out[e.hole].isLoneWolf = true;
                 if (e.kind === "HOLE_WINNER")
                   out[e.hole].winnerId = e.matchPlayerId;
+                if (e.kind === "PUSH") out[e.hole].isPush = true;
               }
               return out;
             })()}
