@@ -31,6 +31,7 @@ import {
   type WolfPushRule,
 } from "./sideGames";
 import { findOrCreateCourseByName } from "./course";
+import { assignHoles, fetchOsmGolfFeatures, geocodeCourse } from "./osm";
 
 export async function signInAction(formData: FormData) {
   const username = String(formData.get("username") ?? "");
@@ -649,6 +650,185 @@ export async function markGreenCenterAction(formData: FormData) {
         hole,
         contributedById: user.id,
         ...dataFor(position),
+      },
+    });
+  }
+}
+
+// Pull course geometry from OpenStreetMap. Idempotent + cached: once the
+// Course row has osmFetchedAt, this no-ops unless forceRefresh=true.
+// Safe to call from the server-side page render -- bails fast when cached.
+export async function importCourseFromOsm(
+  courseName: string,
+  totalHoles: number,
+  opts: { forceRefresh?: boolean } = {},
+): Promise<{ imported: number; hadData: boolean }> {
+  const trimmed = courseName.trim();
+  if (!trimmed) return { imported: 0, hadData: false };
+  const course = await findOrCreateCourseByName(trimmed);
+  if (course.osmFetchedAt && !opts.forceRefresh) {
+    return {
+      imported: 0,
+      hadData: !!(course.centerLat && course.centerLng),
+    };
+  }
+
+  // 1) Geocode if we don't yet have a center
+  let center: { lat: number; lng: number } | null =
+    course.centerLat != null && course.centerLng != null
+      ? { lat: course.centerLat, lng: course.centerLng }
+      : null;
+  if (!center) {
+    const g = await geocodeCourse(trimmed);
+    if (g) center = { lat: g.lat, lng: g.lng };
+  }
+  // No center -> mark as attempted and bail. Course stays user-mappable.
+  if (!center) {
+    await prisma.course.update({
+      where: { id: course.id },
+      data: { osmFetchedAt: new Date() },
+    });
+    return { imported: 0, hadData: false };
+  }
+
+  // 2) Pull golf features within ~700m of center
+  const features = await fetchOsmGolfFeatures(center.lat, center.lng, 700);
+  const assigned = assignHoles(features, totalHoles);
+
+  // 3) Persist tee + green points per hole. Skip holes that the user
+  //    has already manually marked -- their mark wins.
+  let imported = 0;
+  for (const h of assigned) {
+    if (h.hole < 1 || h.hole > totalHoles) continue;
+    const existing = await prisma.courseHole.findUnique({
+      where: { courseId_hole: { courseId: course.id, hole: h.hole } },
+    });
+    const dataPatch: Record<string, unknown> = {};
+    if (h.tee && (!existing || existing.teeLat == null)) {
+      dataPatch.teeLat = h.tee.lat;
+      dataPatch.teeLng = h.tee.lng;
+    }
+    if (h.green && (!existing || existing.greenLat == null)) {
+      dataPatch.greenLat = h.green.lat;
+      dataPatch.greenLng = h.green.lng;
+    }
+    if (h.greenPolygon && (!existing || existing.greenPolygonJson == null)) {
+      dataPatch.greenPolygonJson = JSON.stringify(
+        h.greenPolygon.map((p) => [p.lat, p.lng]),
+      );
+    }
+    if (Object.keys(dataPatch).length === 0) continue;
+    if (existing) {
+      await prisma.courseHole.update({
+        where: { id: existing.id },
+        data: { ...dataPatch, source: existing.source ?? "osm" },
+      });
+    } else {
+      await prisma.courseHole.create({
+        data: {
+          courseId: course.id,
+          hole: h.hole,
+          source: "osm",
+          ...dataPatch,
+        },
+      });
+    }
+    imported++;
+  }
+
+  // 4) Persist non-green polygons as hazards (water + bunkers near holes).
+  //    Hole assignment is best-effort: nearest hole within 80m of feature
+  //    centroid. This will only run on first import; cleared by manual
+  //    deleteHazardAction if it gets noisy.
+  const holeAnchors = assigned
+    .filter((h) => h.green)
+    .map((h) => ({ hole: h.hole, ...(h.green as { lat: number; lng: number }) }));
+  for (const f of features) {
+    if (f.kind !== "water" && f.kind !== "bunker") continue;
+    if (holeAnchors.length === 0) continue;
+    let bestHole: number | null = null;
+    let bestDist = Infinity;
+    for (const a of holeAnchors) {
+      const dLat = (f.centroid.lat - a.lat) * 111000;
+      const dLng = (f.centroid.lng - a.lng) * 111000 * Math.cos((a.lat * Math.PI) / 180);
+      const d = Math.sqrt(dLat * dLat + dLng * dLng);
+      if (d < bestDist) {
+        bestDist = d;
+        bestHole = a.hole;
+      }
+    }
+    if (bestHole == null || bestDist > 80) continue;
+    await prisma.courseHazard.create({
+      data: {
+        courseId: course.id,
+        hole: bestHole,
+        kind: f.kind === "water" ? "WATER" : "SAND",
+        lat: f.centroid.lat,
+        lng: f.centroid.lng,
+        label: null,
+      },
+    });
+  }
+
+  await prisma.course.update({
+    where: { id: course.id },
+    data: {
+      centerLat: center.lat,
+      centerLng: center.lng,
+      osmFetchedAt: new Date(),
+    },
+  });
+  return { imported, hadData: imported > 0 };
+}
+
+// User-triggered re-import (from the on-course view's 'refresh from OSM'
+// button). Allowed for any signed-in user; force-refreshes the cache.
+export async function refreshCourseFromOsmAction(formData: FormData) {
+  await requireUser();
+  const courseName = String(formData.get("courseName") ?? "").trim();
+  const totalHoles = Math.max(
+    1,
+    Math.min(36, Number(formData.get("holes") ?? 18)),
+  );
+  await importCourseFromOsm(courseName, totalHoles, { forceRefresh: true });
+}
+
+// Mark the tee box for a hole. Mirrors markGreenCenterAction.
+export async function markTeeAction(formData: FormData) {
+  const user = await requireUser();
+  const courseName = String(formData.get("courseName") ?? "").trim();
+  const hole = Number(formData.get("hole"));
+  const lat = Number(formData.get("lat"));
+  const lng = Number(formData.get("lng"));
+  if (!courseName) throw new Error("Course name required");
+  if (!Number.isFinite(hole) || hole < 1 || hole > 36) {
+    throw new Error("Invalid hole number");
+  }
+  if (
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng) ||
+    Math.abs(lat) > 90 ||
+    Math.abs(lng) > 180
+  ) {
+    throw new Error("Invalid coordinates");
+  }
+  const course = await findOrCreateCourseByName(courseName);
+  const existing = await prisma.courseHole.findUnique({
+    where: { courseId_hole: { courseId: course.id, hole } },
+  });
+  if (existing) {
+    await prisma.courseHole.update({
+      where: { id: existing.id },
+      data: { teeLat: lat, teeLng: lng },
+    });
+  } else {
+    await prisma.courseHole.create({
+      data: {
+        courseId: course.id,
+        hole,
+        teeLat: lat,
+        teeLng: lng,
+        contributedById: user.id,
       },
     });
   }

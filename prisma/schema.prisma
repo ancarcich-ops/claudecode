@@ -204,6 +204,15 @@ model OddsSnapshot {
 model Course {
   id        String       @id @default(cuid())
   name      String       @unique
+  // Geocoded center of the course (via Nominatim on first lookup). Used
+  // as the anchor for Overpass queries -- we fetch golf features within
+  // ~700m of this point.
+  centerLat Float?
+  centerLng Float?
+  // Timestamp of the last successful OpenStreetMap import. Null when we
+  // haven't attempted yet; set even when OSM had no data (to avoid
+  // retrying every visit). Re-run by clearing this column.
+  osmFetchedAt DateTime?
   createdAt DateTime     @default(now())
 
   holes     CourseHole[]
@@ -252,11 +261,23 @@ model CourseHole {
   greenFrontLng  Float?
   greenBackLat   Float?
   greenBackLng   Float?
+  // Tee box anchor. Lets the renderer draw a schematic hole shape
+  // (tee -> green line) without needing a full fairway polygon.
+  teeLat    Float?
+  teeLng    Float?
+  // Optional richer polygons (when OSM has them). JSON-encoded arrays of
+  // [lat, lng] pairs forming a closed loop. Renderer prefers these over
+  // the schematic when set.
+  greenPolygonJson   String?
+  fairwayPolygonJson String?
   // Optional published yardage (back tee) -- not used for GPS distance
   // but handy as a sanity-check / fallback display.
   distanceYds Int?
   // Audit: who first mapped this hole (so we can credit / re-prompt).
   contributedById String?
+  // Tagged 'osm' when the hole was pre-seeded from OpenStreetMap so we
+  // know when to trust the data more vs less.
+  source    String?
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 

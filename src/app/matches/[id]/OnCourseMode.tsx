@@ -15,6 +15,7 @@ import {
   logScoreAction,
   markGreenCenterAction,
   markHazardAction,
+  markTeeAction,
 } from "@/lib/actions";
 import HoleMiniMap from "./HoleMiniMap";
 import WindArrow from "./WindArrow";
@@ -183,6 +184,7 @@ export default function OnCourseMode({
   const par = pars[hole - 1] ?? 4;
   const geo = holeGeoByHole[hole];
   const greenSet = geo && geo.greenLat != null && geo.greenLng != null;
+  const teeSet = !!(geo && geo.teeLat != null && geo.teeLng != null);
   const playerPos = pos
     ? { lat: pos.coords.latitude, lng: pos.coords.longitude }
     : null;
@@ -269,6 +271,19 @@ export default function OnCourseMode({
     });
   };
 
+  const markTee = () => {
+    if (!pos) return;
+    const fd = new FormData();
+    fd.set("courseName", courseName);
+    fd.set("hole", String(hole));
+    fd.set("lat", String(pos.coords.latitude));
+    fd.set("lng", String(pos.coords.longitude));
+    startTransition(async () => {
+      await markTeeAction(fd);
+      router.refresh();
+    });
+  };
+
   return (
     // z-50 so it covers the mobile bottom tab bar (z-40). overflow-y-auto
     // so on short viewports (or when score buttons sit below the fold)
@@ -328,10 +343,15 @@ export default function OnCourseMode({
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center relative">
         {/* Mini-map -- shows whatever points are known. Hidden when too
             sparse (fewer than 2 points) to render meaningfully. */}
-        {playerPos && greenSet && (
-          <div className="absolute top-3 right-3 w-24 h-24 sm:w-32 sm:h-32 rounded-md border border-border bg-panel2/60 overflow-hidden">
+        {playerPos && (greenSet || teeSet) && (
+          <div className="absolute top-3 right-3 w-28 h-28 sm:w-40 sm:h-40 rounded-md border border-border bg-panel2/60 overflow-hidden">
             <HoleMiniMap
               player={playerPos}
+              tee={
+                geo?.teeLat != null && geo?.teeLng != null
+                  ? { lat: geo.teeLat, lng: geo.teeLng }
+                  : null
+              }
               greenCenter={
                 geo?.greenLat != null && geo?.greenLng != null
                   ? { lat: geo.greenLat, lng: geo.greenLng }
@@ -347,6 +367,7 @@ export default function OnCourseMode({
                   ? { lat: geo.greenBackLat, lng: geo.greenBackLng }
                   : null
               }
+              greenPolygon={geo?.greenPolygon ?? null}
               hazards={holeHazards.map((h) => ({
                 id: h.id,
                 kind: h.kind,
@@ -386,17 +407,29 @@ export default function OnCourseMode({
               className="space-y-4"
             >
               <div className="text-mute text-sm max-w-xs">
-                This hole isn&apos;t mapped yet. When you&apos;re standing on
-                the green, tap below to drop the pin for everyone after you.
+                This hole isn&apos;t mapped yet. Drop a pin from the tee or
+                green and it&apos;ll be saved for everyone after you.
               </div>
-              <button
-                type="button"
-                onClick={() => markGreen("center")}
-                disabled={pending}
-                className="btn btn-primary"
-              >
-                Mark green here
-              </button>
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => markGreen("center")}
+                  disabled={pending}
+                  className="btn btn-primary"
+                >
+                  Mark green here
+                </button>
+                {!teeSet && (
+                  <button
+                    type="button"
+                    onClick={markTee}
+                    disabled={pending}
+                    className="btn btn-ghost"
+                  >
+                    Mark tee here
+                  </button>
+                )}
+              </div>
               {accuracyYd != null && (
                 <div className="text-[10px] text-mute">
                   GPS accuracy ± {accuracyYd}y
@@ -457,8 +490,8 @@ export default function OnCourseMode({
                 )}
                 {accuracyYd != null && <span>± {accuracyYd}y GPS</span>}
               </div>
-              {(!frontMarked || !backMarked) && (
-                <div className="flex items-center justify-center gap-2 pt-1">
+              {(!frontMarked || !backMarked || !teeSet) && (
+                <div className="flex items-center justify-center gap-2 pt-1 flex-wrap">
                   {!frontMarked && (
                     <button
                       type="button"
@@ -477,6 +510,16 @@ export default function OnCourseMode({
                       className="btn btn-ghost text-[11px]"
                     >
                       Mark back here
+                    </button>
+                  )}
+                  {!teeSet && (
+                    <button
+                      type="button"
+                      onClick={markTee}
+                      disabled={pending}
+                      className="btn btn-ghost text-[11px]"
+                    >
+                      Mark tee here
                     </button>
                   )}
                 </div>
