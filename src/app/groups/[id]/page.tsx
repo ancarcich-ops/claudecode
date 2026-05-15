@@ -94,7 +94,18 @@ export default async function GroupDetailPage({
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <PlayerAvatar
-                    seed={m.user?.username ?? m.userId}
+                    seed={m.user?.avatarSeed ?? m.user?.username ?? m.userId}
+                    variant={
+                      (m.user?.avatarVariant as
+                        | "beam"
+                        | "marble"
+                        | "sunset"
+                        | "pixel"
+                        | "ring"
+                        | "bauhaus"
+                        | undefined) ?? "beam"
+                    }
+                    avatarUrl={m.user?.avatarUrl ?? null}
                     size={32}
                   />
                   <div className="min-w-0">

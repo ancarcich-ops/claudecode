@@ -705,6 +705,79 @@ export async function deleteHazardAction(formData: FormData) {
     .catch(() => {});
 }
 
+// Avatar customization: pick a generated variant + seed. Always available
+// (no external infra). Empty seed -> default to user id (resets to the
+// original generated avatar).
+export async function updateAvatarConfigAction(formData: FormData) {
+  const user = await requireUser();
+  const seedRaw = String(formData.get("seed") ?? "").trim();
+  const variantRaw = String(formData.get("variant") ?? "beam").trim();
+  const allowedVariants = new Set([
+    "beam",
+    "marble",
+    "sunset",
+    "pixel",
+    "ring",
+    "bauhaus",
+  ]);
+  const variant = allowedVariants.has(variantRaw) ? variantRaw : "beam";
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      avatarSeed: seedRaw || null,
+      avatarVariant: variant,
+    },
+  });
+  revalidatePath("/settings");
+  revalidatePath("/");
+}
+
+// Upload a real photo via Vercel Blob. Requires BLOB_READ_WRITE_TOKEN
+// in env; the settings UI hides the upload button when missing.
+export async function uploadAvatarAction(formData: FormData) {
+  const user = await requireUser();
+  const file = formData.get("file");
+  if (!(file instanceof File)) throw new Error("No file");
+  if (file.size > 4 * 1024 * 1024) {
+    throw new Error("File too large (max 4 MB)");
+  }
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Not an image");
+  }
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    throw new Error(
+      "Photo upload not configured. Generated avatars only for now.",
+    );
+  }
+  // Dynamic import so the dependency isn't pulled into routes that don't
+  // use it (and so the build doesn't fail when the package would tree-shake
+  // out).
+  const { put } = await import("@vercel/blob");
+  const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase().slice(0, 4);
+  const path = `avatars/${user.id}-${Date.now()}.${ext}`;
+  const blob = await put(path, file, {
+    access: "public",
+    contentType: file.type,
+  });
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { avatarUrl: blob.url },
+  });
+  revalidatePath("/settings");
+  revalidatePath("/");
+}
+
+// Clear an uploaded photo (falls back to the generated avatar).
+export async function clearAvatarUrlAction() {
+  const user = await requireUser();
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { avatarUrl: null },
+  });
+  revalidatePath("/settings");
+  revalidatePath("/");
+}
+
 export async function deleteMatchAction(formData: FormData) {
   const user = await requireUser();
   const matchId = String(formData.get("matchId"));
