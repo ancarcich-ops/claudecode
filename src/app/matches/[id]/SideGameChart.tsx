@@ -5,7 +5,6 @@ import {
   CartesianGrid,
   ComposedChart,
   Line,
-  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -13,29 +12,34 @@ import {
 } from "recharts";
 import ChartTooltip from "./ChartTooltip";
 
-type Row = { t: number } & Record<string, number>;
+type Row = { hole: number } & Record<string, number>;
 type PlayerMeta = { id: string; displayName: string; color: string };
 
-export default function OddsChart({
-  series,
+export default function SideGameChart({
+  rows,
   players,
+  yLabel,
+  valueFormatter,
+  yDomain,
 }: {
-  series: Row[];
+  rows: Row[];
   players: PlayerMeta[];
+  yLabel: string; // e.g. "points", "skins", "vs par"
+  valueFormatter?: (n: number) => string;
+  yDomain?: [number | "auto", number | "auto"];
 }) {
-  if (series.length < 2) {
+  if (rows.length === 0) {
     return (
       <div className="h-56 flex items-center justify-center text-sm text-mute border border-dashed border-border rounded-md">
-        Odds chart appears once the market has movement.
+        Chart fills in as scores are logged.
       </div>
     );
   }
 
-  const last = series[series.length - 1];
-  const lastIdx = series.length - 1;
+  const last = rows[rows.length - 1];
+  const lastIdx = rows.length - 1;
+  const fmt = valueFormatter ?? ((n) => String(n));
 
-  // Custom dot renderer for Line: only emit a circle at the final point so we
-  // get an emphasized "live" marker without dots peppering the whole line.
   const endpointDot =
     (color: string) =>
     (props: { cx?: number; cy?: number; index?: number }) => {
@@ -44,8 +48,6 @@ export default function OddsChart({
       }
       return (
         <g>
-          {/* Soft halo that breathes -- SMIL animation works inside the
-             SVG Recharts renders and doesn't depend on chart re-renders. */}
           <circle cx={props.cx} cy={props.cy} fill={color}>
             <animate
               attributeName="r"
@@ -60,9 +62,7 @@ export default function OddsChart({
               repeatCount="indefinite"
             />
           </circle>
-          {/* Outer ring */}
           <circle cx={props.cx} cy={props.cy} r={5} fill={color} opacity={0.5} />
-          {/* Crisp inner dot with a dark stroke so it pops on its own line */}
           <circle
             cx={props.cx}
             cy={props.cy}
@@ -79,14 +79,14 @@ export default function OddsChart({
     <div className="h-64">
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart
-          data={series}
-          margin={{ top: 8, right: 16, bottom: 4, left: -12 }}
+          data={rows}
+          margin={{ top: 8, right: 16, bottom: 4, left: -8 }}
         >
           <defs>
             {players.map((p) => (
               <linearGradient
                 key={p.id}
-                id={`oddsfill-${p.id}`}
+                id={`sgfill-${p.id}`}
                 x1="0"
                 y1="0"
                 x2="0"
@@ -103,32 +103,27 @@ export default function OddsChart({
             strokeDasharray="2 4"
           />
           <XAxis
-            dataKey="t"
+            dataKey="hole"
             type="number"
-            scale="time"
-            domain={["dataMin", "dataMax"]}
-            ticks={[series[0].t, last.t]}
-            tickFormatter={(_v, i) => (i === 0 ? "Open" : "Now")}
+            domain={[1, "dataMax"]}
+            ticks={
+              rows.length <= 9
+                ? rows.map((r) => r.hole)
+                : [1, Math.ceil(rows.length / 2), last.hole]
+            }
+            tickFormatter={(v) => `${v}`}
             tick={{ fontSize: 11, fill: "#8aa094" }}
             stroke="transparent"
             tickLine={false}
             axisLine={false}
           />
           <YAxis
-            domain={[0, 1]}
-            ticks={[0.25, 0.5, 0.75]}
-            tickFormatter={(v) => `${Math.round(v * 100)}%`}
+            domain={yDomain ?? ["auto", "auto"]}
             tick={{ fontSize: 11, fill: "#8aa094" }}
             stroke="transparent"
             tickLine={false}
             axisLine={false}
-            width={38}
-          />
-          <ReferenceLine
-            y={0.5}
-            stroke="#1f2a25"
-            strokeDasharray="3 5"
-            ifOverflow="extendDomain"
+            width={34}
           />
           <Tooltip
             cursor={{ stroke: "#1f2a25", strokeWidth: 1 }}
@@ -147,18 +142,10 @@ export default function OddsChart({
                   }))
                 }
                 label={props.label}
-                labelFormatter={(v) =>
-                  new Date(Number(v)).toLocaleTimeString(undefined, {
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })
-                }
+                labelFormatter={(v) => `Hole ${v}`}
                 valueFormatter={(value, key) => {
                   const p = players.find((pl) => pl.id === key);
-                  return [
-                    `${(value * 100).toFixed(0)}%`,
-                    p?.displayName ?? key,
-                  ];
+                  return [fmt(value), p?.displayName ?? key];
                 }}
               />
             )}
@@ -169,7 +156,7 @@ export default function OddsChart({
               type="monotone"
               dataKey={p.id}
               stroke="none"
-              fill={`url(#oddsfill-${p.id})`}
+              fill={`url(#sgfill-${p.id})`}
               isAnimationActive
               animationDuration={900}
               animationEasing="ease-out"
@@ -198,6 +185,9 @@ export default function OddsChart({
           ))}
         </ComposedChart>
       </ResponsiveContainer>
+      <div className="text-[10px] text-mute uppercase tracking-wider mt-1 ml-1">
+        Hole · {yLabel}
+      </div>
     </div>
   );
 }

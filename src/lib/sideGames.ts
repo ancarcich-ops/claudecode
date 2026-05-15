@@ -336,3 +336,136 @@ export function computeAllSideGames(input: {
 export function isSideGameKind(s: string): s is SideGameKind {
   return s === "STABLEFORD" || s === "SKINS" || s === "NASSAU";
 }
+
+// ---- Running (hole-by-hole) series for charts ---------------------------
+// Each function returns rows of the form { hole: N, [playerId]: value } so
+// the chart layer can pass it directly to Recharts.
+
+export type RunningSeries = {
+  rows: ({ hole: number } & Record<string, number>)[];
+  // The cumulative value at the final available hole, per player. Used as
+  // the chart's "current" label.
+  current: Record<string, number>;
+  // Highest plotted hole index (for the X domain).
+  throughHole: number;
+};
+
+function maxHolesAcross(players: LiveScorePlayer[]): number {
+  return Math.max(
+    0,
+    ...players.map((p) => {
+      const keys = Object.keys(p.scoresByHole).map(Number);
+      return keys.length === 0 ? 0 : Math.max(...keys);
+    }),
+  );
+}
+
+export function runningStableford(
+  players: LiveScorePlayer[],
+  pars: number[],
+  holes: number,
+  scoringMode: ScoringMode,
+): RunningSeries {
+  const through = Math.min(holes, maxHolesAcross(players));
+  const rows: ({ hole: number } & Record<string, number>)[] = [];
+  const totals: Record<string, number> = Object.fromEntries(
+    players.map((p) => [p.id, 0]),
+  );
+  for (let h = 1; h <= through; h++) {
+    for (const p of players) {
+      const gross = p.scoresByHole[h];
+      if (typeof gross === "number") {
+        const par = pars[h - 1] ?? 4;
+        const net = netStrokesForHole(
+          gross,
+          p.handicap,
+          h - 1,
+          holes,
+          scoringMode,
+        );
+        totals[p.id] = (totals[p.id] ?? 0) + stablefordPointsFromNet(net, par);
+      }
+    }
+    rows.push({ hole: h, ...totals });
+  }
+  return { rows, current: { ...totals }, throughHole: through };
+}
+
+export function runningSkins(
+  players: LiveScorePlayer[],
+  pars: number[],
+  holes: number,
+  scoringMode: ScoringMode,
+): RunningSeries {
+  const rows: ({ hole: number } & Record<string, number>)[] = [];
+  const counts: Record<string, number> = Object.fromEntries(
+    players.map((p) => [p.id, 0]),
+  );
+  let carryover = 1;
+  let through = 0;
+  for (let h = 1; h <= holes; h++) {
+    if (players.some((p) => typeof p.scoresByHole[h] !== "number")) break;
+    const nets = players.map((p) => ({
+      id: p.id,
+      net: netStrokesForHole(
+        p.scoresByHole[h] as number,
+        p.handicap,
+        h - 1,
+        holes,
+        scoringMode,
+      ),
+    }));
+    const low = Math.min(...nets.map((n) => n.net));
+    const winners = nets.filter((n) => n.net === low);
+    if (winners.length === 1) {
+      counts[winners[0].id] += carryover;
+      carryover = 1;
+    } else {
+      carryover += 1;
+    }
+    rows.push({ hole: h, ...counts });
+    through = h;
+  }
+  return { rows, current: { ...counts }, throughHole: through };
+}
+
+// Nassau running net relative to par over a segment (front/back/total).
+// X = hole offset within the segment (1..segLength), Y = net-to-par.
+export function runningNassauSegment(
+  players: LiveScorePlayer[],
+  pars: number[],
+  holes: number,
+  scoringMode: ScoringMode,
+  start1: number,
+  end1: number,
+): RunningSeries {
+  const through = Math.min(end1, maxHolesAcross(players));
+  const rows: ({ hole: number } & Record<string, number>)[] = [];
+  const running: Record<string, number> = Object.fromEntries(
+    players.map((p) => [p.id, 0]),
+  );
+  let lastHole = 0;
+  for (let h = start1; h <= through; h++) {
+    for (const p of players) {
+      const gross = p.scoresByHole[h];
+      if (typeof gross === "number") {
+        const par = pars[h - 1] ?? 4;
+        const net = netStrokesForHole(
+          gross,
+          p.handicap,
+          h - 1,
+          holes,
+          scoringMode,
+        );
+        running[p.id] = (running[p.id] ?? 0) + (net - par);
+      }
+    }
+    rows.push({ hole: h - start1 + 1, ...running });
+    lastHole = h;
+  }
+  return {
+    rows,
+    current: { ...running },
+    throughHole: lastHole === 0 ? 0 : lastHole - start1 + 1,
+  };
+}

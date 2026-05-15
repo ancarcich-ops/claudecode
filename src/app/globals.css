@@ -26,7 +26,10 @@ body {
   .btn-danger { @apply bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20; }
 
   .input {
-    @apply w-full rounded-md bg-panel2 border border-border px-3 py-2 text-sm text-ink placeholder:text-mute focus:outline-none focus:ring-1 focus:ring-accent;
+    /* text-base (16px) on mobile prevents iOS Safari from auto-zooming the
+       viewport when a date/select input is focused. text-sm on >=sm keeps
+       the desktop look compact. */
+    @apply w-full rounded-md bg-panel2 border border-border px-3 py-2 text-base sm:text-sm text-ink placeholder:text-mute focus:outline-none focus:ring-1 focus:ring-accent;
   }
   .label { @apply block text-xs uppercase tracking-wider text-mute mb-1; }
   .card { @apply rounded-lg border border-border bg-panel; }
