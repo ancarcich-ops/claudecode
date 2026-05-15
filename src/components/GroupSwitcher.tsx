@@ -95,7 +95,7 @@ export default function GroupSwitcher({
         type="button"
         onClick={() => setOpen((v) => !v)}
         disabled={pending}
-        className="btn btn-ghost h-9 px-2.5 text-xs whitespace-nowrap max-w-[10rem] sm:max-w-[14rem]"
+        className="btn btn-ghost px-3 whitespace-nowrap max-w-[10rem] sm:max-w-[14rem]"
         aria-haspopup="menu"
         aria-expanded={open}
       >

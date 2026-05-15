@@ -75,13 +75,13 @@ export default async function RootLayout({
                 <>
                   <Link
                     href="/"
-                    className="btn btn-ghost px-2.5 sm:px-3 whitespace-nowrap text-xs"
+                    className="btn btn-ghost px-3 whitespace-nowrap"
                   >
                     Home
                   </Link>
                   <Link
                     href="/matches/new"
-                    className="btn btn-primary px-2.5 sm:px-3 whitespace-nowrap"
+                    className="btn btn-primary px-3 whitespace-nowrap"
                     aria-label="Post a new match"
                   >
                     <span aria-hidden>+</span>
