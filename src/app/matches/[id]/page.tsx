@@ -42,6 +42,8 @@ import SnakeEditor from "./SnakeEditor";
 import WolfEditor from "./WolfEditor";
 import WolfSettings from "./WolfSettings";
 import WinCelebration from "@/components/WinCelebration";
+import OnCourseMode from "./OnCourseMode";
+import { getCourseHolesByName } from "@/lib/course";
 import AutoRefresh from "@/components/AutoRefresh";
 import ScoreSheet from "./ScoreSheet";
 import WagerForm from "./WagerForm";
@@ -149,6 +151,27 @@ export default async function MatchPage({
     netScore: odds.meta.netScores[p.id] ?? null,
     scores: p.scores.slice().sort((a, b) => a.hole - b.hole),
   }));
+
+  // On-course GPS data: per-hole green coordinates for this course, plus
+  // the signed-in user's match-player id (if any) so they can log scores
+  // directly from the on-course view.
+  const holeGeoByHole = await getCourseHolesByName(match.courseName);
+  const myMatchPlayer = user
+    ? match.players.find((p) => p.userId === user.id)
+    : null;
+  // Suggest starting on the hole after the user's last logged score; or
+  // the max thru of the whole match if the user isn't a player.
+  const userLastHole = myMatchPlayer
+    ? myMatchPlayer.scores.reduce((m, s) => Math.max(m, s.hole), 0)
+    : 0;
+  const groupMaxThru = match.players.reduce(
+    (m, p) => Math.max(m, p.scores.length),
+    0,
+  );
+  const onCourseStartingHole = Math.max(
+    1,
+    Math.min(match.holes, (userLastHole || groupMaxThru) + 1),
+  );
 
   // Side-game leaderboards. Filter persisted kinds against the known set in
   // case a kind was deprecated since this match was created.
@@ -430,6 +453,44 @@ export default async function MatchPage({
           </div>
         )}
       </section>
+
+      {canLogScores && (
+        <section className="card p-4">
+          <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+            <div>
+              <h2 className="text-sm uppercase tracking-wider text-mute">
+                On course
+              </h2>
+              <p className="text-[11px] text-mute mt-0.5">
+                GPS distances to the green + one-tap score entry. Mobile-first.
+              </p>
+            </div>
+            {(() => {
+              const mappedCount = Object.values(holeGeoByHole).filter(
+                (h) => h.greenLat != null,
+              ).length;
+              return (
+                <span className="text-[11px] text-mute font-mono tabular-nums">
+                  {mappedCount}/{match.holes} mapped
+                </span>
+              );
+            })()}
+          </div>
+          <OnCourseMode
+            matchId={match.id}
+            courseName={match.courseName}
+            holes={match.holes}
+            startingHole={onCourseStartingHole}
+            pars={pars}
+            players={match.players.map((p) => ({
+              id: p.id,
+              displayName: p.displayName,
+            }))}
+            holeGeoByHole={holeGeoByHole}
+            myMatchPlayerId={myMatchPlayer?.id ?? null}
+          />
+        </section>
+      )}
 
       <section className="card p-4">
         <div className="flex items-center justify-between mb-3">

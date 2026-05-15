@@ -167,3 +167,27 @@ model OddsSnapshot {
 
   @@index([matchId, createdAt])
 }
+
+model Course {
+  id        String       @id @default(cuid())
+  name      String       @unique
+  createdAt DateTime     @default(now())
+
+  holes     CourseHole[]
+}
+
+model CourseHole {
+  id        String  @id @default(cuid())
+  courseId  String
+  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  hole      Int
+  greenLat  Float?
+  greenLng  Float?
+  distanceYds Int?
+  contributedById String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@unique([courseId, hole])
+  @@index([courseId])
+}

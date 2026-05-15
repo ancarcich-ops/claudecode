@@ -189,3 +189,37 @@ model OddsSnapshot {
 
   @@index([matchId, createdAt])
 }
+
+// Shared per-course data, keyed by the same `courseName` strings already
+// used on Match. Looked-up-or-created lazily the first time a user marks
+// a green coord for that course. Decoupled from the `COURSE_PRESETS`
+// catalog so user-created free-text courses (e.g. local munis we don't
+// have presets for) can collect geo data too.
+model Course {
+  id        String       @id @default(cuid())
+  name      String       @unique
+  createdAt DateTime     @default(now())
+
+  holes     CourseHole[]
+}
+
+model CourseHole {
+  id        String  @id @default(cuid())
+  courseId  String
+  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  hole      Int
+  // Green center coordinates. Nullable until a user marks them via GPS
+  // while standing on the green. WGS84 lat/lng.
+  greenLat  Float?
+  greenLng  Float?
+  // Optional published yardage (back tee) -- not used for GPS distance
+  // but handy as a sanity-check / fallback display.
+  distanceYds Int?
+  // Audit: who first mapped this hole (so we can credit / re-prompt).
+  contributedById String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@unique([courseId, hole])
+  @@index([courseId])
+}
