@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { leaveGroupAction } from "@/lib/actions";
 import { findGroupByIdOrSlug } from "@/lib/groups";
 import CopyInvite from "@/components/CopyInvite";
+import PlayerAvatar from "@/components/Avatar";
 
 export const dynamic = "force-dynamic";
 
@@ -91,7 +92,12 @@ export default async function GroupDetailPage({
                 key={m.id}
                 className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2"
               >
-                <div className="min-w-0">
+                <div className="flex items-center gap-3 min-w-0">
+                  <PlayerAvatar
+                    seed={m.user?.username ?? m.userId}
+                    size={32}
+                  />
+                  <div className="min-w-0">
                   <div className="text-sm font-medium truncate">
                     {displayName}
                     {isYou && (
@@ -105,6 +111,7 @@ export default async function GroupDetailPage({
                       day: "numeric",
                       year: "numeric",
                     })}
+                  </div>
                   </div>
                 </div>
                 {m.role === "owner" && (

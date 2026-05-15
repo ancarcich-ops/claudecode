@@ -31,6 +31,16 @@ body {
        the desktop look compact. */
     @apply w-full rounded-md bg-panel2 border border-border px-3 py-2 text-base sm:text-sm text-ink placeholder:text-mute focus:outline-none focus:ring-1 focus:ring-accent;
   }
+  /* Native select with our chevron. Applied automatically to all <select>
+     elements that use the .input class (which most of ours do). */
+  select.input {
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%238aa094'><path d='M4 6l4 4 4-4z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 16px 16px;
+    padding-right: 2rem;
+  }
   .label { @apply block text-xs uppercase tracking-wider text-mute mb-1; }
   .card { @apply rounded-lg border border-border bg-panel; }
   .chip { @apply inline-flex items-center rounded-full border border-border bg-panel2 px-2 py-0.5 text-xs text-mute; }

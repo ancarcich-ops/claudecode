@@ -7,6 +7,8 @@ import { GeistMono } from "geist/font/mono";
 import { getCurrentUser } from "@/lib/auth";
 import { getActiveGroupId, listUserGroups } from "@/lib/groups";
 import GroupSwitcher from "@/components/GroupSwitcher";
+import MobileTabBar from "@/components/MobileTabBar";
+import { Toaster } from "sonner";
 
 // Per the brand kit: Bricolage = display + wordmark, Geist = body,
 // Geist Mono = tabular numerics. Bricolage via next/font/google;
@@ -111,9 +113,23 @@ export default async function RootLayout({
             </nav>
           </div>
         </header>
-        <main className="mx-auto max-w-6xl px-3 sm:px-4 py-5 sm:py-6">
+        <main className="mx-auto max-w-6xl px-3 sm:px-4 py-5 sm:py-6 pb-24 sm:pb-6">
           {children}
         </main>
+        {user && <MobileTabBar />}
+        <Toaster
+          theme="dark"
+          position="bottom-right"
+          richColors
+          closeButton
+          toastOptions={{
+            style: {
+              background: "#161f1b",
+              border: "1px solid #1f2a25",
+              color: "#e8f0ea",
+            },
+          }}
+        />
       </body>
     </html>
   );
