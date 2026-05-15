@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { findGroupByIdOrSlug } from "@/lib/groups";
 import { computeGroupLeaderboard } from "@/lib/leaderboard";
 
 export const dynamic = "force-dynamic";
@@ -14,16 +15,18 @@ export default async function GroupLeaderboardPage({
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
+  const resolved = await findGroupByIdOrSlug(params.id);
+  if (!resolved) notFound();
   const group = await prisma.group.findUnique({
-    where: { id: params.id },
+    where: { id: resolved.id },
     select: {
       id: true,
       name: true,
+      slug: true,
       members: { where: { userId: user.id }, select: { id: true } },
     },
   });
   if (!group) notFound();
-  // Membership gate: only members of the group can see its leaderboard.
   if (group.members.length === 0) notFound();
 
   const lb = await computeGroupLeaderboard(group.id);
@@ -80,7 +83,7 @@ export default async function GroupLeaderboardPage({
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <Link
-          href={`/groups/${group.id}`}
+          href={`/groups/${group.slug ?? group.id}`}
           className="text-xs text-mute hover:text-ink"
         >
           ← {group.name}

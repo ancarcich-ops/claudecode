@@ -15,6 +15,8 @@ import { defaultPars } from "./odds";
 import {
   generateInviteCode,
   setActiveGroupCookie,
+  slugifyGroupName,
+  uniqueGroupSlug,
   type GroupFilter,
 } from "./groups";
 import {
@@ -60,12 +62,15 @@ export async function createGroupAction(formData: FormData) {
 
   // Try a few times in the (extremely unlikely) event of an invite-code collision.
   let group;
+  const slugBase = slugifyGroupName(name);
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = generateInviteCode();
+    const slug = await uniqueGroupSlug(slugBase);
     try {
       group = await prisma.group.create({
         data: {
           name,
+          slug,
           inviteCode: code,
           createdById: user.id,
           members: { create: { userId: user.id, role: "owner" } },
@@ -73,10 +78,10 @@ export async function createGroupAction(formData: FormData) {
       });
       break;
     } catch {
-      // unique-constraint retry
+      // unique-constraint retry (either invite code or slug race)
     }
   }
-  if (!group) throw new Error("Could not generate a unique invite code");
+  if (!group) throw new Error("Could not create group");
 
   setActiveGroupCookie(group.id);
   revalidatePath("/");
