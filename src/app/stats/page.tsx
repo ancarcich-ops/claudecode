@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { computeUserStats } from "@/lib/userStats";
+import EmptyIllustration from "@/components/EmptyIllustration";
 
 export const dynamic = "force-dynamic";
 
@@ -28,13 +29,16 @@ export default async function PersonalStatsPage() {
       </div>
 
       {!hasAnyData ? (
-        <div className="card p-6 text-sm text-mute">
-          You haven&apos;t finished a round yet. Stats fill in as matches
-          wrap up.{" "}
-          <Link className="text-accent" href="/matches/new">
-            Post one →
-          </Link>
-        </div>
+        <EmptyIllustration
+          kind="noStats"
+          title="Nothing logged yet."
+          body="Your stats fill in as rounds wrap up."
+          action={
+            <Link className="btn btn-primary text-sm" href="/matches/new">
+              Post a round →
+            </Link>
+          }
+        />
       ) : (
         <>
           {/* Top-line counters */}

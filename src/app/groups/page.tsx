@@ -8,6 +8,7 @@ import {
   leaveGroupAction,
 } from "@/lib/actions";
 import CopyInvite from "@/components/CopyInvite";
+import EmptyIllustration from "@/components/EmptyIllustration";
 
 export const dynamic = "force-dynamic";
 
@@ -77,9 +78,11 @@ export default async function GroupsPage({
           Your groups
         </h2>
         {groups.length === 0 ? (
-          <p className="text-sm text-mute">
-            No groups yet. Spin one up below or drop in an invite code.
-          </p>
+          <EmptyIllustration
+            kind="noGroups"
+            title="No groups yet."
+            body="Spin one up below or drop in an invite code from a friend."
+          />
         ) : (
           <ul className="space-y-2">
             {groups.map((g) => (

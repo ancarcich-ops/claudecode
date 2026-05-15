@@ -6,6 +6,7 @@ import { getActiveGroupId, visibleMatchWhere } from "@/lib/groups";
 import AutoRefresh from "@/components/AutoRefresh";
 import LiveCardStats from "@/components/LiveCardStats";
 import { StaggerGroup, StaggerItem } from "@/components/Stagger";
+import EmptyIllustration from "@/components/EmptyIllustration";
 import {
   computeStableford,
   computeSkins,
@@ -97,18 +98,22 @@ export default async function HomePage() {
       <section>
         <SectionHeader title="Upcoming" />
         {upcoming.length === 0 && live.length === 0 ? (
-          <EmptyCard>
-            Quiet Saturday.{" "}
-            {user ? (
-              <Link className="text-accent" href="/matches/new">
-                Post a tee time so the market opens →
-              </Link>
-            ) : (
-              <Link className="text-accent" href="/login">
-                Sign in to post one →
-              </Link>
-            )}
-          </EmptyCard>
+          <EmptyIllustration
+            kind="noMatches"
+            title="Quiet Saturday."
+            body="No rounds on the board yet. Post a tee time so the market opens."
+            action={
+              user ? (
+                <Link className="btn btn-primary text-sm" href="/matches/new">
+                  Post a round →
+                </Link>
+              ) : (
+                <Link className="btn btn-primary text-sm" href="/login">
+                  Sign in to post →
+                </Link>
+              )
+            }
+          />
         ) : upcoming.length === 0 ? (
           <EmptyCard>Nothing on the tee. Open the next line.</EmptyCard>
         ) : (

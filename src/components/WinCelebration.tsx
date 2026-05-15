@@ -33,6 +33,11 @@ export default function WinCelebration({
     }
     fired.current.add(matchId);
 
+    // Opt-in arpeggio
+    try {
+      window.dispatchEvent(new CustomEvent("sticks:sound:win"));
+    } catch {}
+
     const colors = ["#34d399", "#60a5fa", "#fbbf24", "#fb923c", "#22d3ee", "#f472b6"];
     // Three bursts for shape, all at the top edge.
     confetti({

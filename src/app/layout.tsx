@@ -8,6 +8,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { getActiveGroupId, listUserGroups } from "@/lib/groups";
 import GroupSwitcher from "@/components/GroupSwitcher";
 import MobileTabBar from "@/components/MobileTabBar";
+import Onboarding from "@/components/Onboarding";
+import Sounds from "@/components/Sounds";
 import { Toaster } from "sonner";
 
 // Per the brand kit: Bricolage = display + wordmark, Geist = body,
@@ -117,6 +119,8 @@ export default async function RootLayout({
           {children}
         </main>
         {user && <MobileTabBar />}
+        <Onboarding enabled={!!user} />
+        <Sounds />
         <Toaster
           theme="dark"
           position="bottom-right"

@@ -48,6 +48,21 @@ body {
   .tag-down { @apply text-danger; }
 }
 
+/* View Transitions API: enables a single cross-document transition. The
+   matched element on the source and destination pages share a
+   view-transition-name and morph between them. We give match cards
+   identity by id; the destination page's header uses the same name so
+   the card visually 'opens into' the match detail. Browsers that don't
+   support this (Firefox, older iOS) simply navigate normally. */
+@view-transition {
+  navigation: auto;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 280ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 /* Skeleton shimmer for first-load placeholders. */
 @keyframes skeleton-shimmer {
   0%   { background-position: 200% 0; }

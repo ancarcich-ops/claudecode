@@ -1,14 +1,19 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 // Polls a tiny "version" endpoint and calls router.refresh() when the version
 // string changes. Cheaper than refreshing on a timer, and keeps everything
 // server-rendered (chart, odds, scores all update).
+//
+// Notes:
+// - Tab in background -> pause polling (visibilitychange).
+// - On each network success we briefly flash a 'just updated' indicator
+//   the parent can render (subscribe via window event 'sticks:live-tick').
 export default function AutoRefresh({
   endpoint,
-  intervalMs = 4000,
+  intervalMs = 2500,
 }: {
   endpoint: string;
   intervalMs?: number;
@@ -36,6 +41,9 @@ export default function AutoRefresh({
         if (cancelled) return;
         if (lastVersion.current !== null && version !== lastVersion.current) {
           router.refresh();
+          // Tell any subscriber (e.g. a 'just updated' pulse) the version
+          // moved. Lightweight cross-component signal without a context.
+          window.dispatchEvent(new CustomEvent("sticks:live-tick"));
         }
         lastVersion.current = version;
       } catch {
@@ -52,4 +60,31 @@ export default function AutoRefresh({
   }, [endpoint, intervalMs, router]);
 
   return null;
+}
+
+// Small component that flashes when the live polling detects a change.
+// Use this near any 'Live' indicator to give users feedback that the page
+// is fresh.
+export function LiveTickFlash({ className }: { className?: string }) {
+  const [flash, setFlash] = useState(false);
+  useEffect(() => {
+    const onTick = () => {
+      setFlash(true);
+      const t = setTimeout(() => setFlash(false), 700);
+      return () => clearTimeout(t);
+    };
+    window.addEventListener("sticks:live-tick", onTick);
+    return () => window.removeEventListener("sticks:live-tick", onTick);
+  }, []);
+  return (
+    <span
+      aria-hidden
+      className={
+        "inline-block w-1.5 h-1.5 rounded-full transition-all " +
+        (flash ? "bg-accent shadow-[0_0_8px_2px_rgba(52,211,153,0.6)]" : "bg-accent/40") +
+        " " +
+        (className ?? "")
+      }
+    />
+  );
 }
