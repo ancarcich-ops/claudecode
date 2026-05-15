@@ -514,9 +514,13 @@ export async function recordSideGameEventAction(formData: FormData) {
   } else if (wolf) {
     // Wolf: PARTNER and LONE_WOLF are mutually exclusive per hole (only one
     // Wolf choice can be active). HOLE_WINNER is its own single-award kind.
-    if (kind === "PARTNER" || kind === "LONE_WOLF") {
+    if (kind === "PARTNER" || kind === "LONE_WOLF" || kind === "PRE_LONE_WOLF") {
       await prisma.sideGameEvent.deleteMany({
-        where: { sideGameId, hole, kind: { in: ["PARTNER", "LONE_WOLF"] } },
+        where: {
+          sideGameId,
+          hole,
+          kind: { in: ["PARTNER", "LONE_WOLF", "PRE_LONE_WOLF"] },
+        },
       });
       if (matchPlayerId) {
         await prisma.sideGameEvent.create({

@@ -11,12 +11,14 @@ type WolfHoleState = {
   hole: number;
   partnerId: string | null;
   isLoneWolf: boolean;
+  isPreLoneWolf: boolean;
   winnerId: string | null;
   isPush: boolean;
 };
 
-// Sentinel value in the partner select for the lone-wolf option.
+// Sentinel values in the partner select for the lone-wolf options.
 const LONE = "__LONE__";
+const PRE_LONE = "__PRE_LONE__";
 
 function wolfForHole(
   players: Player[],
@@ -59,7 +61,12 @@ export default function WolfEditor({
 
   const send = (
     hole: number,
-    kind: "PARTNER" | "LONE_WOLF" | "HOLE_WINNER" | "PUSH",
+    kind:
+      | "PARTNER"
+      | "LONE_WOLF"
+      | "PRE_LONE_WOLF"
+      | "HOLE_WINNER"
+      | "PUSH",
     matchPlayerId: string,
   ) => {
     const fd = new FormData();
@@ -79,11 +86,12 @@ export default function WolfEditor({
     value: string,
   ) => {
     if (value === "") {
-      // Clear by sending PARTNER with empty player; action will wipe both
-      // PARTNER and LONE_WOLF rows for this hole.
+      // Clear -- the action wipes any of PARTNER / LONE_WOLF / PRE_LONE_WOLF.
       send(hole, "PARTNER", "");
     } else if (value === LONE) {
       send(hole, "LONE_WOLF", wolf.id);
+    } else if (value === PRE_LONE) {
+      send(hole, "PRE_LONE_WOLF", wolf.id);
     } else {
       send(hole, "PARTNER", value);
     }
@@ -155,9 +163,11 @@ export default function WolfEditor({
           {Array.from({ length: holes }, (_, i) => i + 1).map((h) => {
             const wolf = wolfForHole(players, h, rotation);
             const state = byHole[h];
-            const partnerValue = state?.isLoneWolf
-              ? LONE
-              : state?.partnerId ?? "";
+            const partnerValue = state?.isPreLoneWolf
+              ? PRE_LONE
+              : state?.isLoneWolf
+                ? LONE
+                : state?.partnerId ?? "";
             const winner = winnerSide(state, wolf);
             const choiceMade =
               !!state && (state.isLoneWolf || !!state.partnerId);
@@ -178,6 +188,7 @@ export default function WolfEditor({
                   >
                     <option value="">—</option>
                     <option value={LONE}>Lone Wolf</option>
+                    <option value={PRE_LONE}>Pre-Lone Wolf (2x)</option>
                     {/* In 3-player Wolf the wolf always goes solo --
                        partner picks aren't allowed. Hide opponents from
                        the select for that case. */}
