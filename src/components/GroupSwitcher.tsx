@@ -2,10 +2,16 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { selectGroupAction, signOutAction } from "@/lib/actions";
 
-export type GroupOption = { id: string; name: string };
+export type GroupOption = { id: string; name: string; slug: string | null };
+
+const LEADERBOARD_PATH_RE = /^\/groups\/[^/]+\/leaderboard\/?$/;
+
+function groupUrl(g: GroupOption, suffix: string): string {
+  return `/groups/${g.slug ?? g.id}${suffix}`;
+}
 
 export default function GroupSwitcher({
   groups,
@@ -16,7 +22,20 @@ export default function GroupSwitcher({
   active: string;
   username: string;
 }) {
+  // Resolve the actively-filtered group (if any) so we can offer its
+  // leaderboard right in the menu. "All my groups" / "Public only" don't
+  // map to a leaderboard, so the link hides in those cases.
+  const activeGroup =
+    active && active !== "public"
+      ? groups.find((g) => g.id === active) ?? null
+      : null;
   const router = useRouter();
+  const pathname = usePathname() ?? "";
+  // On the leaderboard page, the dropdown also doubles as a "switch which
+  // group's leaderboard I'm viewing" control. Picking a specific group
+  // navigates to that group's leaderboard; picking the non-group filters
+  // sends the user back to the home market.
+  const onLeaderboard = LEADERBOARD_PATH_RE.test(pathname);
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -41,6 +60,23 @@ export default function GroupSwitcher({
     fd.set("groupId", value);
     startTransition(async () => {
       await selectGroupAction(fd);
+      // On the leaderboard page, also navigate so the user lands on the
+      // right page for whatever filter they just picked.
+      if (onLeaderboard) {
+        if (value && value !== "public") {
+          const g = groups.find((x) => x.id === value);
+          if (g) {
+            router.push(groupUrl(g, "/leaderboard"));
+            setOpen(false);
+            return;
+          }
+        }
+        // 'All my groups' / 'Public only' don't map to a leaderboard;
+        // send the user home where those filters do apply.
+        router.push("/");
+        setOpen(false);
+        return;
+      }
       router.refresh();
     });
     setOpen(false);
@@ -100,6 +136,16 @@ export default function GroupSwitcher({
             </>
           )}
           <div className="border-t border-border mt-1" />
+          {activeGroup && (
+            <Link
+              href={groupUrl(activeGroup, "/leaderboard")}
+              onClick={() => setOpen(false)}
+              className="block w-full text-left px-3 py-2 text-sm text-ink hover:bg-panel2"
+              role="menuitem"
+            >
+              {activeGroup.name} leaderboard
+            </Link>
+          )}
           <Link
             href="/groups"
             onClick={() => setOpen(false)}
