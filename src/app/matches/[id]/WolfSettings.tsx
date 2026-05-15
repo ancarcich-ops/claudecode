@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateWolfConfigAction } from "@/lib/actions";
 
@@ -44,6 +44,37 @@ export default function WolfSettings({
   };
   const resetOrder = () => setOrder(seatOrder);
 
+  // Drag-to-reorder (desktop). Mobile users have the up/down arrows --
+  // native HTML5 drag doesn't fire useful events on touch, and a touch
+  // polyfill is bigger than the value it adds here.
+  const draggedIndex = useRef<number | null>(null);
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+
+  const onDragStart = (idx: number) => (e: React.DragEvent) => {
+    draggedIndex.current = idx;
+    e.dataTransfer.effectAllowed = "move";
+  };
+  const onDragOver = (idx: number) => (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (hoverIndex !== idx) setHoverIndex(idx);
+  };
+  const onDrop = (idx: number) => (e: React.DragEvent) => {
+    e.preventDefault();
+    const from = draggedIndex.current;
+    draggedIndex.current = null;
+    setHoverIndex(null);
+    if (from === null || from === idx) return;
+    const next = order.slice();
+    const [moved] = next.splice(from, 1);
+    next.splice(idx, 0, moved);
+    setOrder(next);
+  };
+  const onDragEnd = () => {
+    draggedIndex.current = null;
+    setHoverIndex(null);
+  };
+
   const isCustomOrder =
     order.join(",") !== seatOrder.join(",");
   const dirty = isCustomOrder || rule !== pushRule;
@@ -71,11 +102,29 @@ export default function WolfSettings({
           {order.map((id, i) => {
             const p = byId.get(id);
             if (!p) return null;
+            const isHover = hoverIndex === i;
             return (
               <li
                 key={id}
-                className="flex items-center gap-2 border border-border rounded-md px-2 py-1.5"
+                draggable={!locked && !pending}
+                onDragStart={onDragStart(i)}
+                onDragOver={onDragOver(i)}
+                onDrop={onDrop(i)}
+                onDragEnd={onDragEnd}
+                className={
+                  "flex items-center gap-2 border rounded-md px-2 py-1.5 cursor-grab active:cursor-grabbing transition-colors " +
+                  (isHover
+                    ? "border-accent/60 bg-accent/5"
+                    : "border-border")
+                }
               >
+                <span
+                  className="text-mute shrink-0 select-none"
+                  aria-hidden
+                  title="Drag to reorder"
+                >
+                  ⋮⋮
+                </span>
                 <span className="w-6 text-xs font-mono tabular-nums text-mute text-right shrink-0">
                   {i + 1}.
                 </span>
