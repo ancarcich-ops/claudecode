@@ -14,7 +14,8 @@ export type SideGameKind =
   | "STABLEFORD"
   | "SKINS"
   | "NASSAU"
-  | "BBB";
+  | "BBB"
+  | "SNAKE";
 
 // Per-hole event kinds. Stored in SideGameEvent.kind for BBB rows.
 export const BBB_EVENT_KINDS = ["BINGO", "BANGO", "BONGO"] as const;
@@ -22,6 +23,13 @@ export type BbbEventKind = (typeof BBB_EVENT_KINDS)[number];
 
 export function isBbbEventKind(s: string): s is BbbEventKind {
   return (BBB_EVENT_KINDS as readonly string[]).includes(s);
+}
+
+export const SNAKE_EVENT_KINDS = ["THREE_PUTT"] as const;
+export type SnakeEventKind = (typeof SNAKE_EVENT_KINDS)[number];
+
+export function isSnakeEventKind(s: string): s is SnakeEventKind {
+  return (SNAKE_EVENT_KINDS as readonly string[]).includes(s);
 }
 
 export const ALL_SIDE_GAMES: {
@@ -53,13 +61,18 @@ export const ALL_SIDE_GAMES: {
     blurb:
       "Three per-hole points: first on the green, closest once on, first in the hole.",
   },
+  {
+    kind: "SNAKE",
+    label: "Snake",
+    blurb:
+      "Every 3-putt passes the snake. Whoever holds it at the end loses.",
+  },
 ];
 
 // Future kinds: surfaced in the UI as 'coming soon' so users can see the
 // roadmap without us implementing them yet.
 export const COMING_SOON_SIDE_GAMES = [
   { kind: "WOLF", label: "Wolf", blurb: "Rotating partners, weekly format." },
-  { kind: "SNAKE", label: "Snake", blurb: "Last player to 3-putt holds it." },
 ];
 
 export type LiveScorePlayer = {
@@ -382,6 +395,90 @@ export function runningBbb(
   return { rows, current: { ...totals }, throughHole: through };
 }
 
+// ---- Snake --------------------------------------------------------------
+// Source data: a row per (hole, playerId) for each 3-putt. Multiple players
+// can 3-putt on the same hole. Total 3-putts = base leaderboard signal
+// (fewer is better). The "current snake holder" is whoever was tagged on
+// the highest-numbered hole that has any 3-putt -- if multiple players
+// 3-putted on that hole, all of them currently share the snake.
+
+export type SnakeEvent = {
+  hole: number;
+  matchPlayerId: string;
+};
+
+function snakeHolders(events: SnakeEvent[]): Set<string> {
+  if (events.length === 0) return new Set();
+  const lastHole = Math.max(...events.map((e) => e.hole));
+  return new Set(
+    events.filter((e) => e.hole === lastHole).map((e) => e.matchPlayerId),
+  );
+}
+
+export function computeSnake(
+  players: LiveScorePlayer[],
+  events: SnakeEvent[],
+): Leaderboard {
+  const counts: Record<string, number> = Object.fromEntries(
+    players.map((p) => [p.id, 0]),
+  );
+  for (const e of events) {
+    if (e.matchPlayerId in counts) counts[e.matchPlayerId] += 1;
+  }
+  const holders = snakeHolders(events);
+  const rows = players.map((p) => {
+    const n = counts[p.id] ?? 0;
+    const isHolder = holders.has(p.id);
+    return {
+      playerId: p.id,
+      player: p.displayName,
+      // numeric is the 3-putt count; lower is better in this game.
+      numeric: n,
+      value: isHolder
+        ? `${n} 3-putt${n === 1 ? "" : "s"} · holder`
+        : `${n} 3-putt${n === 1 ? "" : "s"}`,
+    };
+  });
+  // Lower 3-putt count = better, so rank ascending (no higherIsBetter).
+  return {
+    key: "SNAKE",
+    kind: "SNAKE",
+    title: "Snake",
+    subtitle:
+      events.length === 0
+        ? "No 3-putts yet"
+        : `Snake holder: ${players
+            .filter((p) => holders.has(p.id))
+            .map((p) => p.displayName)
+            .join(", ")}`,
+    rows: rankRows(rows, false),
+  };
+}
+
+export function runningSnake(
+  players: LiveScorePlayer[],
+  holes: number,
+  events: SnakeEvent[],
+): RunningSeries {
+  const through = Math.min(
+    holes,
+    events.length === 0 ? 0 : Math.max(...events.map((e) => e.hole)),
+  );
+  const rows: ({ hole: number } & Record<string, number>)[] = [];
+  const totals: Record<string, number> = Object.fromEntries(
+    players.map((p) => [p.id, 0]),
+  );
+  for (let h = 1; h <= through; h++) {
+    for (const e of events) {
+      if (e.hole === h && e.matchPlayerId in totals) {
+        totals[e.matchPlayerId] += 1;
+      }
+    }
+    rows.push({ hole: h, ...totals });
+  }
+  return { rows, current: { ...totals }, throughHole: through };
+}
+
 // Dispatch: compute all enabled side games for a match. BBB needs the extra
 // `bbbEvents` input since it's not derivable from strokes alone.
 export function computeAllSideGames(input: {
@@ -391,8 +488,17 @@ export function computeAllSideGames(input: {
   holes: number;
   scoringMode: ScoringMode;
   bbbEvents?: BbbEvent[];
+  snakeEvents?: SnakeEvent[];
 }): { kind: SideGameKind; leaderboards: Leaderboard[] }[] {
-  const { enabled, players, pars, holes, scoringMode, bbbEvents = [] } = input;
+  const {
+    enabled,
+    players,
+    pars,
+    holes,
+    scoringMode,
+    bbbEvents = [],
+    snakeEvents = [],
+  } = input;
   const out: { kind: SideGameKind; leaderboards: Leaderboard[] }[] = [];
   for (const kind of enabled) {
     if (kind === "STABLEFORD") {
@@ -410,6 +516,8 @@ export function computeAllSideGames(input: {
       if (lbs.length > 0) out.push({ kind, leaderboards: lbs });
     } else if (kind === "BBB") {
       out.push({ kind, leaderboards: [computeBbb(players, bbbEvents)] });
+    } else if (kind === "SNAKE") {
+      out.push({ kind, leaderboards: [computeSnake(players, snakeEvents)] });
     }
   }
   return out;
@@ -420,7 +528,8 @@ export function isSideGameKind(s: string): s is SideGameKind {
     s === "STABLEFORD" ||
     s === "SKINS" ||
     s === "NASSAU" ||
-    s === "BBB"
+    s === "BBB" ||
+    s === "SNAKE"
   );
 }
 

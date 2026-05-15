@@ -17,7 +17,11 @@ import {
   setActiveGroupCookie,
   type GroupFilter,
 } from "./groups";
-import { isBbbEventKind, isSideGameKind } from "./sideGames";
+import {
+  isBbbEventKind,
+  isSideGameKind,
+  isSnakeEventKind,
+} from "./sideGames";
 
 export async function signInAction(formData: FormData) {
   const username = String(formData.get("username") ?? "");
@@ -428,9 +432,9 @@ export async function recordSideGameEventAction(formData: FormData) {
   if (!sideGameId || !Number.isFinite(hole) || hole < 1 || !kind) {
     throw new Error("Invalid side-game event");
   }
-  // Only BBB events are wired through this action for now; Snake/Wolf
-  // additions will allow their kinds the same way.
-  if (!isBbbEventKind(kind)) throw new Error("Unsupported event kind");
+  const bbb = isBbbEventKind(kind);
+  const snake = isSnakeEventKind(kind);
+  if (!bbb && !snake) throw new Error("Unsupported event kind");
 
   // Confirm the side game belongs to a match we can find (used to invalidate
   // the right path on revalidate).
@@ -440,15 +444,32 @@ export async function recordSideGameEventAction(formData: FormData) {
   });
   if (!sg) throw new Error("Side game not found");
 
-  // Single-award kinds: delete any existing rows for this (game, hole, kind)
-  // and create the new one if a player was picked.
-  await prisma.sideGameEvent.deleteMany({
-    where: { sideGameId, hole, kind },
-  });
-  if (matchPlayerId) {
-    await prisma.sideGameEvent.create({
-      data: { sideGameId, hole, kind, matchPlayerId },
+  if (bbb) {
+    // Single-award kinds: delete any existing rows for this (game, hole, kind)
+    // and create the new one if a player was picked.
+    await prisma.sideGameEvent.deleteMany({
+      where: { sideGameId, hole, kind },
     });
+    if (matchPlayerId) {
+      await prisma.sideGameEvent.create({
+        data: { sideGameId, hole, kind, matchPlayerId },
+      });
+    }
+  } else if (snake) {
+    // Multi-player toggle: each (hole, player) is independent. Submitting
+    // without a player is a no-op (we wouldn't know who to toggle).
+    if (!matchPlayerId) throw new Error("Player required for snake event");
+    const existing = await prisma.sideGameEvent.findFirst({
+      where: { sideGameId, hole, kind, matchPlayerId },
+      select: { id: true },
+    });
+    if (existing) {
+      await prisma.sideGameEvent.delete({ where: { id: existing.id } });
+    } else {
+      await prisma.sideGameEvent.create({
+        data: { sideGameId, hole, kind, matchPlayerId },
+      });
+    }
   }
 
   revalidatePath(`/matches/${sg.matchId}`);

@@ -15,7 +15,8 @@ export type ChartTabId =
   | "NASSAU_F9"
   | "NASSAU_B9"
   | "NASSAU_TOTAL"
-  | "BBB";
+  | "BBB"
+  | "SNAKE";
 
 export type SideGameSeries = {
   stableford?: { rows: SgRow[] };
@@ -24,6 +25,7 @@ export type SideGameSeries = {
   nassauB9?: { rows: SgRow[] };
   nassauTotal?: { rows: SgRow[] };
   bbb?: { rows: SgRow[] };
+  snake?: { rows: SgRow[] };
 };
 
 export default function MatchChartTabs({
@@ -45,6 +47,7 @@ export default function MatchChartTabs({
   if (sideGames.nassauTotal)
     tabs.push({ id: "NASSAU_TOTAL", label: "Nassau · Total" });
   if (sideGames.bbb) tabs.push({ id: "BBB", label: "BBB" });
+  if (sideGames.snake) tabs.push({ id: "SNAKE", label: "Snake" });
 
   const [active, setActive] = useState<ChartTabId>("ODDS");
 
@@ -140,6 +143,15 @@ export default function MatchChartTabs({
           players={players}
           yLabel="points (cumulative)"
           valueFormatter={(n) => `${n} pt${n === 1 ? "" : "s"}`}
+          yDomain={[0, "auto"]}
+        />
+      )}
+      {active === "SNAKE" && sideGames.snake && (
+        <SideGameChart
+          rows={sideGames.snake.rows}
+          players={players}
+          yLabel="3-putts (lower wins)"
+          valueFormatter={(n) => `${n} 3-putt${n === 1 ? "" : "s"}`}
           yDomain={[0, "auto"]}
         />
       )}
