@@ -568,9 +568,16 @@ function scoreWolfHole(
     playerIds.map((id) => [id, 0]),
   );
   if (!shaped.winnerId) return pts;
+  const N = playerIds.length;
+  // Player-count-aware scoring:
+  //   3 players (always solo): wolf win = 2; others win = 1 each
+  //   4 players solo:          wolf win = 3; others win = 1 each
+  //   4 players partner:       winning team = 2 each; losing team = 0
+  //   5+ (fallback):           wolf solo win = N - 1; others 1 each
+  //                            partner: winning team = 2 each; losing = 0
   if (shaped.isLoneWolf) {
     if (shaped.winnerId === shaped.wolfId) {
-      pts[shaped.wolfId] = 4;
+      pts[shaped.wolfId] = N - 1; // 2 for N=3, 3 for N=4, scales for N=5+
     } else {
       for (const id of playerIds) {
         if (id !== shaped.wolfId) pts[id] = 1;
@@ -581,11 +588,16 @@ function scoreWolfHole(
   if (shaped.partnerId) {
     const wolfTeam = new Set([shaped.wolfId, shaped.partnerId]);
     if (wolfTeam.has(shaped.winnerId)) {
+      // Wolf team wins -- they get 2 each. Losing team gets 0.
       pts[shaped.wolfId] = 2;
       pts[shaped.partnerId] = 2;
     } else {
+      // Opponents win. Standard rule: winners get 2 each, losers 0. For
+      // 5+ players we keep the legacy 1-each on the opponent side so the
+      // pot doesn't inflate, but at N=4 it's the symmetric 2/0.
+      const opponentPts = N === 4 ? 2 : 1;
       for (const id of playerIds) {
-        if (!wolfTeam.has(id)) pts[id] = 1;
+        if (!wolfTeam.has(id)) pts[id] = opponentPts;
       }
     }
   }

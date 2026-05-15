@@ -151,13 +151,17 @@ export default function WolfEditor({
                   >
                     <option value="">—</option>
                     <option value={LONE}>Lone Wolf</option>
-                    {players
-                      .filter((p) => p.id !== wolf.id)
-                      .map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.displayName}
-                        </option>
-                      ))}
+                    {/* In 3-player Wolf the wolf always goes solo --
+                       partner picks aren't allowed. Hide opponents from
+                       the select for that case. */}
+                    {players.length !== 3 &&
+                      players
+                        .filter((p) => p.id !== wolf.id)
+                        .map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.displayName}
+                          </option>
+                        ))}
                   </select>
                 </td>
                 <td className="py-1 px-1.5">
