@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { findGroupByIdOrSlug } from "@/lib/groups";
 import { computeGroupLeaderboard } from "@/lib/leaderboard";
+import LeaderboardTable from "./LeaderboardTable";
 
 export const dynamic = "force-dynamic";
 
@@ -103,82 +104,178 @@ export default async function GroupLeaderboardPage({
           Once a match in this group finishes, the leaderboard fills in.
         </div>
       ) : (
-        <div className="card p-1 sm:p-2 overflow-x-auto">
-          <table className="w-full text-sm">
+        <LeaderboardTable
+          rows={lb.rows}
+          meUserId={user.id}
+          columns={visible.map((c) => ({
+            key: c.key as
+              | "mainWins"
+              | "stablefordWins"
+              | "skinsWins"
+              | "nassauWins"
+              | "bbbWins"
+              | "snakeWins"
+              | "wolfWins",
+            label: c.label,
+            hint: c.hint,
+            numeric: true,
+            show: c.show,
+          }))}
+        />
+      )}
+
+      {/* Current champions per game type */}
+      {lb.champions.length > 0 && (
+        <section className="card p-5">
+          <h2 className="text-sm uppercase tracking-wider text-mute mb-3">
+            Current champions
+          </h2>
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {lb.champions.map((c) => (
+              <li
+                key={c.kind}
+                className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2"
+              >
+                <div className="min-w-0">
+                  <div className="text-[10px] uppercase tracking-wider text-mute">
+                    {c.label}
+                  </div>
+                  <div className="text-sm font-medium truncate">
+                    {c.winners.map((w) => w.displayName).join(", ")}
+                  </div>
+                </div>
+                <div className="text-[11px] text-mute text-right shrink-0">
+                  <div className="truncate max-w-[10rem]">{c.courseName}</div>
+                  <div>
+                    {new Date(c.scheduledAt).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Head-to-head matrix */}
+      {lb.headToHead.users.length >= 2 && (
+        <section className="card p-2 sm:p-4 overflow-x-auto">
+          <h2 className="text-sm uppercase tracking-wider text-mute mb-3 px-2 pt-1">
+            Head to head
+          </h2>
+          <table className="w-full text-xs">
             <thead>
               <tr className="text-mute">
-                <th className="text-left font-medium uppercase tracking-wider text-[10px] py-2 px-2 sticky left-0 bg-panel">
-                  Player
-                </th>
-                <th
-                  className="text-right font-medium uppercase tracking-wider text-[10px] py-2 px-2"
-                  title="Total matches played"
-                >
-                  GP
-                </th>
-                {visible.map((c) => (
+                <th className="text-left font-medium uppercase tracking-wider text-[10px] py-2 px-2"></th>
+                {lb.headToHead.users.map((u) => (
                   <th
-                    key={String(c.key)}
+                    key={u.userId}
                     className="text-right font-medium uppercase tracking-wider text-[10px] py-2 px-2"
-                    title={c.hint}
                   >
-                    {c.label}
+                    vs {u.displayName.slice(0, 8)}
                   </th>
                 ))}
-                <th
-                  className="text-right font-medium uppercase tracking-wider text-[10px] py-2 px-2 text-accent"
-                  title="Total wins across all game types"
-                >
-                  All
-                </th>
               </tr>
             </thead>
             <tbody>
-              {lb.rows.map((r) => {
-                const isYou = r.userId === user.id;
-                const displayName = r.displayName ?? r.username;
-                return (
-                  <tr
-                    key={r.userId}
-                    className="border-t border-border hover:bg-panel2/30"
-                  >
-                    <td className="py-2 px-2 sticky left-0 bg-panel">
-                      <div className="font-medium truncate max-w-[10rem]">
-                        {displayName}
-                        {isYou && (
-                          <span className="text-mute font-normal"> (you)</span>
-                        )}
-                      </div>
-                      <div className="text-[10px] text-mute truncate">
-                        @{r.username}
-                      </div>
-                    </td>
-                    <td className="py-2 px-2 text-right font-mono tabular-nums text-mute">
-                      {r.matchesPlayed}
-                    </td>
-                    {visible.map((c) => {
-                      const v = r[c.key] as number;
+              {lb.headToHead.users.map((row) => (
+                <tr key={row.userId} className="border-t border-border">
+                  <td className="py-2 px-2 font-medium">{row.displayName}</td>
+                  {lb.headToHead.users.map((col) => {
+                    if (row.userId === col.userId) {
                       return (
                         <td
-                          key={String(c.key)}
-                          className={
-                            "py-2 px-2 text-right font-mono tabular-nums " +
-                            (v === 0 ? "text-mute/40" : "")
-                          }
+                          key={col.userId}
+                          className="py-2 px-2 text-right text-mute/40 font-mono tabular-nums"
                         >
-                          {v}
+                          —
                         </td>
                       );
-                    })}
-                    <td className="py-2 px-2 text-right font-mono tabular-nums text-accent">
-                      {r.totalWins}
-                    </td>
-                  </tr>
-                );
-              })}
+                    }
+                    const w = lb.headToHead.wins[row.userId]?.[col.userId] ?? 0;
+                    const l = lb.headToHead.wins[col.userId]?.[row.userId] ?? 0;
+                    const tone =
+                      w > l
+                        ? "text-accent"
+                        : w < l
+                          ? "text-danger"
+                          : "text-mute";
+                    return (
+                      <td
+                        key={col.userId}
+                        className={
+                          "py-2 px-2 text-right font-mono tabular-nums " + tone
+                        }
+                        title={`${w} win${w === 1 ? "" : "s"}, ${l} loss${l === 1 ? "" : "es"}`}
+                      >
+                        {w}-{l}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
             </tbody>
           </table>
-        </div>
+        </section>
+      )}
+
+      {/* Streaks */}
+      {lb.streaks.length > 0 && (
+        <section className="card p-5">
+          <h2 className="text-sm uppercase tracking-wider text-mute mb-3">
+            Main-game streaks
+          </h2>
+          <ul className="space-y-1">
+            {lb.streaks.slice(0, 8).map((s) => (
+              <li
+                key={s.userId}
+                className="flex items-center justify-between text-sm py-1"
+              >
+                <span className="truncate">{s.displayName}</span>
+                <span className="font-mono tabular-nums shrink-0">
+                  <span
+                    className={
+                      s.currentMainStreak > 0 ? "text-accent" : "text-mute"
+                    }
+                  >
+                    {s.currentMainStreak}
+                  </span>
+                  <span className="text-mute"> · best {s.bestMainStreak}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Course records */}
+      {lb.courseRecords.length > 0 && (
+        <section className="card p-5">
+          <h2 className="text-sm uppercase tracking-wider text-mute mb-3">
+            Course records
+          </h2>
+          <ul className="space-y-1">
+            {lb.courseRecords.map((c) => (
+              <li
+                key={c.courseName}
+                className="flex items-center justify-between gap-3 text-sm py-1 border-b border-border last:border-b-0"
+              >
+                <span className="truncate min-w-0">{c.courseName}</span>
+                <span className="font-mono tabular-nums shrink-0 text-right">
+                  <div>
+                    <span className="text-ink">{c.gross}</span>
+                    <span className="text-mute"> · {c.bestDisplayName}</span>
+                  </div>
+                  <div className="text-[10px] text-mute">
+                    net {c.net.toFixed(1)}
+                  </div>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       <p className="text-[11px] text-mute">
