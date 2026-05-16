@@ -8,6 +8,7 @@ import {
   expectedDistribution,
 } from "@/lib/scoringBaseline";
 import EmptyIllustration from "@/components/EmptyIllustration";
+import RoundHistoryChart from "./RoundHistoryChart";
 
 export const dynamic = "force-dynamic";
 
@@ -99,6 +100,26 @@ export default async function PersonalStatsPage({
               <Stat label="Wolf" value={stats.wolfWins} />
             </div>
           </section>
+
+          {/* Round-by-round vs par */}
+          {stats.rounds.length >= 1 && (
+            <section className="card p-5">
+              <div className="flex items-center justify-between mb-3 gap-2">
+                <h2 className="text-sm uppercase tracking-wider text-mute">
+                  Rounds over time
+                </h2>
+                <span className="text-[11px] text-mute">vs par · lower is better</span>
+              </div>
+              <RoundHistoryChart
+                rounds={stats.rounds.map((r) => ({
+                  t: r.scheduledAt.getTime(),
+                  vsPar: r.vsPar,
+                  holesPlayed: r.holesPlayed,
+                  courseName: r.courseName,
+                }))}
+              />
+            </section>
+          )}
 
           {/* Scoring analysis */}
           <ScoringAnalysis stats={stats} baselineHcp={baselineHcp} />
