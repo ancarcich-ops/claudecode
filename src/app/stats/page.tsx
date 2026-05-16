@@ -209,29 +209,6 @@ export default async function PersonalStatsPage({
           {/* Scoring analysis */}
           <ScoringAnalysis stats={stats} baselineHcp={baselineHcp} />
 
-          {/* Logged rounds with inline delete */}
-          {stats.rounds.length > 0 && (
-            <section className="card p-5">
-              <div className="flex items-center justify-between mb-3 gap-2">
-                <h2 className="text-sm uppercase tracking-wider text-mute">
-                  Logged rounds
-                </h2>
-                <span className="text-[11px] text-mute">tap × to delete</span>
-              </div>
-              <RoundsList
-                rounds={[...stats.rounds]
-                  .reverse()
-                  .map((r) => ({
-                    matchId: r.matchId,
-                    courseName: r.courseName,
-                    scheduledAt: r.scheduledAt.toISOString(),
-                    holesPlayed: r.holesPlayed,
-                    vsPar: r.vsPar,
-                  }))}
-              />
-            </section>
-          )}
-
           {/* Course records */}
           {stats.courseRecords.length > 0 && (
             <section className="card p-5">
@@ -260,6 +237,30 @@ export default async function PersonalStatsPage({
                   +{stats.courseRecords.length - 12} more
                 </p>
               )}
+            </section>
+          )}
+
+          {/* Logged rounds with inline delete -- lives at the bottom so the
+              scrolling experience leads with analytics, not data management. */}
+          {stats.rounds.length > 0 && (
+            <section className="card p-5">
+              <div className="flex items-center justify-between mb-3 gap-2">
+                <h2 className="text-sm uppercase tracking-wider text-mute">
+                  Logged rounds
+                </h2>
+                <span className="text-[11px] text-mute">tap × to delete</span>
+              </div>
+              <RoundsList
+                rounds={[...stats.rounds]
+                  .reverse()
+                  .map((r) => ({
+                    matchId: r.matchId,
+                    courseName: r.courseName,
+                    scheduledAt: r.scheduledAt.toISOString(),
+                    holesPlayed: r.holesPlayed,
+                    vsPar: r.vsPar,
+                  }))}
+              />
             </section>
           )}
         </>
