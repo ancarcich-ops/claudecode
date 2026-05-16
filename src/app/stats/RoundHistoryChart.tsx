@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  Area,
+  Bar,
+  BarChart,
   CartesianGrid,
-  ComposedChart,
-  Line,
+  Cell,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -19,68 +19,52 @@ type Row = {
   courseName: string;
 };
 
-// Round-by-round score-to-par history. Vs-par normalizes for any hole count
-// (9, 12, 18) so every round sits on the same axis. Lower = better.
+// Round-by-round score-to-par history as bars. Each bar is one round.
+// Bar above zero = over par (red). Bar below zero = under par (green).
+// Lower = better.
 export default function RoundHistoryChart({ rounds }: { rounds: Row[] }) {
-  if (rounds.length < 2) {
+  if (rounds.length < 1) {
     return (
       <div className="h-56 flex items-center justify-center text-sm text-mute border border-dashed border-border rounded-md">
-        Two completed rounds and this chart fills in.
+        Log a round and this chart fills in.
       </div>
     );
   }
 
-  // Y-axis domain padded so the line breathes -- include the par line (0)
-  // in every case so the comparison is honest.
-  const values = rounds.map((r) => r.vsPar);
-  const lo = Math.min(0, ...values);
-  const hi = Math.max(0, ...values);
-  const pad = Math.max(1, (hi - lo) * 0.15);
-  const lastIdx = rounds.length - 1;
-
-  // Trend: average of the most recent 5 rounds vs the earliest 5. Drawn as
-  // a small badge above the chart so the user can read direction at a glance.
   const recentN = Math.min(5, rounds.length);
   const recent =
     rounds.slice(-recentN).reduce((s, r) => s + r.vsPar, 0) / recentN;
 
-  const endpointDot = (props: { cx?: number; cy?: number; index?: number }) => {
-    if (props.index !== lastIdx || props.cx == null || props.cy == null)
-      return <g />;
-    return (
-      <g>
-        <circle cx={props.cx} cy={props.cy} fill="#34d399">
-          <animate
-            attributeName="r"
-            values="8;13;8"
-            dur="2.2s"
-            repeatCount="indefinite"
-          />
-          <animate
-            attributeName="opacity"
-            values="0.18;0.05;0.18"
-            dur="2.2s"
-            repeatCount="indefinite"
-          />
-        </circle>
-        <circle cx={props.cx} cy={props.cy} r={5} fill="#34d399" opacity={0.5} />
-        <circle
-          cx={props.cx}
-          cy={props.cy}
-          r={3}
-          fill="#34d399"
-          stroke="#0b0f0c"
-          strokeWidth={1.5}
-        />
-      </g>
-    );
-  };
+  // Pad so the bars don't kiss the axis. Always include 0 (par) so the
+  // reference line lives inside the visible range.
+  const values = rounds.map((r) => r.vsPar);
+  const lo = Math.min(0, ...values);
+  const hi = Math.max(0, ...values);
+  const pad = Math.max(1, (hi - lo) * 0.15);
+
+  const colorFor = (v: number) =>
+    v < 0 ? "#34d399" : v === 0 ? "#fbbf24" : "#f87171";
+
+  // Decimate x-axis labels so we don't crowd. Show first, last, and a few
+  // in between (every ~25% of the way).
+  const tickIndices = (() => {
+    if (rounds.length <= 4) return rounds.map((_, i) => i);
+    const step = Math.max(1, Math.floor((rounds.length - 1) / 3));
+    const idx = new Set<number>();
+    for (let i = 0; i < rounds.length; i += step) idx.add(i);
+    idx.add(rounds.length - 1);
+    return Array.from(idx).sort((a, b) => a - b);
+  })();
+
+  // Use the row index as the x key so bars sit at evenly spaced slots
+  // even when rounds aren't evenly spaced in time.
+  const data = rounds.map((r, i) => ({ ...r, i }));
 
   return (
     <div>
       <div className="flex items-baseline justify-between mb-2">
         <div className="text-[10px] uppercase tracking-wider text-mute">
-          Last {rounds.length} rounds
+          {rounds.length} round{rounds.length === 1 ? "" : "s"}
         </div>
         <div className="text-[11px] font-mono tabular-nums text-mute">
           recent avg{" "}
@@ -92,29 +76,29 @@ export default function RoundHistoryChart({ rounds }: { rounds: Row[] }) {
       </div>
       <div className="h-56 sm:h-64">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart
-            data={rounds}
-            margin={{ top: 8, right: 16, bottom: 4, left: 4 }}
+          <BarChart
+            data={data}
+            margin={{ top: 16, right: 8, bottom: 4, left: 4 }}
           >
-            <defs>
-              <linearGradient id="vsParFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#34d399" stopOpacity={0.28} />
-                <stop offset="100%" stopColor="#34d399" stopOpacity={0} />
-              </linearGradient>
-            </defs>
             <CartesianGrid
-              stroke="#1f2a25"
+              stroke="rgb(var(--color-border))"
               vertical={false}
               strokeDasharray="2 4"
             />
             <XAxis
-              dataKey="t"
+              dataKey="i"
               type="number"
-              scale="time"
-              domain={["dataMin", "dataMax"]}
-              ticks={[rounds[0].t, rounds[lastIdx].t]}
-              tickFormatter={(_v, i) => (i === 0 ? "Earliest" : "Latest")}
-              tick={{ fontSize: 11, fill: "#8aa094" }}
+              domain={[-0.5, rounds.length - 0.5]}
+              ticks={tickIndices}
+              tickFormatter={(v) => {
+                const r = rounds[v];
+                if (!r) return "";
+                return new Date(r.t).toLocaleDateString(undefined, {
+                  month: "numeric",
+                  day: "numeric",
+                });
+              }}
+              tick={{ fontSize: 11, fill: "rgb(var(--color-mute))" }}
               stroke="transparent"
               tickLine={false}
               axisLine={false}
@@ -124,27 +108,27 @@ export default function RoundHistoryChart({ rounds }: { rounds: Row[] }) {
               tickFormatter={(v) =>
                 v === 0 ? "E" : v > 0 ? `+${v}` : `${v}`
               }
-              tick={{ fontSize: 11, fill: "#8aa094" }}
+              tick={{ fontSize: 11, fill: "rgb(var(--color-mute))" }}
               stroke="transparent"
               tickLine={false}
               axisLine={false}
-              width={44}
+              width={36}
             />
             <ReferenceLine
               y={0}
-              stroke="#34d399"
-              strokeOpacity={0.35}
+              stroke="rgb(var(--color-accent))"
+              strokeOpacity={0.4}
               strokeDasharray="3 5"
               label={{
                 value: "par",
                 position: "insideRight",
-                fill: "#34d399",
+                fill: "rgb(var(--color-accent))",
                 fontSize: 10,
-                opacity: 0.6,
+                opacity: 0.7,
               }}
             />
             <Tooltip
-              cursor={{ stroke: "#1f2a25", strokeWidth: 1 }}
+              cursor={{ fill: "rgb(var(--color-panel2) / 0.5)" }}
               content={({
                 active,
                 payload,
@@ -157,7 +141,7 @@ export default function RoundHistoryChart({ rounds }: { rounds: Row[] }) {
                 if (!r) return null;
                 const v = r.vsPar;
                 const color =
-                  v < 0 ? "text-accent" : v === 0 ? "text-gold" : "text-ink";
+                  v < 0 ? "text-accent" : v === 0 ? "text-gold" : "text-danger";
                 return (
                   <div className="rounded-md border border-border bg-panel/95 backdrop-blur px-2.5 py-1.5 shadow-md text-xs">
                     <div className="text-mute text-[10px] uppercase tracking-wider">
@@ -184,36 +168,28 @@ export default function RoundHistoryChart({ rounds }: { rounds: Row[] }) {
                 );
               }}
             />
-            <Area
-              type="monotone"
+            <Bar
               dataKey="vsPar"
-              stroke="none"
-              fill="url(#vsParFill)"
               isAnimationActive
-              animationDuration={900}
+              animationDuration={700}
               animationEasing="ease-out"
-              activeDot={false}
-            />
-            <Line
-              type="monotone"
-              dataKey="vsPar"
-              stroke="#34d399"
-              strokeWidth={2.25}
-              dot={endpointDot}
-              activeDot={{
-                r: 4,
-                stroke: "#0b0f0c",
-                strokeWidth: 2,
-                fill: "#34d399",
-              }}
-              isAnimationActive
-              animationDuration={1100}
-              animationEasing="ease-out"
-              connectNulls
-            />
-          </ComposedChart>
+              radius={[3, 3, 3, 3]}
+              maxBarSize={36}
+            >
+              {data.map((r) => (
+                <Cell key={r.i} fill={colorFor(r.vsPar)} />
+              ))}
+            </Bar>
+          </BarChart>
         </ResponsiveContainer>
       </div>
+      <p className="text-[11px] text-mute mt-2 text-center">
+        <span className="text-accent">Under par</span>
+        <span className="opacity-50"> · </span>
+        <span className="text-gold">par</span>
+        <span className="opacity-50"> · </span>
+        <span className="text-danger">over par</span>
+      </p>
     </div>
   );
 }

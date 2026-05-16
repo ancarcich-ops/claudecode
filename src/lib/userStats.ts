@@ -1,5 +1,6 @@
 import { prisma } from "./db";
 import { parseParData } from "./odds";
+import { normalizeCourseName } from "./courseAlias";
 import {
   computeStableford,
   computeSkins,
@@ -206,14 +207,17 @@ export async function computeUserStats(userId: string): Promise<UserStats | null
         vsPar: roundVsPar,
       });
 
-      // Course best (lowest gross). Tiebreak by net.
+      // Course best (lowest gross). Tiebreak by net. Aliased course names
+      // collapse to one entry so the same course played with slightly
+      // different spellings doesn't show up twice.
       const myGross = me.scores.reduce((a, x) => a + x.strokes, 0);
       const allowance = scoringMode === "GROSS" ? 0 : me.handicap;
       const myNet = myGross - allowance;
-      const existing = bestByCourse.get(match.courseName);
+      const canonicalCourse = normalizeCourseName(match.courseName);
+      const existing = bestByCourse.get(canonicalCourse);
       if (!existing || myGross < existing.gross) {
-        bestByCourse.set(match.courseName, {
-          courseName: match.courseName,
+        bestByCourse.set(canonicalCourse, {
+          courseName: canonicalCourse,
           matchId: match.id,
           gross: myGross,
           net: myNet,
