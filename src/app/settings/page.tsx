@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import AvatarEditor from "./AvatarEditor";
+import ThemeToggle from "./ThemeToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +45,8 @@ export default async function SettingsPage() {
         avatarUrl={user.avatarUrl}
         photoUploadEnabled={photoUploadConfigured}
       />
+
+      <ThemeToggle />
     </div>
   );
 }

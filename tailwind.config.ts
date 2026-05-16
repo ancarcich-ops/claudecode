@@ -5,16 +5,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        bg: "#0b0f0c",
-        panel: "#111815",
-        panel2: "#161f1b",
-        border: "#1f2a25",
-        ink: "#e8f0ea",
-        mute: "#8aa094",
-        accent: "#34d399",
-        accentDim: "#10b981",
-        danger: "#f87171",
-        gold: "#fbbf24",
+        // CSS variables (defined per-theme in globals.css) keep dark/light
+        // palettes in lockstep. Tailwind's <alpha-value> substitution still
+        // works because the values are RGB triples.
+        bg: "rgb(var(--color-bg) / <alpha-value>)",
+        panel: "rgb(var(--color-panel) / <alpha-value>)",
+        panel2: "rgb(var(--color-panel2) / <alpha-value>)",
+        border: "rgb(var(--color-border) / <alpha-value>)",
+        ink: "rgb(var(--color-ink) / <alpha-value>)",
+        mute: "rgb(var(--color-mute) / <alpha-value>)",
+        accent: "rgb(var(--color-accent) / <alpha-value>)",
+        accentDim: "rgb(var(--color-accentDim) / <alpha-value>)",
+        danger: "rgb(var(--color-danger) / <alpha-value>)",
+        gold: "rgb(var(--color-gold) / <alpha-value>)",
       },
       fontFamily: {
         // Bricolage Grotesque -- wordmark + headlines

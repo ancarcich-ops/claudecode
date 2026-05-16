@@ -2,13 +2,43 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Theme tokens. Values are RGB triples so Tailwind's <alpha-value>
+   substitution still works (bg-panel/70 etc.). */
 :root {
   color-scheme: dark;
+  --color-bg: 11 15 12;
+  --color-panel: 17 24 21;
+  --color-panel2: 22 31 27;
+  --color-border: 31 42 37;
+  --color-ink: 232 240 234;
+  --color-mute: 138 160 148;
+  --color-accent: 52 211 153;
+  --color-accentDim: 16 185 129;
+  --color-danger: 248 113 113;
+  --color-gold: 251 191 36;
+  --skeleton-base: 255 255 255;
+  --recharts-axis: 138 160 148;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --color-bg: 247 250 248;
+  --color-panel: 255 255 255;
+  --color-panel2: 240 244 241;
+  --color-border: 216 225 218;
+  --color-ink: 11 31 21;
+  --color-mute: 94 110 99;
+  --color-accent: 5 150 105;
+  --color-accentDim: 4 120 87;
+  --color-danger: 220 38 38;
+  --color-gold: 180 83 9;
+  --skeleton-base: 0 0 0;
+  --recharts-axis: 94 110 99;
 }
 
 html, body {
-  background: #0b0f0c;
-  color: #e8f0ea;
+  background: rgb(var(--color-bg));
+  color: rgb(var(--color-ink));
 }
 
 body {
@@ -63,7 +93,8 @@ body {
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Skeleton shimmer for first-load placeholders. */
+/* Skeleton shimmer for first-load placeholders. Base RGB flips per theme
+   so the shimmer reads on both dark and light. */
 @keyframes skeleton-shimmer {
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
@@ -71,9 +102,9 @@ body {
 .skeleton {
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.04) 0%,
-    rgba(255, 255, 255, 0.09) 50%,
-    rgba(255, 255, 255, 0.04) 100%
+    rgb(var(--skeleton-base) / 0.04) 0%,
+    rgb(var(--skeleton-base) / 0.10) 50%,
+    rgb(var(--skeleton-base) / 0.04) 100%
   );
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.6s ease-in-out infinite;
@@ -87,20 +118,23 @@ body {
    pop out of the upcoming/settled list. Pure decoration; falls back
    to the static ring if reduced-motion is preferred. */
 @keyframes live-glow {
-  0%, 100% { box-shadow: 0 0 18px -2px rgba(52, 211, 153, 0.18); }
-  50%      { box-shadow: 0 0 32px -2px rgba(52, 211, 153, 0.42); }
+  0%, 100% { box-shadow: 0 0 18px -2px rgb(var(--color-accent) / 0.18); }
+  50%      { box-shadow: 0 0 32px -2px rgb(var(--color-accent) / 0.42); }
 }
 .live-card {
   animation: live-glow 2.6s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) {
-  .live-card { animation: none; box-shadow: 0 0 24px -4px rgba(52, 211, 153, 0.28); }
+  .live-card { animation: none; box-shadow: 0 0 24px -4px rgb(var(--color-accent) / 0.28); }
 }
 
-/* Recharts label colors when rendered on dark bg */
-.recharts-cartesian-axis-tick-value tspan { fill: #8aa094 !important; }
+/* Recharts label colors picked from the active theme. */
+.recharts-cartesian-axis-tick-value tspan {
+  fill: rgb(var(--recharts-axis)) !important;
+}
 .recharts-tooltip-wrapper .recharts-default-tooltip {
-  background-color: #161f1b !important;
-  border: 1px solid #1f2a25 !important;
+  background-color: rgb(var(--color-panel2)) !important;
+  border: 1px solid rgb(var(--color-border)) !important;
   border-radius: 8px;
+  color: rgb(var(--color-ink)) !important;
 }
