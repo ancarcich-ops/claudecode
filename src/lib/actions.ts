@@ -991,4 +991,16 @@ export async function deleteMatchAction(formData: FormData) {
   redirect("/");
 }
 
+// Delete used from a list (e.g. /stats round list) where we want to stay
+// on the page instead of redirecting home. Same authorization rules.
+export async function deleteMatchInPlaceAction(matchId: string) {
+  const user = await requireUser();
+  const match = await prisma.match.findUnique({ where: { id: matchId } });
+  if (!match) return;
+  if (match.createdById !== user.id) throw new Error("Not your match");
+  await prisma.match.delete({ where: { id: matchId } });
+  revalidatePath("/stats");
+  revalidatePath("/");
+}
+
 export { getCurrentUser };
