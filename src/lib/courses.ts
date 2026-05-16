@@ -152,6 +152,15 @@ export const COURSE_PRESETS: CoursePreset[] = [
     pars: p(18, 72),
   },
   {
+    id: "alondra-park",
+    name: "Alondra Park Golf Course",
+    city: "Lawndale",
+    region: "LA",
+    access: "municipal",
+    holes: 18,
+    pars: [4, 5, 3, 4, 4, 4, 3, 5, 4, 4, 4, 3, 4, 3, 5, 4, 4, 5],
+  },
+  {
     id: "los-verdes",
     name: "Los Verdes Golf Course",
     city: "Rancho Palos Verdes",
