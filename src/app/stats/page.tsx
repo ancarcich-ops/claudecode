@@ -9,6 +9,7 @@ import {
   expectedDistribution,
 } from "@/lib/scoringBaseline";
 import EmptyIllustration from "@/components/EmptyIllustration";
+import BaselinePicker from "./BaselinePicker";
 import RoundHistoryChart from "./RoundHistoryChart";
 import RoundsList from "./RoundsList";
 
@@ -324,7 +325,7 @@ function ScoringAnalysis({
         <h2 className="text-sm uppercase tracking-wider text-mute">
           Scoring analysis
         </h2>
-        <BaselinePicker selected={baselineHcp} />
+        <BaselinePicker selected={baselineHcp} id="analysis-vs" />
       </div>
 
       {/* Par-type cards */}
@@ -383,34 +384,6 @@ function ScoringAnalysis({
         </div>
       )}
     </section>
-  );
-}
-
-function BaselinePicker({ selected }: { selected: number }) {
-  return (
-    <form className="flex items-center gap-2" action="/stats">
-      <label htmlFor="vs" className="text-[10px] uppercase tracking-wider text-mute">
-        vs HI
-      </label>
-      <select
-        id="vs"
-        name="vs"
-        defaultValue={selected}
-        className="bg-panel2 border border-border rounded-md text-ink text-xs font-mono tabular-nums px-2 py-1 focus:outline-none focus:ring-1 focus:ring-accent"
-      >
-        {BASELINE_HANDICAPS.map((h) => (
-          <option key={h} value={h}>
-            {h}
-          </option>
-        ))}
-      </select>
-      <button
-        type="submit"
-        className="text-[10px] uppercase tracking-wider text-mute hover:text-accent"
-      >
-        Apply
-      </button>
-    </form>
   );
 }
 

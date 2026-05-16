@@ -12,7 +12,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { BASELINE_HANDICAPS } from "@/lib/scoringBaseline";
+import BaselinePicker from "./BaselinePicker";
 
 type Row = {
   t: number;
@@ -87,7 +87,7 @@ export default function RoundHistoryChart({
           {rounds.length} round{rounds.length === 1 ? "" : "s"}
         </div>
         <div className="flex items-center gap-3">
-          <BaselinePicker selected={baselineHcp} />
+          <BaselinePicker selected={baselineHcp} id="rounds-vs" />
           <div className="text-[11px] font-mono tabular-nums text-mute">
             recent avg{" "}
             <span className={recent <= 0 ? "text-accent" : "text-ink"}>
@@ -248,33 +248,3 @@ export default function RoundHistoryChart({
   );
 }
 
-function BaselinePicker({ selected }: { selected: number }) {
-  return (
-    <form className="flex items-center gap-2" action="/stats">
-      <label
-        htmlFor="rounds-vs"
-        className="text-[10px] uppercase tracking-wider text-mute"
-      >
-        vs HI
-      </label>
-      <select
-        id="rounds-vs"
-        name="vs"
-        defaultValue={selected}
-        className="bg-panel2 border border-border rounded-md text-ink text-xs font-mono tabular-nums px-2 py-1 focus:outline-none focus:ring-1 focus:ring-accent"
-      >
-        {BASELINE_HANDICAPS.map((h) => (
-          <option key={h} value={h}>
-            {h}
-          </option>
-        ))}
-      </select>
-      <button
-        type="submit"
-        className="text-[10px] uppercase tracking-wider text-mute hover:text-accent"
-      >
-        Apply
-      </button>
-    </form>
-  );
-}
