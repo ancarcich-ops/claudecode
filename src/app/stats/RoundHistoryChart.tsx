@@ -20,8 +20,9 @@ type Row = {
 };
 
 // Round-by-round score-to-par history as bars. Each bar is one round.
-// Bar above zero = over par (red). Bar below zero = under par (green).
-// Lower = better.
+// Y-axis is reversed so par (0) sits near the top and over-par bars hang
+// downward -- visually "lower = bigger score = worse". Under-par bars
+// would extend upward past the par line. Lower = better.
 export default function RoundHistoryChart({ rounds }: { rounds: Row[] }) {
   if (rounds.length < 1) {
     return (
@@ -35,12 +36,14 @@ export default function RoundHistoryChart({ rounds }: { rounds: Row[] }) {
   const recent =
     rounds.slice(-recentN).reduce((s, r) => s + r.vsPar, 0) / recentN;
 
-  // Pad so the bars don't kiss the axis. Always include 0 (par) so the
-  // reference line lives inside the visible range.
+  // Y-axis domain. We keep 0 (par) inside the visible range no matter
+  // what, then snap to integers and pad outward by 1 so bars don't kiss
+  // the top/bottom and ticks are always whole numbers.
   const values = rounds.map((r) => r.vsPar);
-  const lo = Math.min(0, ...values);
-  const hi = Math.max(0, ...values);
-  const pad = Math.max(1, (hi - lo) * 0.15);
+  const rawLo = Math.min(0, ...values);
+  const rawHi = Math.max(0, ...values);
+  const lo = Math.floor(rawLo) - 1;
+  const hi = Math.ceil(rawHi) + 1;
 
   const colorFor = (v: number) =>
     v < 0 ? "#34d399" : v === 0 ? "#fbbf24" : "#f87171";
@@ -78,7 +81,7 @@ export default function RoundHistoryChart({ rounds }: { rounds: Row[] }) {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={data}
-            margin={{ top: 16, right: 8, bottom: 4, left: 4 }}
+            margin={{ top: 16, right: 16, bottom: 20, left: 4 }}
           >
             <CartesianGrid
               stroke="rgb(var(--color-border))"
@@ -104,28 +107,23 @@ export default function RoundHistoryChart({ rounds }: { rounds: Row[] }) {
               axisLine={false}
             />
             <YAxis
-              domain={[lo - pad, hi + pad]}
+              domain={[lo, hi]}
+              reversed
+              allowDecimals={false}
               tickFormatter={(v) =>
-                v === 0 ? "E" : v > 0 ? `+${v}` : `${v}`
+                v === 0 ? "Par" : v > 0 ? `+${Math.round(v)}` : `${Math.round(v)}`
               }
               tick={{ fontSize: 11, fill: "rgb(var(--color-mute))" }}
               stroke="transparent"
               tickLine={false}
               axisLine={false}
-              width={36}
+              width={42}
             />
             <ReferenceLine
               y={0}
               stroke="rgb(var(--color-accent))"
-              strokeOpacity={0.4}
+              strokeOpacity={0.45}
               strokeDasharray="3 5"
-              label={{
-                value: "par",
-                position: "insideRight",
-                fill: "rgb(var(--color-accent))",
-                fontSize: 10,
-                opacity: 0.7,
-              }}
             />
             <Tooltip
               cursor={{ fill: "rgb(var(--color-panel2) / 0.5)" }}
