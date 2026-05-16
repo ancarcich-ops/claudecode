@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import {
   createGroupAction,
   joinGroupAction,
   updateAvatarConfigAction,
+  uploadAvatarAction,
 } from "@/lib/actions";
 
 // Multi-step first-launch flow. Each step does something real (not just
@@ -30,10 +31,14 @@ const STEPS: StepKey[] = ["welcome", "avatar", "group", "launch"];
 export default function Onboarding({
   enabled,
   username,
+  photoUploadEnabled = false,
 }: {
   enabled: boolean;
   // Used as the avatar generator seed when the user hasn't picked one yet.
   username?: string;
+  // True when BLOB_READ_WRITE_TOKEN is configured server-side; gates the
+  // photo-upload affordance in the avatar step.
+  photoUploadEnabled?: boolean;
 }) {
   const router = useRouter();
   const [visible, setVisible] = useState(false);
@@ -111,6 +116,7 @@ export default function Onboarding({
                     <AvatarStep
                       username={username ?? "you"}
                       pending={pending}
+                      photoUploadEnabled={photoUploadEnabled}
                       onPicked={(variant) => {
                         const fd = new FormData();
                         fd.set("variant", variant);
@@ -121,6 +127,23 @@ export default function Onboarding({
                           } catch {
                             toast.error("Couldn't save avatar — moving on.");
                             advance();
+                          }
+                        });
+                      }}
+                      onUpload={(file) => {
+                        const fd = new FormData();
+                        fd.set("file", file);
+                        startTransition(async () => {
+                          try {
+                            await uploadAvatarAction(fd);
+                            toast.success("Photo saved.");
+                            advance();
+                          } catch (e) {
+                            toast.error(
+                              e instanceof Error
+                                ? e.message
+                                : "Upload failed.",
+                            );
                           }
                         });
                       }}
@@ -269,23 +292,34 @@ function WelcomeStep() {
       <h2 className="font-display text-3xl sm:text-4xl font-semibold tracking-tight leading-tight mt-2">
         All your games.
         <br />
-        One round.
+        One app.
       </h2>
       <p className="text-sm text-mute mt-3 max-w-sm mx-auto leading-relaxed">
-        Score-tracking, six side games, and a live market that moves
-        with every shot.
+        Score-tracking, every side game imaginable, and a live market that
+        moves with every shot — instantly keep up with all your friends&apos;
+        golf rounds.
       </p>
 
       <div className="mt-6 space-y-2">
         <FeatureRow
           icon={<LiveDot />}
           title="Live odds"
-          body="Win probabilities reprice as scores come in."
+          body="Match win probabilities reprice as your group picks sides and as scores come in during the round."
         />
         <FeatureRow
           icon={<GamesIcon />}
-          title="Six side games"
-          body="Stableford, Skins, Nassau, Wolf, BBB, Snake."
+          title="All your favorite side games"
+          body="Including Stableford, Skins, Nassau, Wolf, BBB, Snake."
+        />
+        <FeatureRow
+          icon={<TrophyIcon />}
+          title="Group leaderboard"
+          body="Claim bragging rights — most wins, reigning champion, head-to-head records, and current streaks across your foursome."
+        />
+        <FeatureRow
+          icon={<ChartIcon />}
+          title="Personal stats"
+          body="Auto-tracked Sticks index, performance by par 3 / 4 / 5, birdie-through-double distribution, and how you stack up vs the handicap you target."
         />
         <FeatureRow
           icon={<GpsIcon />}
@@ -326,13 +360,28 @@ function FeatureRow({
 function AvatarStep({
   username,
   pending,
+  photoUploadEnabled,
   onPicked,
+  onUpload,
 }: {
   username: string;
   pending: boolean;
+  photoUploadEnabled: boolean;
   onPicked: (variant: AvatarVariant) => void;
+  onUpload: (file: File) => void;
 }) {
   const [selected, setSelected] = useState<AvatarVariant | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const pickFile = () => fileInputRef.current?.click();
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    onUpload(f);
+    // Reset so the same file can be picked again after a failed upload.
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   return (
     <div>
@@ -341,8 +390,7 @@ function AvatarStep({
           Pick your look.
         </h2>
         <p className="text-sm text-mute mt-1.5">
-          Generated from your username. You can swap to a photo later in
-          Settings.
+          Generated from your username. Or upload your own photo.
         </p>
       </div>
 
@@ -375,6 +423,34 @@ function AvatarStep({
           );
         })}
       </div>
+
+      {photoUploadEnabled && (
+        <>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            onChange={onFileChange}
+            className="hidden"
+          />
+          <div className="flex items-center gap-3 my-5">
+            <span className="flex-1 h-px bg-border" />
+            <span className="text-[10px] uppercase tracking-wider text-mute">
+              or
+            </span>
+            <span className="flex-1 h-px bg-border" />
+          </div>
+          <button
+            type="button"
+            onClick={pickFile}
+            disabled={pending}
+            className="w-full flex items-center justify-center gap-2 rounded-md border border-dashed border-border bg-panel hover:border-accent/40 hover:text-ink text-mute px-3 py-3 text-sm transition-colors disabled:opacity-50"
+          >
+            <UploadIcon />
+            {pending ? "Uploading…" : "Upload a photo"}
+          </button>
+        </>
+      )}
 
       <div className="mt-6 flex flex-col gap-2">
         <button
@@ -638,6 +714,68 @@ function GpsIcon() {
     >
       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
       <circle cx="12" cy="10" r="3" />
+    </svg>
+  );
+}
+
+function TrophyIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M8 21h8" />
+      <path d="M12 17v4" />
+      <path d="M7 4h10v5a5 5 0 0 1-10 0V4z" />
+      <path d="M17 4h3v2a3 3 0 0 1-3 3" />
+      <path d="M7 4H4v2a3 3 0 0 0 3 3" />
+    </svg>
+  );
+}
+
+function ChartIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <line x1="18" y1="20" x2="18" y2="10" />
+      <line x1="12" y1="20" x2="12" y2="4" />
+      <line x1="6" y1="20" x2="6" y2="14" />
+    </svg>
+  );
+}
+
+function UploadIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="17 8 12 3 7 8" />
+      <line x1="12" y1="3" x2="12" y2="15" />
     </svg>
   );
 }

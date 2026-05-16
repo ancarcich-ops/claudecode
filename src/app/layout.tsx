@@ -129,7 +129,11 @@ export default async function RootLayout({
           {children}
         </main>
         {user && <MobileTabBar />}
-        <Onboarding enabled={!!user} username={user?.username} />
+        <Onboarding
+          enabled={!!user}
+          username={user?.username}
+          photoUploadEnabled={!!process.env.BLOB_READ_WRITE_TOKEN}
+        />
         <Sounds />
         <Toaster
           position="bottom-right"
