@@ -1,12 +1,21 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
-import { computeUserStats } from "@/lib/userStats";
+import { computeUserStats, type ScoreDistribution } from "@/lib/userStats";
+import {
+  BASELINE_HANDICAPS,
+  expectedAvgScores,
+  expectedDistribution,
+} from "@/lib/scoringBaseline";
 import EmptyIllustration from "@/components/EmptyIllustration";
 
 export const dynamic = "force-dynamic";
 
-export default async function PersonalStatsPage() {
+export default async function PersonalStatsPage({
+  searchParams,
+}: {
+  searchParams: { vs?: string };
+}) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
@@ -15,6 +24,13 @@ export default async function PersonalStatsPage() {
 
   const displayName = stats.displayName ?? stats.username;
   const hasAnyData = stats.matchesPlayed > 0;
+
+  // Baseline handicap for the comparison view. Default 10 -- a fair middle
+  // for casual players that mirrors the screenshot we modeled this on.
+  const rawVs = Number(searchParams.vs);
+  const baselineHcp = (BASELINE_HANDICAPS as readonly number[]).includes(rawVs)
+    ? (rawVs as number)
+    : 10;
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -84,22 +100,8 @@ export default async function PersonalStatsPage() {
             </div>
           </section>
 
-          {/* Performance by hole type */}
-          <section className="card p-5">
-            <div className="flex items-center justify-between mb-3 gap-2">
-              <h2 className="text-sm uppercase tracking-wider text-mute">
-                Performance by par
-              </h2>
-              <span className="text-[11px] text-mute">
-                lower vs par is better
-              </span>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <ParBucket label="Par 3s" bucket={stats.par3} />
-              <ParBucket label="Par 4s" bucket={stats.par4} />
-              <ParBucket label="Par 5s" bucket={stats.par5} />
-            </div>
-          </section>
+          {/* Scoring analysis */}
+          <ScoringAnalysis stats={stats} baselineHcp={baselineHcp} />
 
           {/* Course records */}
           {stats.courseRecords.length > 0 && (
@@ -166,48 +168,248 @@ function Stat({
   );
 }
 
-function ParBucket({
+function ScoringAnalysis({
+  stats,
+  baselineHcp,
+}: {
+  stats: { par3: ParBucket; par4: ParBucket; par5: ParBucket; distribution: ScoreDistribution };
+  baselineHcp: number;
+}) {
+  const expected = expectedAvgScores(baselineHcp);
+  const expectedDist = expectedDistribution(baselineHcp);
+  const hasDist = stats.distribution.totalHolesPlayed > 0;
+
+  return (
+    <section className="card p-5">
+      <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+        <h2 className="text-sm uppercase tracking-wider text-mute">
+          Scoring analysis
+        </h2>
+        <BaselinePicker selected={baselineHcp} />
+      </div>
+
+      {/* Par-type cards */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <ParCard
+          label="Par 3s"
+          bucket={stats.par3}
+          baselineScore={expected.par3}
+          baselinePar={3}
+        />
+        <ParCard
+          label="Par 4s"
+          bucket={stats.par4}
+          baselineScore={expected.par4}
+          baselinePar={4}
+        />
+        <ParCard
+          label="Par 5s"
+          bucket={stats.par5}
+          baselineScore={expected.par5}
+          baselinePar={5}
+        />
+      </div>
+
+      {/* Distribution bars */}
+      {hasDist && (
+        <div className="mt-5 space-y-4">
+          <DistRow
+            label="Birdies-"
+            actual={stats.distribution.per18.birdiesOrBetter}
+            baseline={expectedDist.birdiesOrBetter}
+            higherIsBetter
+          />
+          <DistRow
+            label="Pars"
+            actual={stats.distribution.per18.pars}
+            baseline={expectedDist.pars}
+            higherIsBetter
+          />
+          <DistRow
+            label="Bogeys"
+            actual={stats.distribution.per18.bogeys}
+            baseline={expectedDist.bogeys}
+            higherIsBetter={false}
+          />
+          <DistRow
+            label="Doubles+"
+            actual={stats.distribution.per18.doublesOrWorse}
+            baseline={expectedDist.doublesOrWorse}
+            higherIsBetter={false}
+          />
+          <p className="text-[11px] text-mute pt-1">
+            Per 18 holes vs a {baselineHcp} HI baseline. Triangle = baseline,
+            bar = your average.
+          </p>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function BaselinePicker({ selected }: { selected: number }) {
+  return (
+    <form className="flex items-center gap-2" action="/stats">
+      <label htmlFor="vs" className="text-[10px] uppercase tracking-wider text-mute">
+        vs HI
+      </label>
+      <select
+        id="vs"
+        name="vs"
+        defaultValue={selected}
+        className="bg-panel2 border border-border rounded-md text-ink text-xs font-mono tabular-nums px-2 py-1 focus:outline-none focus:ring-1 focus:ring-accent"
+      >
+        {BASELINE_HANDICAPS.map((h) => (
+          <option key={h} value={h}>
+            {h}
+          </option>
+        ))}
+      </select>
+      <button
+        type="submit"
+        className="text-[10px] uppercase tracking-wider text-mute hover:text-accent"
+      >
+        Apply
+      </button>
+    </form>
+  );
+}
+
+type ParBucket = {
+  holesPlayed: number;
+  strokes: number;
+  vsPar: number;
+  avgVsPar: number | null;
+  avgScore: number | null;
+};
+
+function ParCard({
   label,
   bucket,
+  baselineScore,
 }: {
   label: string;
-  bucket: {
-    holesPlayed: number;
-    strokes: number;
-    vsPar: number;
-    avgVsPar: number | null;
-  };
+  bucket: ParBucket;
+  baselineScore: number;
+  baselinePar: number;
 }) {
-  const avg = bucket.avgVsPar;
-  const color =
-    avg === null
+  const avg = bucket.avgScore;
+  // Strokes-gained per hole vs the baseline player: positive = better
+  // (you played fewer strokes than they would on that hole).
+  const sg = avg === null ? null : baselineScore - avg;
+  const sgColor =
+    sg === null
       ? "text-mute"
-      : avg < 0
+      : sg > 0.05
         ? "text-accent"
-        : avg === 0
-          ? "text-gold"
+        : sg < -0.05
+          ? "text-danger"
           : "text-mute";
+
   return (
-    <div className="border border-border rounded-md p-3">
+    <div className="border border-border rounded-md p-3 text-center">
       <div className="text-[10px] uppercase tracking-wider text-mute">
         {label}
       </div>
       {avg === null ? (
-        <div className="font-mono tabular-nums text-xl mt-0.5 text-mute">—</div>
+        <>
+          <div className="font-display font-semibold text-2xl mt-1 text-mute">
+            —
+          </div>
+          <div className="text-[10px] text-mute mt-0.5">no holes yet</div>
+        </>
       ) : (
         <>
-          <div
-            className={`font-mono tabular-nums text-xl mt-0.5 ${color}`}
-            title={`${bucket.strokes} strokes over ${bucket.holesPlayed} holes (${bucket.vsPar >= 0 ? "+" : ""}${bucket.vsPar} vs par)`}
-          >
-            {avg >= 0 ? "+" : ""}
-            {avg.toFixed(2)}
+          <div className="font-display font-semibold text-2xl mt-1 tabular-nums">
+            {avg.toFixed(1)}
           </div>
-          <div className="text-[10px] text-mute mt-0.5">
-            {bucket.holesPlayed} hole{bucket.holesPlayed === 1 ? "" : "s"}
-          </div>
+          <div className="text-[10px] text-mute mt-0.5">Avg. Score</div>
+          {sg !== null && (
+            <div
+              className={`text-[11px] font-mono tabular-nums mt-1.5 ${sgColor}`}
+            >
+              {sg > 0 ? "+" : ""}
+              {sg.toFixed(1)} SG / Hole
+            </div>
+          )}
         </>
       )}
+    </div>
+  );
+}
+
+function DistRow({
+  label,
+  actual,
+  baseline,
+  higherIsBetter,
+}: {
+  label: string;
+  actual: number;
+  baseline: number;
+  higherIsBetter: boolean;
+}) {
+  // Shared scale across both endpoints so the relative position reads
+  // honestly. Pad 15% so values right at the max don't kiss the edge.
+  const max = Math.max(actual, baseline, 1) * 1.15;
+  const actualPct = Math.min(100, (actual / max) * 100);
+  const baselinePct = Math.min(100, (baseline / max) * 100);
+  const beating = higherIsBetter ? actual >= baseline : actual <= baseline;
+  const barColor = beating ? "bg-accent/70" : "bg-danger/70";
+  const valColor = beating ? "text-accent" : "text-danger";
+
+  return (
+    <div className="grid grid-cols-[5.5rem_1fr] items-center gap-3">
+      <div className="text-sm text-ink">{label}</div>
+      <div className="relative h-12">
+        {/* Actual value, anchored to the right end of the user bar. */}
+        <div
+          className={`absolute top-0 text-[11px] font-mono tabular-nums ${valColor}`}
+          style={{
+            left: `calc(${actualPct}% - 1rem)`,
+          }}
+        >
+          {actual.toFixed(1)}
+        </div>
+        {/* Track */}
+        <div
+          className="absolute left-0 right-0 h-1 bg-border rounded-full"
+          style={{ top: "1.25rem" }}
+        />
+        {/* User bar */}
+        <div
+          className={`absolute h-1 ${barColor} rounded-full`}
+          style={{
+            top: "1.25rem",
+            left: 0,
+            width: `${actualPct}%`,
+          }}
+        />
+        {/* Baseline triangle below the bar */}
+        <div
+          className="absolute text-mute"
+          style={{
+            left: `calc(${baselinePct}% - 0.375rem)`,
+            top: "1.75rem",
+            lineHeight: 1,
+          }}
+          aria-hidden
+        >
+          <svg width="12" height="8" viewBox="0 0 12 8" fill="currentColor">
+            <path d="M6 0 L12 8 L0 8 Z" />
+          </svg>
+        </div>
+        {/* Baseline value */}
+        <div
+          className="absolute text-[10px] font-mono tabular-nums text-mute"
+          style={{
+            left: `calc(${baselinePct}% - 0.75rem)`,
+            bottom: 0,
+          }}
+        >
+          {baseline.toFixed(1)}
+        </div>
+      </div>
     </div>
   );
 }
