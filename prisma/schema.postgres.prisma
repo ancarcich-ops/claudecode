@@ -17,6 +17,7 @@ model User {
   avatarSeed    String?
   avatarVariant String?
   avatarUrl     String?
+  ghinNumber  String?
   createdAt   DateTime @default(now())
 
   createdMatches   Match[]       @relation("MatchCreator")

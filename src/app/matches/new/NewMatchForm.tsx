@@ -39,6 +39,7 @@ const MODE_COPY: Record<
 export default function NewMatchForm({
   action,
   defaultPlayerName,
+  defaultPlayerHandicap = "12",
   currentUserId,
   recentCourses,
   presets,
@@ -47,6 +48,9 @@ export default function NewMatchForm({
 }: {
   action: (formData: FormData) => Promise<void>;
   defaultPlayerName: string;
+  // Pre-filled handicap for the creator's seat. Comes from their computed
+  // Sticks index when available; the parent supplies the fallback string.
+  defaultPlayerHandicap?: string;
   currentUserId: string;
   recentCourses: string[];
   presets: CoursePreset[];
@@ -54,7 +58,11 @@ export default function NewMatchForm({
   defaultGroupId: string;
 }) {
   const [players, setPlayers] = useState<PlayerRow[]>([
-    { name: defaultPlayerName, handicap: "12", userId: currentUserId },
+    {
+      name: defaultPlayerName,
+      handicap: defaultPlayerHandicap,
+      userId: currentUserId,
+    },
     { name: "", handicap: "15", userId: null },
   ]);
   const [sideGames, setSideGames] = useState<Set<SideGameKind>>(new Set());

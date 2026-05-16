@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import { computeUserStats, type ScoreDistribution } from "@/lib/userStats";
 import {
   BASELINE_HANDICAPS,
@@ -23,8 +24,19 @@ export default async function PersonalStatsPage({
   const stats = await computeUserStats(user.id);
   if (!stats) redirect("/");
 
+  // Pull the GHIN # alongside computed stats so we can render the chip on
+  // the page header next to the auto-calc index.
+  const profile = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { ghinNumber: true },
+  });
+
   const displayName = stats.displayName ?? stats.username;
   const hasAnyData = stats.matchesPlayed > 0;
+  const handicap = stats.handicap;
+  const ghin = profile?.ghinNumber ?? null;
+  const formatIndex = (n: number) =>
+    n >= 0 ? `+${n.toFixed(1)}` : n.toFixed(1);
 
   // Baseline handicap for the comparison view. Default 10 -- a fair middle
   // for casual players that mirrors the screenshot we modeled this on.
@@ -35,14 +47,45 @@ export default async function PersonalStatsPage({
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold">
-          {displayName}
-          <span className="text-mute font-normal"> · personal stats</span>
-        </h1>
-        <p className="text-sm text-mute mt-1">
-          Every completed match you played, regardless of group scoping.
-        </p>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-xl font-semibold">
+            {displayName}
+            <span className="text-mute font-normal"> · personal stats</span>
+          </h1>
+          <p className="text-sm text-mute mt-1">
+            Every completed match you played, regardless of group scoping.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {handicap && (
+            <Link
+              href="/settings"
+              className="rounded-md border border-accent/30 bg-accent/10 px-2.5 py-1.5 text-right hover:border-accent/50 transition-colors"
+              title="Auto-computed from your last 20 rounds"
+            >
+              <div className="text-[9px] uppercase tracking-wider text-accent/80 leading-none">
+                Sticks idx
+              </div>
+              <div className="font-display font-semibold text-lg tabular-nums text-accent leading-tight">
+                {formatIndex(handicap.index)}
+              </div>
+            </Link>
+          )}
+          {ghin && (
+            <div
+              className="rounded-md border border-border bg-panel2 px-2.5 py-1.5 text-right"
+              title="Your USGA GHIN number"
+            >
+              <div className="text-[9px] uppercase tracking-wider text-mute leading-none">
+                GHIN
+              </div>
+              <div className="font-mono tabular-nums text-sm text-ink leading-tight mt-0.5">
+                #{ghin}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {!hasAnyData ? (

@@ -21,6 +21,10 @@ model User {
   avatarSeed    String?
   avatarVariant String?
   avatarUrl     String?
+  // Optional USGA/GHIN handicap number. Displayed as a "verified" badge
+  // next to the user's auto-computed Sticks index; we don't have GHIN API
+  // access so the number itself is just stored as the user provides it.
+  ghinNumber  String?
   createdAt   DateTime @default(now())
 
   createdMatches   Match[]       @relation("MatchCreator")
