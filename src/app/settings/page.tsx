@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { computeUserStats } from "@/lib/userStats";
 import AvatarEditor from "./AvatarEditor";
 import HandicapCard from "./HandicapCard";
+import ReplayOnboarding from "./ReplayOnboarding";
 import ThemeToggle from "./ThemeToggle";
 
 export const dynamic = "force-dynamic";
@@ -62,6 +63,10 @@ export default async function SettingsPage() {
       />
 
       <ThemeToggle />
+
+      <div className="flex justify-center pt-2">
+        <ReplayOnboarding />
+      </div>
     </div>
   );
 }
