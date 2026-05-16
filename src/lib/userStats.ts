@@ -47,6 +47,18 @@ export type RoundSummary = {
   scheduledAt: Date;
   holesPlayed: number;
   vsPar: number;
+  gross: number;
+};
+
+// Lowest-vs-par round across the user's history. Used for the "Best"
+// chip on /stats.
+export type BestRound = {
+  matchId: string;
+  courseName: string;
+  scheduledAt: Date;
+  vsPar: number;
+  gross: number;
+  holesPlayed: number;
 };
 
 // Per-18-holes counts of each score category. Stats are accumulated as raw
@@ -97,6 +109,10 @@ export type UserStats = {
   bestMainStreak: number;
   // Auto-computed handicap index from logged rounds (null if too few rounds).
   handicap: HandicapResult | null;
+  // Average gross score across the user's 18-hole rounds (null if none).
+  avg18Gross: number | null;
+  // Round with the lowest vs-par across all rounds (null if no rounds).
+  bestRound: BestRound | null;
 };
 
 function emptyStats(par: 3 | 4 | 5): ParTypeStats {
@@ -162,6 +178,8 @@ export async function computeUserStats(userId: string): Promise<UserStats | null
     currentMainStreak: 0,
     bestMainStreak: 0,
     handicap: null,
+    avg18Gross: null,
+    bestRound: null,
   };
 
   const bestByCourse = new Map<string, CourseBest>();
@@ -203,18 +221,19 @@ export async function computeUserStats(userId: string): Promise<UserStats | null
         roundVsPar += diff;
       }
 
+      const myGross = me.scores.reduce((a, x) => a + x.strokes, 0);
       stats.rounds.push({
         matchId: match.id,
         courseName: match.courseName,
         scheduledAt: match.scheduledAt,
         holesPlayed: me.scores.length,
         vsPar: roundVsPar,
+        gross: myGross,
       });
 
       // Course best (lowest gross). Tiebreak by net. Aliased course names
       // collapse to one entry so the same course played with slightly
       // different spellings doesn't show up twice.
-      const myGross = me.scores.reduce((a, x) => a + x.strokes, 0);
       const allowance = scoringMode === "GROSS" ? 0 : me.handicap;
       const myNet = myGross - allowance;
       const canonicalCourse = normalizeCourseName(match.courseName);
@@ -374,6 +393,36 @@ export async function computeUserStats(userId: string): Promise<UserStats | null
     (a, b) => a.gross - b.gross,
   );
   stats.handicap = computeHandicapIndex(stats.rounds);
+
+  // Average gross score across 18-hole rounds only -- mixing 9 and 18
+  // hole rounds would make this meaningless. Null if the user has never
+  // posted an 18-hole round.
+  const eighteens = stats.rounds.filter((r) => r.holesPlayed === 18);
+  stats.avg18Gross =
+    eighteens.length === 0
+      ? null
+      : eighteens.reduce((s, r) => s + r.gross, 0) / eighteens.length;
+
+  // Personal best round = lowest vs-par across the entire history.
+  // Tiebreak by gross (then most recent) so two -3 rounds prefer the one
+  // shot on the harder par.
+  if (stats.rounds.length > 0) {
+    const sorted = [...stats.rounds].sort(
+      (a, b) =>
+        a.vsPar - b.vsPar ||
+        a.gross - b.gross ||
+        b.scheduledAt.getTime() - a.scheduledAt.getTime(),
+    );
+    const r = sorted[0];
+    stats.bestRound = {
+      matchId: r.matchId,
+      courseName: r.courseName,
+      scheduledAt: r.scheduledAt,
+      vsPar: r.vsPar,
+      gross: r.gross,
+      holesPlayed: r.holesPlayed,
+    };
+  }
 
   return stats;
 }
