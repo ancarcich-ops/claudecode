@@ -27,6 +27,7 @@ import {
   runningBbb,
   runningSnake,
   runningWolf,
+  shapeWolfHoles,
   parseWolfConfig,
   type SideGameKind,
   type BbbEvent,
@@ -682,40 +683,28 @@ export default async function MatchPage({
             }))}
             rotation={wolfConfig.rotation ?? []}
             byHole={(() => {
-              const out: Record<
-                number,
-                {
-                  hole: number;
-                  partnerId: string | null;
-                  isLoneWolf: boolean;
-                  isPreLoneWolf: boolean;
-                  winnerId: string | null;
-                  isPush: boolean;
-                }
-              > = {};
-              for (const e of wolfEvents) {
-                if (!out[e.hole]) {
-                  out[e.hole] = {
-                    hole: e.hole,
-                    partnerId: null,
-                    isLoneWolf: false,
-                    isPreLoneWolf: false,
-                    winnerId: null,
-                    isPush: false,
-                  };
-                }
-                if (e.kind === "PARTNER")
-                  out[e.hole].partnerId = e.matchPlayerId;
-                if (e.kind === "LONE_WOLF") out[e.hole].isLoneWolf = true;
-                if (e.kind === "PRE_LONE_WOLF") {
-                  out[e.hole].isLoneWolf = true;
-                  out[e.hole].isPreLoneWolf = true;
-                }
-                if (e.kind === "HOLE_WINNER")
-                  out[e.hole].winnerId = e.matchPlayerId;
-                if (e.kind === "PUSH") out[e.hole].isPush = true;
-              }
-              return out;
+              // shapeWolfHoles handles both manual events and the auto-derived
+              // winner (from logged scores) under one source of truth.
+              const shaped = shapeWolfHoles(
+                seatedWolfPlayers,
+                match.holes,
+                wolfEvents,
+                wolfConfig.rotation,
+                matchStart,
+              );
+              return Object.fromEntries(
+                shaped.map((s) => [
+                  s.hole,
+                  {
+                    hole: s.hole,
+                    partnerId: s.partnerId,
+                    isLoneWolf: s.isLoneWolf,
+                    isPreLoneWolf: s.isPreLoneWolf,
+                    winnerId: s.winnerId,
+                    isPush: s.isPush,
+                  },
+                ]),
+              );
             })()}
             locked={!canLogScores}
           />

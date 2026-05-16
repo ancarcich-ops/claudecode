@@ -549,8 +549,9 @@ export async function recordSideGameEventAction(formData: FormData) {
         await prisma.sideGameEvent.create({
           data: { sideGameId, hole, kind, matchPlayerId },
         });
-      } else if (kind === "PUSH") {
-        // PUSH carries no matchPlayerId.
+      } else if (kind === "PUSH" && matchPlayerId) {
+        // PUSH carries no real matchPlayerId; the caller uses a non-empty
+        // marker (e.g. "push") to flag "create" vs "" to flag "clear".
         await prisma.sideGameEvent.create({
           data: { sideGameId, hole, kind },
         });

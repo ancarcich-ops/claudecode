@@ -602,7 +602,7 @@ type WolfHole = {
   isPush: boolean;
 };
 
-function shapeWolfHoles(
+export function shapeWolfHoles(
   players: WolfPlayer[],
   holes: number,
   events: WolfEvent[],
@@ -623,16 +623,60 @@ function shapeWolfHoles(
     const partner = es.find((e) => e.kind === "PARTNER");
     const lone = es.find((e) => e.kind === "LONE_WOLF");
     const preLone = es.find((e) => e.kind === "PRE_LONE_WOLF");
-    const winner = es.find((e) => e.kind === "HOLE_WINNER");
-    const push = es.some((e) => e.kind === "PUSH");
+    const manualWinner = es.find((e) => e.kind === "HOLE_WINNER");
+    const manualPush = es.some((e) => e.kind === "PUSH");
+
+    // Auto-derive winner from logged scores when (a) no manual winner /
+    // push has been recorded, and (b) the wolf has already committed to
+    // a partner / lone-wolf choice for the hole. Best-ball within each
+    // team -- ties between teams are pushes.
+    const partnerId = partner?.matchPlayerId ?? null;
+    const isLoneWolf = !!lone || !!preLone;
+    const hasChoice = !!partner || isLoneWolf;
+    let derivedWinnerId: string | null = null;
+    let derivedPush = false;
+
+    if (!manualWinner && !manualPush && hasChoice && players.length >= 2) {
+      const strokeFor = (id: string) => players.find((p) => p.id === id)?.scoresByHole[h];
+      const wolfStrokes = strokeFor(wolf.id);
+      const partnerStrokes = partnerId ? strokeFor(partnerId) : undefined;
+      const opponentIds = players
+        .map((p) => p.id)
+        .filter((id) => id !== wolf.id && id !== partnerId);
+      const opponentStrokeList = opponentIds
+        .map((id) => strokeFor(id))
+        .filter((v): v is number => typeof v === "number");
+
+      const wolfReady = typeof wolfStrokes === "number";
+      const partnerReady = !partnerId || typeof partnerStrokes === "number";
+      const oppsReady = opponentStrokeList.length === opponentIds.length;
+      if (wolfReady && partnerReady && oppsReady) {
+        const wolfTeamScore =
+          isLoneWolf || !partnerId
+            ? (wolfStrokes as number)
+            : Math.min(wolfStrokes as number, partnerStrokes as number);
+        const oppTeamScore = Math.min(...opponentStrokeList);
+        if (wolfTeamScore < oppTeamScore) {
+          derivedWinnerId = wolf.id;
+        } else if (oppTeamScore < wolfTeamScore) {
+          // Pick the lowest-scoring opponent as the team representative
+          // so scoreWolfHole still classifies the winning side correctly.
+          const idx = opponentStrokeList.indexOf(oppTeamScore);
+          derivedWinnerId = opponentIds[idx];
+        } else {
+          derivedPush = true;
+        }
+      }
+    }
+
     out.push({
       hole: h,
       wolfId: wolf.id,
-      partnerId: partner?.matchPlayerId ?? null,
-      isLoneWolf: !!lone || !!preLone,
+      partnerId,
+      isLoneWolf,
       isPreLoneWolf: !!preLone,
-      winnerId: winner?.matchPlayerId ?? null,
-      isPush: push,
+      winnerId: manualWinner?.matchPlayerId ?? derivedWinnerId,
+      isPush: manualPush || derivedPush,
     });
   }
   return out;
