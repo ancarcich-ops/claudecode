@@ -129,7 +129,7 @@ export default async function RootLayout({
           {children}
         </main>
         {user && <MobileTabBar />}
-        <Onboarding enabled={!!user} />
+        <Onboarding enabled={!!user} username={user?.username} />
         <Sounds />
         <Toaster
           position="bottom-right"
