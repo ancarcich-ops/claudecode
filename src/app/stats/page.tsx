@@ -58,7 +58,7 @@ export default async function PersonalStatsPage({
             Every completed match you played, regardless of group scoping.
           </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 w-full justify-center sm:w-auto sm:justify-end">
           {handicap && (
             <Link
               href="/settings"
