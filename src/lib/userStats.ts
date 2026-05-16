@@ -1,6 +1,7 @@
 import { prisma } from "./db";
 import { parseParData } from "./odds";
 import { normalizeCourseName } from "./courseAlias";
+import { computeHandicapIndex, type HandicapResult } from "./handicap";
 import {
   computeStableford,
   computeSkins,
@@ -94,6 +95,8 @@ export type UserStats = {
   // recent match; bestStreak = longest run ever.
   currentMainStreak: number;
   bestMainStreak: number;
+  // Auto-computed handicap index from logged rounds (null if too few rounds).
+  handicap: HandicapResult | null;
 };
 
 function emptyStats(par: 3 | 4 | 5): ParTypeStats {
@@ -158,6 +161,7 @@ export async function computeUserStats(userId: string): Promise<UserStats | null
     courseRecords: [],
     currentMainStreak: 0,
     bestMainStreak: 0,
+    handicap: null,
   };
 
   const bestByCourse = new Map<string, CourseBest>();
@@ -369,6 +373,7 @@ export async function computeUserStats(userId: string): Promise<UserStats | null
   stats.courseRecords = Array.from(bestByCourse.values()).sort(
     (a, b) => a.gross - b.gross,
   );
+  stats.handicap = computeHandicapIndex(stats.rounds);
 
   return stats;
 }

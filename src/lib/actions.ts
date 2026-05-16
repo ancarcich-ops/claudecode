@@ -962,6 +962,24 @@ export async function clearAvatarUrlAction() {
   revalidatePath("/");
 }
 
+// Save the user's USGA GHIN number. Just storage -- we don't have GHIN API
+// access so the value isn't validated against the official directory.
+// Stored as digits only (we strip whitespace, dashes, etc).
+export async function updateGhinNumberAction(formData: FormData) {
+  const user = await requireUser();
+  const raw = String(formData.get("ghinNumber") ?? "").trim();
+  const cleaned = raw.replace(/[^\d]/g, "");
+  if (cleaned && (cleaned.length < 6 || cleaned.length > 10)) {
+    throw new Error("GHIN number should be 6-10 digits");
+  }
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { ghinNumber: cleaned || null },
+  });
+  revalidatePath("/settings");
+  revalidatePath("/stats");
+}
+
 export async function deleteMatchAction(formData: FormData) {
   const user = await requireUser();
   const matchId = String(formData.get("matchId"));

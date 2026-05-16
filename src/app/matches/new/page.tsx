@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { createMatchAction } from "@/lib/actions";
 import { COURSE_PRESETS } from "@/lib/courses";
 import { getActiveGroupId, listUserGroups } from "@/lib/groups";
+import { computeUserStats } from "@/lib/userStats";
 import NewMatchForm from "./NewMatchForm";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +27,15 @@ export default async function NewMatchPage() {
     user.displayName ??
     user.username.charAt(0).toUpperCase() + user.username.slice(1);
 
+  // Pre-fill the creator's handicap with their auto-computed Sticks index
+  // when available. Falls back to the historical default of "12" so the
+  // form never lands empty.
+  const userStats = await computeUserStats(user.id);
+  const defaultHandicap =
+    userStats?.handicap != null
+      ? userStats.handicap.index.toFixed(1)
+      : "12";
+
   const groups = await listUserGroups(user.id);
   const activeGroup = getActiveGroupId();
   // Default the form to the user's currently-selected group if it's a real
@@ -47,6 +57,7 @@ export default async function NewMatchPage() {
       <NewMatchForm
         action={createMatchAction}
         defaultPlayerName={defaultName}
+        defaultPlayerHandicap={defaultHandicap}
         currentUserId={user.id}
         recentCourses={recentCourses}
         presets={COURSE_PRESETS}
