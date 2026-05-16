@@ -36,6 +36,17 @@ export type CourseBest = {
   scheduledAt: Date;
 };
 
+// One entry per played round, in chronological order. vsPar is total
+// strokes minus the par of the holes actually scored, so 9/12/18-hole
+// rounds are directly comparable.
+export type RoundSummary = {
+  matchId: string;
+  courseName: string;
+  scheduledAt: Date;
+  holesPlayed: number;
+  vsPar: number;
+};
+
 // Per-18-holes counts of each score category. Stats are accumulated as raw
 // totals then normalized at the end so 9-hole rounds aren't double-weighted.
 export type ScoreDistribution = {
@@ -73,6 +84,8 @@ export type UserStats = {
   par5: ParTypeStats;
   // Score-type counts across all holes, plus per-18-holes normalization.
   distribution: ScoreDistribution;
+  // Per-round vs-par history, chronological (oldest first).
+  rounds: RoundSummary[];
   // Best gross score per course
   courseRecords: CourseBest[];
   // Win streak: consecutive completed matches (in chronological order) where
@@ -140,6 +153,7 @@ export async function computeUserStats(userId: string): Promise<UserStats | null
     par4: emptyStats(4),
     par5: emptyStats(5),
     distribution: emptyDistribution(),
+    rounds: [],
     courseRecords: [],
     currentMainStreak: 0,
     bestMainStreak: 0,
@@ -162,7 +176,8 @@ export async function computeUserStats(userId: string): Promise<UserStats | null
     if (me.scores.length > 0) {
       stats.matchesWithScores++;
 
-      // Per-hole bucketed performance.
+      // Per-hole bucketed performance + per-round vs-par accumulator.
+      let roundVsPar = 0;
       for (const s of me.scores) {
         const par = pars[s.hole - startingHole] ?? 4;
         const bucket =
@@ -179,7 +194,17 @@ export async function computeUserStats(userId: string): Promise<UserStats | null
         else if (diff === 0) stats.distribution.pars++;
         else if (diff === 1) stats.distribution.bogeys++;
         else stats.distribution.doublesOrWorse++;
+
+        roundVsPar += diff;
       }
+
+      stats.rounds.push({
+        matchId: match.id,
+        courseName: match.courseName,
+        scheduledAt: match.scheduledAt,
+        holesPlayed: me.scores.length,
+        vsPar: roundVsPar,
+      });
 
       // Course best (lowest gross). Tiebreak by net.
       const myGross = me.scores.reduce((a, x) => a + x.strokes, 0);
