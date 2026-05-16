@@ -25,6 +25,7 @@ export type ParTypeStats = {
   strokes: number;
   vsPar: number; // total strokes minus total par for those holes
   avgVsPar: number | null; // vsPar / holesPlayed (null if no holes)
+  avgScore: number | null; // strokes / holesPlayed (null if no holes)
 };
 
 export type CourseBest = {
@@ -33,6 +34,23 @@ export type CourseBest = {
   gross: number;
   net: number;
   scheduledAt: Date;
+};
+
+// Per-18-holes counts of each score category. Stats are accumulated as raw
+// totals then normalized at the end so 9-hole rounds aren't double-weighted.
+export type ScoreDistribution = {
+  birdiesOrBetter: number;
+  pars: number;
+  bogeys: number;
+  doublesOrWorse: number;
+  totalHolesPlayed: number;
+  // Same counts normalized to a full 18-hole round, for display.
+  per18: {
+    birdiesOrBetter: number;
+    pars: number;
+    bogeys: number;
+    doublesOrWorse: number;
+  };
 };
 
 export type UserStats = {
@@ -53,6 +71,8 @@ export type UserStats = {
   par3: ParTypeStats;
   par4: ParTypeStats;
   par5: ParTypeStats;
+  // Score-type counts across all holes, plus per-18-holes normalization.
+  distribution: ScoreDistribution;
   // Best gross score per course
   courseRecords: CourseBest[];
   // Win streak: consecutive completed matches (in chronological order) where
@@ -63,7 +83,24 @@ export type UserStats = {
 };
 
 function emptyStats(par: 3 | 4 | 5): ParTypeStats {
-  return { holesPlayed: 0, strokes: 0, vsPar: 0, avgVsPar: null };
+  return {
+    holesPlayed: 0,
+    strokes: 0,
+    vsPar: 0,
+    avgVsPar: null,
+    avgScore: null,
+  };
+}
+
+function emptyDistribution(): ScoreDistribution {
+  return {
+    birdiesOrBetter: 0,
+    pars: 0,
+    bogeys: 0,
+    doublesOrWorse: 0,
+    totalHolesPlayed: 0,
+    per18: { birdiesOrBetter: 0, pars: 0, bogeys: 0, doublesOrWorse: 0 },
+  };
 }
 
 export async function computeUserStats(userId: string): Promise<UserStats | null> {
@@ -102,6 +139,7 @@ export async function computeUserStats(userId: string): Promise<UserStats | null
     par3: emptyStats(3),
     par4: emptyStats(4),
     par5: emptyStats(5),
+    distribution: emptyDistribution(),
     courseRecords: [],
     currentMainStreak: 0,
     bestMainStreak: 0,
@@ -132,6 +170,15 @@ export async function computeUserStats(userId: string): Promise<UserStats | null
         bucket.holesPlayed++;
         bucket.strokes += s.strokes;
         bucket.vsPar += s.strokes - par;
+
+        // Score-type distribution. Anything <= par-1 counts as birdie-or-better
+        // (eagles fold in here -- they're rare enough to not warrant a column).
+        const diff = s.strokes - par;
+        stats.distribution.totalHolesPlayed++;
+        if (diff <= -1) stats.distribution.birdiesOrBetter++;
+        else if (diff === 0) stats.distribution.pars++;
+        else if (diff === 1) stats.distribution.bogeys++;
+        else stats.distribution.doublesOrWorse++;
       }
 
       // Course best (lowest gross). Tiebreak by net.
@@ -268,6 +315,17 @@ export async function computeUserStats(userId: string): Promise<UserStats | null
   // Finalize averages
   for (const b of [stats.par3, stats.par4, stats.par5]) {
     b.avgVsPar = b.holesPlayed === 0 ? null : b.vsPar / b.holesPlayed;
+    b.avgScore = b.holesPlayed === 0 ? null : b.strokes / b.holesPlayed;
+  }
+  const d = stats.distribution;
+  if (d.totalHolesPlayed > 0) {
+    const k = 18 / d.totalHolesPlayed;
+    d.per18 = {
+      birdiesOrBetter: d.birdiesOrBetter * k,
+      pars: d.pars * k,
+      bogeys: d.bogeys * k,
+      doublesOrWorse: d.doublesOrWorse * k,
+    };
   }
   stats.totalWins =
     stats.mainWins +
