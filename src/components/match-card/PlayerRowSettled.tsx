@@ -6,6 +6,7 @@
 import Avatar from "@/components/Avatar";
 import { isVariant } from "@/components/Avatar";
 import HoleDotRow from "./HoleDotRow";
+import Sparkline from "./Sparkline";
 import type { PlayerCard } from "@/lib/matchCard";
 
 export default function PlayerRowSettled({
@@ -78,27 +79,37 @@ export default function PlayerRowSettled({
         <HoleDotRow dots={player.dots} totalHoles={totalHoles} />
       </div>
 
-      {totalHoles === 18 && (
-        <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-panel2 border border-border px-2 py-0.5">
-          <span className="font-mono text-[10px] uppercase tracking-wider text-mute">
-            Out
+      <div className="mt-2 flex items-center gap-2 flex-wrap">
+        {totalHoles === 18 && (
+          <span className="inline-flex items-center gap-2 rounded-full bg-panel2 border border-border px-2 py-0.5">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-mute">
+              Out
+            </span>
+            <span
+              className={"font-mono text-[10px] tabular-nums " + color(player.outNet)}
+            >
+              {fmt(player.outNet)}
+            </span>
+            <span className="text-faint text-[10px]">|</span>
+            <span className="font-mono text-[10px] uppercase tracking-wider text-mute">
+              In
+            </span>
+            <span
+              className={"font-mono text-[10px] tabular-nums " + color(player.inNet)}
+            >
+              {fmt(player.inNet)}
+            </span>
           </span>
-          <span
-            className={"font-mono text-[10px] tabular-nums " + color(player.outNet)}
-          >
-            {fmt(player.outNet)}
+        )}
+        {player.cumulativeNet.length > 0 && (
+          <span className="ml-auto -mr-1">
+            <Sparkline
+              values={player.cumulativeNet}
+              tone={isWinner ? "gold" : "accent"}
+            />
           </span>
-          <span className="text-faint text-[10px]">|</span>
-          <span className="font-mono text-[10px] uppercase tracking-wider text-mute">
-            In
-          </span>
-          <span
-            className={"font-mono text-[10px] tabular-nums " + color(player.inNet)}
-          >
-            {fmt(player.inNet)}
-          </span>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

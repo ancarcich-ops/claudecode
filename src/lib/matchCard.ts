@@ -18,6 +18,11 @@ export type DotKind =
   | "current"
   | "unplayed";
 
+export type Momentum =
+  | { kind: "eagle"; hole: number }
+  | { kind: "hot"; birdies: number; lastN: number }
+  | { kind: "cold"; over: number; lastN: number };
+
 export type PlayerCard = {
   id: string;
   name: string;
@@ -42,6 +47,12 @@ export type PlayerCard = {
   inNet: number;
   // 1-based rank used by SETTLED rows. 0 means "still in progress".
   rank: number;
+  // Optional badge surfaced next to the thru chip; null when nothing
+  // exceptional has happened recently. eagle > hot > cold > null.
+  momentum: Momentum | null;
+  // Cumulative net-to-par at each scored hole (oldest -> newest).
+  // Length == holesPlayed. Used to draw the small inline sparkline.
+  cumulativeNet: number[];
 };
 
 export type NextHole = {
@@ -148,6 +159,10 @@ export function buildMatchCardData(
   const players: PlayerCard[] = m.players.map((p) => {
     const byHole = new Map(p.scores.map((s) => [s.hole, s.strokes]));
     const dots: DotKind[] = [];
+    // Chronological order of holes the player actually scored, with the
+    // diff vs par. Used both for the sparkline cumulative array and the
+    // momentum read.
+    const playedDiffs: { hole: number; diff: number }[] = [];
     let outNet = 0;
     let inNet = 0;
     let netToPar = 0;
@@ -163,6 +178,7 @@ export function buildMatchCardData(
         else inNet += diff;
         holesPlayed++;
         dots.push(dotKindFor(diff));
+        playedDiffs.push({ hole, diff });
       } else if (
         hole === currentHole &&
         m.status === "IN_PROGRESS" &&
@@ -173,6 +189,17 @@ export function buildMatchCardData(
         dots.push("unplayed");
       }
     }
+    // Cumulative running net for the sparkline -- oldest scored hole on
+    // the left, latest on the right.
+    const cumulativeNet: number[] = [];
+    {
+      let running = 0;
+      for (const d of playedDiffs) {
+        running += d.diff;
+        cumulativeNet.push(running);
+      }
+    }
+    const momentum = momentumFor(playedDiffs);
     return {
       id: p.id,
       name: p.displayName,
@@ -192,6 +219,8 @@ export function buildMatchCardData(
       outNet,
       inNet,
       rank: rankFor(p.id),
+      momentum,
+      cumulativeNet,
     };
   });
 
@@ -286,4 +315,38 @@ function buildTickerItems(
     items.push(`MARKET OPEN`);
   }
   return items;
+}
+
+// Reads the per-hole diffs (in chronological play order) and decides
+// whether the player gets a momentum badge. Spec priority:
+//   eagle (most recent hole was an eagle)  >
+//   hot   (>=3 birdies in last 5 OR an eagle anywhere in last 5)  >
+//   cold  (cumulative >=+4 strokes over par in last 3)  >
+//   null
+// Only one badge per player. The chip uses the returned shape to pick
+// its label / icon / color.
+function momentumFor(
+  diffs: { hole: number; diff: number }[],
+): Momentum | null {
+  if (diffs.length === 0) return null;
+  const last = diffs[diffs.length - 1];
+  if (last.diff <= -2) {
+    return { kind: "eagle", hole: last.hole };
+  }
+  const last5 = diffs.slice(-5);
+  if (last5.some((d) => d.diff <= -2)) {
+    return { kind: "hot", birdies: last5.filter((d) => d.diff <= -1).length, lastN: last5.length };
+  }
+  const birdies = last5.filter((d) => d.diff === -1).length;
+  if (birdies >= 3) {
+    return { kind: "hot", birdies, lastN: last5.length };
+  }
+  const last3 = diffs.slice(-3);
+  if (last3.length === 3) {
+    const overSum = last3.reduce((s, d) => s + d.diff, 0);
+    if (overSum >= 4) {
+      return { kind: "cold", over: overSum, lastN: last3.length };
+    }
+  }
+  return null;
 }

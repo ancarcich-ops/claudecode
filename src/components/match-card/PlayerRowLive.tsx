@@ -8,6 +8,8 @@ import Avatar from "@/components/Avatar";
 import { isVariant } from "@/components/Avatar";
 import ProbabilityTick, { useRowFlash } from "./ProbabilityTick";
 import HoleDotRow from "./HoleDotRow";
+import MomentumChip from "./MomentumChip";
+import Sparkline from "./Sparkline";
 import type { PlayerCard } from "@/lib/matchCard";
 
 export default function PlayerRowLive({
@@ -70,7 +72,7 @@ export default function PlayerRowLive({
       </div>
 
       {player.holesPlayed > 0 && (
-        <div className="mt-2 flex items-center gap-2">
+        <div className="mt-2 flex items-center gap-2 flex-wrap">
           <span className="inline-flex items-center gap-1 rounded-full bg-panel2 border border-border px-2 py-0.5">
             <span className="font-mono text-[10px] uppercase tracking-wider text-mute">
               thru {player.holesPlayed}/{totalHoles}
@@ -80,6 +82,10 @@ export default function PlayerRowLive({
             >
               {netLabel}
             </span>
+          </span>
+          {player.momentum && <MomentumChip m={player.momentum} />}
+          <span className="ml-auto -mr-1">
+            <Sparkline values={player.cumulativeNet} />
           </span>
         </div>
       )}
