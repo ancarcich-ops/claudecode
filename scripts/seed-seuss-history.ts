@@ -1,160 +1,47 @@
-// One-shot historical round seeder for the "Seuss" account.
+// One-shot historical round seeder. CLI alternative to the in-app
+// /settings → "Import demo rounds" button.
 //
-// Inserts 6 completed rounds (taken from the reference screenshots) so the
-// personal-stats page has real data to render. Idempotent on a per-match
-// basis: matches are keyed by (createdById, scheduledAt, courseName), so
-// rerunning won't duplicate.
+// Run against the production DB. The user clicking the in-app button is
+// simpler -- this exists for non-interactive setup / CI / data backfills.
 //
-// Run against the production DB:
-//   DATABASE_URL='postgres://...' \
-//   USERNAME=seuss \
+// Bash / macOS:
+//   DATABASE_URL='postgres://...' SEED_USERNAME=seuss \
+//     npx tsx scripts/seed-seuss-history.ts
+//
+// Windows PowerShell:
+//   $env:DATABASE_URL = "postgres://..."
+//   $env:SEED_USERNAME = "seuss"
 //   npx tsx scripts/seed-seuss-history.ts
 //
-// USERNAME defaults to "seuss". Pass a different value if the live account
-// uses a different handle.
+// SEED_USERNAME defaults to "seuss". (Windows reserves the bare USERNAME
+// env var to the current Windows account, hence the prefix.)
 
 import { PrismaClient } from "@prisma/client";
+import { DEMO_ROUNDS, generateScores } from "../src/lib/demoRounds";
 
 const prisma = new PrismaClient();
 
-type Round = {
-  scheduledAt: Date;
-  courseName: string;
-  pars: number[];
-  totalOverPar: number;
-  // 1 for front-9 / full rounds, 10 for back-9 rounds.
-  startingHole?: number;
-};
-
-const PAR_18_72 = [4, 4, 3, 5, 4, 4, 3, 4, 5, 4, 4, 3, 5, 4, 4, 3, 4, 5];
-const PAR_18_71_TORREY = [4, 4, 3, 4, 4, 5, 3, 4, 5, 4, 4, 3, 4, 5, 5, 3, 4, 4];
-const ALONDRA_18 = [4, 5, 3, 4, 4, 4, 3, 5, 4, 4, 4, 3, 4, 3, 5, 4, 4, 5];
-const ALONDRA_FRONT_9 = ALONDRA_18.slice(0, 9); // par 36
-
-const ROUNDS: Round[] = [
-  {
-    scheduledAt: new Date("2026-05-15T15:00:00-07:00"),
-    courseName: "Alondra Park GC - North",
-    pars: ALONDRA_FRONT_9,
-    totalOverPar: 5, // 41 strokes on par 36
-  },
-  {
-    scheduledAt: new Date("2026-05-01T15:00:00-07:00"),
-    courseName: "Escena GC",
-    pars: PAR_18_72,
-    totalOverPar: 13, // 85 on par 72
-  },
-  {
-    scheduledAt: new Date("2026-04-18T15:00:00-07:00"),
-    courseName: "Recreation Park - South 9",
-    // Executive layout, par 31 (5 par-3s, 4 par-4s).
-    pars: [3, 4, 3, 4, 3, 3, 3, 4, 4],
-    totalOverPar: 11, // 42 on par 31
-  },
-  {
-    scheduledAt: new Date("2026-04-12T15:00:00-07:00"),
-    courseName: "Torrey Pines GC - North",
-    pars: PAR_18_71_TORREY, // par 72 actually -- correct below
-    totalOverPar: 16,
-  },
-  {
-    scheduledAt: new Date("2026-04-03T15:00:00-07:00"),
-    courseName: "Alondra Park GC - North",
-    pars: ALONDRA_18,
-    totalOverPar: 16, // 88 on par 72
-  },
-  {
-    scheduledAt: new Date("2026-03-19T15:00:00-07:00"),
-    courseName: "Wolf Creek Golf Club",
-    // 17 holes played, par 68 layout: 3 par-3s, 12 par-4s, 2 par-5s = 67. Bump one 4 to 5 -> 68.
-    pars: [4, 4, 3, 5, 4, 4, 3, 4, 5, 4, 4, 3, 4, 4, 4, 5, 4],
-    totalOverPar: 17, // 85 on par 68
-  },
-];
-
-// Sanity-fix Torrey Pines pars to total 72 (it's a par-72 layout).
-ROUNDS[3].pars = [4, 5, 4, 3, 4, 4, 3, 5, 4, 4, 4, 3, 4, 5, 5, 3, 4, 4];
-
-// Deterministic LCG so rerunning produces the same per-hole scores.
-function rng(seed: number): () => number {
-  let s = seed >>> 0 || 1;
-  return () => {
-    s = (s * 9301 + 49297) % 233280;
-    return s / 233280;
-  };
-}
-
-// Spread a target "over par" across holes as a mix of birdies, pars,
-// bogeys, doubles. Deterministic per round via the seed.
-function generateScores(pars: number[], totalOverPar: number, seed: number): number[] {
-  const diffs = pars.map(() => 0);
-  let target = totalOverPar;
-  const rand = rng(seed);
-
-  // Sprinkle one or two birdies for texture (1 per 9 holes, capped at 2).
-  const birdiesToAdd = Math.min(2, Math.floor(pars.length / 9));
-  for (let i = 0; i < birdiesToAdd; i++) {
-    for (let tries = 0; tries < 30; tries++) {
-      const idx = Math.floor(rand() * pars.length);
-      if (diffs[idx] === 0) {
-        diffs[idx] = -1;
-        target += 1;
-        break;
-      }
-    }
-  }
-
-  // Then distribute the remaining over-par as bogeys (preferred) and doubles
-  // (when bogeys are exhausted or randomly).
-  let safety = pars.length * 6;
-  while (target > 0 && safety-- > 0) {
-    const idx = Math.floor(rand() * pars.length);
-    if (diffs[idx] === 0) {
-      // ~70% bogey, 30% jump straight to double (rare but realistic).
-      diffs[idx] = rand() < 0.7 ? 1 : 2;
-      target -= diffs[idx];
-    } else if (diffs[idx] === 1 && target > 0) {
-      diffs[idx] = 2;
-      target -= 1;
-    } else if (diffs[idx] === 2 && target > 0) {
-      diffs[idx] = 3;
-      target -= 1;
-    }
-  }
-
-  // If we overshot (e.g. picked double when target=1), back off by trimming
-  // one double back to a bogey.
-  while (target < 0) {
-    const overshootIdx = diffs.findIndex((d) => d >= 2);
-    if (overshootIdx === -1) break;
-    diffs[overshootIdx] -= 1;
-    target += 1;
-  }
-
-  return diffs.map((d, i) => Math.max(1, pars[i] + d));
-}
-
 async function main() {
-  const username = (process.env.USERNAME ?? "seuss").trim().toLowerCase();
+  const username = (process.env.SEED_USERNAME ?? "seuss").trim().toLowerCase();
   console.log(`[seed] Using username "${username}"`);
 
   const user = await prisma.user.upsert({
     where: { username },
     update: {},
-    create: { username, displayName: username.charAt(0).toUpperCase() + username.slice(1) },
+    create: {
+      username,
+      displayName: username.charAt(0).toUpperCase() + username.slice(1),
+    },
   });
   console.log(`[seed] User id=${user.id} username=${user.username}`);
 
   let created = 0;
   let skipped = 0;
 
-  for (let i = 0; i < ROUNDS.length; i++) {
-    const round = ROUNDS[i];
-    // Verify pars sum correctly.
+  for (let i = 0; i < DEMO_ROUNDS.length; i++) {
+    const round = DEMO_ROUNDS[i];
     const parTotal = round.pars.reduce((a, b) => a + b, 0);
-    const grossExpected = parTotal + round.totalOverPar;
 
-    // De-dupe: if a match for this user + course + date already exists, skip.
     const existing = await prisma.match.findFirst({
       where: {
         createdById: user.id,
@@ -164,7 +51,9 @@ async function main() {
     });
     if (existing) {
       console.log(
-        `[seed] skip "${round.courseName}" ${round.scheduledAt.toISOString().slice(0, 10)} (already exists)`,
+        `[seed] skip "${round.courseName}" ${round.scheduledAt
+          .toISOString()
+          .slice(0, 10)} (already exists)`,
       );
       skipped++;
       continue;
@@ -175,12 +64,6 @@ async function main() {
     const scores = generateScores(round.pars, round.totalOverPar, seed);
     const grossActual = scores.reduce((a, b) => a + b, 0);
     const vsParActual = grossActual - parTotal;
-
-    if (vsParActual !== round.totalOverPar) {
-      console.warn(
-        `[seed] WARN ${round.courseName}: generated +${vsParActual}, wanted +${round.totalOverPar}. Gross ${grossActual} vs expected ${grossExpected}.`,
-      );
-    }
 
     const match = await prisma.match.create({
       data: {
@@ -214,7 +97,9 @@ async function main() {
     });
     created++;
     console.log(
-      `[seed] + ${round.courseName} ${round.scheduledAt.toISOString().slice(0, 10)}  gross=${grossActual}  +${vsParActual}  holes=${round.pars.length}  matchId=${match.id}`,
+      `[seed] + ${round.courseName} ${round.scheduledAt
+        .toISOString()
+        .slice(0, 10)}  gross=${grossActual}  +${vsParActual}  holes=${round.pars.length}  matchId=${match.id}`,
     );
   }
 
