@@ -3,7 +3,6 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import AvatarEditor from "./AvatarEditor";
 import ThemeToggle from "./ThemeToggle";
-import DemoRoundsImporter from "./DemoRoundsImporter";
 
 export const dynamic = "force-dynamic";
 
@@ -48,8 +47,6 @@ export default async function SettingsPage() {
       />
 
       <ThemeToggle />
-
-      <DemoRoundsImporter />
     </div>
   );
 }
