@@ -86,7 +86,7 @@ export default function AvatarEditor({
 
   return (
     <section className="card p-5 space-y-5">
-      <h2 className="text-sm uppercase tracking-wider text-mute">Avatar</h2>
+      <h2 className="font-display text-base font-semibold text-ink">Avatar</h2>
 
       {/* Preview */}
       <div className="flex items-center gap-4">

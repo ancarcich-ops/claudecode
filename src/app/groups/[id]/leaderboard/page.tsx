@@ -130,7 +130,7 @@ export default async function GroupLeaderboardPage({
       {/* Current champions per game type */}
       {lb.champions.length > 0 && (
         <section className="card p-5">
-          <h2 className="text-sm uppercase tracking-wider text-mute mb-3">
+          <h2 className="font-display text-base font-semibold text-ink mb-3">
             Current champions
           </h2>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -165,7 +165,7 @@ export default async function GroupLeaderboardPage({
       {/* Head-to-head matrix */}
       {lb.headToHead.users.length >= 2 && (
         <section className="card p-2 sm:p-4 overflow-x-auto">
-          <h2 className="text-sm uppercase tracking-wider text-mute mb-3 px-2 pt-1">
+          <h2 className="font-display text-base font-semibold text-ink mb-3 px-2 pt-1">
             Head to head
           </h2>
           <table className="w-full text-xs">
@@ -227,7 +227,7 @@ export default async function GroupLeaderboardPage({
       {/* Streaks */}
       {lb.streaks.length > 0 && (
         <section className="card p-5">
-          <h2 className="text-sm uppercase tracking-wider text-mute mb-3">
+          <h2 className="font-display text-base font-semibold text-ink mb-3">
             Main-game streaks
           </h2>
           <ul className="space-y-1">
@@ -256,7 +256,7 @@ export default async function GroupLeaderboardPage({
       {/* Course records */}
       {lb.courseRecords.length > 0 && (
         <section className="card p-5">
-          <h2 className="text-sm uppercase tracking-wider text-mute mb-3">
+          <h2 className="font-display text-base font-semibold text-ink mb-3">
             Course records
           </h2>
           <ul className="space-y-1">

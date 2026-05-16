@@ -385,7 +385,7 @@ export default async function MatchPage({
 
       <section className="card p-4">
         <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
-          <h2 className="text-sm uppercase tracking-wider text-mute">
+          <h2 className="font-display text-base font-semibold text-ink">
             Market
           </h2>
           <div className="text-[11px] sm:text-xs text-mute font-mono whitespace-nowrap">
@@ -457,7 +457,7 @@ export default async function MatchPage({
       </section>
 
       <section className="card p-4">
-        <h2 className="text-sm uppercase tracking-wider text-mute mb-3">
+        <h2 className="font-display text-base font-semibold text-ink mb-3">
           Place your call
         </h2>
         {!user ? (
@@ -498,7 +498,7 @@ export default async function MatchPage({
         <section className="card p-4">
           <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
             <div>
-              <h2 className="text-sm uppercase tracking-wider text-mute">
+              <h2 className="font-display text-base font-semibold text-ink">
                 On course
               </h2>
               <p className="text-[11px] text-mute mt-0.5">
@@ -539,7 +539,7 @@ export default async function MatchPage({
 
       <section className="card p-4">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm uppercase tracking-wider text-mute">
+          <h2 className="font-display text-base font-semibold text-ink">
             Scorecard
           </h2>
           <span className="text-xs text-mute">
@@ -573,7 +573,7 @@ export default async function MatchPage({
       {bbbGame && user && (
         <section className="card p-4">
           <div className="flex items-center justify-between gap-2 mb-3">
-            <h2 className="text-sm uppercase tracking-wider text-mute">
+            <h2 className="font-display text-base font-semibold text-ink">
               Bingo Bango Bongo · events
             </h2>
             <span className="text-[11px] text-mute">
@@ -607,7 +607,7 @@ export default async function MatchPage({
       {snakeGame && user && (
         <section className="card p-4">
           <div className="flex items-center justify-between gap-2 mb-3">
-            <h2 className="text-sm uppercase tracking-wider text-mute">
+            <h2 className="font-display text-base font-semibold text-ink">
               Snake · 3-putts
             </h2>
             <span className="text-[11px] text-mute">
@@ -638,7 +638,7 @@ export default async function MatchPage({
       {wolfGame && user && isCreator && (
         <section className="card p-4">
           <div className="flex items-center justify-between gap-2 mb-3">
-            <h2 className="text-sm uppercase tracking-wider text-mute">
+            <h2 className="font-display text-base font-semibold text-ink">
               Wolf · settings
             </h2>
             <span className="text-[11px] text-mute">
@@ -662,7 +662,7 @@ export default async function MatchPage({
       {wolfGame && user && (
         <section className="card p-4">
           <div className="flex items-center justify-between gap-2 mb-3">
-            <h2 className="text-sm uppercase tracking-wider text-mute">
+            <h2 className="font-display text-base font-semibold text-ink">
               Wolf · partners &amp; winners
             </h2>
             <span className="text-[11px] text-mute">
@@ -724,7 +724,7 @@ export default async function MatchPage({
 
       {sideGameSections.length > 0 && (
         <section className="card p-4">
-          <h2 className="text-sm uppercase tracking-wider text-mute mb-3">
+          <h2 className="font-display text-base font-semibold text-ink mb-3">
             Side games
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

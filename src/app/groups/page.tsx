@@ -74,7 +74,7 @@ export default async function GroupsPage({
       </div>
 
       <section className="card p-5">
-        <h2 className="text-sm uppercase tracking-wider text-mute mb-3">
+        <h2 className="font-display text-base font-semibold text-ink mb-3">
           Your groups
         </h2>
         {groups.length === 0 ? (
@@ -114,7 +114,7 @@ export default async function GroupsPage({
       </section>
 
       <section className="card p-5">
-        <h2 className="text-sm uppercase tracking-wider text-mute mb-3">
+        <h2 className="font-display text-base font-semibold text-ink mb-3">
           Create a group
         </h2>
         <form action={createGroupAction} className="flex gap-2">
@@ -136,7 +136,7 @@ export default async function GroupsPage({
       </section>
 
       <section className="card p-5">
-        <h2 className="text-sm uppercase tracking-wider text-mute mb-3">
+        <h2 className="font-display text-base font-semibold text-ink mb-3">
           Join with an invite code
         </h2>
         <form action={joinGroupAction} className="flex gap-2">

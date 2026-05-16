@@ -102,10 +102,10 @@ export default function RoundsList({ rounds }: { rounds: RoundItem[] }) {
                   : `Delete ${label}`
               }
               className={
-                "shrink-0 w-7 h-7 rounded-md text-xs font-mono transition-colors " +
+                "shrink-0 w-8 h-8 rounded-md text-sm font-mono font-semibold transition-colors border " +
                 (isArmed
-                  ? "bg-danger/15 text-danger border border-danger/40"
-                  : "text-mute hover:text-danger hover:bg-danger/10 border border-transparent")
+                  ? "bg-danger text-black border-danger"
+                  : "bg-danger/10 text-danger border-danger/40 hover:bg-danger/20")
               }
               title={isArmed ? "Tap again to confirm" : "Delete round"}
             >

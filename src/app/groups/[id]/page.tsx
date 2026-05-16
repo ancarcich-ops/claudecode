@@ -67,7 +67,7 @@ export default async function GroupDetailPage({
 
       <section className="card p-5 space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm uppercase tracking-wider text-mute">
+          <h2 className="font-display text-base font-semibold text-ink">
             Invite
           </h2>
           <CopyInvite code={group.inviteCode} />
@@ -79,7 +79,7 @@ export default async function GroupDetailPage({
       </section>
 
       <section className="card p-5">
-        <h2 className="text-sm uppercase tracking-wider text-mute mb-3">
+        <h2 className="font-display text-base font-semibold text-ink mb-3">
           Members
         </h2>
         <ul className="space-y-2">
@@ -135,7 +135,7 @@ export default async function GroupDetailPage({
       </section>
 
       <section className="card p-5">
-        <h2 className="text-sm uppercase tracking-wider text-mute mb-3">
+        <h2 className="font-display text-base font-semibold text-ink mb-3">
           Leave group
         </h2>
         <p className="text-xs text-mute mb-3">

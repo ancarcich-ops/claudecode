@@ -155,7 +155,7 @@ export default async function PersonalStatsPage({
               or streaks. */}
           {hasCompetitive && (
             <section className="card p-5">
-              <h2 className="text-sm uppercase tracking-wider text-mute mb-3">
+              <h2 className="font-display text-base font-semibold text-ink mb-3">
                 At a glance
               </h2>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -180,7 +180,7 @@ export default async function PersonalStatsPage({
           {/* Wins by game -- also competitive-only. */}
           {hasCompetitive && (
           <section className="card p-5">
-            <h2 className="text-sm uppercase tracking-wider text-mute mb-3">
+            <h2 className="font-display text-base font-semibold text-ink mb-3">
               Wins by game
             </h2>
             <div className="grid grid-cols-3 sm:grid-cols-7 gap-3">
@@ -199,7 +199,7 @@ export default async function PersonalStatsPage({
           {stats.rounds.length >= 1 && (
             <section className="card p-5">
               <div className="flex items-center justify-between mb-3 gap-2">
-                <h2 className="text-sm uppercase tracking-wider text-mute">
+                <h2 className="font-display text-base font-semibold text-ink">
                   Rounds over time
                 </h2>
                 <span className="text-[11px] text-mute">vs par · lower is better</span>
@@ -222,7 +222,7 @@ export default async function PersonalStatsPage({
           {/* Course records */}
           {stats.courseRecords.length > 0 && (
             <section className="card p-5">
-              <h2 className="text-sm uppercase tracking-wider text-mute mb-3">
+              <h2 className="font-display text-base font-semibold text-ink mb-3">
                 Course bests
               </h2>
               <ul className="space-y-1">
@@ -255,7 +255,7 @@ export default async function PersonalStatsPage({
           {stats.rounds.length > 0 && (
             <section className="card p-5">
               <div className="flex items-center justify-between mb-3 gap-2">
-                <h2 className="text-sm uppercase tracking-wider text-mute">
+                <h2 className="font-display text-base font-semibold text-ink">
                   Logged rounds
                 </h2>
                 <span className="text-[11px] text-mute">tap × to delete</span>
@@ -322,7 +322,7 @@ function ScoringAnalysis({
   return (
     <section className="card p-5">
       <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
-        <h2 className="text-sm uppercase tracking-wider text-mute">
+        <h2 className="font-display text-base font-semibold text-ink">
           Scoring analysis
         </h2>
         <BaselinePicker selected={baselineHcp} id="analysis-vs" />

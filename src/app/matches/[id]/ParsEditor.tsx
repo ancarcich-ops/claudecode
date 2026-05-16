@@ -39,7 +39,7 @@ export default function ParsEditor({
         className="w-full flex items-center justify-between"
         onClick={() => setOpen((o) => !o)}
       >
-        <span className="text-sm uppercase tracking-wider text-mute">
+        <span className="font-display text-base font-semibold text-ink">
           Course pars · par {total}
         </span>
         <span className="text-xs text-mute">{open ? "Hide" : "Edit"}</span>
