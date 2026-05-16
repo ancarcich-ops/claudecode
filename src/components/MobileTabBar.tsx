@@ -23,7 +23,7 @@ export default function MobileTabBar() {
   const pathname = usePathname() ?? "";
   return (
     <nav
-      className="sm:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-panel/95 backdrop-blur"
+      className="sm:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-panel"
       role="navigation"
       aria-label="Primary"
     >

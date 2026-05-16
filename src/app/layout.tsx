@@ -125,7 +125,7 @@ export default async function RootLayout({
             </nav>
           </div>
         </header>
-        <main className="mx-auto max-w-6xl px-3 sm:px-4 py-5 sm:py-6 pb-24 sm:pb-6">
+        <main className="mx-auto max-w-6xl px-3 sm:px-4 py-5 sm:py-6 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:pb-6">
           {children}
         </main>
         {user && <MobileTabBar />}
