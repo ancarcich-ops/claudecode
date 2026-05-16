@@ -15,8 +15,11 @@ export default function PeekHole({
 }) {
   const labelColor = variant === "live" ? "text-accent" : "text-sky-400";
   const labelText = variant === "live" ? "Now teeing" : "Opens at";
-  const path =
-    next.shapePath ?? "M 6 14 Q 35 4 60 8 T 94 6";
+  const path = next.shapePath ?? "M 6 9 Q 35 4 60 9 T 94 9";
+  // Place tee + pin at the start / end of the path so they line up with
+  // whatever curve we drew. Approximate from the path; for the generic
+  // fallback we hard-code; for real paths we just read first/last command.
+  const endpoints = endpointsFromPath(path);
 
   return (
     <div className="rounded-md border border-border bg-panel2 px-3 py-2">
@@ -56,11 +59,39 @@ export default function PeekHole({
           strokeWidth="1.25"
           strokeLinecap="round"
         />
-        {/* tee */}
-        <circle cx="6" cy="14" r="1.4" fill="rgb(var(--color-mute) / 0.9)" />
-        {/* pin */}
-        <circle cx="94" cy="6" r="1.6" fill="rgb(var(--color-gold))" />
+        {/* tee + pin pinned to the path endpoints we drew above. */}
+        <circle
+          cx={endpoints.start.x}
+          cy={endpoints.start.y}
+          r="1.4"
+          fill="rgb(var(--color-mute) / 0.9)"
+        />
+        <circle
+          cx={endpoints.end.x}
+          cy={endpoints.end.y}
+          r="1.6"
+          fill="rgb(var(--color-gold))"
+        />
       </svg>
     </div>
   );
+}
+
+// Parses the first `M x y` and the trailing `... x y` pair out of the
+// path string so we can drop the tee dot and the pin exactly on the
+// curve we drew. Cheap and good enough for the M / L / Q paths we emit
+// from buildHoleShapePath. Falls back to the generic placeholder
+// coords when parsing fails.
+function endpointsFromPath(path: string): {
+  start: { x: number; y: number };
+  end: { x: number; y: number };
+} {
+  const nums = path.match(/-?\d+(\.\d+)?/g)?.map(Number) ?? [];
+  if (nums.length < 4) {
+    return { start: { x: 6, y: 14 }, end: { x: 94, y: 6 } };
+  }
+  return {
+    start: { x: nums[0], y: nums[1] },
+    end: { x: nums[nums.length - 2], y: nums[nums.length - 1] },
+  };
 }

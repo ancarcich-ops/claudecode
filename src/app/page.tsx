@@ -70,6 +70,11 @@ export default async function HomePage() {
     6,
   );
 
+  // Pull next-hole OSM geometry for every match in view, in one batched
+  // query, so the peek panel on LIVE / UPCOMING cards draws the actual
+  // hole shape instead of the generic placeholder curve.
+  const courseHoleMap = await loadNextHoleGeo([...live, ...upcoming]);
+
   return (
     <div className="space-y-10">
       <AutoRefresh endpoint="/api/markets/state" />
@@ -103,7 +108,7 @@ export default async function HomePage() {
           <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {live.map((m) => (
               <StaggerItem key={m.id}>
-                <RenderedMatchCard match={m} />
+                <RenderedMatchCard match={m} courseHoleMap={courseHoleMap} />
               </StaggerItem>
             ))}
           </StaggerGroup>
@@ -132,7 +137,7 @@ export default async function HomePage() {
         ) : upcoming.length === 0 ? (
           <EmptyCard>Nothing on the tee. Open the next line.</EmptyCard>
         ) : (
-          <MatchGridNew matches={upcoming} />
+          <MatchGridNew matches={upcoming} courseHoleMap={courseHoleMap} />
         )}
       </section>
 
@@ -141,7 +146,7 @@ export default async function HomePage() {
         {completed.length === 0 ? (
           <EmptyCard>No closed lines yet.</EmptyCard>
         ) : (
-          <MatchGridNew matches={completed} />
+          <MatchGridNew matches={completed} courseHoleMap={courseHoleMap} />
         )}
       </section>
     </div>
@@ -187,7 +192,10 @@ function EmptyCard({ children }: { children: React.ReactNode }) {
 
 // Shared bridge between the prisma row and the redesigned MatchCard.
 // We compute odds once and feed the normalized data through.
-function buildCardData(m: GridMatch) {
+function buildCardData(
+  m: GridMatch,
+  courseHoleMap: NextHoleGeoMap,
+) {
   const pars = parseParData(m.parData, m.holes);
   const scoringMode = m.scoringMode as "NET" | "GROSS" | "CUSTOM";
   const startingHole = m.startingHole ?? 1;
@@ -206,6 +214,15 @@ function buildCardData(m: GridMatch) {
       ),
     })),
   });
+  // Determine which hole counts as "next" and look up its geometry.
+  let maxLogged = 0;
+  for (const p of m.players)
+    for (const s of p.scores) if (s.hole > maxLogged) maxLogged = s.hole;
+  const lastHole = startingHole + m.holes - 1;
+  const nextHole = Math.min(maxLogged + 1, lastHole);
+  const geo =
+    courseHoleMap.get(`${m.courseName}::${nextHole}`) ?? null;
+
   return buildMatchCardData(
     {
       ...m,
@@ -222,21 +239,96 @@ function buildCardData(m: GridMatch) {
       })),
     },
     odds.probabilities,
+    geo,
   );
 }
 
-function RenderedMatchCard({ match }: { match: GridMatch }) {
-  return <MatchCard data={buildCardData(match)} />;
+function RenderedMatchCard({
+  match,
+  courseHoleMap,
+}: {
+  match: GridMatch;
+  courseHoleMap: NextHoleGeoMap;
+}) {
+  return <MatchCard data={buildCardData(match, courseHoleMap)} />;
 }
 
-function MatchGridNew({ matches }: { matches: GridMatch[] }) {
+function MatchGridNew({
+  matches,
+  courseHoleMap,
+}: {
+  matches: GridMatch[];
+  courseHoleMap: NextHoleGeoMap;
+}) {
   return (
     <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 gap-3">
       {matches.map((m) => (
         <StaggerItem key={m.id}>
-          <RenderedMatchCard match={m} />
+          <RenderedMatchCard match={m} courseHoleMap={courseHoleMap} />
         </StaggerItem>
       ))}
     </StaggerGroup>
   );
+}
+
+// One batched query: for each match in view, pull its course's CourseHole
+// rows (tee + green coords + fairway polygon). Keyed by "<courseName>::<hole>"
+// so the per-card lookup is a Map.get.
+type NextHoleGeoMap = Map<string, import("@/lib/matchCard").HoleGeoLite>;
+
+async function loadNextHoleGeo(matches: GridMatch[]): Promise<NextHoleGeoMap> {
+  const courseNames = Array.from(new Set(matches.map((m) => m.courseName)));
+  if (courseNames.length === 0) return new Map();
+  const holes = await prisma.courseHole.findMany({
+    where: { course: { name: { in: courseNames } } },
+    select: {
+      hole: true,
+      teeLat: true,
+      teeLng: true,
+      greenLat: true,
+      greenLng: true,
+      fairwayPolygonJson: true,
+      distanceYds: true,
+      course: { select: { name: true } },
+    },
+  });
+  const map: NextHoleGeoMap = new Map();
+  for (const h of holes) {
+    const tee =
+      h.teeLat != null && h.teeLng != null
+        ? { lat: h.teeLat, lng: h.teeLng }
+        : null;
+    const green =
+      h.greenLat != null && h.greenLng != null
+        ? { lat: h.greenLat, lng: h.greenLng }
+        : null;
+    let fairwayPolygon: { lat: number; lng: number }[] | null = null;
+    if (h.fairwayPolygonJson) {
+      try {
+        const parsed = JSON.parse(h.fairwayPolygonJson);
+        if (Array.isArray(parsed)) {
+          const pts: { lat: number; lng: number }[] = [];
+          for (const p of parsed) {
+            if (Array.isArray(p) && p.length >= 2) {
+              const lat = Number(p[0]);
+              const lng = Number(p[1]);
+              if (Number.isFinite(lat) && Number.isFinite(lng))
+                pts.push({ lat, lng });
+            }
+          }
+          if (pts.length > 2) fairwayPolygon = pts;
+        }
+      } catch {
+        // ignore malformed polygon json
+      }
+    }
+    map.set(`${h.course.name}::${h.hole}`, {
+      tee,
+      green,
+      fairwayPolygon,
+      yardageYds: h.distanceYds ?? null,
+      strokeIndex: null,
+    });
+  }
+  return map;
 }
