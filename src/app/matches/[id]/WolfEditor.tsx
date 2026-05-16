@@ -6,7 +6,9 @@ import { recordSideGameEventAction } from "@/lib/actions";
 
 type Player = { id: string; displayName: string; seat: number };
 
-// Pre-shaped per-hole state from the server.
+// Pre-shaped per-hole state from the server. winnerId / isPush already
+// reflect auto-derivation from logged scores -- the editor only collects
+// the partner choice + an optional push override.
 type WolfHoleState = {
   hole: number;
   partnerId: string | null;
@@ -54,8 +56,6 @@ export default function WolfEditor({
   startingHole?: number;
   players: Player[];
   byHole: Record<number, WolfHoleState>;
-  // Optional custom rotation (matchPlayerId list). Empty array = use seat
-  // order, same as runtime default.
   rotation: string[];
   locked: boolean;
 }) {
@@ -64,12 +64,7 @@ export default function WolfEditor({
 
   const send = (
     hole: number,
-    kind:
-      | "PARTNER"
-      | "LONE_WOLF"
-      | "PRE_LONE_WOLF"
-      | "HOLE_WINNER"
-      | "PUSH",
+    kind: "PARTNER" | "LONE_WOLF" | "PRE_LONE_WOLF" | "HOLE_WINNER" | "PUSH",
     matchPlayerId: string,
   ) => {
     const fd = new FormData();
@@ -83,13 +78,8 @@ export default function WolfEditor({
     });
   };
 
-  const onPartnerChange = (
-    hole: number,
-    wolf: Player,
-    value: string,
-  ) => {
+  const onPartnerChange = (hole: number, wolf: Player, value: string) => {
     if (value === "") {
-      // Clear -- the action wipes any of PARTNER / LONE_WOLF / PRE_LONE_WOLF.
       send(hole, "PARTNER", "");
     } else if (value === LONE) {
       send(hole, "LONE_WOLF", wolf.id);
@@ -100,145 +90,132 @@ export default function WolfEditor({
     }
   };
 
-  const onWinnerChange = (
-    hole: number,
-    wolf: Player,
-    partnerId: string | null,
-    _isLoneWolf: boolean,
-    side: "" | "WOLF" | "OTHERS" | "PUSH",
-  ) => {
-    if (side === "") {
-      // Clear both kinds by sending HOLE_WINNER with no player; the action
-      // wipes both HOLE_WINNER and PUSH for the hole.
-      send(hole, "HOLE_WINNER", "");
-      return;
-    }
-    if (side === "PUSH") {
-      send(hole, "PUSH", "");
-      return;
-    }
-    if (side === "WOLF") {
-      // Store the Wolf's id as the team representative.
-      send(hole, "HOLE_WINNER", wolf.id);
-      return;
-    }
-    // Others: pick any non-Wolf, non-partner player as the representative.
-    const opponents = players.filter(
-      (p) => p.id !== wolf.id && p.id !== partnerId,
-    );
-    if (opponents.length === 0) return;
-    send(hole, "HOLE_WINNER", opponents[0].id);
+  const togglePush = (hole: number, currentlyPushed: boolean) => {
+    // Server-side PUSH event toggles cleanly: send PUSH adds; send PUSH on a
+    // pushed hole removes. matchPlayerId is unused for PUSH but required.
+    send(hole, "PUSH", currentlyPushed ? "" : "push");
   };
 
-  // Reconstruct "which side won" (or pushed) from the stored events.
-  const winnerSide = (
-    state: WolfHoleState | undefined,
-    wolf: Player,
-  ): "" | "WOLF" | "OTHERS" | "PUSH" => {
-    if (!state) return "";
-    if (state.isPush) return "PUSH";
-    if (!state.winnerId) return "";
+  const playerName = (id: string | null) =>
+    id ? players.find((p) => p.id === id)?.displayName ?? "—" : "—";
+
+  // Determine outcome label + color from the shaped state.
+  const outcomeFor = (state: WolfHoleState | undefined, wolf: Player) => {
+    if (!state || (!state.winnerId && !state.isPush)) {
+      return { label: "—", tone: "text-mute" };
+    }
+    if (state.isPush) return { label: "Push", tone: "text-gold" };
     const wolfTeam = new Set<string>([wolf.id]);
     if (state.partnerId) wolfTeam.add(state.partnerId);
-    return wolfTeam.has(state.winnerId) ? "WOLF" : "OTHERS";
+    if (state.winnerId && wolfTeam.has(state.winnerId)) {
+      return {
+        label: state.isLoneWolf
+          ? state.isPreLoneWolf
+            ? "Lone Wolf · 2x"
+            : "Wolf wins"
+          : "Wolf team",
+        tone: "text-accent",
+      };
+    }
+    return { label: "Others", tone: "text-danger" };
   };
 
   return (
-    <div className="overflow-x-auto -mx-1">
-      <table className="w-full text-xs">
-        <thead>
-          <tr className="text-mute">
-            <th className="text-left font-medium uppercase tracking-wider py-1.5 pr-2 w-12">
-              Hole
-            </th>
-            <th className="text-left font-medium uppercase tracking-wider py-1.5 px-1.5">
-              Wolf
-            </th>
-            <th className="text-left font-medium uppercase tracking-wider py-1.5 px-1.5">
-              Partner
-            </th>
-            <th className="text-left font-medium uppercase tracking-wider py-1.5 px-1.5">
-              Winner
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {Array.from({ length: holes }, (_, i) => startingHole + i).map((h) => {
-            const wolf = wolfForHole(players, h, rotation, startingHole);
-            const state = byHole[h];
-            const partnerValue = state?.isPreLoneWolf
-              ? PRE_LONE
-              : state?.isLoneWolf
-                ? LONE
-                : state?.partnerId ?? "";
-            const winner = winnerSide(state, wolf);
-            const choiceMade =
-              !!state && (state.isLoneWolf || !!state.partnerId);
+    <div className="space-y-2">
+      {Array.from({ length: holes }, (_, i) => startingHole + i).map((h) => {
+        const wolf = wolfForHole(players, h, rotation, startingHole);
+        const state = byHole[h];
+        const partnerValue = state?.isPreLoneWolf
+          ? PRE_LONE
+          : state?.isLoneWolf
+            ? LONE
+            : state?.partnerId ?? "";
+        const choiceMade = !!state && (state.isLoneWolf || !!state.partnerId);
+        const outcome = outcomeFor(state, wolf);
 
-            return (
-              <tr key={h} className="border-t border-border">
-                <td className="py-1.5 pr-2 font-mono tabular-nums text-mute">
-                  {h}
-                </td>
-                <td className="py-1.5 px-1.5 truncate">{wolf.displayName}</td>
-                <td className="py-1 px-1.5">
-                  <select
-                    value={partnerValue}
-                    onChange={(e) => onPartnerChange(h, wolf, e.target.value)}
-                    disabled={pending || locked}
-                    aria-label={`Wolf partner choice on hole ${h}`}
-                    className="input h-8 py-0 px-1.5 text-xs w-full min-w-0"
-                  >
-                    <option value="">—</option>
-                    <option value={LONE}>Lone Wolf</option>
-                    <option value={PRE_LONE}>Pre-Lone Wolf (2x)</option>
-                    {/* In 3-player Wolf the wolf always goes solo --
-                       partner picks aren't allowed. Hide opponents from
-                       the select for that case. */}
-                    {players.length !== 3 &&
-                      players
-                        .filter((p) => p.id !== wolf.id)
-                        .map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.displayName}
-                          </option>
-                        ))}
-                  </select>
-                </td>
-                <td className="py-1 px-1.5">
-                  <select
-                    value={winner}
-                    onChange={(e) =>
-                      onWinnerChange(
-                        h,
-                        wolf,
-                        state?.partnerId ?? null,
-                        state?.isLoneWolf ?? false,
-                        e.target.value as "" | "WOLF" | "OTHERS" | "PUSH",
-                      )
-                    }
-                    // Push is a valid outcome even without a Wolf-choice
-                    // (e.g. abandoned hole), so always allow Push;
-                    // Wolf-team / Others still need a choice first.
-                    disabled={pending || locked}
-                    aria-label={`Hole ${h} winner`}
-                    className="input h-8 py-0 px-1.5 text-xs w-full min-w-0"
-                  >
-                    <option value="">—</option>
-                    <option value="WOLF" disabled={!choiceMade}>
-                      {state?.isLoneWolf ? "Wolf won" : "Wolf team"}
-                    </option>
-                    <option value="OTHERS" disabled={!choiceMade}>
-                      Others
-                    </option>
-                    <option value="PUSH">Push</option>
-                  </select>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+        return (
+          <div
+            key={h}
+            className="rounded-md border border-border bg-panel2 px-3 py-2.5"
+          >
+            <div className="flex items-center gap-3">
+              <div className="font-mono tabular-nums text-mute w-6 shrink-0">
+                {h}
+              </div>
+              <div className="text-sm min-w-0 flex-1">
+                <div className="text-[10px] uppercase tracking-wider text-mute leading-none">
+                  Wolf
+                </div>
+                <div className="text-ink font-medium truncate">
+                  {wolf.displayName}
+                </div>
+              </div>
+              <div className="shrink-0 text-right min-w-0 max-w-[55%]">
+                <div className="text-[10px] uppercase tracking-wider text-mute leading-none">
+                  Outcome
+                </div>
+                <div className={`text-sm font-medium truncate ${outcome.tone}`}>
+                  {outcome.label}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-[1fr_auto] gap-2 mt-2.5">
+              <select
+                value={partnerValue}
+                onChange={(e) => onPartnerChange(h, wolf, e.target.value)}
+                disabled={pending || locked}
+                aria-label={`Wolf partner choice on hole ${h}`}
+                className="input h-9 text-sm"
+              >
+                <option value="">Pick partner…</option>
+                <option value={LONE}>Lone Wolf</option>
+                <option value={PRE_LONE}>Pre-Lone Wolf (2x)</option>
+                {players.length !== 3 &&
+                  players
+                    .filter((p) => p.id !== wolf.id)
+                    .map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.displayName}
+                      </option>
+                    ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => togglePush(h, !!state?.isPush)}
+                disabled={pending || locked}
+                aria-pressed={!!state?.isPush}
+                title={
+                  state?.isPush
+                    ? "Currently pushed — tap to clear"
+                    : "Force push (override auto-result)"
+                }
+                className={
+                  "h-9 px-3 rounded-md border text-xs uppercase tracking-wider font-semibold transition-colors " +
+                  (state?.isPush
+                    ? "bg-gold/15 text-gold border-gold/40"
+                    : "bg-panel border-border text-mute hover:text-ink")
+                }
+              >
+                Push
+              </button>
+            </div>
+
+            {/* Read-out of the autopilot. Hidden when no partner choice yet. */}
+            {choiceMade && state?.partnerId && (
+              <div className="mt-2 text-[11px] text-mute">
+                Team: <span className="text-ink">{wolf.displayName}</span>
+                {" + "}
+                <span className="text-ink">{playerName(state.partnerId)}</span>
+              </div>
+            )}
+          </div>
+        );
+      })}
+      <p className="text-[11px] text-mute pt-1">
+        Winner is auto-detected from logged scores once everyone&apos;s in
+        on a hole. Tap Push if you want to force a push manually.
+      </p>
     </div>
   );
 }
