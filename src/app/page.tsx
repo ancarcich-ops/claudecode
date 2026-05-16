@@ -5,6 +5,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { getActiveGroupId, visibleMatchWhere } from "@/lib/groups";
 import AutoRefresh from "@/components/AutoRefresh";
 import LiveCardStats from "@/components/LiveCardStats";
+import MatchCard from "@/components/match-card/MatchCard";
+import { buildMatchCardData } from "@/lib/matchCard";
 import { StaggerGroup, StaggerItem } from "@/components/Stagger";
 import EmptyIllustration from "@/components/EmptyIllustration";
 import PlayerAvatar from "@/components/Avatar";
@@ -101,7 +103,7 @@ export default async function HomePage() {
           <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {live.map((m) => (
               <StaggerItem key={m.id}>
-                <LiveCard match={m} />
+                <RenderedMatchCard match={m} />
               </StaggerItem>
             ))}
           </StaggerGroup>
@@ -130,7 +132,7 @@ export default async function HomePage() {
         ) : upcoming.length === 0 ? (
           <EmptyCard>Nothing on the tee. Open the next line.</EmptyCard>
         ) : (
-          <MatchGrid matches={upcoming} />
+          <MatchGridNew matches={upcoming} />
         )}
       </section>
 
@@ -139,7 +141,7 @@ export default async function HomePage() {
         {completed.length === 0 ? (
           <EmptyCard>No closed lines yet.</EmptyCard>
         ) : (
-          <MatchGrid matches={completed} settled />
+          <MatchGridNew matches={completed} />
         )}
       </section>
     </div>
@@ -182,37 +184,15 @@ function EmptyCard({ children }: { children: React.ReactNode }) {
   return <div className="card p-6 text-sm text-mute">{children}</div>;
 }
 
-// Score helpers for live cards. Computed per-player from raw ScoreEntry rows.
-function playerLiveScore(
-  p: GridMatch["players"][number],
-  pars: number[],
-): { holes: number; strokes: number; diff: number } | null {
-  if (p.scores.length === 0) return null;
-  const strokes = p.scores.reduce((s, x) => s + x.strokes, 0);
-  const parThrough = p.scores.reduce(
-    (s, x) => s + (pars[x.hole - 1] ?? 4),
-    0,
-  );
-  return { holes: p.scores.length, strokes, diff: strokes - parThrough };
-}
 
-function fmtDiff(diff: number): string {
-  if (diff === 0) return "E";
-  return diff > 0 ? `+${diff}` : `${diff}`;
-}
-
-function diffColor(diff: number): string {
-  if (diff < 0) return "text-accent";
-  if (diff === 0) return "text-gold";
-  return "text-mute";
-}
-
-function LiveCard({ match: m }: { match: GridMatch }) {
+// Shared bridge between the prisma row and the redesigned MatchCard.
+// We compute odds once and feed the normalized data through.
+function buildCardData(m: GridMatch) {
   const pars = parseParData(m.parData, m.holes);
   const scoringMode = m.scoringMode as "NET" | "GROSS" | "CUSTOM";
   const startingHole = m.startingHole ?? 1;
   const odds = computeOdds({
-    status: "IN_PROGRESS",
+    status: m.status as "UPCOMING" | "IN_PROGRESS" | "COMPLETED",
     holes: m.holes,
     startingHole,
     pars,
@@ -226,226 +206,37 @@ function LiveCard({ match: m }: { match: GridMatch }) {
       ),
     })),
   });
-
-  // Match-level "thru X" is the max holes any player has logged.
-  const maxThru = m.players.reduce(
-    (max, p) => Math.max(max, p.scores.length),
-    0,
-  );
-
-  // Current side-game totals per player. We compute these as one-off
-  // leaderboards (not running series) since the home card shows snapshots.
-  const enabledKinds: SideGameKind[] = (m.sideGames ?? [])
-    .map((sg) => sg.kind)
-    .filter(isSideGameKind);
-  const sgPlayers = m.players.map((p) => ({
-    id: p.id,
-    displayName: p.displayName,
-    handicap: p.handicap,
-    scoresByHole: Object.fromEntries(
-      p.scores.map((s) => [s.hole, s.strokes]),
-    ),
-  }));
-  const sideGamesData: {
-    stableford?: Record<string, number>;
-    skins?: Record<string, number>;
-  } = {};
-  if (enabledKinds.includes("STABLEFORD")) {
-    const lb = computeStableford(
-      sgPlayers,
-      pars,
-      m.holes,
-      scoringMode,
-      startingHole,
-    );
-    sideGamesData.stableford = Object.fromEntries(
-      lb.rows.map((r) => [r.playerId, r.numeric]),
-    );
-  }
-  if (enabledKinds.includes("SKINS")) {
-    const lb = computeSkins(
-      sgPlayers,
-      pars,
-      m.holes,
-      scoringMode,
-      startingHole,
-    );
-    sideGamesData.skins = Object.fromEntries(
-      lb.rows.map((r) => [r.playerId, r.numeric]),
-    );
-  }
-
-  return (
-    <Link
-      href={`/matches/${m.id}`}
-      className="card p-4 block live-card border-accent/40 hover:border-accent/60 transition-colors"
-    >
-      <div className="flex items-center justify-between mb-2">
-        <div className="text-sm font-semibold truncate">{m.courseName}</div>
-        <span className="text-xs px-2 py-0.5 rounded-full bg-accent/15 text-accent font-medium inline-flex items-center gap-1.5">
-          <span
-            className="inline-block w-1.5 h-1.5 rounded-full bg-accent animate-pulse"
-            aria-hidden
-          />
-          Live · thru {maxThru}
-        </span>
-      </div>
-      <div className="text-xs text-mute mb-3">
-        {new Date(m.scheduledAt).toLocaleString(undefined, {
-          weekday: "short",
-          month: "short",
-          day: "numeric",
-          hour: "numeric",
-          minute: "2-digit",
-        })}
-        {" · "}
-        {m.holes} holes{(m.startingHole ?? 1) === 10 ? " (back)" : ""}
-        {" · "}
-        {m._count.wagers} wagers
-      </div>
-      <LiveCardStats
-        players={m.players.map((p) => ({
-          id: p.id,
-          displayName: p.displayName,
-          handicap: p.handicap,
-          probability: odds.probabilities[p.id] ?? 0,
-          liveScore: playerLiveScore(p, pars),
-          avatarSeed: p.user?.avatarSeed ?? null,
-          avatarVariant: p.user?.avatarVariant ?? null,
-          avatarUrl: p.user?.avatarUrl ?? null,
-        }))}
-        sideGames={sideGamesData}
-      />
-    </Link>
+  return buildMatchCardData(
+    {
+      ...m,
+      players: m.players.map((p) => ({
+        ...p,
+        user: p.user
+          ? {
+              username: p.user.username,
+              avatarSeed: p.user.avatarSeed,
+              avatarVariant: p.user.avatarVariant,
+              avatarUrl: p.user.avatarUrl,
+            }
+          : null,
+      })),
+    },
+    odds.probabilities,
   );
 }
 
-function MatchGrid({
-  matches,
-  settled,
-}: {
-  matches: GridMatch[];
-  settled?: boolean;
-}) {
+function RenderedMatchCard({ match }: { match: GridMatch }) {
+  return <MatchCard data={buildCardData(match)} />;
+}
+
+function MatchGridNew({ matches }: { matches: GridMatch[] }) {
   return (
     <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 gap-3">
-      {matches.map((m) => {
-        const odds = computeOdds({
-          status: m.status as "UPCOMING" | "IN_PROGRESS" | "COMPLETED",
-          holes: m.holes,
-          startingHole: m.startingHole ?? 1,
-          pars: parseParData(m.parData, m.holes),
-          players: m.players.map((p) => ({
-            id: p.id,
-            handicap: p.handicap,
-            wagerCount: p._count.wagers,
-            scoresByHole: Object.fromEntries(
-              p.scores.map((s) => [s.hole, s.strokes]),
-            ),
-          })),
-        });
-
-        const sorted = [...m.players].sort(
-          (a, b) =>
-            (odds.probabilities[b.id] ?? 0) - (odds.probabilities[a.id] ?? 0),
-        );
-
-        return (
-          <StaggerItem key={m.id}>
-          <Link
-            href={`/matches/${m.id}`}
-            className="card p-4 hover:border-accent/40 transition-colors block"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-sm font-semibold">{m.courseName}</div>
-              <StatusPill status={m.status} />
-            </div>
-            <div className="text-xs text-mute mb-3">
-              {new Date(m.scheduledAt).toLocaleString(undefined, {
-                weekday: "short",
-                month: "short",
-                day: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-              })}
-              {" · "}
-              {m.holes} holes{(m.startingHole ?? 1) === 10 ? " (back)" : ""}
-              {" · "}
-              {m._count.wagers} wagers
-            </div>
-            <ul className="space-y-1.5">
-              {sorted.map((p) => {
-                const pct = odds.probabilities[p.id] ?? 0;
-                return (
-                  <li key={p.id} className="text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-1.5 min-w-0">
-                        <PlayerAvatar
-                          seed={p.user?.avatarSeed ?? p.id}
-                          variant={
-                            (p.user?.avatarVariant as
-                              | "beam"
-                              | "marble"
-                              | "sunset"
-                              | "pixel"
-                              | "ring"
-                              | "bauhaus"
-                              | undefined) ?? "beam"
-                          }
-                          avatarUrl={p.user?.avatarUrl ?? null}
-                          size={16}
-                        />
-                        <span className="truncate">
-                          {p.displayName}{" "}
-                          <span className="text-mute text-xs">
-                            · hcp {p.handicap}
-                          </span>
-                        </span>
-                      </span>
-                      <span className="font-mono tabular-nums text-accent">
-                        {formatPct(pct)}
-                      </span>
-                    </div>
-                    <div className="h-1.5 bg-panel2 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-accent/80"
-                        style={{ width: `${pct * 100}%` }}
-                      />
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-            {settled && (
-              <div className="mt-3 text-xs text-mute">
-                Final ·{" "}
-                {m.completedAt
-                  ? new Date(m.completedAt).toLocaleDateString()
-                  : ""}
-              </div>
-            )}
-          </Link>
-          </StaggerItem>
-        );
-      })}
+      {matches.map((m) => (
+        <StaggerItem key={m.id}>
+          <RenderedMatchCard match={m} />
+        </StaggerItem>
+      ))}
     </StaggerGroup>
-  );
-}
-
-function StatusPill({ status }: { status: string }) {
-  const cls: Record<string, string> = {
-    UPCOMING: "bg-panel2 text-mute",
-    IN_PROGRESS: "bg-accent/15 text-accent",
-    COMPLETED: "bg-gold/10 text-gold",
-  };
-  const label: Record<string, string> = {
-    UPCOMING: "Upcoming",
-    IN_PROGRESS: "Live",
-    COMPLETED: "Final",
-  };
-  return (
-    <span className={`text-xs px-2 py-0.5 rounded-full ${cls[status] ?? ""}`}>
-      {label[status] ?? status}
-    </span>
   );
 }

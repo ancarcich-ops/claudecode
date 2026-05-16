@@ -10,8 +10,10 @@
   --color-panel: 17 24 21;
   --color-panel2: 22 31 27;
   --color-border: 31 42 37;
+  --color-borderSoft: 24 35 32;
   --color-ink: 232 240 234;
   --color-mute: 138 160 148;
+  --color-faint: 93 107 100;
   --color-accent: 52 211 153;
   --color-accentDim: 16 185 129;
   --color-danger: 248 113 113;
@@ -26,8 +28,10 @@
   --color-panel: 255 255 255;
   --color-panel2: 240 244 241;
   --color-border: 216 225 218;
+  --color-borderSoft: 226 233 228;
   --color-ink: 11 31 21;
   --color-mute: 94 110 99;
+  --color-faint: 130 146 134;
   --color-accent: 5 150 105;
   --color-accentDim: 4 120 87;
   --color-danger: 220 38 38;
@@ -114,19 +118,54 @@ body {
   .skeleton { animation: none; }
 }
 
-/* Live match card: gentle pulsing glow so in-progress rounds visually
-   pop out of the upcoming/settled list. Pure decoration; falls back
-   to the static ring if reduced-motion is preferred. */
+/* Live match card glow. Timing matches the match-card design spec. */
 @keyframes live-glow {
-  0%, 100% { box-shadow: 0 0 18px -2px rgb(var(--color-accent) / 0.18); }
-  50%      { box-shadow: 0 0 32px -2px rgb(var(--color-accent) / 0.42); }
+  0%, 100% { box-shadow: 0 0 0 1px rgb(var(--color-accent) / 0.10), 0 0 24px -8px rgb(var(--color-accent) / 0.25); }
+  50%      { box-shadow: 0 0 0 1px rgb(var(--color-accent) / 0.22), 0 0 36px -6px rgb(var(--color-accent) / 0.45); }
 }
 .live-card {
-  animation: live-glow 2.6s ease-in-out infinite;
+  animation: live-glow 3.4s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) {
-  .live-card { animation: none; box-shadow: 0 0 24px -4px rgb(var(--color-accent) / 0.28); }
+  .live-card { animation: none; box-shadow: 0 0 0 1px rgb(var(--color-accent) / 0.18), 0 0 28px -6px rgb(var(--color-accent) / 0.32); }
 }
+
+/* Pulsing dot used in the LIVE pill. */
+@keyframes pulse-dot {
+  0%   { box-shadow: 0 0 0 0 rgb(var(--color-accent) / 0.55); }
+  70%  { box-shadow: 0 0 0 8px rgb(var(--color-accent) / 0); }
+  100% { box-shadow: 0 0 0 0 rgb(var(--color-accent) / 0); }
+}
+.pulse-dot { animation: pulse-dot 2.4s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) { .pulse-dot { animation: none; } }
+
+/* Probability tick number flash (up/down) + row background pulse. */
+@keyframes tick-up {
+  0%   { color: rgb(var(--color-ink)); transform: translateY(0); }
+  20%  { color: rgb(var(--color-accent)); transform: translateY(-2px); }
+  100% { color: rgb(var(--color-ink)); transform: translateY(0); }
+}
+@keyframes tick-down {
+  0%   { color: rgb(var(--color-ink)); transform: translateY(0); }
+  20%  { color: rgb(var(--color-danger)); transform: translateY(2px); }
+  100% { color: rgb(var(--color-ink)); transform: translateY(0); }
+}
+.tick-up   { animation: tick-up 600ms ease-out; }
+.tick-down { animation: tick-down 600ms ease-out; }
+
+@keyframes row-flash-up   { 0%,100% { background: transparent; } 20% { background: rgb(var(--color-accent) / 0.18); } }
+@keyframes row-flash-down { 0%,100% { background: transparent; } 20% { background: rgb(var(--color-danger) / 0.18); } }
+.row-flash-up   { animation: row-flash-up 600ms ease-out; }
+.row-flash-down { animation: row-flash-down 600ms ease-out; }
+
+/* Hot-streak flame gentle flicker. */
+@keyframes flicker { 0%,100% { opacity: 1; } 50% { opacity: 0.7; } }
+.flicker { animation: flicker 1.6s ease-in-out infinite; }
+
+/* Ticker tape marquee. Content is duplicated for seamless loop. */
+@keyframes scroll-l { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.scroll-l { animation: scroll-l 28s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .scroll-l { animation: none; } }
 
 /* Recharts label colors picked from the active theme. */
 .recharts-cartesian-axis-tick-value tspan {
