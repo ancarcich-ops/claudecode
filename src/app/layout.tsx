@@ -57,6 +57,16 @@ export default async function RootLayout({
       lang="en"
       className={`${display.variable} ${GeistSans.variable} ${GeistMono.variable}`}
     >
+      <head>
+        {/* Apply the saved theme before paint so users on light mode don't
+            flash dark first. The script is intentionally tiny and runs
+            synchronously in <head>. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem("sticks-theme");if(t==="light")document.documentElement.dataset.theme="light";}catch(e){}`,
+          }}
+        />
+      </head>
       <body>
         <header className="border-b border-border bg-panel/70 backdrop-blur sticky top-0 z-30">
           <div className="mx-auto max-w-6xl px-3 sm:px-4 h-14 flex items-center justify-between gap-2">
@@ -68,9 +78,9 @@ export default async function RootLayout({
                 width="22"
                 height="22"
                 viewBox="0 0 64 64"
-                fill="#34d399"
+                fill="currentColor"
                 aria-hidden
-                className="shrink-0"
+                className="shrink-0 text-accent"
               >
                 <rect x="13" y="14" width="8" height="40" rx="2.5" />
                 <rect x="28" y="6" width="8" height="50" rx="2.5" />
@@ -122,15 +132,14 @@ export default async function RootLayout({
         <Onboarding enabled={!!user} />
         <Sounds />
         <Toaster
-          theme="dark"
           position="bottom-right"
           richColors
           closeButton
           toastOptions={{
             style: {
-              background: "#161f1b",
-              border: "1px solid #1f2a25",
-              color: "#e8f0ea",
+              background: "rgb(var(--color-panel2))",
+              border: "1px solid rgb(var(--color-border))",
+              color: "rgb(var(--color-ink))",
             },
           }}
         />
