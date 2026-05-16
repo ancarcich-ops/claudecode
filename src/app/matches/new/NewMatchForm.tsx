@@ -366,7 +366,7 @@ export default function NewMatchForm({
 
       <div className="card p-5">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm uppercase tracking-wider text-mute">
+          <h2 className="font-display text-base font-semibold text-ink">
             Players
           </h2>
           <button
@@ -421,7 +421,7 @@ export default function NewMatchForm({
 
       <div className="card p-5">
         <div className="flex items-center justify-between mb-1">
-          <h2 className="text-sm uppercase tracking-wider text-mute">
+          <h2 className="font-display text-base font-semibold text-ink">
             Side games
           </h2>
           <span className="text-[11px] text-mute">{sideGames.size} on</span>

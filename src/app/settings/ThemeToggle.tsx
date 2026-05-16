@@ -46,7 +46,7 @@ export default function ThemeToggle() {
     <div className="card p-5">
       <div className="flex items-start justify-between gap-3 mb-3">
         <div>
-          <h2 className="text-sm uppercase tracking-wider text-mute">
+          <h2 className="font-display text-base font-semibold text-ink">
             Appearance
           </h2>
           <p className="text-[11px] text-mute mt-1">
