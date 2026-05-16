@@ -33,7 +33,13 @@ export default async function PersonalStatsPage({
   });
 
   const displayName = stats.displayName ?? stats.username;
-  const hasAnyData = stats.matchesPlayed > 0;
+  // "Any data" = any logged round. Solo rounds still produce analytics
+  // (chart, scoring breakdown, handicap, course bests) so we don't gate
+  // the whole page on matchesPlayed (which counts competitive matches
+  // only). The At-a-glance / Wins-by-game sections each gate themselves
+  // on matchesPlayed below.
+  const hasAnyData = stats.rounds.length > 0;
+  const hasCompetitive = stats.matchesPlayed > 0;
   const handicap = stats.handicap;
   const ghin = profile?.ghinNumber ?? null;
   const avg18 = stats.avg18Gross;
@@ -143,34 +149,35 @@ export default async function PersonalStatsPage({
         />
       ) : (
         <>
-          {/* Top-line counters */}
-          <section className="card p-5">
-            <h2 className="text-sm uppercase tracking-wider text-mute mb-3">
-              At a glance
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <Stat label="Matches" value={stats.matchesPlayed} />
-              <Stat label="Total wins" value={stats.totalWins} accent />
-              <Stat
-                label="Win rate"
-                value={
-                  stats.matchesPlayed === 0
-                    ? "—"
-                    : `${Math.round(
-                        (stats.mainWins / stats.matchesPlayed) * 100,
-                      )}%`
-                }
-                sub={`${stats.mainWins} main wins`}
-              />
-              <Stat
-                label="Current streak"
-                value={stats.currentMainStreak}
-                sub={`best · ${stats.bestMainStreak}`}
-              />
-            </div>
-          </section>
+          {/* Top-line counters. Only render when the user has competitive
+              matches (2+ players); solo rounds don't contribute to wins
+              or streaks. */}
+          {hasCompetitive && (
+            <section className="card p-5">
+              <h2 className="text-sm uppercase tracking-wider text-mute mb-3">
+                At a glance
+              </h2>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <Stat label="Matches" value={stats.matchesPlayed} />
+                <Stat label="Total wins" value={stats.totalWins} accent />
+                <Stat
+                  label="Win rate"
+                  value={`${Math.round(
+                    (stats.mainWins / stats.matchesPlayed) * 100,
+                  )}%`}
+                  sub={`${stats.mainWins} main wins`}
+                />
+                <Stat
+                  label="Current streak"
+                  value={stats.currentMainStreak}
+                  sub={`best · ${stats.bestMainStreak}`}
+                />
+              </div>
+            </section>
+          )}
 
-          {/* Wins by game */}
+          {/* Wins by game -- also competitive-only. */}
+          {hasCompetitive && (
           <section className="card p-5">
             <h2 className="text-sm uppercase tracking-wider text-mute mb-3">
               Wins by game
@@ -185,6 +192,7 @@ export default async function PersonalStatsPage({
               <Stat label="Wolf" value={stats.wolfWins} />
             </div>
           </section>
+          )}
 
           {/* Round-by-round vs par */}
           {stats.rounds.length >= 1 && (

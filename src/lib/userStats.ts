@@ -159,7 +159,11 @@ export async function computeUserStats(userId: string): Promise<UserStats | null
     userId: user.id,
     username: user.username,
     displayName: user.displayName,
-    matchesPlayed: matches.length,
+    // Competitive stats below only count matches with 2+ players. Solo
+    // rounds (single-player score-tracking entries) skew win-rate /
+    // streak math since the only player always "wins". We re-set
+    // matchesPlayed inside the loop so it reflects the same filter.
+    matchesPlayed: 0,
     matchesWithScores: 0,
     mainWins: 0,
     stablefordWins: 0,
@@ -196,8 +200,16 @@ export async function computeUserStats(userId: string): Promise<UserStats | null
     const me = match.players.find((p) => p.userId === userId);
     if (!me) continue;
 
+    // Solo rounds (single player) are personal score-tracking entries, not
+    // competitions. Score-based analytics (rounds history, distribution,
+    // course bests, handicap) still count every round; competitive stats
+    // (matches played, wins, win-rate, streak, side-game wins) only count
+    // matches with 2+ players.
+    const isCompetitive = match.players.length >= 2;
+    if (isCompetitive) stats.matchesPlayed++;
+
     if (me.scores.length > 0) {
-      stats.matchesWithScores++;
+      if (isCompetitive) stats.matchesWithScores++;
 
       // Per-hole bucketed performance + per-round vs-par accumulator.
       let roundVsPar = 0;
@@ -249,7 +261,11 @@ export async function computeUserStats(userId: string): Promise<UserStats | null
       }
     }
 
-    // Main-game win: lowest net (or gross). Ties = shared win.
+    // Main-game win: lowest net (or gross). Ties = shared win. Solo rounds
+    // skip this entirely -- a one-player "match" is always trivially won
+    // and would inflate win rate / streak.
+    if (!isCompetitive) continue;
+
     const finalNets = match.players.map((p) => {
       const total = p.scores.reduce((s, x) => s + x.strokes, 0);
       const allowance = scoringMode === "GROSS" ? 0 : p.handicap;
