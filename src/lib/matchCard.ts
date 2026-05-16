@@ -5,6 +5,7 @@
 
 import { parseParData } from "./odds";
 import { colorForSeat } from "./colors";
+import { buildHoleShapePath, type LatLng } from "./holeShape";
 
 // ----- Public types -----
 
@@ -100,10 +101,25 @@ type RawMatch = {
   _count: { wagers: number };
 };
 
+// Optional course geometry for a single hole. Comes from CourseHole
+// rows that the OSM seeder populates. When provided for the upcoming
+// "next hole", PeekHole renders a real sketched shape instead of the
+// generic placeholder curve.
+export type HoleGeoLite = {
+  tee: LatLng | null;
+  green: LatLng | null;
+  fairwayPolygon: LatLng[] | null;
+  yardageYds: number | null;
+  strokeIndex: number | null;
+};
+
 export function buildMatchCardData(
   m: RawMatch,
   // Win probabilities keyed by matchPlayerId.
   probabilities: Record<string, number>,
+  // Optional: geometry + meta for the match's *next* hole. Passing it
+  // upgrades the peek panel from a placeholder curve to a real sketch.
+  nextHoleGeo?: HoleGeoLite | null,
 ): MatchCardData {
   const totalHoles = m.holes;
   const startingHole = m.startingHole ?? 1;
@@ -193,6 +209,7 @@ export function buildMatchCardData(
       pars,
       startingHole,
       m.status,
+      nextHoleGeo ?? null,
     ),
     tickerItems: buildTickerItems(players, m.status, m._count.wagers),
   };
@@ -219,17 +236,20 @@ function buildNextHole(
   pars: number[],
   startingHole: number,
   status: string,
+  geo: HoleGeoLite | null,
 ): NextHole | null {
   if (status !== "IN_PROGRESS" && status !== "UPCOMING") return null;
   const idx = hole - startingHole;
   if (idx < 0 || idx >= pars.length) return null;
+  const shapePath = geo
+    ? buildHoleShapePath(geo.tee, geo.green, geo.fairwayPolygon)
+    : null;
   return {
     number: hole,
     par: pars[idx] ?? 4,
-    // TODO: pull yardage + stroke index from CourseHole when available.
-    yardageYds: null,
-    strokeIndex: null,
-    shapePath: null,
+    yardageYds: geo?.yardageYds ?? null,
+    strokeIndex: geo?.strokeIndex ?? null,
+    shapePath,
   };
 }
 
