@@ -102,6 +102,7 @@ export default function OnCourseMode({
   matchId,
   courseName,
   holes,
+  matchStartingHole = 1,
   startingHole,
   pars,
   players,
@@ -113,6 +114,9 @@ export default function OnCourseMode({
   matchId: string;
   courseName: string;
   holes: number;
+  // First hole of the match (1 for full/front-9, 10 for back-9).
+  matchStartingHole?: number;
+  // Hole to land on when entering on-course mode (next un-logged hole).
   startingHole: number;
   pars: number[];
   players: Player[];
@@ -128,8 +132,10 @@ export default function OnCourseMode({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [active, setActive] = useState(false);
+  const firstHole = matchStartingHole;
+  const lastHole = matchStartingHole + holes - 1;
   const [hole, setHole] = useState<number>(
-    Math.max(1, Math.min(holes, startingHole)),
+    Math.max(firstHole, Math.min(lastHole, startingHole)),
   );
   const [pos, setPos] = useState<GeolocationPosition | null>(null);
   const [gpsError, setGpsError] = useState<string | null>(null);
@@ -181,7 +187,7 @@ export default function OnCourseMode({
     );
   }
 
-  const par = pars[hole - 1] ?? 4;
+  const par = pars[hole - firstHole] ?? 4;
   const geo = holeGeoByHole[hole];
   const greenSet = geo && geo.greenLat != null && geo.greenLng != null;
   const teeSet = !!(geo && geo.teeLat != null && geo.teeLng != null);
@@ -206,7 +212,7 @@ export default function OnCourseMode({
     startTransition(async () => {
       await logScoreAction(fd);
       // Auto-advance to next hole if not on the last one.
-      if (hole < holes) setHole(hole + 1);
+      if (hole < lastHole) setHole(hole + 1);
       router.refresh();
       try {
         window.dispatchEvent(new CustomEvent("sticks:sound:score"));
@@ -315,8 +321,8 @@ export default function OnCourseMode({
       <div className="flex items-center justify-between px-4 py-2 border-b border-border">
         <button
           type="button"
-          onClick={() => setHole(Math.max(1, hole - 1))}
-          disabled={hole === 1 || pending}
+          onClick={() => setHole(Math.max(firstHole, hole - 1))}
+          disabled={hole === firstHole || pending}
           className="btn btn-ghost h-9 w-9 px-0 disabled:opacity-30"
           aria-label="Previous hole"
         >
@@ -330,8 +336,8 @@ export default function OnCourseMode({
         </div>
         <button
           type="button"
-          onClick={() => setHole(Math.min(holes, hole + 1))}
-          disabled={hole === holes || pending}
+          onClick={() => setHole(Math.min(lastHole, hole + 1))}
+          disabled={hole === lastHole || pending}
           className="btn btn-ghost h-9 w-9 px-0 disabled:opacity-30"
           aria-label="Next hole"
         >

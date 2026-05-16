@@ -215,6 +215,7 @@ export async function computeGroupLeaderboard(
 
     const pars = parseParData(match.parData, match.holes);
     const scoringMode = match.scoringMode as "NET" | "GROSS" | "CUSTOM";
+    const startingHole = match.startingHole ?? 1;
     const matchPlayerToUserId = new Map<string, string>();
     for (const p of match.players) {
       if (p.userId) matchPlayerToUserId.set(p.id, p.userId);
@@ -394,12 +395,24 @@ export async function computeGroupLeaderboard(
 
       if (sg.kind === "STABLEFORD") {
         hasStableford = true;
-        const lb = computeStableford(sgPlayers, pars, match.holes, scoringMode);
+        const lb = computeStableford(
+          sgPlayers,
+          pars,
+          match.holes,
+          scoringMode,
+          startingHole,
+        );
         awardLeaders(lb, matchPlayerToUserId, bump("stablefordWins"));
         recordChampion("STABLEFORD", "Stableford", lb);
       } else if (sg.kind === "SKINS") {
         hasSkins = true;
-        const lb = computeSkins(sgPlayers, pars, match.holes, scoringMode);
+        const lb = computeSkins(
+          sgPlayers,
+          pars,
+          match.holes,
+          scoringMode,
+          startingHole,
+        );
         awardLeaders(lb, matchPlayerToUserId, bump("skinsWins"));
         recordChampion("SKINS", "Skins", lb);
       } else if (sg.kind === "NASSAU" && match.holes === 18) {
@@ -442,7 +455,13 @@ export async function computeGroupLeaderboard(
             kind: e.kind as WolfEvent["kind"],
             matchPlayerId: e.matchPlayerId ?? null,
           }));
-        const lb = computeWolf(seatedPlayers, match.holes, events);
+        const lb = computeWolf(
+          seatedPlayers,
+          match.holes,
+          events,
+          undefined,
+          startingHole,
+        );
         awardLeaders(lb, matchPlayerToUserId, bump("wolfWins"));
         recordChampion("WOLF", "Wolf", lb);
       }

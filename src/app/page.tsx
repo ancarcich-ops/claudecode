@@ -210,9 +210,11 @@ function diffColor(diff: number): string {
 function LiveCard({ match: m }: { match: GridMatch }) {
   const pars = parseParData(m.parData, m.holes);
   const scoringMode = m.scoringMode as "NET" | "GROSS" | "CUSTOM";
+  const startingHole = m.startingHole ?? 1;
   const odds = computeOdds({
     status: "IN_PROGRESS",
     holes: m.holes,
+    startingHole,
     pars,
     scoringMode,
     players: m.players.map((p) => ({
@@ -249,13 +251,25 @@ function LiveCard({ match: m }: { match: GridMatch }) {
     skins?: Record<string, number>;
   } = {};
   if (enabledKinds.includes("STABLEFORD")) {
-    const lb = computeStableford(sgPlayers, pars, m.holes, scoringMode);
+    const lb = computeStableford(
+      sgPlayers,
+      pars,
+      m.holes,
+      scoringMode,
+      startingHole,
+    );
     sideGamesData.stableford = Object.fromEntries(
       lb.rows.map((r) => [r.playerId, r.numeric]),
     );
   }
   if (enabledKinds.includes("SKINS")) {
-    const lb = computeSkins(sgPlayers, pars, m.holes, scoringMode);
+    const lb = computeSkins(
+      sgPlayers,
+      pars,
+      m.holes,
+      scoringMode,
+      startingHole,
+    );
     sideGamesData.skins = Object.fromEntries(
       lb.rows.map((r) => [r.playerId, r.numeric]),
     );
@@ -285,7 +299,7 @@ function LiveCard({ match: m }: { match: GridMatch }) {
           minute: "2-digit",
         })}
         {" · "}
-        {m.holes} holes
+        {m.holes} holes{(m.startingHole ?? 1) === 10 ? " (back)" : ""}
         {" · "}
         {m._count.wagers} wagers
       </div>
@@ -319,6 +333,7 @@ function MatchGrid({
         const odds = computeOdds({
           status: m.status as "UPCOMING" | "IN_PROGRESS" | "COMPLETED",
           holes: m.holes,
+          startingHole: m.startingHole ?? 1,
           pars: parseParData(m.parData, m.holes),
           players: m.players.map((p) => ({
             id: p.id,
@@ -354,7 +369,7 @@ function MatchGrid({
                 minute: "2-digit",
               })}
               {" · "}
-              {m.holes} holes
+              {m.holes} holes{(m.startingHole ?? 1) === 10 ? " (back)" : ""}
               {" · "}
               {m._count.wagers} wagers
             </div>

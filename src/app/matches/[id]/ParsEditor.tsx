@@ -6,11 +6,13 @@ export default function ParsEditor({
   action,
   matchId,
   holes,
+  startingHole = 1,
   pars,
 }: {
   action: (formData: FormData) => Promise<void>;
   matchId: string;
   holes: number;
+  startingHole?: number;
   pars: number[];
 }) {
   const [open, setOpen] = useState(false);
@@ -50,7 +52,7 @@ export default function ParsEditor({
                 key={i}
                 className="flex flex-col items-center gap-1 text-[11px] text-mute"
               >
-                <span>{i + 1}</span>
+                <span>{startingHole + i}</span>
                 <select
                   value={v}
                   onChange={(e) => setIdx(i, Number(e.target.value))}

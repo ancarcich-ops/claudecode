@@ -148,6 +148,9 @@ export async function createMatchAction(formData: FormData) {
   const scheduledAtRaw = String(formData.get("scheduledAt") ?? "");
   const holesRaw = Number(formData.get("holes") ?? 18);
   const holes: 9 | 18 = holesRaw === 9 ? 9 : 18;
+  // Back-9 support: only valid for 9-hole rounds; everything else is hole 1.
+  const startingHoleRaw = Number(formData.get("startingHole") ?? 1);
+  const startingHole = holes === 9 && startingHoleRaw === 10 ? 10 : 1;
   const notes = String(formData.get("notes") ?? "").trim() || null;
   const parDataRaw = String(formData.get("parData") ?? "").trim();
   const scoringModeRaw = String(formData.get("scoringMode") ?? "NET");
@@ -245,6 +248,7 @@ export async function createMatchAction(formData: FormData) {
       courseName,
       scheduledAt: new Date(scheduledAtRaw),
       holes,
+      startingHole,
       notes,
       parData,
       scoringMode,

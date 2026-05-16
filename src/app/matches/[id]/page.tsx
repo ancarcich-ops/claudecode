@@ -187,13 +187,16 @@ export default async function MatchPage({
   const userLastHole = myMatchPlayer
     ? myMatchPlayer.scores.reduce((m, s) => Math.max(m, s.hole), 0)
     : 0;
-  const groupMaxThru = match.players.reduce(
-    (m, p) => Math.max(m, p.scores.length),
+  const groupLastHole = match.players.reduce(
+    (m, p) => Math.max(m, p.scores.reduce((mm, s) => Math.max(mm, s.hole), 0)),
     0,
   );
+  // For a back-9 match, hole numbers run match.startingHole..match.startingHole+match.holes-1.
+  const matchStart = match.startingHole ?? 1;
+  const matchEnd = matchStart + match.holes - 1;
   const onCourseStartingHole = Math.max(
-    1,
-    Math.min(match.holes, (userLastHole || groupMaxThru) + 1),
+    matchStart,
+    Math.min(matchEnd, (userLastHole || groupLastHole) + 1),
   );
 
   // Side-game leaderboards. Filter persisted kinds against the known set in
@@ -249,6 +252,7 @@ export default async function MatchPage({
     pars,
     holes: match.holes,
     scoringMode,
+    startingHole: matchStart,
     bbbEvents,
     snakeEvents,
     wolfEvents,
@@ -275,10 +279,17 @@ export default async function MatchPage({
       pars,
       match.holes,
       scoringMode,
+      matchStart,
     );
   }
   if (enabledKinds.includes("SKINS")) {
-    sgSeries.skins = runningSkins(sgPlayers, pars, match.holes, scoringMode);
+    sgSeries.skins = runningSkins(
+      sgPlayers,
+      pars,
+      match.holes,
+      scoringMode,
+      matchStart,
+    );
   }
   if (enabledKinds.includes("NASSAU") && match.holes === 18) {
     sgSeries.nassauF9 = runningNassauSegment(
@@ -307,10 +318,15 @@ export default async function MatchPage({
     );
   }
   if (enabledKinds.includes("BBB")) {
-    sgSeries.bbb = runningBbb(sgPlayers, match.holes, bbbEvents);
+    sgSeries.bbb = runningBbb(sgPlayers, match.holes, bbbEvents, matchStart);
   }
   if (enabledKinds.includes("SNAKE")) {
-    sgSeries.snake = runningSnake(sgPlayers, match.holes, snakeEvents);
+    sgSeries.snake = runningSnake(
+      sgPlayers,
+      match.holes,
+      snakeEvents,
+      matchStart,
+    );
   }
   if (enabledKinds.includes("WOLF")) {
     sgSeries.wolf = runningWolf(
@@ -318,6 +334,7 @@ export default async function MatchPage({
       match.holes,
       wolfEvents,
       wolfConfig,
+      matchStart,
     );
   }
 
@@ -353,7 +370,7 @@ export default async function MatchPage({
             minute: "2-digit",
           })}
           {" · "}
-          {match.holes}H · par {odds.meta.coursePar}
+          {match.holes}H{matchStart === 10 ? " (back)" : ""} · par {odds.meta.coursePar}
           {" · "}
           {modeLabel}
           {" · "}
@@ -503,6 +520,7 @@ export default async function MatchPage({
             matchId={match.id}
             courseName={match.courseName}
             holes={match.holes}
+            matchStartingHole={matchStart}
             startingHole={onCourseStartingHole}
             pars={pars}
             players={match.players.map((p) => ({
@@ -543,6 +561,7 @@ export default async function MatchPage({
             <ScoreSheet
               matchId={match.id}
               holes={match.holes}
+              startingHole={matchStart}
               pars={pars}
               players={playerMeta}
               locked={!canLogScores}
@@ -564,6 +583,7 @@ export default async function MatchPage({
           <BBBEditor
             sideGameId={bbbGame.id}
             holes={match.holes}
+            startingHole={matchStart}
             players={match.players.map((p) => ({
               id: p.id,
               displayName: p.displayName,
@@ -597,6 +617,7 @@ export default async function MatchPage({
           <SnakeEditor
             sideGameId={snakeGame.id}
             holes={match.holes}
+            startingHole={matchStart}
             players={match.players.map((p) => ({
               id: p.id,
               displayName: p.displayName,
@@ -653,6 +674,7 @@ export default async function MatchPage({
           <WolfEditor
             sideGameId={wolfGame.id}
             holes={match.holes}
+            startingHole={matchStart}
             players={match.players.map((p) => ({
               id: p.id,
               displayName: p.displayName,
@@ -767,6 +789,7 @@ export default async function MatchPage({
             action={updateParsAction}
             matchId={match.id}
             holes={match.holes}
+            startingHole={matchStart}
             pars={pars}
           />
         </section>

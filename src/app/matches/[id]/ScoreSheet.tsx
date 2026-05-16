@@ -14,18 +14,25 @@ type Player = {
 export default function ScoreSheet({
   matchId,
   holes,
+  startingHole = 1,
   pars,
   players,
   locked,
 }: {
   matchId: string;
   holes: number;
+  // First hole played (1 for full/front-9, 10 for back-9). Hole labels are
+  // absolute; pars is still length=holes indexed from startingHole.
+  startingHole?: number;
   pars: number[];
   players: Player[];
   locked: boolean;
 }) {
   const [pending, startTransition] = useTransition();
-  const holeNumbers = Array.from({ length: holes }, (_, i) => i + 1);
+  const holeNumbers = Array.from(
+    { length: holes },
+    (_, i) => startingHole + i,
+  );
   const coursePar = pars.reduce((a, b) => a + b, 0);
 
   const submit = (matchPlayerId: string, hole: number, strokes: string) => {
@@ -100,7 +107,7 @@ export default function ScoreSheet({
                 </td>
                 {holeNumbers.map((h) => {
                   const val = byHole.get(h);
-                  const parH = pars[h - 1] ?? 4;
+                  const parH = pars[h - startingHole] ?? 4;
                   const cls =
                     val === undefined
                       ? ""

@@ -44,6 +44,7 @@ export async function loadMatchWithOdds(matchId: string) {
   const odds = computeOdds({
     status: match.status as "UPCOMING" | "IN_PROGRESS" | "COMPLETED",
     holes: match.holes,
+    startingHole: match.startingHole ?? 1,
     pars,
     scoringMode,
     players: playerInputs,
