@@ -196,6 +196,7 @@ export default async function PersonalStatsPage({
                 <span className="text-[11px] text-mute">vs par · lower is better</span>
               </div>
               <RoundHistoryChart
+                baselineHcp={baselineHcp}
                 rounds={stats.rounds.map((r) => ({
                   t: r.scheduledAt.getTime(),
                   vsPar: r.vsPar,
