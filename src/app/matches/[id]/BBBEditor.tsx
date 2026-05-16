@@ -17,12 +17,14 @@ const COLUMNS: { kind: EventKind; label: string; hint: string }[] = [
 export default function BBBEditor({
   sideGameId,
   holes,
+  startingHole = 1,
   players,
   events,
   locked,
 }: {
   sideGameId: string;
   holes: number;
+  startingHole?: number;
   players: Player[];
   // Pre-shaped: events[hole][kind] = matchPlayerId | null
   events: EventsByHole;
@@ -65,7 +67,7 @@ export default function BBBEditor({
           </tr>
         </thead>
         <tbody>
-          {Array.from({ length: holes }, (_, i) => i + 1).map((h) => (
+          {Array.from({ length: holes }, (_, i) => startingHole + i).map((h) => (
             <tr key={h} className="border-t border-border">
               <td className="py-1.5 pr-2 font-mono tabular-nums text-mute">
                 {h}

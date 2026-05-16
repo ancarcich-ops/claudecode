@@ -211,12 +211,13 @@ export function computeStableford(
   pars: number[],
   holes: number,
   scoringMode: ScoringMode,
+  startingHole: number = 1,
 ): Leaderboard {
   const rows = players.map((p) => {
     let points = 0;
     let counted = 0;
     for (let i = 0; i < holes; i++) {
-      const gross = p.scoresByHole[i + 1];
+      const gross = p.scoresByHole[startingHole + i];
       if (typeof gross !== "number") continue;
       const par = pars[i] ?? 4;
       const net = netStrokesForHole(gross, p.handicap, i, holes, scoringMode);
@@ -246,6 +247,7 @@ export function computeSkins(
   pars: number[],
   holes: number,
   scoringMode: ScoringMode,
+  startingHole: number = 1,
 ): Leaderboard {
   const skinsByPlayer = new Map<string, number>();
   for (const p of players) skinsByPlayer.set(p.id, 0);
@@ -254,14 +256,15 @@ export function computeSkins(
   let openHole = 0;
 
   for (let i = 0; i < holes; i++) {
+    const h = startingHole + i;
     // Only resolve holes where every player has a score.
-    if (players.some((p) => typeof p.scoresByHole[i + 1] !== "number")) {
+    if (players.some((p) => typeof p.scoresByHole[h] !== "number")) {
       break;
     }
     const nets = players.map((p) => ({
       id: p.id,
       net: netStrokesForHole(
-        p.scoresByHole[i + 1] as number,
+        p.scoresByHole[h] as number,
         p.handicap,
         i,
         holes,
@@ -277,7 +280,7 @@ export function computeSkins(
     } else {
       carryover += 1;
     }
-    openHole = i + 1;
+    openHole = h;
   }
 
   const rows = players.map((p) => {
@@ -429,18 +432,20 @@ export function runningBbb(
   players: LiveScorePlayer[],
   holes: number,
   events: BbbEvent[],
+  startingHole: number = 1,
 ): RunningSeries {
+  const lastHole = startingHole + holes - 1;
   const through = Math.min(
-    holes,
+    lastHole,
     events.length === 0
-      ? 0
+      ? startingHole - 1
       : Math.max(...events.map((e) => e.hole)),
   );
   const rows: ({ hole: number } & Record<string, number>)[] = [];
   const totals: Record<string, number> = Object.fromEntries(
     players.map((p) => [p.id, 0]),
   );
-  for (let h = 1; h <= through; h++) {
+  for (let h = startingHole; h <= through; h++) {
     for (const e of events) {
       if (e.hole === h && e.matchPlayerId && e.matchPlayerId in totals) {
         totals[e.matchPlayerId] += 1;
@@ -515,16 +520,20 @@ export function runningSnake(
   players: LiveScorePlayer[],
   holes: number,
   events: SnakeEvent[],
+  startingHole: number = 1,
 ): RunningSeries {
+  const lastHole = startingHole + holes - 1;
   const through = Math.min(
-    holes,
-    events.length === 0 ? 0 : Math.max(...events.map((e) => e.hole)),
+    lastHole,
+    events.length === 0
+      ? startingHole - 1
+      : Math.max(...events.map((e) => e.hole)),
   );
   const rows: ({ hole: number } & Record<string, number>)[] = [];
   const totals: Record<string, number> = Object.fromEntries(
     players.map((p) => [p.id, 0]),
   );
-  for (let h = 1; h <= through; h++) {
+  for (let h = startingHole; h <= through; h++) {
     for (const e of events) {
       if (e.hole === h && e.matchPlayerId in totals) {
         totals[e.matchPlayerId] += 1;
@@ -561,6 +570,7 @@ export function wolfForHole(
   players: WolfPlayer[],
   hole: number,
   rotation?: string[],
+  startingHole: number = 1,
 ): WolfPlayer | null {
   if (players.length === 0) return null;
   // If a custom rotation is provided, use it. Drop any ids no longer in the
@@ -577,7 +587,8 @@ export function wolfForHole(
   if (ordered.length === 0) {
     ordered = [...players].sort((a, b) => a.seat - b.seat);
   }
-  return ordered[(hole - 1) % ordered.length];
+  // Rotate based on offset from the first hole played, not absolute hole #.
+  return ordered[(hole - startingHole) % ordered.length];
 }
 
 type WolfHole = {
@@ -596,6 +607,7 @@ function shapeWolfHoles(
   holes: number,
   events: WolfEvent[],
   rotation?: string[],
+  startingHole: number = 1,
 ): WolfHole[] {
   const byHole = new Map<number, WolfEvent[]>();
   for (const e of events) {
@@ -603,8 +615,9 @@ function shapeWolfHoles(
     byHole.get(e.hole)!.push(e);
   }
   const out: WolfHole[] = [];
-  for (let h = 1; h <= holes; h++) {
-    const wolf = wolfForHole(players, h, rotation);
+  const lastHole = startingHole + holes - 1;
+  for (let h = startingHole; h <= lastHole; h++) {
+    const wolf = wolfForHole(players, h, rotation, startingHole);
     if (!wolf) continue;
     const es = byHole.get(h) ?? [];
     const partner = es.find((e) => e.kind === "PARTNER");
@@ -717,10 +730,17 @@ export function computeWolf(
   holes: number,
   events: WolfEvent[],
   config: WolfConfig = {},
+  startingHole: number = 1,
 ): Leaderboard {
   const ids = players.map((p) => p.id);
   const pushRule = config.pushRule ?? "NO_POINTS";
-  const shaped = shapeWolfHoles(players, holes, events, config.rotation);
+  const shaped = shapeWolfHoles(
+    players,
+    holes,
+    events,
+    config.rotation,
+    startingHole,
+  );
   const { totals, resolvedHoles } = tallyWolfHoles(shaped, ids, pushRule);
   const pushed = shaped.filter((s) => s.isPush).length;
   const rows = players.map((p) => ({
@@ -756,10 +776,17 @@ export function runningWolf(
   holes: number,
   events: WolfEvent[],
   config: WolfConfig = {},
+  startingHole: number = 1,
 ): RunningSeries {
   const ids = players.map((p) => p.id);
   const pushRule = config.pushRule ?? "NO_POINTS";
-  const shaped = shapeWolfHoles(players, holes, events, config.rotation);
+  const shaped = shapeWolfHoles(
+    players,
+    holes,
+    events,
+    config.rotation,
+    startingHole,
+  );
   const { totals, rows, lastResolved } = tallyWolfHoles(shaped, ids, pushRule);
   return { rows, current: { ...totals }, throughHole: lastResolved };
 }
@@ -774,6 +801,7 @@ export function computeAllSideGames(input: {
   pars: number[];
   holes: number;
   scoringMode: ScoringMode;
+  startingHole?: number;
   bbbEvents?: BbbEvent[];
   snakeEvents?: SnakeEvent[];
   wolfEvents?: WolfEvent[];
@@ -786,6 +814,7 @@ export function computeAllSideGames(input: {
     pars,
     holes,
     scoringMode,
+    startingHole = 1,
     bbbEvents = [],
     snakeEvents = [],
     wolfEvents = [],
@@ -796,12 +825,16 @@ export function computeAllSideGames(input: {
     if (kind === "STABLEFORD") {
       out.push({
         kind,
-        leaderboards: [computeStableford(players, pars, holes, scoringMode)],
+        leaderboards: [
+          computeStableford(players, pars, holes, scoringMode, startingHole),
+        ],
       });
     } else if (kind === "SKINS") {
       out.push({
         kind,
-        leaderboards: [computeSkins(players, pars, holes, scoringMode)],
+        leaderboards: [
+          computeSkins(players, pars, holes, scoringMode, startingHole),
+        ],
       });
     } else if (kind === "NASSAU") {
       const lbs = computeNassau(players, pars, holes, scoringMode);
@@ -813,7 +846,15 @@ export function computeAllSideGames(input: {
     } else if (kind === "WOLF") {
       out.push({
         kind,
-        leaderboards: [computeWolf(wolfPlayers, holes, wolfEvents, wolfConfig)],
+        leaderboards: [
+          computeWolf(
+            wolfPlayers,
+            holes,
+            wolfEvents,
+            wolfConfig,
+            startingHole,
+          ),
+        ],
       });
     }
   }
@@ -859,21 +900,24 @@ export function runningStableford(
   pars: number[],
   holes: number,
   scoringMode: ScoringMode,
+  startingHole: number = 1,
 ): RunningSeries {
-  const through = Math.min(holes, maxHolesAcross(players));
+  const lastHole = startingHole + holes - 1;
+  const through = Math.min(lastHole, maxHolesAcross(players));
   const rows: ({ hole: number } & Record<string, number>)[] = [];
   const totals: Record<string, number> = Object.fromEntries(
     players.map((p) => [p.id, 0]),
   );
-  for (let h = 1; h <= through; h++) {
+  for (let h = startingHole; h <= through; h++) {
+    const offset = h - startingHole;
     for (const p of players) {
       const gross = p.scoresByHole[h];
       if (typeof gross === "number") {
-        const par = pars[h - 1] ?? 4;
+        const par = pars[offset] ?? 4;
         const net = netStrokesForHole(
           gross,
           p.handicap,
-          h - 1,
+          offset,
           holes,
           scoringMode,
         );
@@ -890,6 +934,7 @@ export function runningSkins(
   pars: number[],
   holes: number,
   scoringMode: ScoringMode,
+  startingHole: number = 1,
 ): RunningSeries {
   const rows: ({ hole: number } & Record<string, number>)[] = [];
   const counts: Record<string, number> = Object.fromEntries(
@@ -897,14 +942,16 @@ export function runningSkins(
   );
   let carryover = 1;
   let through = 0;
-  for (let h = 1; h <= holes; h++) {
+  const lastHole = startingHole + holes - 1;
+  for (let h = startingHole; h <= lastHole; h++) {
     if (players.some((p) => typeof p.scoresByHole[h] !== "number")) break;
+    const offset = h - startingHole;
     const nets = players.map((p) => ({
       id: p.id,
       net: netStrokesForHole(
         p.scoresByHole[h] as number,
         p.handicap,
-        h - 1,
+        offset,
         holes,
         scoringMode,
       ),

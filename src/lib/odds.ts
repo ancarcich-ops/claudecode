@@ -31,6 +31,9 @@ export type OddsInput = {
   // NET/CUSTOM subtract the per-player allowance (handicap or agreed strokes)
   // from gross to determine the winner. GROSS uses raw strokes. Default NET.
   scoringMode?: ScoringMode;
+  // First hole played (1 for full/front-9, 10 for back-9). scoresByHole keys
+  // are absolute hole numbers; pars is length=holes indexed from startingHole.
+  startingHole?: number;
   players: PlayerInput[];
 };
 
@@ -107,6 +110,7 @@ function liveProbabilities(
   totalHoles: number,
   pars: number[],
   scoringMode: ScoringMode,
+  startingHole: number,
 ): { probs: number[]; netScores: (number | null)[]; holesPlayed: number } {
   const maxHolesPlayed = Math.max(
     0,
@@ -120,19 +124,23 @@ function liveProbabilities(
 
   const projectedNets: number[] = [];
   const reportedNets: (number | null)[] = [];
+  const lastHole = startingHole + totalHoles - 1;
 
   for (const p of players) {
     const playedHoles = Object.keys(p.scoresByHole)
       .map(Number)
-      .filter((h) => h >= 1 && h <= totalHoles);
+      .filter((h) => h >= startingHole && h <= lastHole);
     const holesPlayed = playedHoles.length;
     const strokesSoFar = playedHoles.reduce(
       (s, h) => s + (p.scoresByHole[h] ?? 0),
       0,
     );
-    const parSoFar = playedHoles.reduce((s, h) => s + (pars[h - 1] ?? 4), 0);
+    const parSoFar = playedHoles.reduce(
+      (s, h) => s + (pars[h - startingHole] ?? 4),
+      0,
+    );
     const remainingPar = pars.reduce(
-      (s, par, i) => (playedHoles.includes(i + 1) ? s : s + par),
+      (s, par, i) => (playedHoles.includes(startingHole + i) ? s : s + par),
       0,
     );
     const holesRemaining = totalHoles - holesPlayed;
@@ -182,6 +190,7 @@ function completedProbabilities(
 export function computeOdds(input: OddsInput): OddsOutput {
   const { players, holes, status } = input;
   const scoringMode: ScoringMode = input.scoringMode ?? "NET";
+  const startingHole = input.startingHole ?? 1;
   const n = players.length;
   const pars = resolvePars(holes, input.pars);
   const coursePar = pars.reduce((a, b) => a + b, 0);
@@ -215,6 +224,7 @@ export function computeOdds(input: OddsInput): OddsOutput {
       holes,
       pars,
       scoringMode,
+      startingHole,
     );
     const liveWeight = Math.min(0.95, holesPlayed / holes);
     const remaining = 1 - liveWeight;

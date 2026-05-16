@@ -62,6 +62,7 @@ export async function computeAndPersistMatchWinners(matchId: string): Promise<vo
 
   const pars = parseParData(match.parData, match.holes);
   const scoringMode = match.scoringMode as "NET" | "GROSS" | "CUSTOM";
+  const startingHole = match.startingHole ?? 1;
   const matchPlayerToUserId = new Map<string, string>();
   for (const p of match.players) {
     if (p.userId) matchPlayerToUserId.set(p.id, p.userId);
@@ -116,11 +117,11 @@ export async function computeAndPersistMatchWinners(matchId: string): Promise<vo
   for (const sg of match.sideGames) {
     if (sg.kind === "STABLEFORD") {
       summary.stableford = winnersFromLeaderboard(
-        computeStableford(sgPlayers, pars, match.holes, scoringMode),
+        computeStableford(sgPlayers, pars, match.holes, scoringMode, startingHole),
       );
     } else if (sg.kind === "SKINS") {
       summary.skins = winnersFromLeaderboard(
-        computeSkins(sgPlayers, pars, match.holes, scoringMode),
+        computeSkins(sgPlayers, pars, match.holes, scoringMode, startingHole),
       );
     } else if (sg.kind === "NASSAU" && match.holes === 18) {
       const segs = computeNassau(sgPlayers, pars, match.holes, scoringMode);
@@ -153,7 +154,7 @@ export async function computeAndPersistMatchWinners(matchId: string): Promise<vo
         }));
       const config = parseWolfConfig(sg.config);
       summary.wolf = winnersFromLeaderboard(
-        computeWolf(seatedPlayers, match.holes, events, config),
+        computeWolf(seatedPlayers, match.holes, events, config, startingHole),
       );
     }
   }

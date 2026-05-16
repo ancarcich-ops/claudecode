@@ -68,6 +68,8 @@ export default function NewMatchForm({
     });
   const [courseName, setCourseName] = useState("");
   const [holes, setHoles] = useState<9 | 18>(18);
+  // 1 = full or front 9, 10 = back 9. Only meaningful when holes === 9.
+  const [startingHole, setStartingHole] = useState<1 | 10>(1);
   const [scoringMode, setScoringMode] = useState<ScoringMode>("NET");
   const modeCopy = MODE_COPY[scoringMode];
 
@@ -81,16 +83,31 @@ export default function NewMatchForm({
 
   // Pars used for the hidden parData field. Preset takes priority; manual
   // input (or "no preset matched") sends empty so the server falls back to
-  // its standard default for the chosen hole count.
-  const parsToSubmit =
-    matchedPreset && matchedPreset.holes === holes ? matchedPreset.pars : null;
+  // its standard default for the chosen hole count. For a 9-hole round on
+  // an 18-hole preset, we slice front (0..9) or back (9..18) by startingHole.
+  const parsToSubmit = (() => {
+    if (!matchedPreset) return null;
+    if (matchedPreset.holes === holes) return matchedPreset.pars;
+    if (matchedPreset.holes === 18 && holes === 9) {
+      return startingHole === 10
+        ? matchedPreset.pars.slice(9, 18)
+        : matchedPreset.pars.slice(0, 9);
+    }
+    return null;
+  })();
 
   const onCourseChange = (value: string) => {
     setCourseName(value);
     const preset = presetByName.get(value.trim().toLowerCase());
     if (preset) {
       setHoles(preset.holes);
+      if (preset.holes === 18) setStartingHole(1);
     }
+  };
+
+  const onHolesChange = (value: 9 | 18) => {
+    setHoles(value);
+    if (value === 18) setStartingHole(1);
   };
 
   const setPlayer = (i: number, patch: Partial<PlayerRow>) =>
@@ -221,13 +238,49 @@ export default function NewMatchForm({
               name="holes"
               className="input"
               value={holes}
-              onChange={(e) => setHoles(Number(e.target.value) as 9 | 18)}
+              onChange={(e) => onHolesChange(Number(e.target.value) as 9 | 18)}
             >
               <option value="18">18</option>
               <option value="9">9</option>
             </select>
           </div>
         </div>
+        {holes === 9 && (
+          <div>
+            <label className="label">Which nine</label>
+            <input
+              type="hidden"
+              name="startingHole"
+              value={startingHole}
+            />
+            <div className="grid grid-cols-2 gap-2">
+              {([1, 10] as const).map((n) => {
+                const active = startingHole === n;
+                return (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setStartingHole(n)}
+                    className={
+                      "flex flex-col items-center justify-center gap-0.5 rounded-md border px-2 py-2 transition min-h-[3.25rem] " +
+                      (active
+                        ? "border-accent bg-accent/10 text-ink"
+                        : "border-border text-mute hover:text-ink")
+                    }
+                    aria-pressed={active}
+                  >
+                    <span className="text-sm font-medium leading-none">
+                      {n === 1 ? "Front 9" : "Back 9"}
+                    </span>
+                    <span className="text-[10px] leading-none opacity-70">
+                      {n === 1 ? "Holes 1-9" : "Holes 10-18"}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
         <div>
           <label className="label">Scoring</label>
           <input type="hidden" name="scoringMode" value={scoringMode} />

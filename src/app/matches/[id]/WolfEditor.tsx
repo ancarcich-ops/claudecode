@@ -23,7 +23,8 @@ const PRE_LONE = "__PRE_LONE__";
 function wolfForHole(
   players: Player[],
   hole: number,
-  rotation?: string[],
+  rotation: string[] | undefined,
+  startingHole: number,
 ): Player {
   let ordered: Player[] = [];
   if (rotation && rotation.length > 0) {
@@ -36,12 +37,13 @@ function wolfForHole(
   if (ordered.length === 0) {
     ordered = [...players].sort((a, b) => a.seat - b.seat);
   }
-  return ordered[(hole - 1) % ordered.length];
+  return ordered[(hole - startingHole) % ordered.length];
 }
 
 export default function WolfEditor({
   sideGameId,
   holes,
+  startingHole = 1,
   players,
   byHole,
   rotation,
@@ -49,6 +51,7 @@ export default function WolfEditor({
 }: {
   sideGameId: string;
   holes: number;
+  startingHole?: number;
   players: Player[];
   byHole: Record<number, WolfHoleState>;
   // Optional custom rotation (matchPlayerId list). Empty array = use seat
@@ -160,8 +163,8 @@ export default function WolfEditor({
           </tr>
         </thead>
         <tbody>
-          {Array.from({ length: holes }, (_, i) => i + 1).map((h) => {
-            const wolf = wolfForHole(players, h, rotation);
+          {Array.from({ length: holes }, (_, i) => startingHole + i).map((h) => {
+            const wolf = wolfForHole(players, h, rotation, startingHole);
             const state = byHole[h];
             const partnerValue = state?.isPreLoneWolf
               ? PRE_LONE

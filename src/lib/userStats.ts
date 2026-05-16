@@ -116,6 +116,7 @@ export async function computeUserStats(userId: string): Promise<UserStats | null
     if (match.players.length === 0) continue;
     const pars = parseParData(match.parData, match.holes);
     const scoringMode = match.scoringMode as "NET" | "GROSS" | "CUSTOM";
+    const startingHole = match.startingHole ?? 1;
 
     const me = match.players.find((p) => p.userId === userId);
     if (!me) continue;
@@ -125,7 +126,7 @@ export async function computeUserStats(userId: string): Promise<UserStats | null
 
       // Per-hole bucketed performance.
       for (const s of me.scores) {
-        const par = pars[s.hole - 1] ?? 4;
+        const par = pars[s.hole - startingHole] ?? 4;
         const bucket =
           par === 3 ? stats.par3 : par === 5 || par > 5 ? stats.par5 : stats.par4;
         bucket.holesPlayed++;
@@ -203,10 +204,22 @@ export async function computeUserStats(userId: string): Promise<UserStats | null
       const leaderIds = (lb: { rows: { playerId: string; isLeader: boolean }[] }) =>
         new Set(lb.rows.filter((r) => r.isLeader).map((r) => r.playerId));
       if (sg.kind === "STABLEFORD") {
-        const lb = computeStableford(sgPlayers, pars, match.holes, scoringMode);
+        const lb = computeStableford(
+          sgPlayers,
+          pars,
+          match.holes,
+          scoringMode,
+          startingHole,
+        );
         if (wins(leaderIds(lb))) stats.stablefordWins++;
       } else if (sg.kind === "SKINS") {
-        const lb = computeSkins(sgPlayers, pars, match.holes, scoringMode);
+        const lb = computeSkins(
+          sgPlayers,
+          pars,
+          match.holes,
+          scoringMode,
+          startingHole,
+        );
         if (wins(leaderIds(lb))) stats.skinsWins++;
       } else if (sg.kind === "NASSAU" && match.holes === 18) {
         const segs = computeNassau(sgPlayers, pars, match.holes, scoringMode);
@@ -240,7 +253,13 @@ export async function computeUserStats(userId: string): Promise<UserStats | null
             matchPlayerId: e.matchPlayerId ?? null,
           }));
         const config = parseWolfConfig(sg.config);
-        const lb = computeWolf(seatedPlayers, match.holes, events, config);
+        const lb = computeWolf(
+          seatedPlayers,
+          match.holes,
+          events,
+          config,
+          startingHole,
+        );
         if (wins(leaderIds(lb))) stats.wolfWins++;
       }
     }

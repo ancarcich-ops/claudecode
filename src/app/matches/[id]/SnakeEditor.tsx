@@ -11,12 +11,14 @@ type ThreePuttsByHole = Record<number, Set<string>>;
 export default function SnakeEditor({
   sideGameId,
   holes,
+  startingHole = 1,
   players,
   threePuttsByHole,
   locked,
 }: {
   sideGameId: string;
   holes: number;
+  startingHole?: number;
   players: Player[];
   threePuttsByHole: ThreePuttsByHole;
   locked: boolean;
@@ -38,7 +40,7 @@ export default function SnakeEditor({
 
   return (
     <div className="space-y-1.5">
-      {Array.from({ length: holes }, (_, i) => i + 1).map((h) => {
+      {Array.from({ length: holes }, (_, i) => startingHole + i).map((h) => {
         const tagged = threePuttsByHole[h] ?? new Set<string>();
         return (
           <div

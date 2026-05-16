@@ -79,6 +79,11 @@ model Match {
   courseName   String
   scheduledAt  DateTime
   holes        Int         @default(18)
+  // First hole played. 1 for full rounds and front-9 rounds; 10 for back-9
+  // rounds. ScoreEntry.hole stores the absolute hole number, so a back-9
+  // match has scores on holes 10-18 (not 1-9). pars is still length=holes,
+  // indexed from this starting point.
+  startingHole Int         @default(1)
   status       String      @default("UPCOMING")
   // "NET" (handicap applied), "GROSS" (raw scores), or "CUSTOM" (group-decided strokes per player).
   // Stored on the player's `handicap` field regardless of mode; this flag decides whether the
