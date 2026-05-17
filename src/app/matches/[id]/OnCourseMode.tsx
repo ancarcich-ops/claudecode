@@ -442,66 +442,66 @@ export default function OnCourseMode({
   };
 
   return (
-    // z-50 so it covers the mobile bottom tab bar (z-40). overflow-y-auto
-    // so on short viewports (or when score buttons sit below the fold)
-    // the panel is reachable without fighting the parent page scroll.
-    <div className="fixed inset-0 z-50 bg-bg flex flex-col overflow-y-auto overscroll-contain">
-      {/* Top bar */}
-      <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border">
+    // overflow-hidden because the new layout fits in the viewport
+    // without scrolling -- map flexes to take all remaining space.
+    <div className="fixed inset-0 z-50 bg-bg flex flex-col overflow-hidden overscroll-contain">
+      {/* Top bar (compact) */}
+      <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border">
         <div className="min-w-0">
-          <div className="text-[10px] uppercase tracking-wider text-mute">
+          <div className="text-[9px] uppercase tracking-wider text-mute leading-tight">
             On course
           </div>
-          <div className="font-medium truncate">{courseName}</div>
+          <div className="font-medium truncate text-sm leading-tight">
+            {courseName}
+          </div>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           {wind && (
             <WindArrow fromDeg={wind.fromDeg} speedMph={wind.speedMph} />
           )}
           <button
             type="button"
             onClick={() => setActive(false)}
-            className="btn btn-ghost text-xs"
+            className="btn btn-ghost text-xs h-8"
           >
             Exit
           </button>
         </div>
       </div>
 
-      {/* Hole header + nav */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-border">
+      {/* Hole nav (compact, single row) */}
+      <div className="flex items-center justify-between px-4 py-1.5 border-b border-border">
         <button
           type="button"
           onClick={() => setHole(Math.max(firstHole, hole - 1))}
           disabled={hole === firstHole || pending}
-          className="btn btn-ghost h-9 w-9 px-0 disabled:opacity-30"
+          className="btn btn-ghost h-8 w-8 px-0 disabled:opacity-30"
           aria-label="Previous hole"
         >
           ←
         </button>
-        <div className="text-center">
-          <div className="font-display text-2xl font-semibold tracking-tight">
-            Hole {hole}
-          </div>
-          <div className="text-[11px] text-mute">Par {par}</div>
+        <div className="font-display text-base font-semibold tracking-tight">
+          Hole {hole}{" "}
+          <span className="text-mute font-normal text-sm">· Par {par}</span>
         </div>
         <button
           type="button"
           onClick={() => setHole(Math.min(lastHole, hole + 1))}
           disabled={hole === lastHole || pending}
-          className="btn btn-ghost h-9 w-9 px-0 disabled:opacity-30"
+          className="btn btn-ghost h-8 w-8 px-0 disabled:opacity-30"
           aria-label="Next hole"
         >
           →
         </button>
       </div>
 
-      {/* Distance hero */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center relative">
-        {/* Mini-map -- shows whatever points are known. Hidden when too
-            sparse (fewer than 2 points) to render meaningfully. */}
-        {playerPos && (greenSet || teeSet) && (
-          <div className="absolute top-3 right-3 w-28 h-28 sm:w-40 sm:h-40 rounded-md border border-border bg-panel2/60 overflow-hidden">
+      {/* Map hero -- fills all remaining vertical space above the
+          distance rail + score buttons. The map itself is the
+          rangefinder; yardages, aim controls, and mark-this-here
+          actions live as overlays. */}
+      <div className="flex-1 relative bg-panel2/40 min-h-0">
+        {playerPos && (greenSet || teeSet) ? (
+          <>
             <HoleMiniMap
               player={playerPos}
               tee={
@@ -534,178 +534,103 @@ export default function OnCourseMode({
               aim={aimPoint}
               onAim={(p) => setAimPoint(p)}
             />
+
+            {/* Top-right yardage card. Big center number, with front
+                / back sub-numbers underneath. Subtle scrim so the
+                numbers stay legible on bright fairway photos. */}
+            {greenSet && (
+              <div className="absolute top-2 right-2 rounded-lg bg-bg/70 backdrop-blur-md border border-border px-3 py-2 text-right shadow-lg pointer-events-none">
+                <div className="text-[9px] uppercase tracking-wider text-mute leading-none">
+                  To green
+                </div>
+                <div className="font-display text-4xl font-bold tabular-nums text-accent leading-none mt-1">
+                  {center != null ? Math.round(center) : "—"}
+                  <span className="text-base text-mute font-normal ml-0.5">
+                    y
+                  </span>
+                </div>
+                <div className="flex items-baseline justify-end gap-2 font-mono tabular-nums text-[10px] text-mute mt-1.5">
+                  <span>
+                    F{" "}
+                    <span className="text-ink">
+                      {front != null ? Math.round(front) : "—"}
+                    </span>
+                  </span>
+                  <span>
+                    B{" "}
+                    <span className="text-ink">
+                      {back != null ? Math.round(back) : "—"}
+                    </span>
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Top-left aim card (only when an aim point is set). */}
+            {aimPoint && (toAimYds != null || aimToGreenYds != null) && (
+              <div className="absolute top-2 left-2 rounded-lg bg-bg/70 backdrop-blur-md border border-border px-3 py-2 shadow-lg pointer-events-none max-w-[55%]">
+                <div className="text-[9px] uppercase tracking-wider text-mute leading-none">
+                  To aim
+                </div>
+                <div className="font-display text-2xl font-bold tabular-nums text-ink leading-none mt-1">
+                  {toAimYds != null ? Math.round(toAimYds) : "—"}
+                  <span className="text-xs text-mute font-normal ml-0.5">
+                    y
+                  </span>
+                </div>
+                {aimToGreenYds != null && (
+                  <div className="text-[10px] text-mute font-mono mt-1">
+                    +{" "}
+                    <span className="text-accent">
+                      {Math.round(aimToGreenYds)}y
+                    </span>{" "}
+                    to green
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Clear-aim chip (bottom-right) when an aim is set. */}
             {aimPoint && (
               <button
                 type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setAimPoint(null);
-                }}
+                onClick={() => setAimPoint(null)}
                 aria-label="Clear aim point"
-                title="Clear aim"
-                className="absolute top-1 right-1 text-[10px] uppercase tracking-wider text-mute hover:text-ink bg-panel/80 backdrop-blur rounded-md px-1.5 py-0.5"
+                className="absolute bottom-2 right-2 text-[10px] uppercase tracking-wider text-ink bg-bg/70 backdrop-blur-md border border-border rounded-md px-2 py-1 shadow-lg"
               >
-                Clear
+                Clear aim
               </button>
             )}
-          </div>
-        )}
-        {/* Aim distances surface beside the distance hero. Always
-            beneath the map (top-left when map is on the right) so
-            users see them while they're picking the aim point. */}
-        {aimPoint && (toAimYds != null || aimToGreenYds != null) && (
-          <div className="absolute top-3 left-3 rounded-md border border-border bg-panel2/80 backdrop-blur px-2 py-1.5 max-w-[55%]">
-            <div className="text-[9px] uppercase tracking-wider text-mute leading-none mb-1">
-              To aim
-            </div>
-            <div className="flex items-baseline gap-2 font-mono tabular-nums">
-              {toAimYds != null && (
-                <span className="text-lg text-ink">
-                  {Math.round(toAimYds)}
-                  <span className="text-mute text-[10px]">y</span>
-                </span>
-              )}
-              {aimToGreenYds != null && (
-                <span className="text-[11px] text-mute">
-                  + <span className="text-accent">{Math.round(aimToGreenYds)}y</span> to green
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-        <AnimatePresence mode="popLayout">
-          {gpsError ? (
-            <motion.div
-              key="err"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              className="text-mute text-sm max-w-xs"
-            >
-              {gpsError}
-            </motion.div>
-          ) : !pos ? (
-            <motion.div
-              key="loading"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="text-mute text-sm"
-            >
-              Locking on…
-            </motion.div>
-          ) : !greenSet ? (
-            <motion.div
-              key="unmapped"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              className="space-y-4"
-            >
-              <div className="text-mute text-sm max-w-xs">
-                This hole isn&apos;t mapped yet. Drop a pin from the tee or
-                green and it&apos;ll be saved for everyone after you.
-              </div>
-              <div className="flex items-center justify-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => markGreen("center")}
-                  disabled={pending}
-                  className="btn btn-primary"
-                >
-                  Mark green here
-                </button>
-                {!teeSet && (
-                  <button
-                    type="button"
-                    onClick={markTee}
-                    disabled={pending}
-                    className="btn btn-ghost"
-                  >
-                    Mark tee here
-                  </button>
-                )}
-              </div>
-              {accuracyYd != null && (
-                <div className="text-[10px] text-mute">
-                  GPS accuracy ± {accuracyYd}y
-                </div>
-              )}
-            </motion.div>
-          ) : (
-            <motion.div
-              key={`d-${center}`}
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.04 }}
-              transition={{ type: "spring", stiffness: 320, damping: 26 }}
-              className="space-y-3"
-            >
-              <div className="text-[10px] uppercase tracking-wider text-mute">
-                To green
-              </div>
-              <div className="flex items-baseline justify-center gap-4 sm:gap-6">
-                <div className="text-center">
-                  <div className="text-[10px] uppercase tracking-wider text-mute">
-                    Front
-                  </div>
-                  <div className="font-display text-3xl sm:text-4xl font-semibold tabular-nums text-ink">
-                    {front != null ? Math.round(front) : "—"}
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-[10px] uppercase tracking-wider text-accent">
-                    Center
-                  </div>
-                  <div className="font-display text-6xl sm:text-7xl font-bold tabular-nums text-accent">
-                    {center != null ? Math.round(center) : "—"}
-                    <span className="text-2xl text-mute font-normal ml-1">y</span>
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-[10px] uppercase tracking-wider text-mute">
-                    Back
-                  </div>
-                  <div className="font-display text-3xl sm:text-4xl font-semibold tabular-nums text-ink">
-                    {back != null ? Math.round(back) : "—"}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center justify-center gap-2 text-[10px] text-mute">
-                {(!frontMarked || !backMarked) && (
-                  <>
-                    <span>
-                      {!frontMarked && !backMarked
-                        ? "Front / back estimated"
-                        : !frontMarked
-                          ? "Front estimated"
-                          : "Back estimated"}
-                    </span>
-                    <span aria-hidden>·</span>
-                  </>
-                )}
-                {accuracyYd != null && <span>± {accuracyYd}y GPS</span>}
+
+            {/* Bottom-left: mark-more affordances + GPS chip. Stays
+                compact; only shows the buttons that are still
+                actionable for this hole. */}
+            <div className="absolute bottom-2 left-2 flex items-center gap-1.5 pointer-events-none">
+              <div className="rounded-md bg-bg/70 backdrop-blur-md border border-border px-2 py-1 text-[10px] text-mute font-mono pointer-events-none">
+                ± {accuracyYd ?? "?"}y
               </div>
               {(!frontMarked || !backMarked || !teeSet) && (
-                <div className="flex items-center justify-center gap-2 pt-1 flex-wrap">
-                  {!frontMarked && (
+                <div className="flex items-center gap-1 pointer-events-auto">
+                  {!frontMarked && greenSet && (
                     <button
                       type="button"
                       onClick={() => markGreen("front")}
                       disabled={pending}
-                      className="btn btn-ghost text-[11px]"
+                      className="btn btn-ghost text-[10px] h-7 px-2 bg-bg/70 backdrop-blur-md border border-border"
+                      title="Mark front of green here"
                     >
-                      Mark front here
+                      + F
                     </button>
                   )}
-                  {!backMarked && (
+                  {!backMarked && greenSet && (
                     <button
                       type="button"
                       onClick={() => markGreen("back")}
                       disabled={pending}
-                      className="btn btn-ghost text-[11px]"
+                      className="btn btn-ghost text-[10px] h-7 px-2 bg-bg/70 backdrop-blur-md border border-border"
+                      title="Mark back of green here"
                     >
-                      Mark back here
+                      + B
                     </button>
                   )}
                   {!teeSet && (
@@ -713,16 +638,84 @@ export default function OnCourseMode({
                       type="button"
                       onClick={markTee}
                       disabled={pending}
-                      className="btn btn-ghost text-[11px]"
+                      className="btn btn-ghost text-[10px] h-7 px-2 bg-bg/70 backdrop-blur-md border border-border"
+                      title="Mark tee here"
                     >
-                      Mark tee here
+                      + Tee
                     </button>
                   )}
                 </div>
               )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
+          </>
+        ) : (
+          // Either no GPS lock yet or the hole has zero geometry.
+          // Centered prompt on the empty hero panel.
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
+            <AnimatePresence mode="popLayout">
+              {gpsError ? (
+                <motion.div
+                  key="err"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  className="text-mute text-sm max-w-xs"
+                >
+                  {gpsError}
+                </motion.div>
+              ) : !pos ? (
+                <motion.div
+                  key="loading"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="text-mute text-sm"
+                >
+                  Locking on…
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="unmapped"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  className="space-y-4"
+                >
+                  <div className="text-mute text-sm max-w-xs">
+                    This hole isn&apos;t mapped yet. Drop a pin from the
+                    tee or green and it&apos;ll be saved for everyone
+                    after you.
+                  </div>
+                  <div className="flex items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => markGreen("center")}
+                      disabled={pending}
+                      className="btn btn-primary"
+                    >
+                      Mark green here
+                    </button>
+                    {!teeSet && (
+                      <button
+                        type="button"
+                        onClick={markTee}
+                        disabled={pending}
+                        className="btn btn-ghost"
+                      >
+                        Mark tee here
+                      </button>
+                    )}
+                  </div>
+                  {accuracyYd != null && (
+                    <div className="text-[10px] text-mute">
+                      GPS accuracy ± {accuracyYd}y
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
       </div>
 
       {/* Distance rail -- Garmin-style scrollable list of every notable
@@ -731,8 +724,8 @@ export default function OnCourseMode({
           bottom. Color-coded by type; tap a green chip to mark, tap
           the X on a hazard to remove. */}
       {pos && (holeHazards.length > 0 || greenSet) && (
-        <div className="border-t border-border px-4 py-2">
-          <div className="flex items-center justify-between mb-1.5">
+        <div className="border-t border-border px-4 py-2 max-h-44 flex flex-col">
+          <div className="flex items-center justify-between mb-1.5 shrink-0">
             <div className="text-[10px] uppercase tracking-wider text-mute">
               Distances
             </div>
@@ -754,7 +747,7 @@ export default function OnCourseMode({
               />
             </div>
           </div>
-          <ul className="space-y-0.5">
+          <ul className="space-y-0.5 overflow-y-auto overscroll-contain">
             {(() => {
               type Row = {
                 key: string;
