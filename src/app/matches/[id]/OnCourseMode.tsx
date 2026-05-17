@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import {
   deriveGreenDistances,
   distanceToLayup,
@@ -212,6 +213,71 @@ export default function OnCourseMode({
   const [pos, setPos] = useState<GeolocationPosition | null>(null);
   const [gpsError, setGpsError] = useState<string | null>(null);
   const watchId = useRef<number | null>(null);
+  // Tap-to-aim point per active hole. Reset whenever the user nav's
+  // between holes so the aim doesn't carry over.
+  const [aimPoint, setAimPoint] = useState<{ lat: number; lng: number } | null>(
+    null,
+  );
+  useEffect(() => {
+    setAimPoint(null);
+  }, [hole]);
+
+  // Auto-advance: if the player walks toward the next hole's tee
+  // (significantly closer than the current hole's green AND inside a
+  // ~70 yard ring of that tee), assume they finished + walked to the
+  // next box and flip the active hole. The user gets a toast with an
+  // Undo so a bad GPS read doesn't strand them mid-hole.
+  //
+  // Throttled to fire at most once per hole transition by gating on
+  // the autoAdvancedRef snapshot.
+  const autoAdvancedRef = useRef<number | null>(null);
+  useEffect(() => {
+    autoAdvancedRef.current = null;
+  }, [hole]);
+
+  // Watcher: every GPS tick, compare the player's distance to the
+  // current hole's green vs the next hole's tee. If they've drifted
+  // well inside the next tee box (and notably further from this
+  // green), assume they've walked off to the next hole and flip the
+  // active hole. Gated by autoAdvancedRef so we don't bounce.
+  useEffect(() => {
+    if (!pos) return;
+    if (hole >= lastHole) return;
+    const nextHole = hole + 1;
+    if (autoAdvancedRef.current === nextHole) return;
+    const curGeo = holeGeoByHole[hole];
+    const nextGeo = holeGeoByHole[nextHole];
+    if (!nextGeo || nextGeo.teeLat == null || nextGeo.teeLng == null) return;
+    const playerLatLng = {
+      lat: pos.coords.latitude,
+      lng: pos.coords.longitude,
+    };
+    const nextTee = { lat: nextGeo.teeLat, lng: nextGeo.teeLng };
+    const dToNextTee = distanceYards(playerLatLng, nextTee);
+    // If we don't know the current green, allow advance solely on
+    // being inside the next tee ring. If we do know the green,
+    // require the next tee be meaningfully closer than the green.
+    const curGreen =
+      curGeo && curGeo.greenLat != null && curGeo.greenLng != null
+        ? { lat: curGeo.greenLat, lng: curGeo.greenLng }
+        : null;
+    const dToCurGreen = curGreen ? distanceYards(playerLatLng, curGreen) : null;
+    const tightRing = dToNextTee < 40; // basically on the next tee
+    const wideRing =
+      dToNextTee < 100 &&
+      dToCurGreen != null &&
+      dToNextTee < dToCurGreen * 0.6;
+    if (!tightRing && !wideRing) return;
+    autoAdvancedRef.current = nextHole;
+    const prevHole = hole;
+    setHole(nextHole);
+    toast.success(`Moved to hole ${nextHole}`, {
+      action: {
+        label: "Undo",
+        onClick: () => setHole(prevHole),
+      },
+    });
+  }, [pos, hole, lastHole, holeGeoByHole]);
 
   // Start / stop the GPS watcher.
   useEffect(() => {
@@ -267,6 +333,19 @@ export default function OnCourseMode({
     ? { lat: pos.coords.latitude, lng: pos.coords.longitude }
     : null;
   const { front, center, back } = deriveGreenDistances(playerPos, geo ?? null);
+  // Aim-point distances: player -> aim and aim -> green center. Both
+  // hidden until the user has dropped an aim AND we know where the
+  // green is.
+  const greenCenterLatLng =
+    geo?.greenLat != null && geo?.greenLng != null
+      ? { lat: geo.greenLat, lng: geo.greenLng }
+      : null;
+  const toAimYds =
+    playerPos && aimPoint ? distanceYards(playerPos, aimPoint) : null;
+  const aimToGreenYds =
+    aimPoint && greenCenterLatLng
+      ? distanceYards(aimPoint, greenCenterLatLng)
+      : null;
   const accuracyYd =
     pos != null ? Math.round(pos.coords.accuracy * 1.0936133) : null;
   // Whether the user has actually marked front/back vs them being
@@ -452,7 +531,46 @@ export default function OnCourseMode({
                 lat: h.lat,
                 lng: h.lng,
               }))}
+              aim={aimPoint}
+              onAim={(p) => setAimPoint(p)}
             />
+            {aimPoint && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setAimPoint(null);
+                }}
+                aria-label="Clear aim point"
+                title="Clear aim"
+                className="absolute top-1 right-1 text-[10px] uppercase tracking-wider text-mute hover:text-ink bg-panel/80 backdrop-blur rounded-md px-1.5 py-0.5"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        )}
+        {/* Aim distances surface beside the distance hero. Always
+            beneath the map (top-left when map is on the right) so
+            users see them while they're picking the aim point. */}
+        {aimPoint && (toAimYds != null || aimToGreenYds != null) && (
+          <div className="absolute top-3 left-3 rounded-md border border-border bg-panel2/80 backdrop-blur px-2 py-1.5 max-w-[55%]">
+            <div className="text-[9px] uppercase tracking-wider text-mute leading-none mb-1">
+              To aim
+            </div>
+            <div className="flex items-baseline gap-2 font-mono tabular-nums">
+              {toAimYds != null && (
+                <span className="text-lg text-ink">
+                  {Math.round(toAimYds)}
+                  <span className="text-mute text-[10px]">y</span>
+                </span>
+              )}
+              {aimToGreenYds != null && (
+                <span className="text-[11px] text-mute">
+                  + <span className="text-accent">{Math.round(aimToGreenYds)}y</span> to green
+                </span>
+              )}
+            </div>
           </div>
         )}
         <AnimatePresence mode="popLayout">

@@ -32,6 +32,8 @@ export default function HoleMiniMap({
   greenBack,
   greenPolygon,
   hazards,
+  aim,
+  onAim,
 }: {
   player: Pt | null;
   tee: Pt | null;
@@ -40,6 +42,12 @@ export default function HoleMiniMap({
   greenBack: Pt | null;
   greenPolygon: Pt[] | null;
   hazards: Hazard[];
+  // Optional "aim point" the user has dropped on the fairway. When
+  // provided the map draws a target marker + a player->aim->green
+  // play line, and tapping the SVG fires onAim with the inverse-
+  // projected lat/lng so the caller can recompute distances.
+  aim?: Pt | null;
+  onAim?: (latLng: Pt | null) => void;
 }) {
   // Collect every point we have so we can auto-fit the viewbox.
   const points: { pt: Pt; tag: string }[] = [];
@@ -52,6 +60,7 @@ export default function HoleMiniMap({
   if (greenPolygon) {
     greenPolygon.forEach((p, i) => points.push({ pt: p, tag: `gp-${i}` }));
   }
+  if (aim) points.push({ pt: aim, tag: "aim" });
   if (points.length < 2) return null;
 
   // Equirectangular projection centered on the first point. Meters out.
@@ -112,6 +121,35 @@ export default function HoleMiniMap({
   const pGC = at("greenC");
   const pGF = at("greenF");
   const pGB = at("greenB");
+  const pAim = at("aim");
+
+  // Reverse projection: take a tap in SVG viewBox coords -> meters in
+  // the rotated frame -> meters in the un-rotated frame -> lat/lng.
+  // Caller uses this to set the aim point from a click on the map.
+  const unproject = (cx: number, cy: number): Pt => {
+    const xMetersRotated = (cx - PAD) / scale + minX;
+    const yMetersRotated = (cy - PAD) / scale + minY;
+    // Reverse the earlier `cos(-rot), sin(-rot)` rotation by applying
+    // the inverse (cos(rot), sin(rot)).
+    const cosR = Math.cos(rot);
+    const sinR = Math.sin(rot);
+    const xMeters = xMetersRotated * cosR - yMetersRotated * sinR;
+    const yMeters = xMetersRotated * sinR + yMetersRotated * cosR;
+    // Undo equirectangular: x = (lng-ref.lng)*R*cosLat, y = -(lat-ref.lat)*R
+    const lat = ref.lat - (yMeters / R) * (180 / Math.PI);
+    const lng = ref.lng + (xMeters / (R * cosLat)) * (180 / Math.PI);
+    return { lat, lng };
+  };
+
+  const handleSvgClick = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (!onAim) return;
+    const svg = e.currentTarget;
+    const rect = svg.getBoundingClientRect();
+    // Convert click pixel -> viewBox coords (V x V).
+    const cx = ((e.clientX - rect.left) / rect.width) * V;
+    const cy = ((e.clientY - rect.top) / rect.height) * V;
+    onAim(unproject(cx, cy));
+  };
 
   // Fairway corridor: a thick translucent line from tee to green.
   // Width scales with hole length so 600y par-5s and 130y par-3s read
@@ -127,9 +165,10 @@ export default function HoleMiniMap({
   return (
     <svg
       viewBox={`0 0 ${V} ${V}`}
-      className="w-full h-full"
+      className={"w-full h-full " + (onAim ? "cursor-crosshair" : "")}
       role="img"
       aria-label="Hole map"
+      onClick={onAim ? handleSvgClick : undefined}
     >
       <defs>
         <linearGradient id="fairway-grad" x1="0" x2="0" y1="0" y2="1">
@@ -151,8 +190,33 @@ export default function HoleMiniMap({
         />
       )}
 
-      {/* Player -> green dashed line */}
-      {pPlayer && pGC && (
+      {/* Play line: when there's an aim point we draw player -> aim
+          (solid accent) + aim -> green (dashed); otherwise the original
+          single dashed player -> green. */}
+      {pPlayer && pAim && (
+        <line
+          x1={pPlayer.cx}
+          y1={pPlayer.cy}
+          x2={pAim.cx}
+          y2={pAim.cy}
+          stroke="#34d399"
+          strokeOpacity="0.85"
+          strokeWidth="1.5"
+        />
+      )}
+      {pAim && pGC && (
+        <line
+          x1={pAim.cx}
+          y1={pAim.cy}
+          x2={pGC.cx}
+          y2={pGC.cy}
+          stroke="#34d399"
+          strokeOpacity="0.5"
+          strokeWidth="1.25"
+          strokeDasharray="3 3"
+        />
+      )}
+      {pPlayer && pGC && !pAim && (
         <line
           x1={pPlayer.cx}
           y1={pPlayer.cy}
@@ -258,6 +322,45 @@ export default function HoleMiniMap({
             strokeWidth="1"
           />
         </>
+      )}
+
+      {/* Aim target marker (always topmost). Concentric circle + small
+          crosshair so it reads as a "drop pin" affordance. */}
+      {pAim && (
+        <g style={{ pointerEvents: "none" }}>
+          <circle
+            cx={pAim.cx}
+            cy={pAim.cy}
+            r="6"
+            fill="none"
+            stroke="#e8f0ea"
+            strokeWidth="1.25"
+          />
+          <circle
+            cx={pAim.cx}
+            cy={pAim.cy}
+            r="2.4"
+            fill="#e8f0ea"
+            stroke="#0b0f0c"
+            strokeWidth="0.8"
+          />
+          <line
+            x1={pAim.cx - 8}
+            y1={pAim.cy}
+            x2={pAim.cx - 4}
+            y2={pAim.cy}
+            stroke="#e8f0ea"
+            strokeWidth="0.8"
+          />
+          <line
+            x1={pAim.cx + 4}
+            y1={pAim.cy}
+            x2={pAim.cx + 8}
+            y2={pAim.cy}
+            stroke="#e8f0ea"
+            strokeWidth="0.8"
+          />
+        </g>
       )}
     </svg>
   );
