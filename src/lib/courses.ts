@@ -6,7 +6,7 @@
 // hole in the "Course pars" editor on the match page.
 
 export type CourseAccess = "public" | "private" | "resort" | "municipal";
-export type CourseRegion = "LA" | "OC" | "IE";
+export type CourseRegion = "LA" | "OC" | "IE" | "BC";
 
 export type CoursePreset = {
   id: string;
@@ -595,6 +595,18 @@ export const COURSE_PRESETS: CoursePreset[] = [
     access: "public",
     holes: 18,
     pars: [5, 4, 4, 4, 3, 5, 4, 3, 4, 4, 5, 4, 3, 4, 5, 3, 4, 4],
+  },
+
+  // --- British Columbia ---
+  {
+    id: "bighorn-gc",
+    name: "Bighorn Golf Club",
+    city: "Kamloops, BC",
+    region: "BC",
+    access: "public",
+    holes: 18,
+    // From the official scorecard (golfbighorn.ca). Par 72.
+    pars: [5, 4, 4, 3, 4, 3, 4, 5, 4, 5, 4, 4, 4, 4, 3, 4, 3, 5],
   },
 ];
 
