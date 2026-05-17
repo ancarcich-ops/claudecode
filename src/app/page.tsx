@@ -70,6 +70,20 @@ export default async function HomePage() {
     6,
   );
 
+  // Pull the current viewer's existing wagers across every match in view
+  // in a single query so the QuickWagerButton can highlight the player
+  // they've already called as "Picked".
+  const allVisibleIds = [...live, ...upcoming, ...completed].map((m) => m.id);
+  const myPicks = user && allVisibleIds.length > 0
+    ? await prisma.wager.findMany({
+        where: { userId: user.id, matchId: { in: allVisibleIds } },
+        select: { matchId: true, pickedPlayerId: true },
+      })
+    : [];
+  const myPickByMatch = new Map(
+    myPicks.map((w) => [w.matchId, w.pickedPlayerId]),
+  );
+
   return (
     <div className="space-y-10">
       <AutoRefresh endpoint="/api/markets/state" />
@@ -103,7 +117,10 @@ export default async function HomePage() {
           <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {live.map((m) => (
               <StaggerItem key={m.id}>
-                <RenderedMatchCard match={m} />
+                <RenderedMatchCard
+                  match={m}
+                  myPickPlayerId={myPickByMatch.get(m.id) ?? null}
+                />
               </StaggerItem>
             ))}
           </StaggerGroup>
@@ -132,7 +149,7 @@ export default async function HomePage() {
         ) : upcoming.length === 0 ? (
           <EmptyCard>Nothing on the tee. Open the next line.</EmptyCard>
         ) : (
-          <MatchGridNew matches={upcoming} />
+          <MatchGridNew matches={upcoming} myPickByMatch={myPickByMatch} />
         )}
       </section>
 
@@ -141,7 +158,7 @@ export default async function HomePage() {
         {completed.length === 0 ? (
           <EmptyCard>No closed lines yet.</EmptyCard>
         ) : (
-          <MatchGridNew matches={completed} />
+          <MatchGridNew matches={completed} myPickByMatch={myPickByMatch} />
         )}
       </section>
     </div>
@@ -188,7 +205,7 @@ function EmptyCard({ children }: { children: React.ReactNode }) {
 
 // Shared bridge between the prisma row and the redesigned MatchCard.
 // Computes odds once and feeds the normalized data through.
-function buildCardData(m: GridMatch) {
+function buildCardData(m: GridMatch, myPickPlayerId: string | null) {
   const pars = parseParData(m.parData, m.holes);
   const scoringMode = m.scoringMode as "NET" | "GROSS" | "CUSTOM";
   const startingHole = m.startingHole ?? 1;
@@ -223,19 +240,35 @@ function buildCardData(m: GridMatch) {
       })),
     },
     odds.probabilities,
+    myPickPlayerId,
   );
 }
 
-function RenderedMatchCard({ match }: { match: GridMatch }) {
-  return <MatchCard data={buildCardData(match)} />;
+function RenderedMatchCard({
+  match,
+  myPickPlayerId,
+}: {
+  match: GridMatch;
+  myPickPlayerId: string | null;
+}) {
+  return <MatchCard data={buildCardData(match, myPickPlayerId)} />;
 }
 
-function MatchGridNew({ matches }: { matches: GridMatch[] }) {
+function MatchGridNew({
+  matches,
+  myPickByMatch,
+}: {
+  matches: GridMatch[];
+  myPickByMatch: Map<string, string>;
+}) {
   return (
     <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 gap-3">
       {matches.map((m) => (
         <StaggerItem key={m.id}>
-          <RenderedMatchCard match={m} />
+          <RenderedMatchCard
+            match={m}
+            myPickPlayerId={myPickByMatch.get(m.id) ?? null}
+          />
         </StaggerItem>
       ))}
     </StaggerGroup>

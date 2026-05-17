@@ -48,6 +48,7 @@ export default function MatchCard({ data }: { data: MatchCardData }) {
               key={p.id}
               player={p}
               totalHoles={data.totalHoles}
+              matchId={data.id}
             />
           ) : isSettled ? (
             <PlayerRowSettled
@@ -57,7 +58,7 @@ export default function MatchCard({ data }: { data: MatchCardData }) {
               isWinner={p.rank === 1}
             />
           ) : (
-            <PlayerRowUpcoming key={p.id} player={p} />
+            <PlayerRowUpcoming key={p.id} player={p} matchId={data.id} />
           ),
         )}
       </div>

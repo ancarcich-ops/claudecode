@@ -9,15 +9,18 @@ import { isVariant } from "@/components/Avatar";
 import ProbabilityTick, { useRowFlash } from "./ProbabilityTick";
 import HoleDotRow from "./HoleDotRow";
 import MomentumChip from "./MomentumChip";
+import QuickWagerButton from "./QuickWagerButton";
 import Sparkline from "./Sparkline";
 import type { PlayerCard } from "@/lib/matchCard";
 
 export default function PlayerRowLive({
   player,
   totalHoles,
+  matchId,
 }: {
   player: PlayerCard;
   totalHoles: number;
+  matchId: string;
 }) {
   const flashCls = useRowFlash(player.id, player.winProbability);
   const netLabel =
@@ -52,13 +55,19 @@ export default function PlayerRowLive({
           />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-sm font-medium text-ink truncate">
               {player.name}
             </span>
             <span className="font-mono text-[10px] text-mute shrink-0">
               hcp {player.handicap.toFixed(1).replace(/\.0$/, "")}
             </span>
+            <QuickWagerButton
+              matchId={matchId}
+              pickedPlayerId={player.id}
+              playerName={player.name}
+              isMyPick={player.isMyPick}
+            />
           </div>
         </div>
         <ProbabilityTick
