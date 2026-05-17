@@ -178,7 +178,10 @@ export async function createMatchAction(formData: FormData) {
     }))
     .filter((p) => p.displayName.length > 0);
 
-  if (drafts.length < 2) throw new Error("Need at least two players");
+  // Solo rounds are allowed -- the user just won't get competitive
+  // counters (win rate / streak / side-game wins are gated on 2+
+  // players elsewhere in the app).
+  if (drafts.length < 1) throw new Error("Need at least one player");
   if (drafts.some((p) => Number.isNaN(p.handicap)))
     throw new Error("Handicaps must be numbers");
 
