@@ -455,18 +455,36 @@ export default function NewMatchForm({
 
       {/* Step 2: Players */}
       <div hidden={step !== 1} className="card p-5">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-display text-base font-semibold text-ink">
-            Players
-          </h2>
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div>
+            <h2 className="font-display text-base font-semibold text-ink">
+              Players
+            </h2>
+            <p className="text-[11px] text-mute mt-0.5">
+              {scoringMode === "CUSTOM"
+                ? "Set strokes given per player — group's call."
+                : scoringMode === "GROSS"
+                  ? "Lowest gross wins; handicap is informational."
+                  : "Lowest gross minus handicap wins."}
+            </p>
+          </div>
           <button
             type="button"
             onClick={addPlayer}
-            className="btn btn-ghost text-xs"
+            className="btn btn-ghost text-xs shrink-0"
             disabled={players.length >= 6}
           >
             + Add player
           </button>
+        </div>
+        <div className="flex items-baseline gap-2 mb-1.5 px-1">
+          <div className="flex-1" />
+          <div className="w-20 shrink-0 text-center">
+            <span className="text-[10px] uppercase tracking-wider text-mute font-mono whitespace-nowrap">
+              {scoringMode === "CUSTOM" ? "Strokes given" : "Handicap"}
+            </span>
+          </div>
+          <div className="w-8 shrink-0" />
         </div>
         <div className="space-y-2">
           {players.map((p, i) => (
@@ -482,12 +500,21 @@ export default function NewMatchForm({
               <input
                 name="playerHandicap"
                 type="number"
-                step="0.1"
+                step={scoringMode === "CUSTOM" ? "1" : "0.1"}
+                min={0}
                 value={p.handicap}
                 onChange={(e) => setPlayer(i, { handicap: e.target.value })}
                 placeholder={modeCopy.field}
-                title={modeCopy.field}
-                aria-label={modeCopy.field}
+                title={
+                  scoringMode === "CUSTOM"
+                    ? `Strokes given to ${p.name || `player ${i + 1}`}`
+                    : modeCopy.field
+                }
+                aria-label={
+                  scoringMode === "CUSTOM"
+                    ? `Strokes given to ${p.name || `player ${i + 1}`}`
+                    : modeCopy.field
+                }
                 className="input w-20 shrink-0 text-center px-2"
               />
               <button
