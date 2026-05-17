@@ -38,6 +38,7 @@ import MatchChartTabs, {
   type SideGameSeries,
 } from "./MatchChartTabs";
 import MatchActionsMenu, { type MatchAction } from "./MatchActionsMenu";
+import MatchTabs, { type MatchTab } from "./MatchTabs";
 import BBBEditor from "./BBBEditor";
 import SnakeEditor from "./SnakeEditor";
 import WolfEditor from "./WolfEditor";
@@ -384,117 +385,8 @@ export default async function MatchPage({
         )}
       </header>
 
-      <section className="card p-4">
-        <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
-          <h2 className="font-display text-base font-semibold text-ink">
-            Market
-          </h2>
-          <div className="text-[11px] sm:text-xs text-mute font-mono whitespace-nowrap">
-            model {(odds.weights.model * 100).toFixed(0)}% · crowd{" "}
-            {(odds.weights.crowd * 100).toFixed(0)}% · live{" "}
-            {(odds.weights.live * 100).toFixed(0)}%
-          </div>
-        </div>
-
-        <MatchChartTabs
-          oddsSeries={series}
-          players={playerMeta.map((p) => ({
-            id: p.id,
-            displayName: p.displayName,
-            color: p.color,
-          }))}
-          sideGames={sgSeries}
-        />
-
-        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {playerMeta.map((p) => (
-            <div key={p.id} className="border border-border rounded-md p-3">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span
-                    className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                    style={{ background: p.color }}
-                  />
-                  <span className="font-medium truncate">{p.displayName}</span>
-                  {isCreator ? (
-                    <HandicapInput
-                      action={updateHandicapAction}
-                      matchId={match.id}
-                      matchPlayerId={p.id}
-                      handicap={p.handicap}
-                    />
-                  ) : (
-                    <span className="chip">
-                      {strokeFieldLabel} {p.handicap}
-                    </span>
-                  )}
-                </div>
-                <div className="font-mono tabular-nums text-lg">
-                  {formatPct(p.probability)}
-                </div>
-              </div>
-              <div className="h-1.5 mt-2 bg-panel2 rounded-full overflow-hidden">
-                <div
-                  className="h-full"
-                  style={{
-                    width: `${p.probability * 100}%`,
-                    background: p.color,
-                  }}
-                />
-              </div>
-              <div className="mt-2 flex items-center justify-between text-xs text-mute">
-                <span>
-                  {p.wagerCount} wager{p.wagerCount === 1 ? "" : "s"}
-                </span>
-                {p.netScore !== null && (
-                  <span className="font-mono">
-                    {projLabel} {p.netScore.toFixed(1)}
-                  </span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="card p-4">
-        <h2 className="font-display text-base font-semibold text-ink mb-3">
-          Place your call
-        </h2>
-        {!user ? (
-          <div className="text-sm text-mute">
-            <a className="text-accent" href="/login">
-              Sign in
-            </a>{" "}
-            to place a call on this match.
-          </div>
-        ) : isCompleted ? (
-          <div className="text-sm text-mute">
-            Market closed. {myWager ? "Your final call is locked in." : ""}
-          </div>
-        ) : (
-          <WagerForm
-            action={placeWagerAction}
-            matchId={match.id}
-            players={playerMeta}
-            currentPickId={myWager?.pickedPlayerId ?? null}
-          />
-        )}
-        {match.wagers.length > 0 && (
-          <div className="mt-4 text-xs text-mute">
-            <span className="uppercase tracking-wider">Recent calls:</span>{" "}
-            {match.wagers
-              .slice(-8)
-              .reverse()
-              .map((w) => (
-                <span key={w.id} className="mr-2">
-                  @{w.user.username} → {w.pickedPlayer.displayName}
-                </span>
-              ))}
-          </div>
-        )}
-      </section>
-
+      {/* On-course launcher hoisted above the tabs as a primary CTA
+          during a live round so it never gets buried behind a tab. */}
       {canLogScores && (
         <section className="card p-4">
           <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
@@ -538,39 +430,358 @@ export default async function MatchPage({
         </section>
       )}
 
-      <section className="card p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-display text-base font-semibold text-ink">
-            Scorecard
-          </h2>
-          <span className="text-xs text-mute">
-            {odds.meta.holesPlayed}/{match.holes} holes logged
-          </span>
+      <MatchTabs
+        defaultTabId="scorecard"
+        tabs={buildMatchTabs({
+          match,
+          user,
+          isCreator,
+          isCompleted,
+          canLogScores,
+          matchStart,
+          pars,
+          playerMeta,
+          odds,
+          modeLabel: strokeFieldLabel,
+          projLabel,
+          series,
+          sgSeries,
+          sideGameSections,
+          sideGameLabel,
+          enabledKinds,
+          myWager,
+          bbbGame,
+          bbbEvents,
+          snakeGame,
+          snakeEvents,
+          wolfGame,
+          wolfEvents,
+          wolfConfig,
+          seatedWolfPlayers,
+          placeWagerAction,
+          updateHandicapAction,
+          updateParsAction,
+        })}
+      />
+    </div>
+  );
+}
+
+type CreatorActionFns = {
+  startMatchAction: (fd: FormData) => Promise<void>;
+  completeMatchAction: (fd: FormData) => Promise<void>;
+  reopenMatchAction: (fd: FormData) => Promise<void>;
+  deleteMatchAction: (fd: FormData) => Promise<void>;
+};
+
+function creatorActions(status: string, fns: CreatorActionFns): MatchAction[] {
+  const out: MatchAction[] = [];
+  if (status === "UPCOMING") {
+    out.push({ label: "Start match", action: fns.startMatchAction });
+  }
+  if (status === "IN_PROGRESS") {
+    out.push({ label: "Mark final", action: fns.completeMatchAction });
+  }
+  if (status !== "UPCOMING") {
+    out.push({ label: "Reopen", action: fns.reopenMatchAction });
+  }
+  out.push({
+    label: "Delete match",
+    action: fns.deleteMatchAction,
+    tone: "danger",
+  });
+  return out;
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const map: Record<string, string> = {
+    UPCOMING: "bg-panel2 text-mute border border-border",
+    IN_PROGRESS: "bg-accent/15 text-accent border border-accent/30",
+    COMPLETED: "bg-gold/10 text-gold border border-gold/30",
+  };
+  const label: Record<string, string> = {
+    UPCOMING: "Upcoming",
+    IN_PROGRESS: "Live",
+    COMPLETED: "Final",
+  };
+  return (
+    <span
+      className={`text-xs px-2.5 py-1 rounded-full whitespace-nowrap ${
+        map[status] ?? ""
+      }`}
+    >
+      {label[status] ?? status}
+    </span>
+  );
+}
+
+
+// Builds the tab list for the match detail page. Each tab's `content`
+// is JSX that gets mounted eagerly by MatchTabs (display:none on the
+// inactive ones) so tab switches stay instant and form state isn't
+// re-mounted on every click.
+//
+// The argument bag is verbose on purpose: the page is a server
+// component that already computes a lot of state, and threading those
+// pre-computed values in keeps this helper a pure function of the
+// match snapshot.
+type BuildMatchTabsArgs = {
+  match: {
+    id: string;
+    courseName: string;
+    holes: number;
+    players: Array<{ id: string; displayName: string; seat: number }>;
+    wagers: Array<{
+      id: string;
+      user: { username: string };
+      pickedPlayer: { displayName: string };
+    }>;
+  };
+  user: { id: string } | null;
+  isCreator: boolean;
+  isCompleted: boolean;
+  canLogScores: boolean;
+  matchStart: number;
+  pars: number[];
+  playerMeta: Array<{
+    id: string;
+    displayName: string;
+    color: string;
+    handicap: number;
+    wagerCount: number;
+    probability: number;
+    netScore: number | null;
+    scores: Array<{ hole: number; strokes: number }>;
+    seat: number;
+  }>;
+  odds: {
+    weights: { model: number; crowd: number; live: number };
+    meta: { holesPlayed: number; coursePar: number; totalWagers: number };
+  };
+  modeLabel: string;
+  projLabel: string;
+  series: ({ t: number } & Record<string, number>)[];
+  sgSeries: SideGameSeries;
+  sideGameSections: Array<{
+    kind: SideGameKind;
+    leaderboards: Array<{
+      key: string;
+      title: string;
+      subtitle?: string;
+      rows: Array<{
+        playerId: string;
+        player: string;
+        value: string;
+        isLeader: boolean;
+      }>;
+    }>;
+  }>;
+  sideGameLabel: Record<SideGameKind, string>;
+  enabledKinds: SideGameKind[];
+  myWager: { pickedPlayerId: string } | null;
+  bbbGame: { id: string } | null | undefined;
+  bbbEvents: BbbEvent[];
+  snakeGame: { id: string } | null | undefined;
+  snakeEvents: SnakeEvent[];
+  wolfGame: { id: string } | null | undefined;
+  wolfEvents: WolfEvent[];
+  wolfConfig: { rotation?: string[]; pushRule?: "NO_POINTS" | "ROLLOVER" };
+  seatedWolfPlayers: Array<{
+    id: string;
+    seat: number;
+    displayName: string;
+    handicap: number;
+    scoresByHole: Record<number, number>;
+  }>;
+  placeWagerAction: (fd: FormData) => Promise<void>;
+  updateHandicapAction: (fd: FormData) => Promise<void>;
+  updateParsAction: (fd: FormData) => Promise<void>;
+};
+
+function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
+  const {
+    match,
+    user,
+    isCreator,
+    isCompleted,
+    canLogScores,
+    matchStart,
+    pars,
+    playerMeta,
+    odds,
+    modeLabel,
+    projLabel,
+    series,
+    sgSeries,
+    sideGameSections,
+    sideGameLabel,
+    enabledKinds,
+    myWager,
+    bbbGame,
+    bbbEvents,
+    snakeGame,
+    snakeEvents,
+    wolfGame,
+    wolfEvents,
+    wolfConfig,
+    seatedWolfPlayers,
+    placeWagerAction,
+    updateHandicapAction,
+    updateParsAction,
+  } = a;
+
+  const scorecardContent = (
+    <section className="card p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="font-display text-base font-semibold text-ink">
+          Scorecard
+        </h2>
+        <span className="text-xs text-mute">
+          {odds.meta.holesPlayed}/{match.holes} holes logged
+        </span>
+      </div>
+      {!user ? (
+        <div className="text-sm text-mute">
+          Sign in to log scores during the round.
         </div>
+      ) : (
+        <>
+          {!canLogScores && !isCompleted && (
+            <div className="text-xs text-mute mb-3">
+              Read-only — only the creator and players in this match can log
+              scores.
+            </div>
+          )}
+          <ScoreSheet
+            matchId={match.id}
+            holes={match.holes}
+            startingHole={matchStart}
+            pars={pars}
+            players={playerMeta}
+            locked={!canLogScores}
+          />
+        </>
+      )}
+    </section>
+  );
+
+  const marketContent = (
+    <div className="space-y-6">
+      <section className="card p-4">
+        <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+          <h2 className="font-display text-base font-semibold text-ink">
+            Market
+          </h2>
+          <div className="text-[11px] sm:text-xs text-mute font-mono whitespace-nowrap">
+            model {(odds.weights.model * 100).toFixed(0)}% · crowd{" "}
+            {(odds.weights.crowd * 100).toFixed(0)}% · live{" "}
+            {(odds.weights.live * 100).toFixed(0)}%
+          </div>
+        </div>
+        <MatchChartTabs
+          oddsSeries={series}
+          players={playerMeta.map((p) => ({
+            id: p.id,
+            displayName: p.displayName,
+            color: p.color,
+          }))}
+          sideGames={sgSeries}
+        />
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {playerMeta.map((p) => (
+            <div key={p.id} className="border border-border rounded-md p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span
+                    className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                    style={{ background: p.color }}
+                  />
+                  <span className="font-medium truncate">{p.displayName}</span>
+                  {isCreator ? (
+                    <HandicapInput
+                      action={updateHandicapAction}
+                      matchId={match.id}
+                      matchPlayerId={p.id}
+                      handicap={p.handicap}
+                    />
+                  ) : (
+                    <span className="chip">
+                      {modeLabel} {p.handicap}
+                    </span>
+                  )}
+                </div>
+                <div className="font-mono tabular-nums text-lg">
+                  {formatPct(p.probability)}
+                </div>
+              </div>
+              <div className="h-1.5 mt-2 bg-panel2 rounded-full overflow-hidden">
+                <div
+                  className="h-full"
+                  style={{
+                    width: `${p.probability * 100}%`,
+                    background: p.color,
+                  }}
+                />
+              </div>
+              <div className="mt-2 flex items-center justify-between text-xs text-mute">
+                <span>
+                  {p.wagerCount} wager{p.wagerCount === 1 ? "" : "s"}
+                </span>
+                {p.netScore !== null && (
+                  <span className="font-mono">
+                    {projLabel} {p.netScore.toFixed(1)}
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+      <section className="card p-4">
+        <h2 className="font-display text-base font-semibold text-ink mb-3">
+          Place your call
+        </h2>
         {!user ? (
           <div className="text-sm text-mute">
-            Sign in to log scores during the round.
+            <a className="text-accent" href="/login">
+              Sign in
+            </a>{" "}
+            to place a call on this match.
+          </div>
+        ) : isCompleted ? (
+          <div className="text-sm text-mute">
+            Market closed. {myWager ? "Your final call is locked in." : ""}
           </div>
         ) : (
-          <>
-            {!canLogScores && !isCompleted && (
-              <div className="text-xs text-mute mb-3">
-                Read-only — only the creator and players in this match can log
-                scores.
-              </div>
-            )}
-            <ScoreSheet
-              matchId={match.id}
-              holes={match.holes}
-              startingHole={matchStart}
-              pars={pars}
-              players={playerMeta}
-              locked={!canLogScores}
-            />
-          </>
+          <WagerForm
+            action={placeWagerAction}
+            matchId={match.id}
+            players={playerMeta}
+            currentPickId={myWager?.pickedPlayerId ?? null}
+          />
+        )}
+        {match.wagers.length > 0 && (
+          <div className="mt-4 text-xs text-mute">
+            <span className="uppercase tracking-wider">Recent calls:</span>{" "}
+            {match.wagers
+              .slice(-8)
+              .reverse()
+              .map((w) => (
+                <span key={w.id} className="mr-2">
+                  @{w.user.username} → {w.pickedPlayer.displayName}
+                </span>
+              ))}
+          </div>
         )}
       </section>
+    </div>
+  );
 
+  const hasSideGames =
+    !!bbbGame || !!snakeGame || !!wolfGame || sideGameSections.length > 0;
+
+  const sideGamesContent = (
+    <div className="space-y-6">
       {bbbGame && user && (
         <section className="card p-4">
           <div className="flex items-center justify-between gap-2 mb-3">
@@ -636,30 +847,6 @@ export default async function MatchPage({
         </section>
       )}
 
-      {wolfGame && user && isCreator && (
-        <section className="card p-4">
-          <div className="flex items-center justify-between gap-2 mb-3">
-            <h2 className="font-display text-base font-semibold text-ink">
-              Wolf · settings
-            </h2>
-            <span className="text-[11px] text-mute">
-              Creator only
-            </span>
-          </div>
-          <WolfSettings
-            sideGameId={wolfGame.id}
-            players={match.players.map((p) => ({
-              id: p.id,
-              displayName: p.displayName,
-              seat: p.seat,
-            }))}
-            rotation={wolfConfig.rotation ?? []}
-            pushRule={wolfConfig.pushRule ?? "NO_POINTS"}
-            locked={isCompleted}
-          />
-        </section>
-      )}
-
       {wolfGame && user && (
         <section className="card p-4">
           <div className="flex items-center justify-between gap-2 mb-3">
@@ -683,8 +870,6 @@ export default async function MatchPage({
             }))}
             rotation={wolfConfig.rotation ?? []}
             byHole={(() => {
-              // shapeWolfHoles handles both manual events and the auto-derived
-              // winner (from logged scores) under one source of truth.
               const shaped = shapeWolfHoles(
                 seatedWolfPlayers,
                 match.holes,
@@ -771,7 +956,34 @@ export default async function MatchPage({
           </div>
         </section>
       )}
+    </div>
+  );
 
+  const settingsContent = (
+    <div className="space-y-6">
+      {wolfGame && user && isCreator && (
+        <section className="card p-4">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <h2 className="font-display text-base font-semibold text-ink">
+              Wolf · settings
+            </h2>
+            <span className="text-[11px] text-mute">
+              Creator only
+            </span>
+          </div>
+          <WolfSettings
+            sideGameId={wolfGame.id}
+            players={match.players.map((p) => ({
+              id: p.id,
+              displayName: p.displayName,
+              seat: p.seat,
+            }))}
+            rotation={wolfConfig.rotation ?? []}
+            pushRule={wolfConfig.pushRule ?? "NO_POINTS"}
+            locked={isCompleted}
+          />
+        </section>
+      )}
       {isCreator && (
         <section className="card p-4">
           <ParsEditor
@@ -785,53 +997,35 @@ export default async function MatchPage({
       )}
     </div>
   );
-}
 
-type CreatorActionFns = {
-  startMatchAction: (fd: FormData) => Promise<void>;
-  completeMatchAction: (fd: FormData) => Promise<void>;
-  reopenMatchAction: (fd: FormData) => Promise<void>;
-  deleteMatchAction: (fd: FormData) => Promise<void>;
-};
-
-function creatorActions(status: string, fns: CreatorActionFns): MatchAction[] {
-  const out: MatchAction[] = [];
-  if (status === "UPCOMING") {
-    out.push({ label: "Start match", action: fns.startMatchAction });
+  const tabs: MatchTab[] = [
+    {
+      id: "scorecard",
+      label: "Scorecard",
+      badge: `${odds.meta.holesPlayed}/${match.holes}`,
+      content: scorecardContent,
+    },
+    {
+      id: "market",
+      label: "Market",
+      badge: odds.meta.totalWagers > 0 ? odds.meta.totalWagers : null,
+      content: marketContent,
+    },
+  ];
+  if (hasSideGames) {
+    tabs.push({
+      id: "side-games",
+      label: "Side games",
+      badge: enabledKinds.length || null,
+      content: sideGamesContent,
+    });
   }
-  if (status === "IN_PROGRESS") {
-    out.push({ label: "Mark final", action: fns.completeMatchAction });
+  if (isCreator) {
+    tabs.push({
+      id: "settings",
+      label: "Settings",
+      content: settingsContent,
+    });
   }
-  if (status !== "UPCOMING") {
-    out.push({ label: "Reopen", action: fns.reopenMatchAction });
-  }
-  out.push({
-    label: "Delete match",
-    action: fns.deleteMatchAction,
-    tone: "danger",
-  });
-  return out;
+  return tabs;
 }
-
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    UPCOMING: "bg-panel2 text-mute border border-border",
-    IN_PROGRESS: "bg-accent/15 text-accent border border-accent/30",
-    COMPLETED: "bg-gold/10 text-gold border border-gold/30",
-  };
-  const label: Record<string, string> = {
-    UPCOMING: "Upcoming",
-    IN_PROGRESS: "Live",
-    COMPLETED: "Final",
-  };
-  return (
-    <span
-      className={`text-xs px-2.5 py-1 rounded-full whitespace-nowrap ${
-        map[status] ?? ""
-      }`}
-    >
-      {label[status] ?? status}
-    </span>
-  );
-}
-
