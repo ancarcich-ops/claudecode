@@ -2,9 +2,10 @@
 // noteworthy in their recent holes. Priority + thresholds are defined
 // by momentumFor() in lib/matchCard.ts:
 //
-//   eagle (most recent hole was an eagle)  -> gold
-//   hot   (>=3 birdies in last 5)           -> accent, flame flicker
-//   cold  (>=+4 over par in last 3)         -> danger
+//   eagle  (most recent hole was an eagle)        -> gold
+//   hot    (>=3 birdies in the round so far)      -> accent, flame flicker
+//   birdie (most recent hole was a birdie)        -> accent
+//   cold   (>=+4 over par across the last 3)      -> danger
 //
 // One chip per player.
 
@@ -26,7 +27,17 @@ export default function MomentumChip({ m }: { m: Momentum }) {
       <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 border border-accent/30 px-2 py-0.5">
         <span aria-hidden className="flicker">🔥</span>
         <span className="font-mono text-[10px] uppercase tracking-wider text-accent">
-          {m.birdies} birdies · {m.lastN}
+          {m.birdies} birdies
+        </span>
+      </span>
+    );
+  }
+  if (m.kind === "birdie") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 border border-accent/30 px-2 py-0.5">
+        <span aria-hidden>🐥</span>
+        <span className="font-mono text-[10px] uppercase tracking-wider text-accent">
+          Birdie on {m.hole}
         </span>
       </span>
     );

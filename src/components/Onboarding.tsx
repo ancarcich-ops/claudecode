@@ -685,7 +685,7 @@ function CardGuideStep() {
             </span>
           }
           label="+ Call button"
-          body="Place your wager on a player from the home screen. Two taps to confirm — switches to a ✓ Picked badge after."
+          body="Choose who you think will win the match. Two taps to confirm — switches to a ✓ Picked badge after."
         />
 
         <Legend
@@ -698,7 +698,7 @@ function CardGuideStep() {
             </span>
           }
           label="Momentum badges"
-          body="🔥 hot = ≥3 birdies in last 5 holes. ❄️ cold = +4 over par across last 3. 🦅 = eagle on the most recent."
+          body="🔥 hot = ≥3 birdies in a round. ❄️ cold = +4 over par across last 3. 🦅 = eagle on the most recent. 🐥 = birdie on the most recent."
         />
 
         <Legend

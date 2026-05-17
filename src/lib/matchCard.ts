@@ -19,6 +19,7 @@ export type DotKind =
 
 export type Momentum =
   | { kind: "eagle"; hole: number }
+  | { kind: "birdie"; hole: number }
   | { kind: "hot"; birdies: number; lastN: number }
   | { kind: "cold"; over: number; lastN: number };
 
@@ -292,10 +293,11 @@ function buildTickerItems(
 }
 
 // Reads the per-hole diffs (in chronological play order) and decides
-// whether the player gets a momentum badge. Spec priority:
-//   eagle (most recent hole was an eagle)  >
-//   hot   (>=3 birdies in last 5 OR an eagle anywhere in last 5)  >
-//   cold  (cumulative >=+4 strokes over par in last 3)  >
+// whether the player gets a momentum badge. Priority:
+//   eagle  (most recent hole was an eagle)
+//   hot    (>=3 birdies in the round so far)
+//   birdie (most recent hole was a birdie -- when not also hot)
+//   cold   (cumulative >=+4 strokes over par across the last 3 holes)
 //   null
 // Only one badge per player. The chip uses the returned shape to pick
 // its label / icon / color.
@@ -307,13 +309,16 @@ function momentumFor(
   if (last.diff <= -2) {
     return { kind: "eagle", hole: last.hole };
   }
-  const last5 = diffs.slice(-5);
-  if (last5.some((d) => d.diff <= -2)) {
-    return { kind: "hot", birdies: last5.filter((d) => d.diff <= -1).length, lastN: last5.length };
+  const totalBirdiesOrBetter = diffs.filter((d) => d.diff <= -1).length;
+  if (totalBirdiesOrBetter >= 3) {
+    return {
+      kind: "hot",
+      birdies: totalBirdiesOrBetter,
+      lastN: diffs.length,
+    };
   }
-  const birdies = last5.filter((d) => d.diff === -1).length;
-  if (birdies >= 3) {
-    return { kind: "hot", birdies, lastN: last5.length };
+  if (last.diff === -1) {
+    return { kind: "birdie", hole: last.hole };
   }
   const last3 = diffs.slice(-3);
   if (last3.length === 3) {
