@@ -10,6 +10,7 @@ import {
   reopenMatchAction,
   startMatchAction,
   updateHandicapAction,
+  saveCourseParsAction,
   updateParsAction,
 } from "@/lib/actions";
 import { formatPct } from "@/lib/odds";
@@ -467,6 +468,7 @@ export default async function MatchPage({
           placeWagerAction,
           updateHandicapAction,
           updateParsAction,
+          saveCourseParsAction,
         })}
       />
     </div>
@@ -602,6 +604,7 @@ type BuildMatchTabsArgs = {
   placeWagerAction: (fd: FormData) => Promise<void>;
   updateHandicapAction: (fd: FormData) => Promise<void>;
   updateParsAction: (fd: FormData) => Promise<void>;
+  saveCourseParsAction: (fd: FormData) => Promise<void>;
 };
 
 function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
@@ -634,6 +637,7 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
     placeWagerAction,
     updateHandicapAction,
     updateParsAction,
+    saveCourseParsAction,
   } = a;
 
   // Defined before scorecardContent so the latter can append the
@@ -667,6 +671,7 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
         <section className="card p-4">
           <ParsEditor
             action={updateParsAction}
+            saveCourseAction={saveCourseParsAction}
             matchId={match.id}
             holes={match.holes}
             startingHole={matchStart}

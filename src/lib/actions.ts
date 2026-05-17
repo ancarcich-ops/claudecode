@@ -203,6 +203,32 @@ export async function createMatchAction(formData: FormData) {
       parData = null;
     }
   }
+  if (!parData) {
+    // Before falling back to the generic default layout, check if the
+    // course has a saved "master pars" snapshot (set via the per-match
+    // ParsEditor's "Save as course default" button). If the length
+    // matches the round's hole count, use it -- nice for casual users
+    // who have edited a course's pars once and don't want to do it
+    // again every time they post a round there.
+    const masterCourse = await prisma.course.findUnique({
+      where: { name: courseName },
+      select: { parData: true },
+    });
+    if (masterCourse?.parData) {
+      try {
+        const parsed = JSON.parse(masterCourse.parData);
+        if (
+          Array.isArray(parsed) &&
+          parsed.length === holes &&
+          parsed.every((p) => Number.isFinite(p) && p >= 3 && p <= 6)
+        ) {
+          parData = JSON.stringify(parsed.map((p) => Math.round(p)));
+        }
+      } catch {
+        // ignore -- generic fallback below will catch it
+      }
+    }
+  }
   if (!parData) parData = JSON.stringify(defaultPars(holes));
 
   // Side games: parallel checkboxes on the new-match form. Filter to the
@@ -437,6 +463,36 @@ export async function updateHandicapAction(formData: FormData) {
     data: { updatedAt: new Date() },
   });
   await recordOddsSnapshot(matchId);
+  revalidatePath(`/matches/${matchId}`);
+}
+
+// Save the current per-match pars as the master pars for the course
+// itself. Future matches on this course inherit them automatically
+// when no per-match override is sent. Creator-only so a random viewer
+// can't rewrite course defaults.
+export async function saveCourseParsAction(formData: FormData) {
+  const user = await requireUser();
+  const matchId = String(formData.get("matchId"));
+  const parsRaw = formData.getAll("par").map((v) => Number(v));
+  const match = await prisma.match.findUnique({
+    where: { id: matchId },
+    select: { createdById: true, courseName: true, holes: true },
+  });
+  if (!match) throw new Error("Match not found");
+  if (match.createdById !== user.id) throw new Error("Not your match");
+  if (parsRaw.length !== match.holes)
+    throw new Error(`Need ${match.holes} pars, got ${parsRaw.length}`);
+  if (parsRaw.some((p) => !Number.isFinite(p) || p < 3 || p > 6))
+    throw new Error("Pars must be 3, 4, 5, or 6");
+
+  await prisma.course.upsert({
+    where: { name: match.courseName },
+    create: {
+      name: match.courseName,
+      parData: JSON.stringify(parsRaw),
+    },
+    update: { parData: JSON.stringify(parsRaw) },
+  });
   revalidatePath(`/matches/${matchId}`);
 }
 
