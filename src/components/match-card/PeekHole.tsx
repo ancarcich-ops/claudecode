@@ -15,7 +15,7 @@ export default function PeekHole({
 }) {
   const labelColor = variant === "live" ? "text-accent" : "text-sky-400";
   const labelText = variant === "live" ? "Now teeing" : "Opens at";
-  const path = next.shapePath ?? "M 6 9 Q 35 4 60 9 T 94 9";
+  const path = next.shapePath ?? fallbackHolePath(next.number, next.par);
   // Place tee + pin at the start / end of the path so they line up with
   // whatever curve we drew. Approximate from the path; for the generic
   // fallback we hard-code; for real paths we just read first/last command.
@@ -94,4 +94,22 @@ function endpointsFromPath(path: string): {
     start: { x: nums[0], y: nums[1] },
     end: { x: nums[nums.length - 2], y: nums[nums.length - 1] },
   };
+}
+
+// Deterministic per-hole fallback curve. Picks one of a few canned
+// shapes from a small hash of (hole, par) so the same hole always
+// renders the same shape and consecutive holes look different.
+// Replaced as soon as the real OSM-derived path is available.
+function fallbackHolePath(hole: number, par: number): string {
+  const shapes = [
+    "M 6 9 Q 50 9 94 9",            // straight
+    "M 6 12 Q 40 4 94 8",           // gentle dogleg right
+    "M 6 6 Q 40 14 94 10",          // gentle dogleg left
+    "M 6 14 Q 30 14 60 4 T 94 6",   // sharp dogleg right
+    "M 6 4 Q 30 4 60 14 T 94 12",   // sharp dogleg left
+    "M 6 9 Q 30 3 50 9 T 94 10",    // S-shape
+    "M 6 9 Q 28 14 56 9 T 94 7",    // mild S
+    "M 6 8 Q 50 2 94 10",           // wide arc up
+  ];
+  return shapes[((hole * 31 + par * 7) % shapes.length + shapes.length) % shapes.length];
 }
