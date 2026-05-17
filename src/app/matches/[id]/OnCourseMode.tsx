@@ -498,9 +498,11 @@ export default function OnCourseMode({
       {/* Map hero -- fills all remaining vertical space above the
           distance rail + score buttons. The map itself is the
           rangefinder; yardages, aim controls, and mark-this-here
-          actions live as overlays. */}
+          actions live as overlays. We render the map whenever we
+          have a GPS lock (even on unmapped holes) so the user gets
+          satellite context for "where am I right now". */}
       <div className="flex-1 relative bg-panel2/40 min-h-0">
-        {playerPos && (greenSet || teeSet) ? (
+        {playerPos ? (
           <>
             <HoleMiniMap
               player={playerPos}
@@ -647,41 +649,21 @@ export default function OnCourseMode({
                 </div>
               )}
             </div>
-          </>
-        ) : (
-          // Either no GPS lock yet or the hole has zero geometry.
-          // Centered prompt on the empty hero panel.
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
-            <AnimatePresence mode="popLayout">
-              {gpsError ? (
-                <motion.div
-                  key="err"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  className="text-mute text-sm max-w-xs"
-                >
-                  {gpsError}
-                </motion.div>
-              ) : !pos ? (
-                <motion.div
-                  key="loading"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="text-mute text-sm"
-                >
-                  Locking on…
-                </motion.div>
-              ) : (
+
+
+            {/* Unmapped-hole prompt as an overlay on top of the
+                satellite, so the user gets both the "where am I"
+                imagery and the call to action. */}
+            {!greenSet && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-6">
                 <motion.div
                   key="unmapped"
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
-                  className="space-y-4"
+                  className="rounded-xl bg-bg/80 backdrop-blur-md border border-border px-4 py-3 text-center space-y-3 shadow-xl pointer-events-auto max-w-xs"
                 >
-                  <div className="text-mute text-sm max-w-xs">
+                  <div className="text-ink text-sm">
                     This hole isn&apos;t mapped yet. Drop a pin from the
                     tee or green and it&apos;ll be saved for everyone
                     after you.
@@ -706,11 +688,33 @@ export default function OnCourseMode({
                       </button>
                     )}
                   </div>
-                  {accuracyYd != null && (
-                    <div className="text-[10px] text-mute">
-                      GPS accuracy ± {accuracyYd}y
-                    </div>
-                  )}
+                </motion.div>
+              </div>
+            )}
+          </>
+        ) : (
+          // No GPS lock yet. Centered prompt over the empty hero.
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
+            <AnimatePresence mode="popLayout">
+              {gpsError ? (
+                <motion.div
+                  key="err"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  className="text-mute text-sm max-w-xs"
+                >
+                  {gpsError}
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="loading"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="text-mute text-sm"
+                >
+                  Locking on…
                 </motion.div>
               )}
             </AnimatePresence>
