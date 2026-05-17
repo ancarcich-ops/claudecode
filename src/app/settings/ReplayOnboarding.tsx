@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-const STORAGE_KEY = "sticks.onboarded.v2";
+const STORAGE_KEY = "sticks.onboarded.v3";
 
 // Small "Show me the welcome flow again" button. Clears the localStorage
 // gate that suppresses onboarding after the first run, then reloads home
