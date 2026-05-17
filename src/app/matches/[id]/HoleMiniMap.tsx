@@ -1,15 +1,19 @@
 "use client";
 
-// Top-down hole map. Renders the best of what's available:
+// Top-down hole map. When NEXT_PUBLIC_MAPBOX_TOKEN is set, the base
+// layer is a Mapbox satellite image of the bounding box of all known
+// features. Without a token we fall back to the dark schematic.
+//
+// Either way, the SVG overlay draws:
 //   - Player position (live GPS)
 //   - Tee (lat/lng)
-//   - Green: prefer a full polygon, fall back to a sized oval from F/C/B,
-//     fall back to a single dot from the center
+//   - Green: prefer a full polygon, fall back to a sized oval from F/C/B
 //   - Hazards (water/sand/oob points)
-//   - A faint fairway corridor between tee and green when both are known
+//   - Optional aim point + play line
 //
-// No tiles, no satellite imagery -- just the points we've collected,
-// projected onto a local meter frame and auto-fit into the viewbox.
+// Projection: linear in lng, Web Mercator in lat -- exactly how Mapbox
+// renders its static-bbox image, so the overlays line up to within a
+// fraction of a yard at golf-course scale.
 
 type Pt = { lat: number; lng: number };
 type Hazard = Pt & {
@@ -23,6 +27,13 @@ const HAZARD_FILL = {
   OOB: "#f87171",
   OTHER: "#8aa094",
 };
+
+// Mapbox uses Web Mercator. We project lat through this so overlays
+// align with the satellite image to sub-yard precision.
+function mercY(latDeg: number): number {
+  const lat = (latDeg * Math.PI) / 180;
+  return Math.log(Math.tan(Math.PI / 4 + lat / 2));
+}
 
 export default function HoleMiniMap({
   player,
@@ -42,102 +53,77 @@ export default function HoleMiniMap({
   greenBack: Pt | null;
   greenPolygon: Pt[] | null;
   hazards: Hazard[];
-  // Optional "aim point" the user has dropped on the fairway. When
-  // provided the map draws a target marker + a player->aim->green
-  // play line, and tapping the SVG fires onAim with the inverse-
-  // projected lat/lng so the caller can recompute distances.
   aim?: Pt | null;
   onAim?: (latLng: Pt | null) => void;
 }) {
-  // Collect every point we have so we can auto-fit the viewbox.
-  const points: { pt: Pt; tag: string }[] = [];
-  if (player) points.push({ pt: player, tag: "player" });
-  if (tee) points.push({ pt: tee, tag: "tee" });
-  if (greenCenter) points.push({ pt: greenCenter, tag: "greenC" });
-  if (greenFront) points.push({ pt: greenFront, tag: "greenF" });
-  if (greenBack) points.push({ pt: greenBack, tag: "greenB" });
-  for (const h of hazards) points.push({ pt: h, tag: `hz-${h.id}` });
-  if (greenPolygon) {
-    greenPolygon.forEach((p, i) => points.push({ pt: p, tag: `gp-${i}` }));
+  const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+
+  // Everything we'll consider for the bbox. We deliberately include
+  // the player + aim too -- a player who walks far off-line shouldn't
+  // slide off the map.
+  const all: Pt[] = [];
+  if (player) all.push(player);
+  if (tee) all.push(tee);
+  if (greenCenter) all.push(greenCenter);
+  if (greenFront) all.push(greenFront);
+  if (greenBack) all.push(greenBack);
+  if (greenPolygon) all.push(...greenPolygon);
+  for (const h of hazards) all.push(h);
+  if (aim) all.push(aim);
+  if (all.length < 2) return null;
+
+  let minLng = Infinity;
+  let maxLng = -Infinity;
+  let minLat = Infinity;
+  let maxLat = -Infinity;
+  for (const p of all) {
+    if (p.lng < minLng) minLng = p.lng;
+    if (p.lng > maxLng) maxLng = p.lng;
+    if (p.lat < minLat) minLat = p.lat;
+    if (p.lat > maxLat) maxLat = p.lat;
   }
-  if (aim) points.push({ pt: aim, tag: "aim" });
-  if (points.length < 2) return null;
 
-  // Equirectangular projection centered on the first point. Meters out.
-  const ref = points[0].pt;
-  const R = 6371000;
-  const toRad = (d: number) => (d * Math.PI) / 180;
-  const cosLat = Math.cos(toRad(ref.lat));
-  const xy = points.map(({ pt, tag }) => ({
-    tag,
-    x: toRad(pt.lng - ref.lng) * R * cosLat,
-    y: -toRad(pt.lat - ref.lat) * R, // invert y so north = up
-  }));
+  // Pad ~12% so points don't sit on the very edge.
+  const padFrac = 0.12;
+  const dLng = Math.max(maxLng - minLng, 1e-6);
+  const dLat = Math.max(maxLat - minLat, 1e-6);
+  minLng -= dLng * padFrac;
+  maxLng += dLng * padFrac;
+  minLat -= dLat * padFrac;
+  maxLat += dLat * padFrac;
 
-  // Rotate so tee->green points UP (negative y). Better than always
-  // north-up: golfers want to see the line of play vertical. Skip if no
-  // tee or green.
-  const teeXY = xy.find((p) => p.tag === "tee");
-  const greenCXY = xy.find((p) => p.tag === "greenC");
-  let rot = 0;
-  if (teeXY && greenCXY) {
-    const dx = greenCXY.x - teeXY.x;
-    const dy = greenCXY.y - teeXY.y;
-    // Angle of tee->green from positive y-axis (up).
-    // We want tee->green to point in -y direction (up on screen).
-    rot = Math.atan2(dx, -dy);
+  // Square the bbox in meters so a square image isn't squashed
+  // (lng spans more meters near the equator, less near the poles).
+  const midLat = (minLat + maxLat) / 2;
+  const cosMid = Math.cos((midLat * Math.PI) / 180);
+  const lngMeters = (maxLng - minLng) * cosMid;
+  const latMeters = maxLat - minLat;
+  if (lngMeters > latMeters) {
+    const extra = (lngMeters - latMeters) / 2;
+    minLat -= extra;
+    maxLat += extra;
+  } else {
+    const extraLng = (latMeters - lngMeters) / 2 / cosMid;
+    minLng -= extraLng;
+    maxLng += extraLng;
   }
-  const cos = Math.cos(-rot);
-  const sin = Math.sin(-rot);
-  const rotated = xy.map((p) => ({
-    tag: p.tag,
-    x: p.x * cos - p.y * sin,
-    y: p.x * sin + p.y * cos,
-  }));
-
-  const xs = rotated.map((p) => p.x);
-  const ys = rotated.map((p) => p.y);
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
-  const w = Math.max(1, maxX - minX);
-  const h = Math.max(1, maxY - minY);
 
   const V = 200;
-  const PAD = 12;
-  const scale = Math.min((V - PAD * 2) / w, (V - PAD * 2) / h);
-  const project = (p: { x: number; y: number }) => ({
-    cx: PAD + (p.x - minX) * scale,
-    cy: PAD + (p.y - minY) * scale,
+
+  // Linear-in-lng, Mercator-in-lat projection into [0, V] on both
+  // axes. y inverted so north = up.
+  const minMercY = mercY(minLat);
+  const maxMercY = mercY(maxLat);
+  const project = (p: Pt) => ({
+    cx: ((p.lng - minLng) / (maxLng - minLng)) * V,
+    cy: V - ((mercY(p.lat) - minMercY) / (maxMercY - minMercY)) * V,
   });
-  const at = (tag: string) => {
-    const m = rotated.find((p) => p.tag === tag);
-    return m ? project(m) : null;
-  };
 
-  const pPlayer = at("player");
-  const pTee = at("tee");
-  const pGC = at("greenC");
-  const pGF = at("greenF");
-  const pGB = at("greenB");
-  const pAim = at("aim");
-
-  // Reverse projection: take a tap in SVG viewBox coords -> meters in
-  // the rotated frame -> meters in the un-rotated frame -> lat/lng.
-  // Caller uses this to set the aim point from a click on the map.
   const unproject = (cx: number, cy: number): Pt => {
-    const xMetersRotated = (cx - PAD) / scale + minX;
-    const yMetersRotated = (cy - PAD) / scale + minY;
-    // Reverse the earlier `cos(-rot), sin(-rot)` rotation by applying
-    // the inverse (cos(rot), sin(rot)).
-    const cosR = Math.cos(rot);
-    const sinR = Math.sin(rot);
-    const xMeters = xMetersRotated * cosR - yMetersRotated * sinR;
-    const yMeters = xMetersRotated * sinR + yMetersRotated * cosR;
-    // Undo equirectangular: x = (lng-ref.lng)*R*cosLat, y = -(lat-ref.lat)*R
-    const lat = ref.lat - (yMeters / R) * (180 / Math.PI);
-    const lng = ref.lng + (xMeters / (R * cosLat)) * (180 / Math.PI);
+    const lng = minLng + (cx / V) * (maxLng - minLng);
+    const my = minMercY + ((V - cy) / V) * (maxMercY - minMercY);
+    const latRad = 2 * (Math.atan(Math.exp(my)) - Math.PI / 4);
+    const lat = (latRad * 180) / Math.PI;
     return { lat, lng };
   };
 
@@ -145,15 +131,30 @@ export default function HoleMiniMap({
     if (!onAim) return;
     const svg = e.currentTarget;
     const rect = svg.getBoundingClientRect();
-    // Convert click pixel -> viewBox coords (V x V).
     const cx = ((e.clientX - rect.left) / rect.width) * V;
     const cy = ((e.clientY - rect.top) / rect.height) * V;
     onAim(unproject(cx, cy));
   };
 
-  // Fairway corridor: a thick translucent line from tee to green.
-  // Width scales with hole length so 600y par-5s and 130y par-3s read
-  // proportionally.
+  const pPlayer = player ? project(player) : null;
+  const pTee = tee ? project(tee) : null;
+  const pGC = greenCenter ? project(greenCenter) : null;
+  const pGF = greenFront ? project(greenFront) : null;
+  const pGB = greenBack ? project(greenBack) : null;
+  const pAim = aim ? project(aim) : null;
+
+  // Mapbox satellite static image at this bbox. Pulled with @2x for
+  // retina; rendered to fill the viewbox. The URL is stable per-bbox
+  // so the browser cache covers re-renders within the same hole. We
+  // strip attribution / logo so the map stays clean -- attribution
+  // appears once on the page in the corner.
+  const tileUrl = MAPBOX_TOKEN
+    ? `https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/[${minLng.toFixed(6)},${minLat.toFixed(6)},${maxLng.toFixed(6)},${maxLat.toFixed(6)}]/512x512@2x?access_token=${MAPBOX_TOKEN}&attribution=false&logo=false`
+    : null;
+
+  // Schematic fairway corridor: a thick translucent line from tee to
+  // green. Only shown when there's no satellite -- over a real photo
+  // the corridor reads as noise.
   let fairwayWidth = 14;
   if (pTee && pGC) {
     const px = pTee.cx - pGC.cx;
@@ -177,8 +178,18 @@ export default function HoleMiniMap({
         </linearGradient>
       </defs>
 
-      {/* Fairway corridor */}
-      {pTee && pGC && (
+      {tileUrl && (
+        <image
+          href={tileUrl}
+          x="0"
+          y="0"
+          width={V}
+          height={V}
+          preserveAspectRatio="xMidYMid slice"
+        />
+      )}
+
+      {!tileUrl && pTee && pGC && (
         <line
           x1={pTee.cx}
           y1={pTee.cy}
@@ -190,9 +201,6 @@ export default function HoleMiniMap({
         />
       )}
 
-      {/* Play line: when there's an aim point we draw player -> aim
-          (solid accent) + aim -> green (dashed); otherwise the original
-          single dashed player -> green. */}
       {pPlayer && pAim && (
         <line
           x1={pPlayer.cx}
@@ -200,8 +208,8 @@ export default function HoleMiniMap({
           x2={pAim.cx}
           y2={pAim.cy}
           stroke="#34d399"
-          strokeOpacity="0.85"
-          strokeWidth="1.5"
+          strokeOpacity="0.95"
+          strokeWidth="1.75"
         />
       )}
       {pAim && pGC && (
@@ -211,8 +219,8 @@ export default function HoleMiniMap({
           x2={pGC.cx}
           y2={pGC.cy}
           stroke="#34d399"
-          strokeOpacity="0.5"
-          strokeWidth="1.25"
+          strokeOpacity="0.7"
+          strokeWidth="1.5"
           strokeDasharray="3 3"
         />
       )}
@@ -223,26 +231,24 @@ export default function HoleMiniMap({
           x2={pGC.cx}
           y2={pGC.cy}
           stroke="#34d399"
-          strokeOpacity="0.5"
-          strokeWidth="1.25"
+          strokeOpacity="0.7"
+          strokeWidth="1.5"
           strokeDasharray="3 3"
         />
       )}
 
-      {/* Green: polygon if we have one, else an oval */}
       {greenPolygon && greenPolygon.length > 2 ? (
         <polygon
           points={greenPolygon
-            .map((p, i) => {
-              const pos = at(`gp-${i}`);
-              return pos ? `${pos.cx},${pos.cy}` : "";
+            .map((p) => {
+              const pos = project(p);
+              return `${pos.cx},${pos.cy}`;
             })
-            .filter(Boolean)
             .join(" ")}
-          fill="#34d399"
-          fillOpacity="0.22"
+          fill={tileUrl ? "none" : "#34d399"}
+          fillOpacity={tileUrl ? 0 : 0.22}
           stroke="#34d399"
-          strokeWidth="1.5"
+          strokeWidth="1.75"
         />
       ) : pGC ? (
         <ellipse
@@ -250,16 +256,15 @@ export default function HoleMiniMap({
           cy={pGC.cy}
           rx={pGF || pGB ? 10 : 7}
           ry={pGF || pGB ? 6 : 5}
-          fill="#34d399"
-          fillOpacity="0.22"
+          fill={tileUrl ? "none" : "#34d399"}
+          fillOpacity={tileUrl ? 0 : 0.22}
           stroke="#34d399"
-          strokeWidth="1.5"
+          strokeWidth="1.75"
         />
       ) : null}
       {pGF && <circle cx={pGF.cx} cy={pGF.cy} r="2" fill="#34d399" />}
       {pGB && <circle cx={pGB.cx} cy={pGB.cy} r="2" fill="#34d399" />}
 
-      {/* Tee box */}
       {pTee && (
         <g>
           <rect
@@ -285,10 +290,8 @@ export default function HoleMiniMap({
         </g>
       )}
 
-      {/* Hazards */}
       {hazards.map((h) => {
-        const p = at(`hz-${h.id}`);
-        if (!p) return null;
+        const p = project(h);
         return (
           <circle
             key={h.id}
@@ -303,7 +306,6 @@ export default function HoleMiniMap({
         );
       })}
 
-      {/* Player dot on top */}
       {pPlayer && (
         <>
           <circle
@@ -311,7 +313,7 @@ export default function HoleMiniMap({
             cy={pPlayer.cy}
             r="5"
             fill="#34d399"
-            fillOpacity="0.25"
+            fillOpacity="0.3"
           />
           <circle
             cx={pPlayer.cx}
@@ -324,8 +326,6 @@ export default function HoleMiniMap({
         </>
       )}
 
-      {/* Aim target marker (always topmost). Concentric circle + small
-          crosshair so it reads as a "drop pin" affordance. */}
       {pAim && (
         <g style={{ pointerEvents: "none" }}>
           <circle
