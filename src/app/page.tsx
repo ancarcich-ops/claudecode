@@ -4,6 +4,7 @@ import { computeOdds, formatPct, parseParData } from "@/lib/odds";
 import { getCurrentUser } from "@/lib/auth";
 import { getActiveGroupId, visibleMatchWhere } from "@/lib/groups";
 import AutoRefresh from "@/components/AutoRefresh";
+import CourseSeeder from "@/components/CourseSeeder";
 import LiveCardStats from "@/components/LiveCardStats";
 import MatchCard from "@/components/match-card/MatchCard";
 import { buildMatchCardData } from "@/lib/matchCard";
@@ -74,10 +75,19 @@ export default async function HomePage() {
   // query, so the peek panel on LIVE / UPCOMING cards draws the actual
   // hole shape instead of the generic placeholder curve.
   const courseHoleMap = await loadNextHoleGeo([...live, ...upcoming]);
+  // Any course on the grid we don't have geo for yet -> hand off to a
+  // client component that POSTs to /api/courses/seed in the background.
+  // The next AutoRefresh tick after the seed completes picks up the
+  // new geometry on its own.
+  const unmappedCourses = uniqueUnmapped(
+    [...live, ...upcoming],
+    courseHoleMap,
+  );
 
   return (
     <div className="space-y-10">
       <AutoRefresh endpoint="/api/markets/state" />
+      <CourseSeeder courses={unmappedCourses} />
       {!user && (
         <div className="card p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -331,4 +341,31 @@ async function loadNextHoleGeo(matches: GridMatch[]): Promise<NextHoleGeoMap> {
     });
   }
   return map;
+}
+
+// Returns one entry per (courseName, holes) that doesn't have *any*
+// CourseHole rows in courseHoleMap -- i.e. the OSM seeder hasn't run
+// against it yet. We just check the next hole because that's what the
+// peek panel needs, but absent geo for the next hole almost always
+// implies the whole course is unseeded.
+function uniqueUnmapped(
+  matches: GridMatch[],
+  courseHoleMap: NextHoleGeoMap,
+): { name: string; holes: number }[] {
+  const seen = new Set<string>();
+  const out: { name: string; holes: number }[] = [];
+  for (const m of matches) {
+    if (seen.has(m.courseName)) continue;
+    seen.add(m.courseName);
+    // Cheap check: do we have ANY hole geo for this course?
+    let hasAny = false;
+    for (const key of courseHoleMap.keys()) {
+      if (key.startsWith(`${m.courseName}::`)) {
+        hasAny = true;
+        break;
+      }
+    }
+    if (!hasAny) out.push({ name: m.courseName, holes: m.holes });
+  }
+  return out;
 }
