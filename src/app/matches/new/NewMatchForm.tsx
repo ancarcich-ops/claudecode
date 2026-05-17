@@ -36,6 +36,12 @@ const MODE_COPY: Record<
   },
 };
 
+const STEPS = [
+  { key: "round", title: "Round" },
+  { key: "players", title: "Players" },
+  { key: "extras", title: "Side games" },
+] as const;
+
 export default function NewMatchForm({
   action,
   defaultPlayerName,
@@ -57,6 +63,7 @@ export default function NewMatchForm({
   groups: { id: string; name: string }[];
   defaultGroupId: string;
 }) {
+  const [step, setStep] = useState(0);
   const [players, setPlayers] = useState<PlayerRow[]>([
     {
       name: defaultPlayerName,
@@ -89,10 +96,6 @@ export default function NewMatchForm({
 
   const matchedPreset = presetByName.get(courseName.trim().toLowerCase());
 
-  // Pars used for the hidden parData field. Preset takes priority; manual
-  // input (or "no preset matched") sends empty so the server falls back to
-  // its standard default for the chosen hole count. For a 9-hole round on
-  // an 18-hole preset, we slice front (0..9) or back (9..18) by startingHole.
   const parsToSubmit = (() => {
     if (!matchedPreset) return null;
     if (matchedPreset.holes === holes) return matchedPreset.pars;
@@ -146,7 +149,6 @@ export default function NewMatchForm({
     )}:${pad(d.getMinutes())}`;
   })();
 
-  // Group presets by region for the datalist (LA first, then OC).
   const groupedPresets = useMemo(() => {
     const byRegion = new Map<string, CoursePreset[]>();
     for (const p of presets) {
@@ -159,9 +161,70 @@ export default function NewMatchForm({
     return byRegion;
   }, [presets]);
 
+  // Per-step validation. The Next button is disabled when the current
+  // step has unfilled / invalid data. The final step always validates
+  // (the side-game step is optional input only).
+  const canAdvance = (() => {
+    if (step === 0) return courseName.trim().length > 0;
+    if (step === 1) {
+      return players.every(
+        (p) => p.name.trim().length > 0 && !Number.isNaN(parseFloat(p.handicap)),
+      );
+    }
+    return true;
+  })();
+
+  const tryNext = () => {
+    if (!canAdvance) return;
+    if (step < STEPS.length - 1) setStep(step + 1);
+  };
+  const goBack = () => {
+    if (step > 0) setStep(step - 1);
+  };
+
   return (
-    <form action={action} className="space-y-5">
-      <div className="card p-5 space-y-4">
+    <form action={action} className="space-y-4">
+      {/* Step header: progress dots + back arrow + step title. */}
+      <div className="flex items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={goBack}
+          className={
+            "text-mute hover:text-ink text-sm w-10 " +
+            (step === 0 ? "invisible" : "")
+          }
+          aria-label="Previous step"
+        >
+          ←
+        </button>
+        <div className="flex items-center gap-1.5">
+          {STEPS.map((_, i) => (
+            <span
+              key={i}
+              className={
+                "h-1.5 rounded-full transition-all " +
+                (i === step
+                  ? "w-6 bg-accent"
+                  : i < step
+                    ? "w-1.5 bg-accent/60"
+                    : "w-1.5 bg-border")
+              }
+            />
+          ))}
+        </div>
+        <span className="w-10 text-right text-[10px] uppercase tracking-wider text-mute">
+          {step + 1}/{STEPS.length}
+        </span>
+      </div>
+
+      <div className="text-center">
+        <h2 className="font-display text-xl font-semibold tracking-tight">
+          {STEPS[step].title}
+        </h2>
+      </div>
+
+      {/* Step 1: Course + tee + scoring + visibility + notes */}
+      <div hidden={step !== 0} className="card p-5 space-y-4">
         <div>
           <label className="label" htmlFor="courseName">
             Course
@@ -175,7 +238,6 @@ export default function NewMatchForm({
             onChange={(e) => onCourseChange(e.target.value)}
             list="course-presets"
             autoComplete="off"
-            required
           />
           <datalist id="course-presets">
             {recentCourses.map((c) => (
@@ -234,7 +296,6 @@ export default function NewMatchForm({
               type="datetime-local"
               className="input"
               defaultValue={defaultTee}
-              required
             />
           </div>
           <div>
@@ -364,7 +425,8 @@ export default function NewMatchForm({
         </div>
       </div>
 
-      <div className="card p-5">
+      {/* Step 2: Players */}
+      <div hidden={step !== 1} className="card p-5">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-display text-base font-semibold text-ink">
             Players
@@ -399,7 +461,6 @@ export default function NewMatchForm({
                 title={modeCopy.field}
                 aria-label={modeCopy.field}
                 className="input w-20 shrink-0 text-center px-2"
-                required
               />
               <button
                 type="button"
@@ -419,72 +480,87 @@ export default function NewMatchForm({
         </p>
       </div>
 
-      <div className="card p-5">
-        <div className="flex items-center justify-between mb-1">
-          <h2 className="font-display text-base font-semibold text-ink">
-            Side games
-          </h2>
-          <span className="text-[11px] text-mute">{sideGames.size} on</span>
-        </div>
-        <p className="text-[11px] text-mute mb-3">
-          Track extra games alongside the main {modeCopy.label.toLowerCase()}{" "}
-          match. Leaderboards update live as scores come in.
-        </p>
-        <div className="space-y-2">
-          {ALL_SIDE_GAMES.map((g) => {
-            const disabledByHoles = g.requires18 && holes !== 18;
-            const active = sideGames.has(g.kind);
-            return (
-              <label
+      {/* Step 3: Side games + review */}
+      <div hidden={step !== 2} className="space-y-4">
+        <div className="card p-5">
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="font-display text-base font-semibold text-ink">
+              Side games
+            </h2>
+            <span className="text-[11px] text-mute">{sideGames.size} on</span>
+          </div>
+          <p className="text-[11px] text-mute mb-3">
+            Track extra games alongside the main{" "}
+            {modeCopy.label.toLowerCase()} match. Leaderboards update live as
+            scores come in.
+          </p>
+          <div className="space-y-2">
+            {ALL_SIDE_GAMES.map((g) => {
+              const disabledByHoles = g.requires18 && holes !== 18;
+              const active = sideGames.has(g.kind);
+              return (
+                <label
+                  key={g.kind}
+                  className={
+                    "flex items-start gap-3 rounded-md border px-3 py-2 cursor-pointer transition-colors " +
+                    (disabledByHoles
+                      ? "border-border opacity-50 cursor-not-allowed"
+                      : active
+                        ? "border-accent/50 bg-accent/5"
+                        : "border-border hover:border-accent/30")
+                  }
+                >
+                  <input
+                    type="checkbox"
+                    name="sideGame"
+                    value={g.kind}
+                    checked={active && !disabledByHoles}
+                    onChange={() =>
+                      !disabledByHoles && toggleSideGame(g.kind)
+                    }
+                    disabled={disabledByHoles}
+                    className="mt-0.5 shrink-0 accent-accent"
+                  />
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium">{g.label}</div>
+                    <div className="text-[11px] text-mute">
+                      {disabledByHoles ? "Needs 18 holes" : g.blurb}
+                    </div>
+                  </div>
+                </label>
+              );
+            })}
+            {COMING_SOON_SIDE_GAMES.map((g) => (
+              <div
                 key={g.kind}
-                className={
-                  "flex items-start gap-3 rounded-md border px-3 py-2 cursor-pointer transition-colors " +
-                  (disabledByHoles
-                    ? "border-border opacity-50 cursor-not-allowed"
-                    : active
-                      ? "border-accent/50 bg-accent/5"
-                      : "border-border hover:border-accent/30")
-                }
+                className="flex items-start gap-3 rounded-md border border-border px-3 py-2 opacity-50"
               >
                 <input
                   type="checkbox"
-                  name="sideGame"
-                  value={g.kind}
-                  checked={active && !disabledByHoles}
-                  onChange={() => !disabledByHoles && toggleSideGame(g.kind)}
-                  disabled={disabledByHoles}
-                  className="mt-0.5 shrink-0 accent-accent"
+                  disabled
+                  className="mt-0.5 shrink-0"
+                  aria-label={`${g.label} (coming soon)`}
                 />
-                <div className="min-w-0">
-                  <div className="text-sm font-medium">{g.label}</div>
-                  <div className="text-[11px] text-mute">
-                    {disabledByHoles ? "Needs 18 holes" : g.blurb}
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium flex items-center justify-between gap-2">
+                    <span>{g.label}</span>
+                    <span className="chip text-[10px]">Coming soon</span>
                   </div>
+                  <div className="text-[11px] text-mute">{g.blurb}</div>
                 </div>
-              </label>
-            );
-          })}
-          {COMING_SOON_SIDE_GAMES.map((g) => (
-            <div
-              key={g.kind}
-              className="flex items-start gap-3 rounded-md border border-border px-3 py-2 opacity-50"
-            >
-              <input
-                type="checkbox"
-                disabled
-                className="mt-0.5 shrink-0"
-                aria-label={`${g.label} (coming soon)`}
-              />
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium flex items-center justify-between gap-2">
-                  <span>{g.label}</span>
-                  <span className="chip text-[10px]">Coming soon</span>
-                </div>
-                <div className="text-[11px] text-mute">{g.blurb}</div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
+
+        <ReviewCard
+          courseName={courseName}
+          holes={holes}
+          startingHole={startingHole}
+          scoringMode={scoringMode}
+          playerCount={players.filter((p) => p.name.trim()).length}
+          sideGameCount={sideGames.size}
+        />
       </div>
 
       {parsToSubmit && (
@@ -495,15 +571,71 @@ export default function NewMatchForm({
         />
       )}
 
-      <div className="flex sm:justify-end">
-        <button
-          className="btn btn-primary w-full sm:w-auto"
-          type="submit"
-        >
-          Open market
-        </button>
+      {/* Sticky bottom action. Next while we're on steps 1 & 2; submit on
+          the final step. */}
+      <div className="sticky bottom-2 pt-2">
+        {step < STEPS.length - 1 ? (
+          <button
+            type="button"
+            onClick={tryNext}
+            disabled={!canAdvance}
+            className="btn btn-primary w-full disabled:opacity-50"
+          >
+            {step === 0 && !canAdvance
+              ? "Add a course to continue"
+              : step === 1 && !canAdvance
+                ? "Fill in every player to continue"
+                : "Next →"}
+          </button>
+        ) : (
+          <button className="btn btn-primary w-full" type="submit">
+            Open market
+          </button>
+        )}
       </div>
     </form>
+  );
+}
+
+function ReviewCard({
+  courseName,
+  holes,
+  startingHole,
+  scoringMode,
+  playerCount,
+  sideGameCount,
+}: {
+  courseName: string;
+  holes: 9 | 18;
+  startingHole: 1 | 10;
+  scoringMode: ScoringMode;
+  playerCount: number;
+  sideGameCount: number;
+}) {
+  const ninesLabel =
+    holes === 18 ? "18" : startingHole === 10 ? "Back 9" : "Front 9";
+  return (
+    <div className="card p-5">
+      <h2 className="font-display text-base font-semibold text-ink mb-2">
+        Review
+      </h2>
+      <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm">
+        <dt className="text-mute">Course</dt>
+        <dd className="text-ink truncate text-right">
+          {courseName || <span className="text-faint">—</span>}
+        </dd>
+        <dt className="text-mute">Holes</dt>
+        <dd className="text-ink text-right">{ninesLabel}</dd>
+        <dt className="text-mute">Scoring</dt>
+        <dd className="text-ink text-right">{MODE_COPY[scoringMode].label}</dd>
+        <dt className="text-mute">Players</dt>
+        <dd className="text-ink text-right">{playerCount}</dd>
+        <dt className="text-mute">Side games</dt>
+        <dd className="text-ink text-right">
+          {sideGameCount === 0 ? "None" : sideGameCount}
+        </dd>
+      </dl>
+    </div>
   );
 }
 
