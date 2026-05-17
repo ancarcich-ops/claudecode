@@ -605,9 +605,18 @@ export const COURSE_PRESETS: CoursePreset[] = [
     region: "IE",
     access: "private",
     holes: 18,
-    // Tom Fazio design at Bighorn GC. Par 72, transcribed from the
-    // official scorecard.
+    // Tom Fazio design at Bighorn GC. Par 72.
     pars: [4, 4, 5, 3, 4, 5, 3, 4, 4, 4, 4, 5, 4, 4, 3, 5, 3, 4],
+  },
+  {
+    id: "bighorn-gc-mountains",
+    name: "Bighorn Golf Club - Mountains",
+    city: "Palm Desert, CA",
+    region: "IE",
+    access: "private",
+    holes: 18,
+    // Arthur Hills / Jay Morrish design at Bighorn GC. Par 72.
+    pars: [5, 4, 5, 3, 4, 4, 4, 3, 4, 4, 3, 5, 4, 4, 5, 4, 3, 4],
   },
 ];
 
