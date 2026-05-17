@@ -181,6 +181,7 @@ export default function HoleMiniMap({
       {tileUrl && (
         <image
           href={tileUrl}
+          xlinkHref={tileUrl}
           x="0"
           y="0"
           width={V}
@@ -188,6 +189,22 @@ export default function HoleMiniMap({
           preserveAspectRatio="xMidYMid slice"
         />
       )}
+
+      {/* Tiny diagnostic badge so we can see, at a glance, whether the
+          NEXT_PUBLIC_MAPBOX_TOKEN reached the client bundle. "SAT" =
+          token present, image request is firing. "NO SAT" = token
+          missing -- env var didn't make it into the build. */}
+      <text
+        x={V - 2}
+        y="6"
+        textAnchor="end"
+        fontSize="4"
+        fill={tileUrl ? "#34d399" : "#f87171"}
+        fillOpacity="0.75"
+        style={{ fontFamily: "monospace" }}
+      >
+        {tileUrl ? "SAT" : "NO SAT"}
+      </text>
 
       {!tileUrl && pTee && pGC && (
         <line
