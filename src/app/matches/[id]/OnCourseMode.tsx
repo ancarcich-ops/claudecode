@@ -98,6 +98,78 @@ function HazardMarkButton({
   );
 }
 
+type DistanceKind =
+  | "GREEN_BACK"
+  | "GREEN_CENTER"
+  | "GREEN_FRONT"
+  | "WATER"
+  | "SAND"
+  | "OOB"
+  | "OTHER";
+
+// One row in the distance rail. Big yardage on the left (mono, dense
+// like a real GPS readout), label + optional layup yardage on the
+// right, color band keyed to feature kind. Removable hazards get the
+// existing X affordance.
+function DistanceRow({
+  row,
+}: {
+  row: {
+    key: string;
+    label: string;
+    distance: number;
+    kind: DistanceKind;
+    layup?: number | null;
+    onRemove?: () => void;
+  };
+}) {
+  const band = (() => {
+    switch (row.kind) {
+      case "GREEN_CENTER":
+        return "bg-accent";
+      case "GREEN_BACK":
+      case "GREEN_FRONT":
+        return "bg-accent/60";
+      case "WATER":
+        return "bg-blue-400";
+      case "SAND":
+        return "bg-gold";
+      case "OOB":
+        return "bg-danger";
+      default:
+        return "bg-mute";
+    }
+  })();
+  return (
+    <li className="flex items-stretch gap-2.5 py-1.5">
+      <span className={"w-0.5 rounded-full shrink-0 " + band} aria-hidden />
+      <span className="font-mono tabular-nums text-base text-ink w-12 shrink-0 text-right">
+        {Math.round(row.distance)}
+        <span className="text-mute text-[10px] ml-0.5">y</span>
+      </span>
+      <span className="text-sm text-ink truncate flex-1 self-center">
+        {row.label}
+      </span>
+      {row.layup != null && (
+        <span className="text-[10px] font-mono text-mute self-center shrink-0">
+          lay <span className="text-accent">{Math.round(row.layup)}y</span>
+        </span>
+      )}
+      {row.onRemove && (
+        <button
+          type="button"
+          onClick={row.onRemove}
+          aria-label={`Remove ${row.label}`}
+          title="Remove"
+          className="self-center text-mute hover:text-danger text-sm shrink-0 px-1"
+        >
+          ×
+        </button>
+      )}
+    </li>
+  );
+}
+
 export default function OnCourseMode({
   matchId,
   courseName,
@@ -535,12 +607,16 @@ export default function OnCourseMode({
         </AnimatePresence>
       </div>
 
-      {/* Hazards on this hole */}
+      {/* Distance rail -- Garmin-style scrollable list of every notable
+          feature on this hole, sorted by descending yardage so the
+          back-of-green sits at the top and the closest hazard at the
+          bottom. Color-coded by type; tap a green chip to mark, tap
+          the X on a hazard to remove. */}
       {pos && (holeHazards.length > 0 || greenSet) && (
         <div className="border-t border-border px-4 py-2">
           <div className="flex items-center justify-between mb-1.5">
             <div className="text-[10px] uppercase tracking-wider text-mute">
-              Hazards
+              Distances
             </div>
             <div className="flex items-center gap-1">
               <HazardMarkButton
@@ -560,48 +636,60 @@ export default function OnCourseMode({
               />
             </div>
           </div>
-          {holeHazards.length === 0 ? (
-            <div className="text-[11px] text-mute">
-              None marked. Drop a pin if you spot one for the next round.
-            </div>
-          ) : (
-            <ul className="space-y-1">
-              {holeHazards.map((h) => (
-                <li
-                  key={h.id}
-                  className="flex items-center justify-between gap-2 text-sm"
-                >
-                  <span className="flex items-center gap-1.5 min-w-0">
-                    <HazardChip kind={h.kind} />
-                    <span className="text-mute text-xs truncate">
-                      {h.label ?? labelForKind(h.kind)}
-                    </span>
-                  </span>
-                  <span className="font-mono tabular-nums text-xs shrink-0">
-                    <span className="text-ink">
-                      {h.distance != null ? Math.round(h.distance) : "—"}y
-                    </span>
-                    {h.layup != null && (
-                      <span className="text-mute">
-                        {" · lay "}
-                        <span className="text-accent">{Math.round(h.layup)}y</span>
-                      </span>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => removeHazard(h.id)}
-                      disabled={pending}
-                      aria-label="Remove hazard"
-                      className="ml-2 text-mute hover:text-danger"
-                      title="Remove"
-                    >
-                      ×
-                    </button>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
+          <ul className="space-y-0.5">
+            {(() => {
+              type Row = {
+                key: string;
+                label: string;
+                distance: number;
+                kind: "GREEN_BACK" | "GREEN_CENTER" | "GREEN_FRONT" | "WATER" | "SAND" | "OOB" | "OTHER";
+                layup?: number | null;
+                onRemove?: () => void;
+              };
+              const rows: Row[] = [];
+              if (back != null)
+                rows.push({
+                  key: "g-back",
+                  label: "Back edge",
+                  distance: back,
+                  kind: "GREEN_BACK",
+                });
+              if (center != null)
+                rows.push({
+                  key: "g-center",
+                  label: "Green center",
+                  distance: center,
+                  kind: "GREEN_CENTER",
+                });
+              if (front != null)
+                rows.push({
+                  key: "g-front",
+                  label: "Front edge",
+                  distance: front,
+                  kind: "GREEN_FRONT",
+                });
+              for (const h of holeHazards) {
+                if (h.distance == null) continue;
+                rows.push({
+                  key: `hz-${h.id}`,
+                  label: h.label ?? labelForKind(h.kind),
+                  distance: h.distance,
+                  kind: h.kind,
+                  layup: h.layup,
+                  onRemove: () => removeHazard(h.id),
+                });
+              }
+              rows.sort((a, b) => b.distance - a.distance);
+              if (rows.length === 0) {
+                return (
+                  <li className="text-[11px] text-mute py-1">
+                    Mark the green and drop hazard pins to fill this in.
+                  </li>
+                );
+              }
+              return rows.map((r) => <DistanceRow key={r.key} row={r} />);
+            })()}
+          </ul>
         </div>
       )}
 
