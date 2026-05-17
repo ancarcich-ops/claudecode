@@ -660,7 +660,7 @@ function CardGuideStep() {
           label="Hole dot row"
           body={
             <>
-              One dot per hole. <span className="text-accent">Green</span> = under par ·{" "}
+              One dot per hole. <span className="text-accent">Green</span> = birdie ·{" "}
               <span className="text-gold">gold</span> = eagle · gray = par ·{" "}
               <span className="text-danger">red</span> = bogey or worse · dashed = current hole · empty = unplayed.
             </>
