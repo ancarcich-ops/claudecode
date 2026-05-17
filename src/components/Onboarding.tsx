@@ -23,10 +23,10 @@ import {
 //   - Each step has a "hero" visual region above text
 //
 // Bumping the storage key on schema changes -- v1 users see this once.
-const STORAGE_KEY = "sticks.onboarded.v2";
+const STORAGE_KEY = "sticks.onboarded.v3";
 
-type StepKey = "welcome" | "avatar" | "group" | "launch";
-const STEPS: StepKey[] = ["welcome", "avatar", "group", "launch"];
+type StepKey = "welcome" | "avatar" | "group" | "card-guide" | "launch";
+const STEPS: StepKey[] = ["welcome", "avatar", "group", "card-guide", "launch"];
 
 export default function Onboarding({
   enabled,
@@ -185,6 +185,7 @@ export default function Onboarding({
                       onSkip={advance}
                     />
                   )}
+                  {step === "card-guide" && <CardGuideStep />}
                   {step === "launch" && (
                     <LaunchStep
                       onPostMatch={() => {
@@ -199,7 +200,7 @@ export default function Onboarding({
             </div>
 
             {/* Footer CTA only for steps without their own inline submit */}
-            {(step === "welcome") && (
+            {step === "welcome" && (
               <Footer>
                 <button
                   type="button"
@@ -207,6 +208,17 @@ export default function Onboarding({
                   className="btn btn-primary w-full"
                 >
                   Get started →
+                </button>
+              </Footer>
+            )}
+            {step === "card-guide" && (
+              <Footer>
+                <button
+                  type="button"
+                  onClick={advance}
+                  className="btn btn-primary w-full"
+                >
+                  Got it →
                 </button>
               </Footer>
             )}
@@ -601,6 +613,187 @@ function ToggleButton({
 }
 
 // ----- Step 4: Launch ------------------------------------------------------
+
+// ----- Step 4: Reading the card -------------------------------------------
+// Tiny legend so first-time users decode the live match card on the home
+// page without trial and error. Each row pairs a real-shaped icon with
+// a one-line plain-English explanation.
+
+function CardGuideStep() {
+  return (
+    <div>
+      <div className="text-center mt-2">
+        <h2 className="font-display text-2xl font-semibold tracking-tight">
+          Reading the card.
+        </h2>
+        <p className="text-sm text-mute mt-1.5 max-w-sm mx-auto">
+          A quick decoder for what every chip, dot, and number means on
+          the home page.
+        </p>
+      </div>
+
+      <div className="mt-5 space-y-2">
+        <Legend
+          icon={
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5">
+              <span className="pulse-dot inline-block w-1.5 h-1.5 rounded-full bg-accent" />
+              <span className="font-mono text-[9px] uppercase tracking-wider text-accent">
+                Live
+              </span>
+            </span>
+          }
+          label="Live status pill"
+          body="A round is in progress right now. Sky-blue 'In 2h 14m' = upcoming. Gold 'Final' = settled."
+        />
+
+        <Legend
+          icon={
+            <div className="flex items-center gap-0.5">
+              <Dot tone="birdie" />
+              <Dot tone="par" />
+              <Dot tone="bogey" />
+              <Dot tone="double" />
+              <Dot tone="current" />
+              <Dot tone="unplayed" />
+            </div>
+          }
+          label="Hole dot row"
+          body={
+            <>
+              One dot per hole. <span className="text-accent">Green</span> = under par ·{" "}
+              <span className="text-gold">gold</span> = eagle · gray = par ·{" "}
+              <span className="text-danger">red</span> = bogey or worse · dashed = current hole · empty = unplayed.
+            </>
+          }
+        />
+
+        <Legend
+          icon={
+            <span className="font-mono tabular-nums text-sm text-ink">
+              <span className="text-accent" aria-hidden>▲</span> 63%
+            </span>
+          }
+          label="Win probability"
+          body="Live odds based on scores + group calls. The arrow shows the last move (▲ rising, ▼ falling, • flat)."
+        />
+
+        <Legend
+          icon={
+            <span className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wider text-mute border border-border bg-panel2">
+              <span aria-hidden>+</span>
+              Call
+            </span>
+          }
+          label="+ Call button"
+          body="Place your wager on a player from the home screen. Two taps to confirm — switches to a ✓ Picked badge after."
+        />
+
+        <Legend
+          icon={
+            <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 border border-accent/30 px-2 py-0.5">
+              <span aria-hidden className="flicker">🔥</span>
+              <span className="font-mono text-[10px] uppercase tracking-wider text-accent">
+                3 birdies
+              </span>
+            </span>
+          }
+          label="Momentum badges"
+          body="🔥 hot = ≥3 birdies in last 5 holes. ❄️ cold = +4 over par across last 3. 🦅 = eagle on the most recent."
+        />
+
+        <Legend
+          icon={<SparklineIcon />}
+          label="Sparkline"
+          body="Tiny chart of running net-to-par across the holes a player has scored. Higher line = better stretch."
+        />
+
+        <Legend
+          icon={
+            <span className="font-mono text-[9px] uppercase tracking-wider text-mute">
+              … LEADER &minus;2 THRU 12 · 1 WAGER …
+            </span>
+          }
+          label="Header ticker"
+          body="Scrolling strip of live odds and recent events. Adapts to whether the round is open, live, or settled."
+        />
+      </div>
+    </div>
+  );
+}
+
+function Legend({
+  icon,
+  label,
+  body,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  body: React.ReactNode;
+}) {
+  return (
+    <div className="grid grid-cols-[5rem_1fr] items-start gap-3 rounded-md border border-border bg-panel2 px-3 py-2.5">
+      <div className="flex items-center justify-center min-h-[1.5rem]">
+        {icon}
+      </div>
+      <div className="min-w-0">
+        <div className="text-sm font-medium text-ink leading-tight">
+          {label}
+        </div>
+        <div className="text-[11px] text-mute leading-snug mt-0.5">{body}</div>
+      </div>
+    </div>
+  );
+}
+
+function Dot({
+  tone,
+}: {
+  tone: "birdie" | "par" | "bogey" | "double" | "current" | "unplayed";
+}) {
+  const cls = (() => {
+    switch (tone) {
+      case "birdie":
+        return "bg-accent";
+      case "par":
+        return "bg-mute/30 border border-mute/30";
+      case "bogey":
+        return "bg-danger/70";
+      case "double":
+        return "bg-danger";
+      case "current":
+        return "border border-dashed border-accent bg-accent/10";
+      default:
+        return "border border-border";
+    }
+  })();
+  return <span className={"w-3 h-3 rounded-[2px] " + cls} aria-hidden />;
+}
+
+function SparklineIcon() {
+  return (
+    <svg width="56" height="16" viewBox="0 0 56 16" aria-hidden>
+      <defs>
+        <linearGradient id="ob-spark" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="rgb(var(--color-accent))" stopOpacity="0.3" />
+          <stop offset="100%" stopColor="rgb(var(--color-accent))" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon
+        points="2,14 2,8 12,6 22,9 32,5 42,7 54,4 54,14"
+        fill="url(#ob-spark)"
+      />
+      <polyline
+        points="2,8 12,6 22,9 32,5 42,7 54,4"
+        fill="none"
+        stroke="rgb(var(--color-accent))"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="54" cy="4" r="1.4" fill="rgb(var(--color-accent))" />
+    </svg>
+  );
+}
 
 function LaunchStep({
   onPostMatch,
