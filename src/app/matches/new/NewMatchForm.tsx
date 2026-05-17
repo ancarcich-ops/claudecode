@@ -134,7 +134,7 @@ export default function NewMatchForm({
     ]);
   const removePlayer = (i: number) =>
     setPlayers((rows) =>
-      rows.length > 2 ? rows.filter((_, idx) => idx !== i) : rows,
+      rows.length > 1 ? rows.filter((_, idx) => idx !== i) : rows,
     );
 
   const defaultTee = (() => {
@@ -183,7 +183,19 @@ export default function NewMatchForm({
   };
 
   return (
-    <form action={action} className="space-y-4">
+    <form
+      action={action}
+      className="space-y-4"
+      onSubmit={(e) => {
+        // Belt-and-suspenders: even if a stray Enter / replay-click on
+        // the sticky CTA tries to fire submit before the user has
+        // reached the final step, swallow it. The "Open market" button
+        // (rendered only on the last step) is the only legitimate path.
+        if (step !== STEPS.length - 1) {
+          e.preventDefault();
+        }
+      }}
+    >
       {/* Step header: progress dots + back arrow + step title. */}
       <div className="flex items-center justify-between gap-3">
         <button
@@ -285,7 +297,7 @@ export default function NewMatchForm({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="label" htmlFor="scheduledAt">
               Tee time
@@ -466,7 +478,7 @@ export default function NewMatchForm({
                 type="button"
                 className="btn btn-ghost px-2 shrink-0"
                 onClick={() => removePlayer(i)}
-                disabled={players.length <= 2}
+                disabled={players.length <= 1}
                 aria-label={`Remove player ${i + 1}`}
                 title="Remove player"
               >
@@ -476,7 +488,8 @@ export default function NewMatchForm({
           ))}
         </div>
         <p className="text-xs text-mute mt-3">
-          Crowd wagers and live scoring shift the line from there.
+          Crowd wagers and live scoring shift the line from there. Playing
+          solo is fine — drop everyone else to log just your round.
         </p>
       </div>
 
@@ -571,11 +584,13 @@ export default function NewMatchForm({
         />
       )}
 
-      {/* Sticky bottom action. Next while we're on steps 1 & 2; submit on
-          the final step. */}
+      {/* Sticky bottom action. Next while we're on steps 1 & 2; submit
+          on the final step. Distinct `key`s + `type=button` on Next make
+          sure a stray replayed click can't morph into a form submit. */}
       <div className="sticky bottom-2 pt-2">
         {step < STEPS.length - 1 ? (
           <button
+            key="next"
             type="button"
             onClick={tryNext}
             disabled={!canAdvance}
@@ -588,7 +603,11 @@ export default function NewMatchForm({
                 : "Next →"}
           </button>
         ) : (
-          <button className="btn btn-primary w-full" type="submit">
+          <button
+            key="submit"
+            type="submit"
+            className="btn btn-primary w-full"
+          >
             Open market
           </button>
         )}

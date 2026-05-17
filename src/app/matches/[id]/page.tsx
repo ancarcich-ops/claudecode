@@ -630,39 +630,86 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
     updateParsAction,
   } = a;
 
-  const scorecardContent = (
-    <section className="card p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="font-display text-base font-semibold text-ink">
-          Scorecard
-        </h2>
-        <span className="text-xs text-mute">
-          {odds.meta.holesPlayed}/{match.holes} holes logged
-        </span>
-      </div>
-      {!user ? (
-        <div className="text-sm text-mute">
-          Sign in to log scores during the round.
-        </div>
-      ) : (
-        <>
-          {!canLogScores && !isCompleted && (
-            <div className="text-xs text-mute mb-3">
-              Read-only — only the creator and players in this match can log
-              scores.
-            </div>
-          )}
-          <ScoreSheet
+  // Defined before scorecardContent so the latter can append the
+  // creator-only settings panels below the score sheet.
+  const settingsContent = (
+    <div className="space-y-6">
+      {wolfGame && user && isCreator && (
+        <section className="card p-4">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <h2 className="font-display text-base font-semibold text-ink">
+              Wolf · settings
+            </h2>
+            <span className="text-[11px] text-mute">
+              Creator only
+            </span>
+          </div>
+          <WolfSettings
+            sideGameId={wolfGame.id}
+            players={match.players.map((p) => ({
+              id: p.id,
+              displayName: p.displayName,
+              seat: p.seat,
+            }))}
+            rotation={wolfConfig.rotation ?? []}
+            pushRule={wolfConfig.pushRule ?? "NO_POINTS"}
+            locked={isCompleted}
+          />
+        </section>
+      )}
+      {isCreator && (
+        <section className="card p-4">
+          <ParsEditor
+            action={updateParsAction}
             matchId={match.id}
             holes={match.holes}
             startingHole={matchStart}
             pars={pars}
-            players={playerMeta}
-            locked={!canLogScores}
           />
-        </>
+        </section>
       )}
-    </section>
+    </div>
+  );
+
+  const scorecardContent = (
+    <div className="space-y-6">
+      <section className="card p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-display text-base font-semibold text-ink">
+            Scorecard
+          </h2>
+          <span className="text-xs text-mute">
+            {odds.meta.holesPlayed}/{match.holes} holes logged
+          </span>
+        </div>
+        {!user ? (
+          <div className="text-sm text-mute">
+            Sign in to log scores during the round.
+          </div>
+        ) : (
+          <>
+            {!canLogScores && !isCompleted && (
+              <div className="text-xs text-mute mb-3">
+                Read-only — only the creator and players in this match can log
+                scores.
+              </div>
+            )}
+            <ScoreSheet
+              matchId={match.id}
+              holes={match.holes}
+              startingHole={matchStart}
+              pars={pars}
+              players={playerMeta}
+              locked={!canLogScores}
+            />
+          </>
+        )}
+      </section>
+      {/* Creator-only configuration lives here instead of its own tab --
+          pars + Wolf rotation are tied directly to scoring, so they
+          read naturally as a continuation of the scorecard. */}
+      {isCreator && settingsContent}
+    </div>
   );
 
   const marketContent = (
@@ -959,45 +1006,6 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
     </div>
   );
 
-  const settingsContent = (
-    <div className="space-y-6">
-      {wolfGame && user && isCreator && (
-        <section className="card p-4">
-          <div className="flex items-center justify-between gap-2 mb-3">
-            <h2 className="font-display text-base font-semibold text-ink">
-              Wolf · settings
-            </h2>
-            <span className="text-[11px] text-mute">
-              Creator only
-            </span>
-          </div>
-          <WolfSettings
-            sideGameId={wolfGame.id}
-            players={match.players.map((p) => ({
-              id: p.id,
-              displayName: p.displayName,
-              seat: p.seat,
-            }))}
-            rotation={wolfConfig.rotation ?? []}
-            pushRule={wolfConfig.pushRule ?? "NO_POINTS"}
-            locked={isCompleted}
-          />
-        </section>
-      )}
-      {isCreator && (
-        <section className="card p-4">
-          <ParsEditor
-            action={updateParsAction}
-            matchId={match.id}
-            holes={match.holes}
-            startingHole={matchStart}
-            pars={pars}
-          />
-        </section>
-      )}
-    </div>
-  );
-
   const tabs: MatchTab[] = [
     {
       id: "scorecard",
@@ -1018,13 +1026,6 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
       label: "Side games",
       badge: enabledKinds.length || null,
       content: sideGamesContent,
-    });
-  }
-  if (isCreator) {
-    tabs.push({
-      id: "settings",
-      label: "Settings",
-      content: settingsContent,
     });
   }
   return tabs;
