@@ -1,15 +1,22 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { toast } from "sonner";
 
 export default function ParsEditor({
   action,
+  saveCourseAction,
   matchId,
   holes,
   startingHole = 1,
   pars,
 }: {
+  // Save the pars to the match (per-round override).
   action: (formData: FormData) => Promise<void>;
+  // Optionally also promote those pars to the course-level default so
+  // future matches at this course inherit them automatically. When
+  // omitted (e.g. non-creator view), the button is hidden.
+  saveCourseAction?: (formData: FormData) => Promise<void>;
   matchId: string;
   holes: number;
   startingHole?: number;
@@ -18,19 +25,47 @@ export default function ParsEditor({
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState<number[]>(pars);
   const [pending, startTransition] = useTransition();
+  const [coursePending, startCourseTransition] = useTransition();
 
   const total = values.reduce((a, b) => a + b, 0);
   const setIdx = (i: number, v: number) =>
     setValues((cur) => cur.map((c, idx) => (idx === i ? v : c)));
 
-  const submit = () => {
+  const buildFormData = () => {
     const fd = new FormData();
     fd.set("matchId", matchId);
     for (const v of values) fd.append("par", String(v));
-    startTransition(() => {
-      action(fd);
+    return fd;
+  };
+
+  const submit = () => {
+    const fd = buildFormData();
+    startTransition(async () => {
+      try {
+        await action(fd);
+        toast.success("Match pars saved.");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Couldn't save pars.");
+      }
     });
   };
+
+  const saveToCourse = () => {
+    if (!saveCourseAction) return;
+    const fd = buildFormData();
+    startCourseTransition(async () => {
+      try {
+        await saveCourseAction(fd);
+        toast.success("Saved as course default. Future rounds inherit these.");
+      } catch (e) {
+        toast.error(
+          e instanceof Error ? e.message : "Couldn't save course default.",
+        );
+      }
+    });
+  };
+
+  const dirty = values.some((v, i) => v !== pars[i]);
 
   return (
     <div>
@@ -67,19 +102,31 @@ export default function ParsEditor({
               </label>
             ))}
           </div>
-          <div className="flex justify-end">
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {saveCourseAction && (
+              <button
+                type="button"
+                className="btn btn-ghost text-xs"
+                onClick={saveToCourse}
+                disabled={coursePending || pending}
+                title="Save these pars as the course-level default. New rounds here will inherit them."
+              >
+                {coursePending ? "Saving…" : "Save as course default"}
+              </button>
+            )}
             <button
               type="button"
               className="btn btn-primary"
               onClick={submit}
-              disabled={pending}
+              disabled={pending || !dirty}
             >
               {pending ? "Saving..." : "Save pars"}
             </button>
           </div>
           <p className="text-xs text-mute">
-            Per-hole pars sharpen the live odds projection. Default is par 72
-            with a mix of 3s, 4s, and 5s.
+            Per-hole pars sharpen the live odds projection. The "Save as course
+            default" option promotes them to the course so future matches at
+            this course auto-fill the same layout.
           </p>
         </div>
       )}

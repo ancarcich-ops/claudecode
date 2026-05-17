@@ -222,6 +222,11 @@ model Course {
   // haven't attempted yet; set even when OSM had no data (to avoid
   // retrying every visit). Re-run by clearing this column.
   osmFetchedAt DateTime?
+  // JSON-encoded master pars array (length 9 or 18) saved by users via
+  // the per-match ParsEditor's "Save as course default" button. When a
+  // new match is created for this course with no per-match override,
+  // createMatchAction falls back to these before the generic defaults.
+  parData   String?
   createdAt DateTime     @default(now())
 
   holes     CourseHole[]

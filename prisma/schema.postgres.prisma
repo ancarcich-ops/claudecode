@@ -179,6 +179,7 @@ model Course {
   centerLat Float?
   centerLng Float?
   osmFetchedAt DateTime?
+  parData   String?
   createdAt DateTime       @default(now())
 
   holes     CourseHole[]
