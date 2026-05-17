@@ -6,7 +6,7 @@
 // hole in the "Course pars" editor on the match page.
 
 export type CourseAccess = "public" | "private" | "resort" | "municipal";
-export type CourseRegion = "LA" | "OC" | "IE" | "BC";
+export type CourseRegion = "LA" | "OC" | "IE";
 
 export type CoursePreset = {
   id: string;
@@ -597,16 +597,17 @@ export const COURSE_PRESETS: CoursePreset[] = [
     pars: [5, 4, 4, 4, 3, 5, 4, 3, 4, 4, 5, 4, 3, 4, 5, 3, 4, 4],
   },
 
-  // --- British Columbia ---
+  // --- Coachella Valley (Riverside County, grouped with IE) ---
   {
-    id: "bighorn-gc",
-    name: "Bighorn Golf Club",
-    city: "Kamloops, BC",
-    region: "BC",
-    access: "public",
+    id: "bighorn-gc-canyons",
+    name: "Bighorn Golf Club - Canyons",
+    city: "Palm Desert, CA",
+    region: "IE",
+    access: "private",
     holes: 18,
-    // From the official scorecard (golfbighorn.ca). Par 72.
-    pars: [5, 4, 4, 3, 4, 3, 4, 5, 4, 5, 4, 4, 4, 4, 3, 4, 3, 5],
+    // Tom Fazio design at Bighorn GC. Par 72, transcribed from the
+    // official scorecard.
+    pars: [4, 4, 5, 3, 4, 5, 3, 4, 4, 4, 4, 5, 4, 4, 3, 5, 3, 4],
   },
 ];
 
