@@ -5,7 +5,6 @@
 
 import { parseParData } from "./odds";
 import { colorForSeat } from "./colors";
-import { buildHoleShapePath, type LatLng } from "./holeShape";
 
 // ----- Public types -----
 
@@ -55,14 +54,12 @@ export type PlayerCard = {
   cumulativeNet: number[];
 };
 
+// Just the meta the header line ("Hole 12 next · P3") needs. The peek
+// panel and its OSM-geometry plumbing were removed in favor of leaning
+// on the card body to tell the round's story.
 export type NextHole = {
   number: number;
   par: number;
-  yardageYds: number | null;
-  strokeIndex: number | null;
-  // SVG path data for the hole sketch, viewBox 0 0 100 18. Null when
-  // we don't have OSM geometry yet.
-  shapePath: string | null;
 };
 
 export type MatchCardData = {
@@ -112,25 +109,10 @@ type RawMatch = {
   _count: { wagers: number };
 };
 
-// Optional course geometry for a single hole. Comes from CourseHole
-// rows that the OSM seeder populates. When provided for the upcoming
-// "next hole", PeekHole renders a real sketched shape instead of the
-// generic placeholder curve.
-export type HoleGeoLite = {
-  tee: LatLng | null;
-  green: LatLng | null;
-  fairwayPolygon: LatLng[] | null;
-  yardageYds: number | null;
-  strokeIndex: number | null;
-};
-
 export function buildMatchCardData(
   m: RawMatch,
   // Win probabilities keyed by matchPlayerId.
   probabilities: Record<string, number>,
-  // Optional: geometry + meta for the match's *next* hole. Passing it
-  // upgrades the peek panel from a placeholder curve to a real sketch.
-  nextHoleGeo?: HoleGeoLite | null,
 ): MatchCardData {
   const totalHoles = m.holes;
   const startingHole = m.startingHole ?? 1;
@@ -233,13 +215,7 @@ export function buildMatchCardData(
     scheduledAt: m.scheduledAt,
     wagerCount: m._count.wagers,
     players,
-    nextHole: buildNextHole(
-      currentHole,
-      pars,
-      startingHole,
-      m.status,
-      nextHoleGeo ?? null,
-    ),
+    nextHole: buildNextHole(currentHole, pars, startingHole, m.status),
     tickerItems: buildTickerItems(players, m.status, m._count.wagers),
   };
 }
@@ -265,21 +241,11 @@ function buildNextHole(
   pars: number[],
   startingHole: number,
   status: string,
-  geo: HoleGeoLite | null,
 ): NextHole | null {
   if (status !== "IN_PROGRESS" && status !== "UPCOMING") return null;
   const idx = hole - startingHole;
   if (idx < 0 || idx >= pars.length) return null;
-  const shapePath = geo
-    ? buildHoleShapePath(geo.tee, geo.green, geo.fairwayPolygon)
-    : null;
-  return {
-    number: hole,
-    par: pars[idx] ?? 4,
-    yardageYds: geo?.yardageYds ?? null,
-    strokeIndex: geo?.strokeIndex ?? null,
-    shapePath,
-  };
+  return { number: hole, par: pars[idx] ?? 4 };
 }
 
 // Compose a small list of marquee items for the LIVE header ticker.
