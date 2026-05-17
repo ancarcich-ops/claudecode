@@ -6,7 +6,6 @@ import Link from "next/link";
 import type { MatchCardData } from "@/lib/matchCard";
 import StatusPill from "./StatusPill";
 import HeaderTicker from "./HeaderTicker";
-import PeekHole from "./PeekHole";
 import PlayerRowLive from "./PlayerRowLive";
 import PlayerRowUpcoming from "./PlayerRowUpcoming";
 import PlayerRowSettled from "./PlayerRowSettled";
@@ -62,15 +61,6 @@ export default function MatchCard({ data }: { data: MatchCardData }) {
           ),
         )}
       </div>
-
-      {(isLive || isUpcoming) && data.nextHole && (
-        <div className="mt-3">
-          <PeekHole
-            next={data.nextHole}
-            variant={isUpcoming ? "upcoming" : "live"}
-          />
-        </div>
-      )}
 
       {isSettled && (
         <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-2.5">
