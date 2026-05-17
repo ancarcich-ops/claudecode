@@ -297,7 +297,7 @@ export default function NewMatchForm({
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="label" htmlFor="scheduledAt">
               Tee time
@@ -306,7 +306,7 @@ export default function NewMatchForm({
               id="scheduledAt"
               name="scheduledAt"
               type="datetime-local"
-              className="input"
+              className="input text-center"
               defaultValue={defaultTee}
             />
           </div>
@@ -317,7 +317,7 @@ export default function NewMatchForm({
             <select
               id="holes"
               name="holes"
-              className="input"
+              className="input text-center"
               value={holes}
               onChange={(e) => onHolesChange(Number(e.target.value) as 9 | 18)}
             >
