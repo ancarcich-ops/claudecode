@@ -39,6 +39,7 @@ import MatchChartTabs, {
 } from "./MatchChartTabs";
 import MatchActionsMenu, { type MatchAction } from "./MatchActionsMenu";
 import MatchTabs, { type MatchTab } from "./MatchTabs";
+import ShareButton from "@/components/ShareButton";
 import BBBEditor from "./BBBEditor";
 import SnakeEditor from "./SnakeEditor";
 import WolfEditor from "./WolfEditor";
@@ -351,6 +352,11 @@ export default async function MatchPage({
             {match.courseName}
           </h1>
           <StatusBadge status={match.status} />
+          <ShareButton
+            url={`/matches/${match.id}`}
+            title={`${match.courseName} on Sticks`}
+            label="Share"
+          />
           {isCreator && (
             <MatchActionsMenu
               matchId={match.id}

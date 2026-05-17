@@ -9,6 +9,7 @@ import {
   expectedDistribution,
 } from "@/lib/scoringBaseline";
 import EmptyIllustration from "@/components/EmptyIllustration";
+import ShareButton from "@/components/ShareButton";
 import BaselinePicker from "./BaselinePicker";
 import RoundHistoryChart from "./RoundHistoryChart";
 import RoundsList from "./RoundsList";
@@ -68,6 +69,13 @@ export default async function PersonalStatsPage({
           <p className="text-sm text-mute mt-1">
             Every completed match you played, regardless of group scoping.
           </p>
+          <div className="mt-2">
+            <ShareButton
+              url={`/u/${stats.username}`}
+              title={`${displayName} on Sticks`}
+              label="Share profile"
+            />
+          </div>
         </div>
         <div className="flex items-center gap-2 shrink-0 w-full justify-center flex-wrap sm:w-auto sm:justify-end">
           {handicap && (
