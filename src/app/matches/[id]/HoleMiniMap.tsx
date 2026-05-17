@@ -70,7 +70,7 @@ export default function HoleMiniMap({
   if (greenPolygon) all.push(...greenPolygon);
   for (const h of hazards) all.push(h);
   if (aim) all.push(aim);
-  if (all.length < 2) return null;
+  if (all.length < 1) return null;
 
   let minLng = Infinity;
   let maxLng = -Infinity;
@@ -81,6 +81,17 @@ export default function HoleMiniMap({
     if (p.lng > maxLng) maxLng = p.lng;
     if (p.lat < minLat) minLat = p.lat;
     if (p.lat > maxLat) maxLat = p.lat;
+  }
+
+  // Single-point bbox (just the player on an unmapped hole): blow it
+  // out to a ~160m square so the satellite imagery actually shows
+  // useful context instead of zooming into a single pixel.
+  if (all.length === 1) {
+    const r = 0.00072; // ~80m at most latitudes
+    minLng -= r;
+    maxLng += r;
+    minLat -= r;
+    maxLat += r;
   }
 
   // Pad ~12% so points don't sit on the very edge.
@@ -189,22 +200,6 @@ export default function HoleMiniMap({
           preserveAspectRatio="xMidYMid slice"
         />
       )}
-
-      {/* Tiny diagnostic badge so we can see, at a glance, whether the
-          NEXT_PUBLIC_MAPBOX_TOKEN reached the client bundle. "SAT" =
-          token present, image request is firing. "NO SAT" = token
-          missing -- env var didn't make it into the build. */}
-      <text
-        x={V - 2}
-        y="6"
-        textAnchor="end"
-        fontSize="4"
-        fill={tileUrl ? "#34d399" : "#f87171"}
-        fillOpacity="0.75"
-        style={{ fontFamily: "monospace" }}
-      >
-        {tileUrl ? "SAT" : "NO SAT"}
-      </text>
 
       {!tileUrl && pTee && pGC && (
         <line
