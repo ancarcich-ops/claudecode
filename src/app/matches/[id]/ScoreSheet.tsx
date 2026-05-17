@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useRef, useTransition } from "react";
 import { logScoreAction } from "@/lib/actions";
 
 type Player = {
@@ -35,6 +35,33 @@ export default function ScoreSheet({
   );
   const coursePar = pars.reduce((a, b) => a + b, 0);
 
+  // Compute the next hole (first one nobody has logged yet) and scroll
+  // it into view on mount. We keep the previous played hole visible too
+  // so the user has context for the running score.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const nextHoleCellRef = useRef<HTMLTableCellElement>(null);
+  const maxScored = players.reduce(
+    (m, p) =>
+      Math.max(m, p.scores.reduce((mm, s) => Math.max(mm, s.hole), 0)),
+    0,
+  );
+  const lastHole = startingHole + holes - 1;
+  const nextHoleNum = Math.min(Math.max(maxScored + 1, startingHole), lastHole);
+
+  useEffect(() => {
+    // Nothing logged yet -> leave the scroll at the start so hole 1 is
+    // already in view.
+    if (maxScored === 0) return;
+    const cell = nextHoleCellRef.current;
+    const container = scrollRef.current;
+    if (!cell || !container) return;
+    // Show one hole of "what just happened" before the next hole. The
+    // sticky-left player-name column is ~128px and each hole cell is
+    // ~40px wide, so we land the next column ~168px from the left edge.
+    const target = cell.offsetLeft - 168;
+    container.scrollLeft = Math.max(0, target);
+  }, [maxScored]);
+
   const submit = (matchPlayerId: string, hole: number, strokes: string) => {
     const fd = new FormData();
     fd.set("matchId", matchId);
@@ -47,7 +74,7 @@ export default function ScoreSheet({
   };
 
   return (
-    <div className="overflow-x-auto -mx-4 px-4">
+    <div ref={scrollRef} className="overflow-x-auto -mx-4 px-4">
       <table className="w-full text-sm border-separate border-spacing-0">
         <thead>
           <tr className="text-mute">
@@ -57,7 +84,11 @@ export default function ScoreSheet({
             {holeNumbers.map((h) => (
               <th
                 key={h}
-                className="font-mono text-xs px-1 py-2 text-center min-w-[2.5rem]"
+                ref={h === nextHoleNum ? nextHoleCellRef : undefined}
+                className={
+                  "font-mono text-xs px-1 py-2 text-center min-w-[2.5rem] " +
+                  (h === nextHoleNum && maxScored > 0 ? "text-accent" : "")
+                }
               >
                 {h}
               </th>

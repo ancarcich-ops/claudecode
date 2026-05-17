@@ -52,6 +52,10 @@ export type PlayerCard = {
   // Cumulative net-to-par at each scored hole (oldest -> newest).
   // Length == holesPlayed. Used to draw the small inline sparkline.
   cumulativeNet: number[];
+  // True when this player is the current viewer's existing wager pick
+  // for this match. Used by the inline "Call" button to switch to a
+  // "Picked" badge.
+  isMyPick: boolean;
 };
 
 // Just the meta the header line ("Hole 12 next · P3") needs. The peek
@@ -113,6 +117,9 @@ export function buildMatchCardData(
   m: RawMatch,
   // Win probabilities keyed by matchPlayerId.
   probabilities: Record<string, number>,
+  // matchPlayerId the current viewer has wagered on for this match,
+  // if any. Drives the per-player "Picked" badge.
+  myPickPlayerId?: string | null,
 ): MatchCardData {
   const totalHoles = m.holes;
   const startingHole = m.startingHole ?? 1;
@@ -203,6 +210,7 @@ export function buildMatchCardData(
       rank: rankFor(p.id),
       momentum,
       cumulativeNet,
+      isMyPick: !!myPickPlayerId && myPickPlayerId === p.id,
     };
   });
 

@@ -6,9 +6,16 @@
 import Avatar from "@/components/Avatar";
 import { isVariant } from "@/components/Avatar";
 import ProbabilityTick from "./ProbabilityTick";
+import QuickWagerButton from "./QuickWagerButton";
 import type { PlayerCard } from "@/lib/matchCard";
 
-export default function PlayerRowUpcoming({ player }: { player: PlayerCard }) {
+export default function PlayerRowUpcoming({
+  player,
+  matchId,
+}: {
+  player: PlayerCard;
+  matchId: string;
+}) {
   const pct = Math.max(0, Math.min(1, player.winProbability));
   return (
     <div className="py-2.5">
@@ -29,13 +36,19 @@ export default function PlayerRowUpcoming({ player }: { player: PlayerCard }) {
           />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-sm font-medium text-ink truncate">
               {player.name}
             </span>
             <span className="font-mono text-[10px] text-mute shrink-0">
               hcp {player.handicap.toFixed(1).replace(/\.0$/, "")}
             </span>
+            <QuickWagerButton
+              matchId={matchId}
+              pickedPlayerId={player.id}
+              playerName={player.name}
+              isMyPick={player.isMyPick}
+            />
           </div>
         </div>
         <ProbabilityTick
