@@ -32,7 +32,7 @@ const MODE_COPY: Record<
     label: "Custom",
     sub: "Group strokes",
     field: "Strokes",
-    help: "Group sets the stroke allowance per player. Lowest gross minus strokes wins.",
+    help: "Set each player's stroke allowance on the next step (Players). Lowest gross minus strokes wins.",
   },
 };
 
@@ -137,7 +137,13 @@ export default function NewMatchForm({
       rows.length > 1 ? rows.filter((_, idx) => idx !== i) : rows,
     );
 
-  const defaultTee = (() => {
+  // Controlled tee-time string in the same shape as <input
+  // type="datetime-local"> expects ("YYYY-MM-DDTHH:mm"). We control it
+  // so we can show our own short label ("5/17 · 9:00pm") on top of an
+  // invisible native input -- the picker still works, but the visible
+  // text isn't the OS's wordy default that overflows the half-width
+  // box on phones.
+  const [scheduledAt, setScheduledAt] = useState<string>(() => {
     const d = new Date();
     d.setDate(d.getDate() + 1);
     d.setMinutes(d.getMinutes() < 30 ? 30 : 0);
@@ -147,7 +153,7 @@ export default function NewMatchForm({
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
       d.getHours(),
     )}:${pad(d.getMinutes())}`;
-  })();
+  });
 
   const groupedPresets = useMemo(() => {
     const byRegion = new Map<string, CoursePreset[]>();
@@ -302,13 +308,23 @@ export default function NewMatchForm({
             <label className="label" htmlFor="scheduledAt">
               Tee time
             </label>
-            <input
-              id="scheduledAt"
-              name="scheduledAt"
-              type="datetime-local"
-              className="input text-center"
-              defaultValue={defaultTee}
-            />
+            <div className="relative">
+              <div
+                className="input text-center flex items-center justify-center pointer-events-none select-none"
+                aria-hidden
+              >
+                {formatTeeShort(scheduledAt)}
+              </div>
+              <input
+                id="scheduledAt"
+                name="scheduledAt"
+                type="datetime-local"
+                value={scheduledAt}
+                onChange={(e) => setScheduledAt(e.target.value)}
+                aria-label="Tee time"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
+            </div>
           </div>
           <div>
             <label className="label" htmlFor="holes">
@@ -675,4 +691,21 @@ function RemoveIcon() {
       <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
   );
+}
+
+// "2026-05-17T21:00" -> "5/17 · 9:00pm". Falls back to the raw string
+// if parsing fails; "—" for empty.
+function formatTeeShort(iso: string): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  const month = d.getMonth() + 1;
+  const day = d.getDate();
+  let hours = d.getHours();
+  const mins = d.getMinutes();
+  const isPM = hours >= 12;
+  hours = hours % 12;
+  if (hours === 0) hours = 12;
+  const m = mins === 0 ? "" : `:${String(mins).padStart(2, "0")}`;
+  return `${month}/${day} · ${hours}${m}${isPM ? "pm" : "am"}`;
 }
