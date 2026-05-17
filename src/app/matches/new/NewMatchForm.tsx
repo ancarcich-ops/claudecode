@@ -280,67 +280,6 @@ export default function NewMatchForm({
 
       {/* Step 1: Course + tee + scoring + visibility + notes */}
       <div hidden={step !== 0} className="card p-5 space-y-4">
-        {templates.length > 0 && (
-          <div className="rounded-md border border-border bg-panel2/60">
-            <button
-              type="button"
-              onClick={() => setTemplatesOpen((v) => !v)}
-              className="w-full flex items-center justify-between px-3 py-2.5"
-              aria-expanded={templatesOpen}
-            >
-              <span className="flex items-center gap-2">
-                <span aria-hidden>↺</span>
-                <span className="text-sm font-medium text-ink">
-                  Start from a past round
-                </span>
-                <span className="font-mono text-[10px] text-mute">
-                  {templates.length}
-                </span>
-              </span>
-              <span className="text-mute text-xs">
-                {templatesOpen ? "Hide" : "Show"}
-              </span>
-            </button>
-            {templatesOpen && (
-              <ul className="border-t border-border divide-y divide-border max-h-64 overflow-y-auto">
-                {templates.map((t) => (
-                  <li key={t.id}>
-                    <button
-                      type="button"
-                      onClick={() => applyTemplate(t)}
-                      className="w-full px-3 py-2 text-left hover:bg-panel transition-colors"
-                    >
-                      <div className="flex items-baseline justify-between gap-3">
-                        <div className="text-sm font-medium text-ink truncate">
-                          {t.courseName}
-                        </div>
-                        <div className="text-[10px] text-mute font-mono shrink-0">
-                          {new Date(t.scheduledAt).toLocaleDateString(
-                            undefined,
-                            { month: "numeric", day: "numeric", year: "2-digit" },
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-[11px] text-mute mt-0.5 truncate">
-                        {t.holes}H
-                        {t.startingHole === 10 ? " (back)" : ""} · {MODE_COPY[t.scoringMode].label} ·{" "}
-                        {t.players.length} player
-                        {t.players.length === 1 ? "" : "s"}
-                        {t.sideGames.length > 0 && (
-                          <> · {t.sideGames.length} side game{t.sideGames.length === 1 ? "" : "s"}</>
-                        )}
-                      </div>
-                      <div className="text-[10px] text-mute mt-0.5 truncate">
-                        {t.players.map((p) => p.name).join(" · ")}
-                      </div>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
-
         <div>
           <label className="label" htmlFor="courseName">
             Course
@@ -508,6 +447,68 @@ export default function NewMatchForm({
           </div>
           <p className="text-[11px] text-mute mt-1.5">{modeCopy.help}</p>
         </div>
+
+        {templates.length > 0 && (
+          <div className="rounded-md border border-border bg-panel2/60">
+            <button
+              type="button"
+              onClick={() => setTemplatesOpen((v) => !v)}
+              className="w-full flex items-center justify-between px-3 py-2.5"
+              aria-expanded={templatesOpen}
+            >
+              <span className="flex items-center gap-2">
+                <span aria-hidden>↺</span>
+                <span className="text-sm font-medium text-ink">
+                  Start from a past round
+                </span>
+                <span className="font-mono text-[10px] text-mute">
+                  {templates.length}
+                </span>
+              </span>
+              <span className="text-mute text-xs">
+                {templatesOpen ? "Hide" : "Show"}
+              </span>
+            </button>
+            {templatesOpen && (
+              <ul className="border-t border-border divide-y divide-border max-h-64 overflow-y-auto">
+                {templates.map((t) => (
+                  <li key={t.id}>
+                    <button
+                      type="button"
+                      onClick={() => applyTemplate(t)}
+                      className="w-full px-3 py-2 text-left hover:bg-panel transition-colors"
+                    >
+                      <div className="flex items-baseline justify-between gap-3">
+                        <div className="text-sm font-medium text-ink truncate">
+                          {t.courseName}
+                        </div>
+                        <div className="text-[10px] text-mute font-mono shrink-0">
+                          {new Date(t.scheduledAt).toLocaleDateString(
+                            undefined,
+                            { month: "numeric", day: "numeric", year: "2-digit" },
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-[11px] text-mute mt-0.5 truncate">
+                        {t.holes}H
+                        {t.startingHole === 10 ? " (back)" : ""} · {MODE_COPY[t.scoringMode].label} ·{" "}
+                        {t.players.length} player
+                        {t.players.length === 1 ? "" : "s"}
+                        {t.sideGames.length > 0 && (
+                          <> · {t.sideGames.length} side game{t.sideGames.length === 1 ? "" : "s"}</>
+                        )}
+                      </div>
+                      <div className="text-[10px] text-mute mt-0.5 truncate">
+                        {t.players.map((p) => p.name).join(" · ")}
+                      </div>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+
         <div>
           <label className="label" htmlFor="groupId">
             Visible to
