@@ -1182,6 +1182,46 @@ export async function adminDeleteMatchAction(formData: FormData) {
   revalidatePath("/");
 }
 
+// Admin: set a match's status, bypassing the creator-only check. Also
+// stamps startedAt / completedAt so the timeline stays consistent.
+export async function adminSetMatchStatusAction(formData: FormData) {
+  const user = await requireUser();
+  const { isUserAdmin } = await import("./admin");
+  if (!isUserAdmin(user)) throw new Error("Admin only");
+  const matchId = String(formData.get("matchId") ?? "").trim();
+  const status = String(formData.get("status") ?? "").trim();
+  if (!matchId) throw new Error("Match id required");
+  const ALLOWED = ["UPCOMING", "IN_PROGRESS", "COMPLETED"] as const;
+  if (!ALLOWED.includes(status as (typeof ALLOWED)[number])) {
+    throw new Error("Invalid status");
+  }
+  const data: {
+    status: string;
+    startedAt?: Date | null;
+    completedAt?: Date | null;
+  } = { status };
+  // Fill / clear timestamps so they match the new status. We only set
+  // missing ones; never overwrite an existing startedAt.
+  const existing = await prisma.match.findUnique({
+    where: { id: matchId },
+    select: { startedAt: true, completedAt: true },
+  });
+  if (!existing) throw new Error("Match not found");
+  if (status === "UPCOMING") {
+    data.startedAt = null;
+    data.completedAt = null;
+  } else if (status === "IN_PROGRESS") {
+    if (!existing.startedAt) data.startedAt = new Date();
+    data.completedAt = null;
+  } else if (status === "COMPLETED") {
+    if (!existing.startedAt) data.startedAt = new Date();
+    if (!existing.completedAt) data.completedAt = new Date();
+  }
+  await prisma.match.update({ where: { id: matchId }, data });
+  revalidatePath("/admin/matches");
+  revalidatePath(`/matches/${matchId}`);
+}
+
 // Admin: set the course's center coords (used as the initial map view
 // when there are no holes mapped yet).
 export async function adminSetCourseCenterAction(formData: FormData) {

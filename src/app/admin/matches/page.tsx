@@ -1,10 +1,15 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { adminDeleteMatchAction } from "@/lib/actions";
+import {
+  adminDeleteMatchAction,
+  adminSetMatchStatusAction,
+} from "@/lib/actions";
 
 function formatDate(d: Date): string {
   return d.toISOString().slice(0, 16).replace("T", " ");
 }
+
+const STATUSES = ["UPCOMING", "IN_PROGRESS", "COMPLETED"] as const;
 
 export default async function AdminMatchesPage() {
   const matches = await prisma.match.findMany({
@@ -65,15 +70,37 @@ export default async function AdminMatchesPage() {
                   {m.players.map((p) => p.displayName).join(", ")}
                 </div>
               </div>
-              <form action={adminDeleteMatchAction} className="shrink-0">
-                <input type="hidden" name="matchId" value={m.id} />
-                <button
-                  type="submit"
-                  className="btn btn-danger h-7 text-[11px]"
-                >
-                  Delete
-                </button>
-              </form>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {STATUSES.filter((s) => s !== m.status).map((s) => (
+                  <form
+                    key={s}
+                    action={adminSetMatchStatusAction}
+                  >
+                    <input type="hidden" name="matchId" value={m.id} />
+                    <input type="hidden" name="status" value={s} />
+                    <button
+                      type="submit"
+                      className="btn btn-ghost h-7 text-[11px] px-2"
+                      title={`Mark ${s.toLowerCase().replace("_", " ")}`}
+                    >
+                      {s === "UPCOMING"
+                        ? "→ Upcoming"
+                        : s === "IN_PROGRESS"
+                          ? "→ Live"
+                          : "→ Complete"}
+                    </button>
+                  </form>
+                ))}
+                <form action={adminDeleteMatchAction}>
+                  <input type="hidden" name="matchId" value={m.id} />
+                  <button
+                    type="submit"
+                    className="btn btn-danger h-7 text-[11px]"
+                  >
+                    Delete
+                  </button>
+                </form>
+              </div>
             </li>
           );
         })}
