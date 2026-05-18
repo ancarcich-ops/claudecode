@@ -1063,4 +1063,149 @@ export async function deleteMatchInPlaceAction(matchId: string) {
   revalidatePath("/");
 }
 
+// ---- Admin-only actions ----
+
+// Admin: save a tee or green-center coordinate for a hole at a course.
+// Bypasses the per-user "did you contribute it" attribution -- this is
+// curator-grade data.
+export async function adminSaveHoleGeoAction(formData: FormData) {
+  const user = await requireUser();
+  const { isUserAdmin } = await import("./admin");
+  if (!isUserAdmin(user)) throw new Error("Admin only");
+  const courseName = String(formData.get("courseName") ?? "").trim();
+  const hole = Number(formData.get("hole"));
+  const kind = String(formData.get("kind") ?? "");
+  const lat = Number(formData.get("lat"));
+  const lng = Number(formData.get("lng"));
+  if (!courseName) throw new Error("Course name required");
+  if (!Number.isFinite(hole) || hole < 1 || hole > 36) {
+    throw new Error("Invalid hole number");
+  }
+  if (
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng) ||
+    Math.abs(lat) > 90 ||
+    Math.abs(lng) > 180
+  ) {
+    throw new Error("Invalid coordinates");
+  }
+  const course = await findOrCreateCourseByName(courseName);
+  const data: Record<string, number> = {};
+  if (kind === "tee") {
+    data.teeLat = lat;
+    data.teeLng = lng;
+  } else if (kind === "green" || kind === "green-center") {
+    data.greenLat = lat;
+    data.greenLng = lng;
+  } else if (kind === "green-front") {
+    data.greenFrontLat = lat;
+    data.greenFrontLng = lng;
+  } else if (kind === "green-back") {
+    data.greenBackLat = lat;
+    data.greenBackLng = lng;
+  } else {
+    throw new Error("Unknown pin kind");
+  }
+  const existing = await prisma.courseHole.findUnique({
+    where: { courseId_hole: { courseId: course.id, hole } },
+  });
+  if (existing) {
+    await prisma.courseHole.update({
+      where: { id: existing.id },
+      data: { ...data, source: "admin" },
+    });
+  } else {
+    await prisma.courseHole.create({
+      data: {
+        courseId: course.id,
+        hole,
+        contributedById: user.id,
+        source: "admin",
+        ...data,
+      },
+    });
+  }
+  revalidatePath(`/admin/courses/${encodeURIComponent(courseName)}`);
+}
+
+// Admin: clear a pin (tee or green) for a hole. Sets the relevant
+// columns back to null.
+export async function adminClearHoleGeoAction(formData: FormData) {
+  const user = await requireUser();
+  const { isUserAdmin } = await import("./admin");
+  if (!isUserAdmin(user)) throw new Error("Admin only");
+  const courseName = String(formData.get("courseName") ?? "").trim();
+  const hole = Number(formData.get("hole"));
+  const kind = String(formData.get("kind") ?? "");
+  if (!courseName) throw new Error("Course name required");
+  const course = await prisma.course.findUnique({ where: { name: courseName } });
+  if (!course) return;
+  const data: Record<string, null> = {};
+  if (kind === "tee") {
+    data.teeLat = null;
+    data.teeLng = null;
+  } else if (kind === "green" || kind === "green-center") {
+    data.greenLat = null;
+    data.greenLng = null;
+  } else if (kind === "green-front") {
+    data.greenFrontLat = null;
+    data.greenFrontLng = null;
+  } else if (kind === "green-back") {
+    data.greenBackLat = null;
+    data.greenBackLng = null;
+  } else {
+    throw new Error("Unknown pin kind");
+  }
+  await prisma.courseHole
+    .update({
+      where: { courseId_hole: { courseId: course.id, hole } },
+      data,
+    })
+    .catch(() => {
+      // Row didn't exist -- nothing to clear.
+    });
+  revalidatePath(`/admin/courses/${encodeURIComponent(courseName)}`);
+}
+
+// Admin: force-delete a match regardless of who created it. For
+// cleaning up sloppy / abandoned / duplicate matches.
+export async function adminDeleteMatchAction(formData: FormData) {
+  const user = await requireUser();
+  const { isUserAdmin } = await import("./admin");
+  if (!isUserAdmin(user)) throw new Error("Admin only");
+  const matchId = String(formData.get("matchId") ?? "").trim();
+  if (!matchId) throw new Error("Match id required");
+  await prisma.match.delete({ where: { id: matchId } }).catch(() => {
+    // Already gone -- ignore.
+  });
+  revalidatePath("/admin/matches");
+  revalidatePath("/");
+}
+
+// Admin: set the course's center coords (used as the initial map view
+// when there are no holes mapped yet).
+export async function adminSetCourseCenterAction(formData: FormData) {
+  const user = await requireUser();
+  const { isUserAdmin } = await import("./admin");
+  if (!isUserAdmin(user)) throw new Error("Admin only");
+  const courseName = String(formData.get("courseName") ?? "").trim();
+  const lat = Number(formData.get("lat"));
+  const lng = Number(formData.get("lng"));
+  if (!courseName) throw new Error("Course name required");
+  if (
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng) ||
+    Math.abs(lat) > 90 ||
+    Math.abs(lng) > 180
+  ) {
+    throw new Error("Invalid coordinates");
+  }
+  const course = await findOrCreateCourseByName(courseName);
+  await prisma.course.update({
+    where: { id: course.id },
+    data: { centerLat: lat, centerLng: lng },
+  });
+  revalidatePath(`/admin/courses/${encodeURIComponent(courseName)}`);
+}
+
 export { getCurrentUser };
