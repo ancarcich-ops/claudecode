@@ -9,6 +9,7 @@ import {
   adminSaveHoleGeoAction,
   adminSetCourseCenterAction,
 } from "@/lib/actions";
+import GolfBertPanel from "./GolfBertPanel";
 
 // Admin course-geometry editor. Shows a Mapbox satellite image of the
 // course (center + ~1.5km bbox), a 18-hole sidebar, and a "set tee"
@@ -482,6 +483,9 @@ export default function CourseEditor({
 
         {/* Sidebar */}
         <div className="w-72 shrink-0 border-l border-border overflow-y-auto bg-panel/40">
+          <div className="p-3 border-b border-border">
+            <GolfBertPanel courseName={courseName} />
+          </div>
           <ul className="divide-y divide-border">
             {holes.map((h) => {
               const teeSet = h.teeLat != null && h.teeLng != null;
