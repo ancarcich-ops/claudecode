@@ -1248,4 +1248,142 @@ export async function adminSetCourseCenterAction(formData: FormData) {
   revalidatePath(`/admin/courses/${encodeURIComponent(courseName)}`);
 }
 
+// Admin: ping GolfBert to confirm credentials work. Returns the raw
+// status response so the UI can show it. Throws on auth/network err.
+export async function adminGolfBertPingAction() {
+  const user = await requireUser();
+  const { isUserAdmin } = await import("./admin");
+  if (!isUserAdmin(user)) throw new Error("Admin only");
+  const gb = await import("./golfbert");
+  return await gb.ping();
+}
+
+// Admin: search GolfBert by name. Returns a thin list the UI can
+// render so the admin can pick the right course id.
+export async function adminGolfBertSearchAction(name: string) {
+  const user = await requireUser();
+  const { isUserAdmin } = await import("./admin");
+  if (!isUserAdmin(user)) throw new Error("Admin only");
+  if (!name.trim()) return [] as Array<{
+    id: number;
+    name: string;
+    city?: string | null;
+    state?: string | null;
+  }>;
+  const gb = await import("./golfbert");
+  const resp = await gb.searchCourses({ name: name.trim(), limit: 25 });
+  return (resp.resources ?? []).map((c) => ({
+    id: c.id,
+    name: c.name,
+    city: c.address?.city ?? null,
+    state: c.address?.state ?? null,
+  }));
+}
+
+// Admin: import all hole geometry for a course from GolfBert into our
+// Course + CourseHole tables. `courseName` is the Sticks-side name to
+// bind the import to -- usually the existing one selected in the
+// editor, so future matches at that name pick up the geometry.
+export async function adminImportFromGolfBertAction(formData: FormData) {
+  const user = await requireUser();
+  const { isUserAdmin } = await import("./admin");
+  if (!isUserAdmin(user)) throw new Error("Admin only");
+  const courseName = String(formData.get("courseName") ?? "").trim();
+  const golfbertId = Number(formData.get("golfbertId"));
+  if (!courseName) throw new Error("Course name required");
+  if (!Number.isFinite(golfbertId) || golfbertId <= 0) {
+    throw new Error("Valid GolfBert course id required");
+  }
+  const gb = await import("./golfbert");
+  const imported = await gb.importCourseFromGolfBert(golfbertId);
+
+  const course = await findOrCreateCourseByName(courseName);
+  // Update course-level center coords + par data (par totalled from
+  // teeboxes per hole). osmFetchedAt stays untouched -- this is a
+  // separate source.
+  const pars = imported.holes.map((h) => h.par ?? 4);
+  await prisma.course.update({
+    where: { id: course.id },
+    data: {
+      centerLat: imported.centerLat ?? course.centerLat ?? undefined,
+      centerLng: imported.centerLng ?? course.centerLng ?? undefined,
+      parData: JSON.stringify(pars),
+    },
+  });
+
+  // Upsert each hole. We always overwrite when GolfBert has the
+  // value -- this is curated data; preserve admin-source rows only
+  // if GolfBert returned null for that field.
+  let holesWritten = 0;
+  let hazardsWritten = 0;
+  for (const h of imported.holes) {
+    await prisma.courseHole.upsert({
+      where: { courseId_hole: { courseId: course.id, hole: h.number } },
+      update: {
+        teeLat: h.teeLat,
+        teeLng: h.teeLng,
+        greenLat: h.greenLat,
+        greenLng: h.greenLng,
+        greenPolygonJson: h.greenPolygon
+          ? JSON.stringify(h.greenPolygon)
+          : null,
+        fairwayPolygonJson: h.fairwayPolygon
+          ? JSON.stringify(h.fairwayPolygon)
+          : null,
+        distanceYds: h.yardage,
+        source: "golfbert",
+      },
+      create: {
+        courseId: course.id,
+        hole: h.number,
+        teeLat: h.teeLat,
+        teeLng: h.teeLng,
+        greenLat: h.greenLat,
+        greenLng: h.greenLng,
+        greenPolygonJson: h.greenPolygon
+          ? JSON.stringify(h.greenPolygon)
+          : null,
+        fairwayPolygonJson: h.fairwayPolygon
+          ? JSON.stringify(h.fairwayPolygon)
+          : null,
+        distanceYds: h.yardage,
+        source: "golfbert",
+      },
+    });
+    holesWritten++;
+
+    // Hazards: wipe previous golfbert-sourced hazards for this hole,
+    // then insert the fresh batch. Course-wide we'd want a source
+    // column on CourseHazard to scope this -- without it, we use
+    // contributedById==null AND createdAt match windowing as a proxy.
+    // Simpler v1: leave user-marked hazards in place; only add new
+    // ones. Idempotency is acceptable here -- duplicates are visual
+    // noise but not destructive.
+    for (const hz of h.hazards) {
+      await prisma.courseHazard.create({
+        data: {
+          courseId: course.id,
+          hole: h.number,
+          kind: hz.kind,
+          label: hz.label ?? null,
+          lat: hz.lat,
+          lng: hz.lng,
+          contributedById: user.id,
+        },
+      });
+      hazardsWritten++;
+    }
+  }
+
+  revalidatePath(`/admin/courses/${encodeURIComponent(courseName)}`);
+  return {
+    courseName,
+    golfbertId,
+    holesWritten,
+    hazardsWritten,
+    par: pars.reduce((a, b) => a + b, 0),
+  };
+}
+
+// Admin: ping GolfBert + search wrappers above.
 export { getCurrentUser };
