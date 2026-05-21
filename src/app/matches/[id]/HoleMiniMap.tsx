@@ -1,26 +1,40 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 // Top-down hole map. When NEXT_PUBLIC_MAPBOX_TOKEN is set, the base
 // layer is a Mapbox satellite image of the bounding box of all known
-// features. Without a token we fall back to the dark schematic.
+// features. Without a token we fall back to a flat schematic.
 //
-// The component measures its own rendered size with a ResizeObserver
-// and requests a Mapbox image of the matching aspect ratio (and a
-// viewBox of the matching aspect ratio), so the satellite fills the
-// whole container with no letterboxing. The bbox is expanded on
-// whichever axis needs more room to match the container aspect, so
-// nothing gets cropped.
-//
-// Projection: linear in lng, Web Mercator in lat -- exactly how
-// Mapbox renders its static-bbox image, so overlays align to within
-// a fraction of a yard at golf-course scale.
+// Sticks's on-course screen treats this component as the canvas: the
+// satellite is the background, the SVG draws geometry overlays on
+// top, and HTML "pills" + "chips" (positioned via the same lat/lng ->
+// pixel projection) hang above the SVG to label distances and invite
+// missing-feature placements. Chrome that doesn't live on the map
+// itself (hole picker, FAB, CTA, sheet) sits in the parent component.
 
 type Pt = { lat: number; lng: number };
 type Hazard = Pt & {
   id: string;
   kind: "WATER" | "SAND" | "OOB" | "OTHER";
+};
+
+// Yardage-pill descriptor. The pill body reads `<prefix> · <yds>y`;
+// the tail tip is anchored at (lat, lng). `orientation: "below"`
+// flips the pill so the tail points up at the target and the body
+// hangs below -- useful for pills near the top scrim so the body
+// doesn't crash into the picker. `variant: "tiny"` is for hazards;
+// `variant: "accent"` is for the AIM pill.
+export type Landmark = {
+  id: string;
+  lat: number;
+  lng: number;
+  prefix?: string;
+  yds: number;
+  orientation?: "above" | "below";
+  variant?: "default" | "tiny" | "accent";
+  tone?: "white" | "sand" | "water";
+  dim?: boolean;
 };
 
 const HAZARD_FILL = {
@@ -30,7 +44,8 @@ const HAZARD_FILL = {
   OTHER: "#8aa094",
 };
 
-// Web Mercator y for lat in degrees.
+// Mapbox uses Web Mercator. We project lat through this so overlays
+// align with the satellite image to sub-yard precision.
 function mercY(latDeg: number): number {
   const lat = (latDeg * Math.PI) / 180;
   return Math.log(Math.tan(Math.PI / 4 + lat / 2));
@@ -46,6 +61,9 @@ export default function HoleMiniMap({
   hazards,
   aim,
   onAim,
+  landmarks,
+  calibration,
+  emptyState,
 }: {
   player: Pt | null;
   tee: Pt | null;
@@ -56,6 +74,32 @@ export default function HoleMiniMap({
   hazards: Hazard[];
   aim?: Pt | null;
   onAim?: (latLng: Pt | null) => void;
+
+  // Yardage pills rendered as HTML siblings of the SVG, positioned by
+  // projecting their lat/lng through the same bbox. Caller decides
+  // which landmarks to surface (front of green, closest bunker carry,
+  // an aim point, etc.).
+  landmarks?: Landmark[];
+
+  // "Mark front / back of green / tee here" chips. Each one becomes a
+  // small gold pill on the map; tapping fires the callback.
+  calibration?: {
+    showFront?: boolean;
+    showBack?: boolean;
+    showTee?: boolean;
+    onMarkFront?: () => void;
+    onMarkBack?: () => void;
+    onMarkTee?: () => void;
+  };
+
+  // Unmapped-hole prompts. Two larger floating chips (one accent,
+  // one gold) that invite the player to drop a pin where they're
+  // standing.
+  emptyState?: {
+    show: boolean;
+    onMarkGreen: () => void;
+    onMarkTee: () => void;
+  };
 }) {
   const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
@@ -79,18 +123,22 @@ export default function HoleMiniMap({
     return () => obs.disconnect();
   }, []);
 
-  // Everything we'll consider for the bbox. We include the player +
-  // aim too -- a player who walks far off-line shouldn't slide off
-  // the map.
-  const all: Pt[] = [];
-  if (player) all.push(player);
-  if (tee) all.push(tee);
-  if (greenCenter) all.push(greenCenter);
-  if (greenFront) all.push(greenFront);
-  if (greenBack) all.push(greenBack);
-  if (greenPolygon) all.push(...greenPolygon);
-  for (const h of hazards) all.push(h);
-  if (aim) all.push(aim);
+  // Collect every point that influences the bbox. Player + aim
+  // included so the player doesn't slide off when they walk far.
+  const all: Pt[] = useMemo(() => {
+    const out: Pt[] = [];
+    if (player) out.push(player);
+    if (tee) out.push(tee);
+    if (greenCenter) out.push(greenCenter);
+    if (greenFront) out.push(greenFront);
+    if (greenBack) out.push(greenBack);
+    if (greenPolygon) out.push(...greenPolygon);
+    for (const h of hazards) out.push(h);
+    if (aim) out.push(aim);
+    if (landmarks) for (const l of landmarks) out.push({ lat: l.lat, lng: l.lng });
+    return out;
+  }, [player, tee, greenCenter, greenFront, greenBack, greenPolygon, hazards, aim, landmarks]);
+
   if (all.length < 1) {
     return <div ref={wrapRef} className="w-full h-full" />;
   }
@@ -105,11 +153,10 @@ export default function HoleMiniMap({
     if (p.lat < minLat) minLat = p.lat;
     if (p.lat > maxLat) maxLat = p.lat;
   }
-
-  // Single-point bbox: blow it out to a ~160m square so satellite
-  // imagery has useful context.
+  // Single-point bbox (just the player on an unmapped hole): synthesize
+  // a ~160m square so the satellite still has useful context.
   if (all.length === 1) {
-    const r = 0.00072; // ~80m at typical mid-latitudes
+    const r = 0.00072;
     minLng -= r;
     maxLng += r;
     minLat -= r;
@@ -125,9 +172,7 @@ export default function HoleMiniMap({
   minLat -= dLat * padFrac;
   maxLat += dLat * padFrac;
 
-  // Expand the bbox on whichever axis is too short so it matches the
-  // container's aspect ratio. Compare in METERS (lng has to be scaled
-  // by cos(lat)). containerAspect = w/h, bboxAspect = lngMeters/latMeters.
+  // Square the bbox in meters to match the container aspect.
   const midLat = (minLat + maxLat) / 2;
   const cosMid = Math.cos((midLat * Math.PI) / 180);
   const lngMeters = (maxLng - minLng) * cosMid;
@@ -135,25 +180,21 @@ export default function HoleMiniMap({
   const containerAspect = size.w / size.h;
   const bboxAspect = lngMeters / latMeters;
   if (bboxAspect > containerAspect) {
-    // Bbox is wider than container -> need more latitude span.
     const targetLatMeters = lngMeters / containerAspect;
     const extra = (targetLatMeters - latMeters) / 2;
     minLat -= extra;
     maxLat += extra;
   } else if (bboxAspect < containerAspect) {
-    // Bbox is taller than container -> need more longitude span.
     const targetLngMeters = latMeters * containerAspect;
     const extra = (targetLngMeters - lngMeters) / 2 / cosMid;
     minLng -= extra;
     maxLng += extra;
   }
 
-  // ViewBox dimensions match the container. We use the rendered size
-  // directly so overlay font sizes / radii scale naturally.
   const Vw = size.w;
   const Vh = size.h;
 
-  // Projection: lng linear, lat Mercator -- both into [0, Vw] / [0, Vh].
+  // Linear-in-lng, Mercator-in-lat projection into [0, Vw] / [0, Vh].
   // y inverted so north = up.
   const minMercY = mercY(minLat);
   const maxMercY = mercY(maxLat);
@@ -185,54 +226,52 @@ export default function HoleMiniMap({
   const pGB = greenBack ? project(greenBack) : null;
   const pAim = aim ? project(aim) : null;
 
-  // Mapbox static image at the (expanded, aspect-matched) bbox. Size
-  // clamped to 1280 in either axis (Mapbox limit). @2x for retina.
   const reqW = Math.min(1280, Math.max(64, Math.round(size.w)));
   const reqH = Math.min(1280, Math.max(64, Math.round(size.h)));
   const tileUrl = MAPBOX_TOKEN
     ? `https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/[${minLng.toFixed(6)},${minLat.toFixed(6)},${maxLng.toFixed(6)},${maxLat.toFixed(6)}]/${reqW}x${reqH}@2x?access_token=${MAPBOX_TOKEN}&attribution=false&logo=false`
     : null;
 
-  // Schematic fairway corridor only when there's no satellite.
-  // Width scales with hole length.
-  let fairwayWidth = 14;
-  if (pTee && pGC) {
-    const dx = pTee.cx - pGC.cx;
-    const dy = pTee.cy - pGC.cy;
-    const lenPx = Math.sqrt(dx * dx + dy * dy);
-    fairwayWidth = Math.max(8, Math.min(28, lenPx * 0.08));
-  }
-
-  // Visual sizes scale gently with container so overlays don't look
-  // tiny on a big screen or huge on a phone.
+  // Scale visual overlays gently with container so they don't look
+  // tiny on a phone or huge on a tablet.
   const scaleRef = Math.min(Vw, Vh);
   const teeW = Math.max(8, scaleRef * 0.035);
   const teeH = Math.max(5, scaleRef * 0.022);
   const hazardR = Math.max(4, scaleRef * 0.018);
-  const playerOuterR = Math.max(6, scaleRef * 0.024);
-  const playerInnerR = Math.max(3, scaleRef * 0.012);
-  const aimOuterR = Math.max(7, scaleRef * 0.03);
-  const aimInnerR = Math.max(2.5, scaleRef * 0.012);
   const greenStroke = Math.max(1.5, scaleRef * 0.007);
 
+  // Aim play line: solid GPS->aim, dashed aim->pin, two range rings.
+  const aimSolidStroke = Math.max(2, scaleRef * 0.009);
+  const aimDashedStroke = Math.max(1.5, scaleRef * 0.006);
+
   return (
-    <div ref={wrapRef} className="w-full h-full">
+    <div ref={wrapRef} className="absolute inset-0 w-full h-full">
       <svg
         viewBox={`0 0 ${Vw} ${Vh}`}
-        className={"w-full h-full block " + (onAim ? "cursor-crosshair" : "")}
+        className={"absolute inset-0 w-full h-full block " + (onAim ? "cursor-crosshair" : "")}
         role="img"
         aria-label="Hole map"
         onClick={onAim ? handleSvgClick : undefined}
         preserveAspectRatio="none"
       >
         <defs>
+          <pattern
+            id="schematic-dots"
+            x="0"
+            y="0"
+            width="16"
+            height="16"
+            patternUnits="userSpaceOnUse"
+          >
+            <circle cx="8" cy="8" r="0.8" fill="#1f2a25" />
+          </pattern>
           <linearGradient id="fairway-grad" x1="0" x2="0" y1="0" y2="1">
             <stop offset="0%" stopColor="#34d399" stopOpacity="0.16" />
             <stop offset="100%" stopColor="#34d399" stopOpacity="0.04" />
           </linearGradient>
         </defs>
 
-        {tileUrl && (
+        {tileUrl ? (
           <image
             href={tileUrl}
             xlinkHref={tileUrl}
@@ -242,20 +281,35 @@ export default function HoleMiniMap({
             height={Vh}
             preserveAspectRatio="none"
           />
+        ) : (
+          // Schematic fallback: dark bg + dotted grid + dashed
+          // fairway corridor in accent-dim. Same chrome as the
+          // satellite variant; just stripped of imagery.
+          <>
+            <rect x="0" y="0" width={Vw} height={Vh} fill="#0b0f0c" />
+            <rect
+              x="0"
+              y="0"
+              width={Vw}
+              height={Vh}
+              fill="url(#schematic-dots)"
+            />
+            {pTee && pGC && (
+              <line
+                x1={pTee.cx}
+                y1={pTee.cy}
+                x2={pGC.cx}
+                y2={pGC.cy}
+                stroke="#1f8f6a"
+                strokeWidth={greenStroke * 1.2}
+                strokeDasharray={`${greenStroke * 3} ${greenStroke * 4}`}
+                strokeOpacity="0.5"
+              />
+            )}
+          </>
         )}
 
-        {!tileUrl && pTee && pGC && (
-          <line
-            x1={pTee.cx}
-            y1={pTee.cy}
-            x2={pGC.cx}
-            y2={pGC.cy}
-            stroke="url(#fairway-grad)"
-            strokeWidth={fairwayWidth}
-            strokeLinecap="round"
-          />
-        )}
-
+        {/* Aim play line. Solid player->aim + dashed aim->pin + 2 rings. */}
         {pPlayer && pAim && (
           <line
             x1={pPlayer.cx}
@@ -264,7 +318,7 @@ export default function HoleMiniMap({
             y2={pAim.cy}
             stroke="#34d399"
             strokeOpacity="0.95"
-            strokeWidth={greenStroke * 1.5}
+            strokeWidth={aimSolidStroke}
           />
         )}
         {pAim && pGC && (
@@ -274,24 +328,50 @@ export default function HoleMiniMap({
             x2={pGC.cx}
             y2={pGC.cy}
             stroke="#34d399"
-            strokeOpacity="0.7"
-            strokeWidth={greenStroke}
-            strokeDasharray={`${greenStroke * 2} ${greenStroke * 2}`}
+            strokeOpacity="0.55"
+            strokeWidth={aimDashedStroke}
+            strokeDasharray={`${aimDashedStroke * 2.5} ${aimDashedStroke * 4}`}
           />
         )}
+        {pAim && (
+          <>
+            <circle
+              cx={pAim.cx}
+              cy={pAim.cy}
+              r={Math.max(18, scaleRef * 0.075)}
+              fill="none"
+              stroke="#34d399"
+              strokeOpacity="0.6"
+              strokeWidth={aimDashedStroke}
+            />
+            <circle
+              cx={pAim.cx}
+              cy={pAim.cy}
+              r={Math.max(26, scaleRef * 0.1)}
+              fill="none"
+              stroke="#34d399"
+              strokeOpacity="0.3"
+              strokeWidth={aimDashedStroke * 0.8}
+              strokeDasharray={`${aimDashedStroke * 2.5} ${aimDashedStroke * 3.5}`}
+            />
+          </>
+        )}
         {pPlayer && pGC && !pAim && (
+          // No aim yet: a quiet dashed reference line player -> pin.
           <line
             x1={pPlayer.cx}
             y1={pPlayer.cy}
             x2={pGC.cx}
             y2={pGC.cy}
             stroke="#34d399"
-            strokeOpacity="0.7"
-            strokeWidth={greenStroke}
-            strokeDasharray={`${greenStroke * 2} ${greenStroke * 2}`}
+            strokeOpacity="0.45"
+            strokeWidth={aimDashedStroke}
+            strokeDasharray={`${aimDashedStroke * 2.5} ${aimDashedStroke * 3.5}`}
           />
         )}
 
+        {/* Green: polygon if we have one, else an oval. Over satellite
+            we leave the fill empty so the real green shows through. */}
         {greenPolygon && greenPolygon.length > 2 ? (
           <polygon
             points={greenPolygon
@@ -301,7 +381,7 @@ export default function HoleMiniMap({
               })
               .join(" ")}
             fill={tileUrl ? "none" : "#34d399"}
-            fillOpacity={tileUrl ? 0 : 0.22}
+            fillOpacity={tileUrl ? 0 : 0.18}
             stroke="#34d399"
             strokeWidth={greenStroke * 1.3}
           />
@@ -312,18 +392,40 @@ export default function HoleMiniMap({
             rx={(pGF || pGB ? 12 : 9) * (scaleRef / 200)}
             ry={(pGF || pGB ? 8 : 6) * (scaleRef / 200)}
             fill={tileUrl ? "none" : "#34d399"}
-            fillOpacity={tileUrl ? 0 : 0.22}
+            fillOpacity={tileUrl ? 0 : 0.18}
             stroke="#34d399"
             strokeWidth={greenStroke * 1.3}
+            strokeDasharray={tileUrl ? undefined : `${greenStroke * 2} ${greenStroke * 3}`}
           />
         ) : null}
         {pGF && (
-          <circle cx={pGF.cx} cy={pGF.cy} r={hazardR * 0.5} fill="#34d399" />
+          <circle cx={pGF.cx} cy={pGF.cy} r={hazardR * 0.45} fill="#34d399" />
         )}
         {pGB && (
-          <circle cx={pGB.cx} cy={pGB.cy} r={hazardR * 0.5} fill="#34d399" />
+          <circle cx={pGB.cx} cy={pGB.cy} r={hazardR * 0.45} fill="#34d399" />
         )}
 
+        {/* Pin flag, rooted at green center. Reads from a glance even
+            against busy satellite imagery. */}
+        {pGC && (
+          <g transform={`translate(${pGC.cx}, ${pGC.cy})`}>
+            <line
+              x1="0"
+              y1="0"
+              x2="0"
+              y2={-Math.max(10, scaleRef * 0.04)}
+              stroke="#e8efe9"
+              strokeWidth={greenStroke * 0.6}
+              strokeLinecap="round"
+            />
+            <path
+              d={`M 0 ${-Math.max(10, scaleRef * 0.04)} L ${Math.max(7, scaleRef * 0.03)} ${-Math.max(7, scaleRef * 0.028)} L 0 ${-Math.max(5, scaleRef * 0.018)} Z`}
+              fill="#34d399"
+            />
+          </g>
+        )}
+
+        {/* Tee box */}
         {pTee && (
           <g>
             <rect
@@ -349,6 +451,7 @@ export default function HoleMiniMap({
           </g>
         )}
 
+        {/* Hazards */}
         {hazards.map((h) => {
           const p = project(h);
           return (
@@ -364,64 +467,324 @@ export default function HoleMiniMap({
             />
           );
         })}
-
-        {pPlayer && (
-          <>
-            <circle
-              cx={pPlayer.cx}
-              cy={pPlayer.cy}
-              r={playerOuterR}
-              fill="#34d399"
-              fillOpacity="0.3"
-            />
-            <circle
-              cx={pPlayer.cx}
-              cy={pPlayer.cy}
-              r={playerInnerR}
-              fill="#34d399"
-              stroke="#0b0f0c"
-              strokeWidth={greenStroke * 0.6}
-            />
-          </>
-        )}
-
-        {pAim && (
-          <g style={{ pointerEvents: "none" }}>
-            <circle
-              cx={pAim.cx}
-              cy={pAim.cy}
-              r={aimOuterR}
-              fill="none"
-              stroke="#e8f0ea"
-              strokeWidth={greenStroke}
-            />
-            <circle
-              cx={pAim.cx}
-              cy={pAim.cy}
-              r={aimInnerR}
-              fill="#e8f0ea"
-              stroke="#0b0f0c"
-              strokeWidth={greenStroke * 0.5}
-            />
-            <line
-              x1={pAim.cx - aimOuterR * 1.4}
-              y1={pAim.cy}
-              x2={pAim.cx - aimOuterR * 0.6}
-              y2={pAim.cy}
-              stroke="#e8f0ea"
-              strokeWidth={greenStroke * 0.5}
-            />
-            <line
-              x1={pAim.cx + aimOuterR * 0.6}
-              y1={pAim.cy}
-              x2={pAim.cx + aimOuterR * 1.4}
-              y2={pAim.cy}
-              stroke="#e8f0ea"
-              strokeWidth={greenStroke * 0.5}
-            />
-          </g>
-        )}
       </svg>
+
+      {/* GPS dot (HTML, so we can use CSS keyframe pulse-strong). */}
+      {pPlayer && (
+        <div
+          className="absolute z-[16] pointer-events-none"
+          style={{
+            left: `${(pPlayer.cx / Vw) * 100}%`,
+            top: `${(pPlayer.cy / Vh) * 100}%`,
+            transform: "translate(-50%, -50%)",
+          }}
+          aria-label="Your position"
+        >
+          <div className="relative">
+            {/* Halo */}
+            <div
+              className="absolute -inset-2 rounded-full"
+              style={{
+                background:
+                  "radial-gradient(circle, rgba(52,211,153,0.28) 0%, rgba(52,211,153,0) 70%)",
+              }}
+            />
+            {/* Core */}
+            <div
+              className="relative w-3.5 h-3.5 rounded-full bg-accent pulse-strong"
+              style={{
+                border: "2px solid rgb(var(--ink-on-accent))",
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Aim marker -- bigger, more refined than the SVG circle alone. */}
+      {pAim && (
+        <div
+          className="absolute z-[18] pointer-events-none"
+          style={{
+            left: `${(pAim.cx / Vw) * 100}%`,
+            top: `${(pAim.cy / Vh) * 100}%`,
+            transform: "translate(-50%, -100%)",
+            filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.6))",
+          }}
+          aria-label="Aim point"
+        >
+          <svg width="28" height="34" viewBox="0 0 28 34">
+            <circle
+              cx="14"
+              cy="14"
+              r="11"
+              fill="rgba(52,211,153,0.18)"
+              stroke="#34d399"
+              strokeWidth="1.5"
+            />
+            <circle cx="14" cy="14" r="3" fill="#34d399" />
+            <line
+              x1="14"
+              y1="14"
+              x2="14"
+              y2="32"
+              stroke="#34d399"
+              strokeWidth="1.4"
+              strokeDasharray="2 3"
+            />
+          </svg>
+        </div>
+      )}
+
+      {/* Yardage pills. Caller passes lat/lng + label + style; we
+          position the tail tip at the projected pixel. */}
+      {landmarks?.map((l) => {
+        const pos = project({ lat: l.lat, lng: l.lng });
+        const orient = l.orientation ?? "above";
+        const variant = l.variant ?? "default";
+        const tone = l.tone ?? "white";
+        const isAccent = variant === "accent";
+        const isTiny = variant === "tiny";
+        const bodyBg = isAccent
+          ? "bg-accent text-ink-on-accent"
+          : tone === "sand"
+            ? "bg-white/95 text-[#3a2d10]"
+            : tone === "water"
+              ? "bg-white/95 text-[#0d2b48]"
+              : "bg-white text-[#0b0f0c]";
+        const prefixCls = isAccent
+          ? "text-ink-on-accent/55"
+          : tone === "sand"
+            ? "text-[#8a7a4f]"
+            : tone === "water"
+              ? "text-[#5d80a8]"
+              : "text-[#6b7c75]";
+        const dimCls = l.dim ? "opacity-50" : "";
+        const bodySizing = isTiny
+          ? "px-1.5 py-[3px] text-[11px] rounded-[7px]"
+          : "px-2.5 py-[4px] text-[15px] rounded-[10px]";
+        const prefixSize = isTiny ? "text-[7.5px]" : "text-[8.5px]";
+        const tailColor = isAccent ? "#34d399" : "#ffffff";
+        const tailSize = isTiny ? 4 : 5;
+        const tailH = isTiny ? 5 : 6;
+        return (
+          <div
+            key={l.id}
+            className={"absolute z-[20] pointer-events-none " + dimCls}
+            style={{
+              left: `${(pos.cx / Vw) * 100}%`,
+              top: `${(pos.cy / Vh) * 100}%`,
+              transform:
+                orient === "above"
+                  ? "translate(-50%, -100%)"
+                  : "translate(-50%, 0)",
+              filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.5))",
+            }}
+          >
+            {orient === "below" && (
+              <div
+                className="mx-auto"
+                style={{
+                  width: 0,
+                  height: 0,
+                  borderLeft: `${tailSize}px solid transparent`,
+                  borderRight: `${tailSize}px solid transparent`,
+                  borderBottom: `${tailH}px solid ${tailColor}`,
+                  marginBottom: -1,
+                }}
+              />
+            )}
+            <div
+              className={
+                "font-mono tabular-nums font-semibold inline-flex items-baseline gap-[3px] " +
+                bodySizing +
+                " " +
+                bodyBg
+              }
+            >
+              {l.prefix && (
+                <span
+                  className={
+                    "uppercase font-medium tracking-[0.14em] mr-[2px] " +
+                    prefixSize +
+                    " " +
+                    prefixCls
+                  }
+                >
+                  {l.prefix}
+                </span>
+              )}
+              {Math.round(l.yds)}
+              <span
+                className={
+                  "font-medium " +
+                  (isTiny ? "text-[9px]" : "text-[9px]") +
+                  " " +
+                  prefixCls
+                }
+              >
+                y
+              </span>
+            </div>
+            {orient === "above" && (
+              <div
+                className="mx-auto"
+                style={{
+                  width: 0,
+                  height: 0,
+                  borderLeft: `${tailSize}px solid transparent`,
+                  borderRight: `${tailSize}px solid transparent`,
+                  borderTop: `${tailH}px solid ${tailColor}`,
+                  marginTop: -1,
+                }}
+              />
+            )}
+          </div>
+        );
+      })}
+
+      {/* Calibration chips (+F / +B / +Tee). Positioned near the
+          relevant feature so the player can tap to refine. */}
+      {calibration?.showFront && pGC && calibration.onMarkFront && (
+        <MapChip
+          tone="gold"
+          label="+ Mark front"
+          x={pGC.cx + scaleRef * 0.04}
+          y={pGC.cy + scaleRef * 0.05}
+          Vw={Vw}
+          Vh={Vh}
+          onClick={calibration.onMarkFront}
+        />
+      )}
+      {calibration?.showBack && pGC && calibration.onMarkBack && (
+        <MapChip
+          tone="gold"
+          label="+ Mark back"
+          x={pGC.cx + scaleRef * 0.04}
+          y={pGC.cy - scaleRef * 0.05}
+          Vw={Vw}
+          Vh={Vh}
+          onClick={calibration.onMarkBack}
+        />
+      )}
+      {calibration?.showTee && pPlayer && calibration.onMarkTee && (
+        <MapChip
+          tone="gold"
+          label="+ Mark tee here"
+          x={pPlayer.cx}
+          y={pPlayer.cy + scaleRef * 0.08}
+          Vw={Vw}
+          Vh={Vh}
+          onClick={calibration.onMarkTee}
+        />
+      )}
+
+      {/* Empty-state chips (unmapped hole). */}
+      {emptyState?.show && (
+        <>
+          <MapChip
+            tone="accent"
+            label="Tap to mark green here"
+            x={Vw * 0.5}
+            y={Vh * 0.32}
+            Vw={Vw}
+            Vh={Vh}
+            onClick={emptyState.onMarkGreen}
+            big
+          />
+          <MapChip
+            tone="gold"
+            label="Tap to mark tee here"
+            x={Vw * 0.5}
+            y={Vh * 0.7}
+            Vw={Vw}
+            Vh={Vh}
+            onClick={emptyState.onMarkTee}
+            big
+          />
+        </>
+      )}
     </div>
+  );
+}
+
+// Floating pill used for both calibration chips (small, anchored at a
+// feature) and empty-state prompts (larger, centered). Tone selects
+// the border + dot colour; the verb in the label is highlighted in
+// the same colour.
+function MapChip({
+  tone,
+  label,
+  x,
+  y,
+  Vw,
+  Vh,
+  onClick,
+  big = false,
+}: {
+  tone: "accent" | "gold";
+  label: string;
+  x: number;
+  y: number;
+  Vw: number;
+  Vh: number;
+  onClick: () => void;
+  big?: boolean;
+}) {
+  const dotColor = tone === "accent" ? "bg-accent" : "bg-gold";
+  const verbColor = tone === "accent" ? "text-accent" : "text-gold";
+  const borderColor =
+    tone === "accent"
+      ? "border-accent/35"
+      : "border-gold/40";
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      className={
+        "absolute z-[22] inline-flex items-center gap-2 rounded-full bg-bg/85 backdrop-blur-md border shadow-[0_6px_20px_-6px_rgba(0,0,0,0.6)] pointer-events-auto " +
+        borderColor +
+        " " +
+        (big ? "px-4 py-2.5" : "px-3 py-2")
+      }
+      style={{
+        left: `${(x / Vw) * 100}%`,
+        top: `${(y / Vh) * 100}%`,
+        transform: "translate(-50%, -50%)",
+      }}
+    >
+      <span
+        className={
+          "inline-block rounded-full pulse-dot " +
+          dotColor +
+          " " +
+          (big ? "w-2 h-2" : "w-1.5 h-1.5")
+        }
+      />
+      <span
+        className={
+          "font-mono tracking-[0.1em] uppercase text-ink " +
+          (big ? "text-[11.5px]" : "text-[10.5px]")
+        }
+      >
+        {label.split(" ").map((word, i, arr) => {
+          // First word ("Tap" / "+") and the highlighted verb get the
+          // tone colour. Simple heuristic: words "green" / "tee" /
+          // "front" / "back" / "mark" get coloured.
+          const lower = word.toLowerCase().replace(/[^a-z]/g, "");
+          const highlight = ["green", "tee", "front", "back", "mark", "+"].includes(
+            lower,
+          );
+          return (
+            <span key={i} className={highlight ? verbColor : ""}>
+              {word}
+              {i < arr.length - 1 ? " " : ""}
+            </span>
+          );
+        })}
+      </span>
+    </button>
   );
 }

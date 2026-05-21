@@ -50,7 +50,7 @@ import OnCourseMode from "./OnCourseMode";
 import { getCourseHazardsByName, getCourseHolesByName } from "@/lib/course";
 import { getWindForCoord } from "@/lib/weather";
 import AutoRefresh from "@/components/AutoRefresh";
-import ScoreSheet from "./ScoreSheet";
+import Scorecard from "./Scorecard";
 import WagerForm from "./WagerForm";
 import ParsEditor from "./ParsEditor";
 import HandicapInput from "./HandicapInput";
@@ -423,10 +423,13 @@ export default async function MatchPage({
             matchStartingHole={matchStart}
             startingHole={onCourseStartingHole}
             pars={pars}
-            players={match.players.map((p) => ({
-              id: p.id,
-              displayName: p.displayName,
-            }))}
+            scoresByHole={
+              myMatchPlayer
+                ? Object.fromEntries(
+                    myMatchPlayer.scores.map((s) => [s.hole, s.strokes]),
+                  )
+                : undefined
+            }
             holeGeoByHole={holeGeoByHole}
             hazardsByHole={hazardsByHole}
             myMatchPlayerId={myMatchPlayer?.id ?? null}
@@ -705,7 +708,7 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
                 scores.
               </div>
             )}
-            <ScoreSheet
+            <Scorecard
               matchId={match.id}
               holes={match.holes}
               startingHole={matchStart}

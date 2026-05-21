@@ -80,6 +80,12 @@ body {
   .chip { @apply inline-flex items-center rounded-full border border-border bg-panel2 px-2 py-0.5 text-xs text-mute; }
   .tag-up { @apply text-accent; }
   .tag-down { @apply text-danger; }
+
+  /* Hide scrollbars on the on-course hole-picker row (and any other
+     horizontal swipe carousel where the bar would otherwise nibble the
+     scrim). */
+  .no-scrollbar { scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
 }
 
 /* View Transitions API: enables a single cross-document transition. The
@@ -138,6 +144,31 @@ body {
 }
 .pulse-dot { animation: pulse-dot 2.4s ease-out infinite; }
 @media (prefers-reduced-motion: reduce) { .pulse-dot { animation: none; } }
+
+/* On-course GPS dot. Larger halo than the LIVE pill dot since the on-
+   course map is the player's primary focus -- it needs to read at a
+   glance while the player is moving. */
+@keyframes pulse-strong {
+  0%   { box-shadow: 0 0 0 0 rgb(var(--color-accent) / 0.65); }
+  70%  { box-shadow: 0 0 0 14px rgb(var(--color-accent) / 0); }
+  100% { box-shadow: 0 0 0 0 rgb(var(--color-accent) / 0); }
+}
+.pulse-strong { animation: pulse-strong 2.2s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) { .pulse-strong { animation: none; } }
+
+/* Score-entry sheet slide-up. */
+@keyframes sheet-up {
+  0%   { transform: translateY(100%); }
+  100% { transform: translateY(0); }
+}
+.sheet-up { animation: sheet-up 220ms cubic-bezier(.2,.7,.2,1); }
+@media (prefers-reduced-motion: reduce) { .sheet-up { animation: none; } }
+
+/* Bottom-aligned ink colour used on top of the saturated accent fill
+   (Enter Score CTA, AIM pill, score sheet Save button). Sits a notch
+   darker than text-ink against accent green so it doesn't vibrate. */
+:root { --ink-on-accent: 6 33 24; }
+.text-ink-on-accent { color: rgb(var(--ink-on-accent)); }
 
 /* Probability tick number flash (up/down) + row background pulse. */
 @keyframes tick-up {
