@@ -1,191 +1,266 @@
 "use client";
 
-import { useEffect, useRef, useTransition } from "react";
-import { logScoreAction } from "@/lib/actions";
+import { useEffect } from "react";
 
-type Player = {
-  id: string;
-  displayName: string;
-  color: string;
-  handicap: number;
-  scores: { hole: number; strokes: number }[];
+// Bottom-sheet score-entry surface for the on-course screen. The 1-9
+// grid that used to be jammed at the bottom of OnCourseMode lives in
+// here now: the entry surface slides up over a dimmed satellite,
+// reads par + yardage + a faint net-relative hint, then dismisses
+// itself when the player taps Save.
+//
+// The sheet doesn't talk to the server itself. OnCourseMode hands it
+// `onSave` and `onCancel`; tapping a cell calls `onSelect` so the
+// parent can echo the choice (e.g. highlight a row in the sidebar)
+// and Save fires when the player commits. This keeps the existing
+// optimistic / transition logic in one place.
+
+type SheetSelection = {
+  strokes: number;
+  // What the selected value reads as relative to par (-2 eagle, -1
+  // birdie, 0 par, +1 bogey, +2 double, etc.). The grid uses this to
+  // tint the cell.
+  relative: number;
+} | null;
+
+const RELATIVE_LABELS: Record<number, { label: string; cls: string }> = {
+  [-3]: { label: "Albatross", cls: "text-gold" },
+  [-2]: { label: "Eagle", cls: "text-gold" },
+  [-1]: { label: "Birdie", cls: "text-accent" },
+  0: { label: "Par", cls: "text-gold/80" },
+  1: { label: "Bogey", cls: "text-mute" },
+  2: { label: "Double", cls: "text-danger" },
+  3: { label: "Triple", cls: "text-danger" },
 };
 
+function cellTone(relative: number, selected: boolean): string {
+  if (selected) {
+    return "bg-accent text-ink-on-accent border-transparent shadow-[0_8px_20px_-6px_rgb(var(--color-accent)/0.5)]";
+  }
+  if (relative <= -2)
+    return "bg-gold/10 border-gold/40 text-gold";
+  if (relative === -1)
+    return "bg-accent/10 border-accent/35 text-accent";
+  if (relative === 0)
+    return "bg-panel border-border text-ink";
+  if (relative === 1)
+    return "bg-panel border-border text-mute";
+  if (relative >= 2)
+    return "bg-panel border-border text-danger";
+  return "bg-panel border-border text-ink";
+}
+
 export default function ScoreSheet({
-  matchId,
-  holes,
-  startingHole = 1,
-  pars,
-  players,
-  locked,
+  open,
+  hole,
+  par,
+  yardage,
+  nextHole,
+  isLastHole,
+  selection,
+  onSelect,
+  onSave,
+  onCancel,
 }: {
-  matchId: string;
-  holes: number;
-  // First hole played (1 for full/front-9, 10 for back-9). Hole labels are
-  // absolute; pars is still length=holes indexed from startingHole.
-  startingHole?: number;
-  pars: number[];
-  players: Player[];
-  locked: boolean;
+  open: boolean;
+  hole: number;
+  par: number;
+  // Per-hole yardage if we have it (CourseHole.distanceYds). Optional
+  // -- some holes haven't been measured yet.
+  yardage: number | null;
+  nextHole: number | null;
+  isLastHole: boolean;
+  selection: SheetSelection;
+  onSelect: (s: SheetSelection) => void;
+  onSave: () => void;
+  onCancel: () => void;
 }) {
-  const [pending, startTransition] = useTransition();
-  const holeNumbers = Array.from(
-    { length: holes },
-    (_, i) => startingHole + i,
-  );
-  const coursePar = pars.reduce((a, b) => a + b, 0);
-
-  // Compute the next hole (first one nobody has logged yet) and scroll
-  // it into view on mount. We keep the previous played hole visible too
-  // so the user has context for the running score.
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const nextHoleCellRef = useRef<HTMLTableCellElement>(null);
-  const maxScored = players.reduce(
-    (m, p) =>
-      Math.max(m, p.scores.reduce((mm, s) => Math.max(mm, s.hole), 0)),
-    0,
-  );
-  const lastHole = startingHole + holes - 1;
-  const nextHoleNum = Math.min(Math.max(maxScored + 1, startingHole), lastHole);
-
+  // Close on Escape so desktop / dev-tools navigation still works.
   useEffect(() => {
-    // Nothing logged yet -> leave the scroll at the start so hole 1 is
-    // already in view.
-    if (maxScored === 0) return;
-    const cell = nextHoleCellRef.current;
-    const container = scrollRef.current;
-    if (!cell || !container) return;
-    // Show one hole of "what just happened" before the next hole. The
-    // sticky-left player-name column is ~128px and each hole cell is
-    // ~40px wide, so we land the next column ~168px from the left edge.
-    const target = cell.offsetLeft - 168;
-    container.scrollLeft = Math.max(0, target);
-  }, [maxScored]);
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onCancel();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onCancel]);
 
-  const submit = (matchPlayerId: string, hole: number, strokes: string) => {
-    const fd = new FormData();
-    fd.set("matchId", matchId);
-    fd.set("matchPlayerId", matchPlayerId);
-    fd.set("hole", String(hole));
-    fd.set("strokes", strokes);
-    startTransition(() => {
-      logScoreAction(fd);
-    });
-  };
+  if (!open) return null;
+
+  // Grid is 1..9 (matching the on-course gesture set) with two trailing
+  // affordances on the last row: "X" pickup and "—" skip. Pickup logs
+  // a relative double-par (par * 2); skip leaves the hole blank but
+  // dismisses the sheet.
+  const cells: Array<
+    | { kind: "score"; value: number }
+    | { kind: "pickup" }
+    | { kind: "skip" }
+  > = [
+    ...Array.from({ length: 9 }, (_, i) => ({
+      kind: "score" as const,
+      value: i + 1,
+    })),
+    { kind: "pickup" },
+    { kind: "skip" },
+  ];
+
+  const saveLabel = isLastHole
+    ? "Save · finish round"
+    : nextHole != null
+      ? `Save · go to ${nextHole}`
+      : "Save";
 
   return (
-    <div ref={scrollRef} className="overflow-x-auto -mx-4 px-4">
-      <table className="w-full text-sm border-separate border-spacing-0">
-        <thead>
-          <tr className="text-mute">
-            <th className="text-left font-normal text-xs uppercase tracking-wider px-2 py-2 sticky left-0 bg-panel z-10 min-w-[8rem]">
-              Hole
-            </th>
-            {holeNumbers.map((h) => (
-              <th
-                key={h}
-                ref={h === nextHoleNum ? nextHoleCellRef : undefined}
-                className={
-                  "font-mono text-xs px-1 py-2 text-center min-w-[2.5rem] " +
-                  (h === nextHoleNum && maxScored > 0 ? "text-accent" : "")
-                }
-              >
-                {h}
-              </th>
-            ))}
-            <th className="font-mono text-xs px-2 py-2 text-right min-w-[3rem]">
-              Gross
-            </th>
-            <th className="font-mono text-xs px-2 py-2 text-right min-w-[3rem]">
-              Net
-            </th>
-          </tr>
-          <tr className="text-mute/70">
-            <th className="text-left font-normal text-[10px] uppercase tracking-wider px-2 pb-2 sticky left-0 bg-panel z-10">
-              Par
-            </th>
-            {pars.map((p, i) => (
-              <th
-                key={i}
-                className="font-mono text-[10px] px-1 pb-2 text-center"
-              >
-                {p}
-              </th>
-            ))}
-            <th className="font-mono text-[10px] px-2 pb-2 text-right">
-              {coursePar}
-            </th>
-            <th className="font-mono text-[10px] px-2 pb-2 text-right">—</th>
-          </tr>
-        </thead>
-        <tbody>
-          {players.map((p) => {
-            const byHole = new Map(p.scores.map((s) => [s.hole, s.strokes]));
-            const total = p.scores.reduce((s, e) => s + e.strokes, 0);
-            const net = total - p.handicap;
+    <>
+      {/* Scrim. Tap to dismiss without saving. */}
+      <button
+        type="button"
+        onClick={onCancel}
+        aria-label="Close score entry"
+        className="absolute inset-0 z-[38] bg-black/55 backdrop-blur-sm"
+      />
+      {/* Sheet. */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Enter score for hole ${hole}`}
+        className="absolute inset-x-0 bottom-0 z-40 sheet-up bg-bg rounded-t-3xl border-t border-border/80 px-5 pt-3 pb-[max(1.75rem,env(safe-area-inset-bottom))] shadow-[0_-20px_50px_-10px_rgba(0,0,0,0.7)]"
+      >
+        {/* Grabber */}
+        <button
+          type="button"
+          onClick={onCancel}
+          aria-label="Close"
+          className="block mx-auto mb-3 h-1 w-10 rounded-full bg-white/20"
+        />
+        {/* Header */}
+        <div className="flex items-baseline justify-between gap-3 mb-1">
+          <h3 className="font-display text-[22px] font-semibold tracking-[-0.015em] leading-none">
+            Hole {hole}{" "}
+            <span className="text-accent font-semibold">· Par {par}</span>
+          </h3>
+          <div className="font-mono tabular-nums text-[11px] tracking-[0.1em] text-mute uppercase shrink-0">
+            {yardage != null ? (
+              <>
+                {yardage}
+                <span className="text-mute/60">y</span>
+              </>
+            ) : (
+              <span className="text-mute/60">— y</span>
+            )}
+          </div>
+        </div>
+        {selection && (
+          <div className="font-mono text-[11px] text-faint mb-3">
+            {(() => {
+              const r = selection.relative;
+              const meta = RELATIVE_LABELS[r];
+              const sign = r > 0 ? `+${r}` : r === 0 ? "E" : `${r}`;
+              const tone =
+                r < 0
+                  ? "text-accent"
+                  : r > 0
+                    ? "text-mute"
+                    : "text-gold/80";
+              return (
+                <>
+                  <span className={tone}>{sign}</span>
+                  {meta && (
+                    <>
+                      {" "}
+                      · {meta.label.toLowerCase()} at {hole}
+                    </>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+        )}
+
+        {/* Grid. 5 cols. */}
+        <div className="grid grid-cols-5 gap-2">
+          {cells.map((c, i) => {
+            if (c.kind === "pickup" || c.kind === "skip") {
+              return (
+                <button
+                  key={c.kind}
+                  type="button"
+                  onClick={() => {
+                    if (c.kind === "pickup") {
+                      // Pickup logs a generous double-par so the round
+                      // still rolls forward without leaving the hole
+                      // blank.
+                      onSelect({
+                        strokes: par * 2,
+                        relative: par,
+                      });
+                    } else {
+                      // Skip: leave score blank, dismiss the sheet.
+                      onCancel();
+                    }
+                  }}
+                  className="aspect-square rounded-xl border border-dashed border-white/12 bg-transparent flex items-center justify-center font-mono text-lg text-faint hover:text-mute hover:border-white/20"
+                  aria-label={
+                    c.kind === "pickup" ? "Picked up" : "Skip hole"
+                  }
+                >
+                  {c.kind === "pickup" ? "X" : "—"}
+                </button>
+              );
+            }
+            const value = c.value;
+            const relative = value - par;
+            const selected = selection?.strokes === value;
+            const meta = RELATIVE_LABELS[relative];
+            const relLabel = meta?.label ?? (relative > 0 ? `+${relative}` : "");
             return (
-              <tr key={p.id} className="border-t border-border">
-                <td className="px-2 py-1.5 sticky left-0 bg-panel z-10">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ background: p.color }}
-                    />
-                    <span className="truncate max-w-[7rem]">
-                      {p.displayName}
-                    </span>
-                  </div>
-                </td>
-                {holeNumbers.map((h) => {
-                  const val = byHole.get(h);
-                  const parH = pars[h - startingHole] ?? 4;
-                  const cls =
-                    val === undefined
-                      ? ""
-                      : val < parH
-                        ? "text-accent"
-                        : val > parH
-                          ? "text-danger"
-                          : "text-ink";
-                  return (
-                    <td key={h} className="p-0.5 text-center">
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        min={1}
-                        max={20}
-                        defaultValue={val ?? ""}
-                        disabled={locked || pending}
-                        onBlur={(e) => {
-                          const next = e.target.value;
-                          const prev = val === undefined ? "" : String(val);
-                          if (next !== prev) submit(p.id, h, next);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter")
-                            (e.target as HTMLInputElement).blur();
-                        }}
-                        className={`w-10 h-10 sm:w-9 sm:h-9 rounded-md bg-panel2 border border-border text-center font-mono text-sm focus:outline-none focus:ring-1 focus:ring-accent ${cls}`}
-                      />
-                    </td>
-                  );
-                })}
-                <td className="px-2 py-1.5 text-right font-mono tabular-nums">
-                  {total || "—"}
-                </td>
-                <td className="px-2 py-1.5 text-right font-mono tabular-nums text-accent">
-                  {p.scores.length > 0 ? net.toFixed(1) : "—"}
-                </td>
-              </tr>
+              <button
+                key={value}
+                type="button"
+                onClick={() => onSelect({ strokes: value, relative })}
+                className={
+                  "aspect-square rounded-xl border flex flex-col items-center justify-center font-mono leading-none transition-colors " +
+                  cellTone(relative, selected)
+                }
+                aria-pressed={selected}
+                aria-label={`Score ${value} (${meta?.label ?? "score"})`}
+              >
+                <span className="text-[22px] font-semibold tabular-nums">
+                  {value}
+                </span>
+                {relLabel && (
+                  <span
+                    className={
+                      "text-[9px] mt-1 tracking-[0.1em] uppercase " +
+                      (selected ? "text-ink-on-accent/80" : "")
+                    }
+                  >
+                    {relLabel}
+                  </span>
+                )}
+              </button>
             );
           })}
-        </tbody>
-      </table>
-      <p className="text-xs text-mute mt-3 px-1">
-        Tap a cell to log strokes. Green = under par, red = over.{" "}
-        The market reprices after each entry — friends watching see the chart
-        move in seconds.
-      </p>
-    </div>
+        </div>
+
+        {/* Action row */}
+        <div className="grid grid-cols-2 gap-2 mt-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-full border border-border bg-transparent text-mute font-mono text-[11px] tracking-[0.1em] uppercase py-3.5 hover:bg-panel"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={!selection}
+            className="rounded-full bg-accent text-ink-on-accent font-display font-bold text-[14px] tracking-[0.08em] uppercase py-3.5 shadow-[0_8px_20px_-8px_rgb(var(--color-accent)/0.55)] disabled:opacity-50 disabled:shadow-none"
+          >
+            {saveLabel}
+          </button>
+        </div>
+      </div>
+    </>
   );
 }
