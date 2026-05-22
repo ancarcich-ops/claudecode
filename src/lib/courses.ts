@@ -16,6 +16,7 @@ export type CourseRegion =
   | "NC"
   | "AZ"
   | "NV"
+  | "UT"
   | "PNW"
   | "TX";
 
@@ -750,6 +751,62 @@ export const COURSE_PRESETS: CoursePreset[] = [
   { id: "wildcat-highlands", name: "The Wildcat Golf Club - Highlands Course", city: "Houston, TX", region: "TX", access: "public", holes: 18, pars: p(18, 72) },
   { id: "wildcat-lakes", name: "The Wildcat Golf Club - Lakes Course", city: "Houston, TX", region: "TX", access: "public", holes: 18, pars: p(18, 72) },
 
+  // --- Arizona expansion (Scottsdale, Phoenix, Flagstaff, Tucson) ---
+  { id: "desert-mountain-cochise", name: "Desert Mountain - Cochise Course", city: "Scottsdale, AZ", region: "AZ", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "desert-mountain-geronimo", name: "Desert Mountain - Geronimo Course", city: "Scottsdale, AZ", region: "AZ", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "desert-mountain-renegade", name: "Desert Mountain - Renegade Course", city: "Scottsdale, AZ", region: "AZ", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "desert-mountain-outlaw", name: "Desert Mountain - Outlaw Course", city: "Scottsdale, AZ", region: "AZ", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "desert-mountain-chiricahua", name: "Desert Mountain - Chiricahua Course", city: "Scottsdale, AZ", region: "AZ", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "talking-stick-north", name: "Talking Stick - North Course", city: "Scottsdale, AZ", region: "AZ", access: "public", holes: 18, pars: p(18, 70) },
+  { id: "talking-stick-south", name: "Talking Stick - South Course", city: "Scottsdale, AZ", region: "AZ", access: "public", holes: 18, pars: p(18, 71) },
+  { id: "whisper-rock-lower", name: "Whisper Rock - Lower Course", city: "Scottsdale, AZ", region: "AZ", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "whisper-rock-upper", name: "Whisper Rock - Upper Course", city: "Scottsdale, AZ", region: "AZ", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "estancia-club", name: "Estancia Club", city: "Scottsdale, AZ", region: "AZ", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "silverleaf-club", name: "Silverleaf Club", city: "Scottsdale, AZ", region: "AZ", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "mirabel-club", name: "Mirabel Club", city: "Scottsdale, AZ", region: "AZ", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "camelback-ambiente", name: "Camelback Golf Club - Ambiente Course", city: "Scottsdale, AZ", region: "AZ", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "camelback-padre", name: "Camelback Golf Club - Padre Course", city: "Scottsdale, AZ", region: "AZ", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "wildfire-faldo", name: "Wildfire Golf Club - Faldo Championship Course", city: "Phoenix, AZ", region: "AZ", access: "resort", holes: 18, pars: p(18, 71) },
+  { id: "wildfire-palmer", name: "Wildfire Golf Club - Palmer Signature Course", city: "Phoenix, AZ", region: "AZ", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "forest-highlands-canyon", name: "Forest Highlands - Canyon Course", city: "Flagstaff, AZ", region: "AZ", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "forest-highlands-meadow", name: "Forest Highlands - Meadow Course", city: "Flagstaff, AZ", region: "AZ", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "quintero-golf-club", name: "Quintero Golf Club", city: "Peoria, AZ", region: "AZ", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "ventana-canyon-mountain", name: "Ventana Canyon - Mountain Course", city: "Tucson, AZ", region: "AZ", access: "resort", holes: 18, pars: p(18, 72) },
+
+  // --- Nevada expansion (Las Vegas + Reno/Tahoe) ---
+  { id: "tpc-summerlin", name: "TPC Summerlin", city: "Las Vegas, NV", region: "NV", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "bears-best-las-vegas", name: "Bear's Best Las Vegas", city: "Las Vegas, NV", region: "NV", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "reflection-bay", name: "Reflection Bay Golf Club", city: "Henderson, NV", region: "NV", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "rio-secco", name: "Rio Secco Golf Club", city: "Henderson, NV", region: "NV", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "southern-highlands", name: "Southern Highlands Golf Club", city: "Las Vegas, NV", region: "NV", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "angel-park-mountain", name: "Angel Park - Mountain Course", city: "Las Vegas, NV", region: "NV", access: "public", holes: 18, pars: p(18, 71) },
+  { id: "angel-park-palm", name: "Angel Park - Palm Course", city: "Las Vegas, NV", region: "NV", access: "public", holes: 18, pars: p(18, 70) },
+  { id: "dragonridge-cc", name: "DragonRidge Country Club", city: "Henderson, NV", region: "NV", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "red-rock-cc-mountain", name: "Red Rock Country Club - Mountain Course", city: "Las Vegas, NV", region: "NV", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "edgewood-tahoe", name: "Edgewood Tahoe Golf Course", city: "Stateline, NV", region: "NV", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "old-greenwood", name: "Old Greenwood Golf Course", city: "Truckee, CA", region: "NV", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "montreux-gcc", name: "Montreux Golf & Country Club", city: "Reno, NV", region: "NV", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "genoa-lakes-lakes", name: "Genoa Lakes - Lakes Course", city: "Genoa, NV", region: "NV", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "incline-village-championship", name: "Incline Village Championship Course", city: "Incline Village, NV", region: "NV", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "arrowcreek-cc", name: "ArrowCreek Country Club", city: "Reno, NV", region: "NV", access: "private", holes: 18, pars: p(18, 72) },
+
+  // --- Utah (St. George, SLC, Park City / Heber Valley) ---
+  { id: "sand-hollow-championship", name: "Sand Hollow Golf Resort - Championship Course", city: "Hurricane, UT", region: "UT", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "coral-canyon", name: "Coral Canyon Golf Course", city: "Washington, UT", region: "UT", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "entrada-snow-canyon", name: "Entrada at Snow Canyon Country Club", city: "St. George, UT", region: "UT", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "the-ledges", name: "The Ledges Golf Club", city: "St. George, UT", region: "UT", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "sunbrook", name: "Sunbrook Golf Course", city: "St. George, UT", region: "UT", access: "municipal", holes: 18, pars: p(18, 72) },
+  { id: "bonneville-golf", name: "Bonneville Golf Course", city: "Salt Lake City, UT", region: "UT", access: "municipal", holes: 18, pars: p(18, 72) },
+  { id: "mountain-dell-canyon", name: "Mountain Dell - Canyon Course", city: "Salt Lake City, UT", region: "UT", access: "municipal", holes: 18, pars: p(18, 72) },
+  { id: "mountain-dell-lake", name: "Mountain Dell - Lake Course", city: "Salt Lake City, UT", region: "UT", access: "municipal", holes: 18, pars: p(18, 71) },
+  { id: "promontory-pete-dye", name: "Promontory Club - Pete Dye Canyon Course", city: "Park City, UT", region: "UT", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "promontory-nicklaus", name: "Promontory Club - Nicklaus Painted Valley Course", city: "Park City, UT", region: "UT", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "park-meadows-cc", name: "Park Meadows Country Club", city: "Park City, UT", region: "UT", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "glenwild", name: "Glenwild Golf Club & Spa", city: "Park City, UT", region: "UT", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "red-ledges", name: "Red Ledges", city: "Heber City, UT", region: "UT", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "victory-ranch", name: "Victory Ranch", city: "Kamas, UT", region: "UT", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "soldier-hollow-gold", name: "Soldier Hollow - Gold Course", city: "Midway, UT", region: "UT", access: "public", holes: 18, pars: p(18, 72) },
+
   // --- Pacific Northwest (sample / dev courses) ---
   {
     id: "riverbend-golf-complex",
@@ -983,6 +1040,68 @@ export const COURSE_PRESET_COORDS: Record<string, { lat: number; lng: number }> 
   "blackhorse-south": { lat: 29.9583, lng: -95.7281 },
   "wildcat-highlands": { lat: 29.6261, lng: -95.3608 },
   "wildcat-lakes": { lat: 29.6261, lng: -95.3608 },
+
+  // --- Arizona expansion ---
+  // Desert Mountain (5 courses), Talking Stick (N+S), Whisper Rock
+  // (L+U), Camelback (Ambiente+Padre), Wildfire (Faldo+Palmer), and
+  // Forest Highlands (Canyon+Meadow) each share a clubhouse.
+  "desert-mountain-cochise": { lat: 33.8519, lng: -111.8703 },
+  "desert-mountain-geronimo": { lat: 33.8519, lng: -111.8703 },
+  "desert-mountain-renegade": { lat: 33.8519, lng: -111.8703 },
+  "desert-mountain-outlaw": { lat: 33.8519, lng: -111.8703 },
+  "desert-mountain-chiricahua": { lat: 33.8519, lng: -111.8703 },
+  "talking-stick-north": { lat: 33.5447, lng: -111.8783 },
+  "talking-stick-south": { lat: 33.5447, lng: -111.8783 },
+  "whisper-rock-lower": { lat: 33.8003, lng: -112.0708 },
+  "whisper-rock-upper": { lat: 33.8003, lng: -112.0708 },
+  "estancia-club": { lat: 33.7861, lng: -111.9269 },
+  "silverleaf-club": { lat: 33.6589, lng: -111.8456 },
+  "mirabel-club": { lat: 33.8489, lng: -111.9508 },
+  "camelback-ambiente": { lat: 33.5333, lng: -111.9647 },
+  "camelback-padre": { lat: 33.5333, lng: -111.9647 },
+  "wildfire-faldo": { lat: 33.6644, lng: -111.9619 },
+  "wildfire-palmer": { lat: 33.6644, lng: -111.9619 },
+  "forest-highlands-canyon": { lat: 35.1186, lng: -111.7019 },
+  "forest-highlands-meadow": { lat: 35.1186, lng: -111.7019 },
+  "quintero-golf-club": { lat: 33.8483, lng: -112.6661 },
+  "ventana-canyon-mountain": { lat: 32.3211, lng: -110.8147 },
+
+  // --- Nevada expansion ---
+  // Angel Park (Mountain + Palm) shares a clubhouse.
+  "tpc-summerlin": { lat: 36.1697, lng: -115.3242 },
+  "bears-best-las-vegas": { lat: 36.1647, lng: -115.3294 },
+  "reflection-bay": { lat: 36.0744, lng: -114.9333 },
+  "rio-secco": { lat: 36.0050, lng: -115.0461 },
+  "southern-highlands": { lat: 36.0061, lng: -115.1839 },
+  "angel-park-mountain": { lat: 36.1839, lng: -115.2917 },
+  "angel-park-palm": { lat: 36.1839, lng: -115.2917 },
+  "dragonridge-cc": { lat: 36.0114, lng: -114.9764 },
+  "red-rock-cc-mountain": { lat: 36.1542, lng: -115.3253 },
+  "edgewood-tahoe": { lat: 38.9619, lng: -119.9419 },
+  "old-greenwood": { lat: 39.3389, lng: -120.1697 },
+  "montreux-gcc": { lat: 39.4083, lng: -119.8881 },
+  "genoa-lakes-lakes": { lat: 39.0044, lng: -119.8456 },
+  "incline-village-championship": { lat: 39.2483, lng: -119.9461 },
+  "arrowcreek-cc": { lat: 39.4097, lng: -119.7869 },
+
+  // --- Utah ---
+  // Mountain Dell (Canyon + Lake) and Promontory (Pete Dye + Nicklaus)
+  // each share a clubhouse.
+  "sand-hollow-championship": { lat: 37.1361, lng: -113.3739 },
+  "coral-canyon": { lat: 37.1408, lng: -113.4953 },
+  "entrada-snow-canyon": { lat: 37.1467, lng: -113.6531 },
+  "the-ledges": { lat: 37.1881, lng: -113.6708 },
+  sunbrook: { lat: 37.0844, lng: -113.6242 },
+  "bonneville-golf": { lat: 40.7517, lng: -111.8161 },
+  "mountain-dell-canyon": { lat: 40.7575, lng: -111.7283 },
+  "mountain-dell-lake": { lat: 40.7575, lng: -111.7283 },
+  "promontory-pete-dye": { lat: 40.7283, lng: -111.4264 },
+  "promontory-nicklaus": { lat: 40.7283, lng: -111.4264 },
+  "park-meadows-cc": { lat: 40.6647, lng: -111.5117 },
+  glenwild: { lat: 40.7375, lng: -111.5414 },
+  "red-ledges": { lat: 40.5739, lng: -111.3819 },
+  "victory-ranch": { lat: 40.5897, lng: -111.2447 },
+  "soldier-hollow-gold": { lat: 40.5181, lng: -111.4781 },
 };
 
 export function findPresetByName(name: string): CoursePreset | undefined {
