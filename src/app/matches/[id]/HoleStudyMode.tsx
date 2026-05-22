@@ -244,25 +244,30 @@ export default function HoleStudyMode({
         </div>
       </div>
 
-      {/* Exit (top-left) */}
+      {/* Exit (top-left). Shape, color, and label all chosen to look
+          unambiguously NOT like a hole-picker pill -- a rounded
+          rectangle with "Done" text instead of yet-another-circle
+          with a glyph. Tested side-by-side with the picker scroll
+          row that runs across the same scrim. */}
       <button
         type="button"
         onClick={() => setActive(false)}
-        className="absolute z-[31] top-[max(env(safe-area-inset-top),12px)] left-3 inline-flex items-center justify-center h-9 w-9 rounded-full bg-bg/70 backdrop-blur-md border border-white/8 text-mute hover:text-ink"
+        className="absolute z-[31] top-[max(env(safe-area-inset-top),12px)] left-3 inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-black/85 border border-white/15 text-white font-medium text-[12px] tracking-wide shadow-[0_4px_14px_-4px_rgba(0,0,0,0.6)] active:scale-95 transition-transform"
         aria-label="Exit preview"
       >
         <svg
-          width="14"
-          height="14"
+          width="11"
+          height="11"
           viewBox="0 0 16 16"
           fill="none"
           stroke="currentColor"
-          strokeWidth="1.8"
+          strokeWidth="2"
           strokeLinecap="round"
         >
           <line x1="3" y1="3" x2="13" y2="13" />
           <line x1="13" y1="3" x2="3" y2="13" />
         </svg>
+        Done
       </button>
 
       {/* Wind dial (top-right) -- same as OnCourseMode. Useful pre-
@@ -317,42 +322,9 @@ export default function HoleStudyMode({
                 <DistStat label="Back" yds={back} />
               </div>
               <div className="text-center text-[9.5px] uppercase tracking-wider text-mute pb-1.5">
-                Tap the satellite to plan a shot
+                Tap on the course to plan your shots and see custom carry distances
               </div>
             </>
-          )}
-          {holeHazards.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/8">
-              {holeHazards.map((h) => (
-                <div
-                  key={h.id}
-                  className={
-                    "px-2 py-[3px] rounded-full text-[10.5px] font-mono tabular-nums " +
-                    (h.kind === "WATER"
-                      ? "bg-[#1e3a5f]/85 text-[#bcd6f0]"
-                      : h.kind === "SAND"
-                        ? "bg-[#3a2d10]/85 text-[#e8d59d]"
-                        : "bg-white/10 text-white/85")
-                  }
-                  title={h.label ?? h.kind}
-                >
-                  <span className="opacity-65 mr-1">
-                    {h.kind === "WATER"
-                      ? "WATER"
-                      : h.kind === "SAND"
-                        ? "SAND"
-                        : h.kind === "OOB"
-                          ? "OB"
-                          : "HAZ"}
-                  </span>
-                  {h.distance != null ? `${h.distance}y` : "—"}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center text-[10px] uppercase tracking-wider text-mute pt-2 border-t border-white/8">
-              No hazards mapped on this hole
-            </div>
           )}
         </div>
       </div>
