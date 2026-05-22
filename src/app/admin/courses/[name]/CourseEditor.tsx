@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   adminClearHoleGeoAction,
+  adminRenameCourseAction,
   adminSaveHoleGeoAction,
   adminSetCourseCenterAction,
 } from "@/lib/actions";
@@ -217,6 +218,28 @@ export default function CourseEditor({
     });
   };
 
+  const renameCourse = () => {
+    const proposed = window.prompt(
+      `Rename "${courseName}" to:`,
+      courseName,
+    );
+    if (!proposed) return;
+    const next = proposed.trim();
+    if (!next || next === courseName) return;
+    const fd = new FormData();
+    fd.set("oldName", courseName);
+    fd.set("newName", next);
+    startTransition(async () => {
+      try {
+        const r = await adminRenameCourseAction(fd);
+        toast.success(`Renamed to "${r.newName}"`);
+        router.push(`/admin/courses/${encodeURIComponent(r.newName)}`);
+      } catch (err) {
+        toast.error((err as Error).message);
+      }
+    });
+  };
+
   const clearPin = (hole: number, kind: "tee" | "green") => {
     setHoles((cur) =>
       cur.map((h) => {
@@ -316,6 +339,14 @@ export default function CourseEditor({
           {city && <div className="text-[10px] text-mute">{city}</div>}
         </div>
         <div className="flex items-center gap-3 shrink-0">
+          <button
+            type="button"
+            onClick={renameCourse}
+            disabled={pending}
+            className="text-[11px] text-mute hover:text-ink underline disabled:opacity-50"
+          >
+            Rename
+          </button>
           <Link
             href={`/admin/courses/${encodeURIComponent(courseName)}/preview`}
             className="text-[11px] text-mute hover:text-ink underline"

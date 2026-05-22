@@ -6,7 +6,7 @@
 // hole in the "Course pars" editor on the match page.
 
 export type CourseAccess = "public" | "private" | "resort" | "municipal";
-export type CourseRegion = "LA" | "OC" | "IE";
+export type CourseRegion = "LA" | "OC" | "IE" | "PNW";
 
 export type CoursePreset = {
   id: string;
@@ -617,6 +617,17 @@ export const COURSE_PRESETS: CoursePreset[] = [
     holes: 18,
     // Arthur Hills / Jay Morrish design at Bighorn GC. Par 72.
     pars: [5, 4, 5, 3, 4, 4, 4, 3, 4, 4, 3, 5, 4, 4, 5, 4, 3, 4],
+  },
+
+  // --- Pacific Northwest (sample / dev courses) ---
+  {
+    id: "riverbend-golf-complex",
+    name: "Riverbend Golf Complex",
+    city: "Kent, WA",
+    region: "PNW",
+    access: "municipal",
+    holes: 18,
+    pars: p(18, 72),
   },
 ];
 
