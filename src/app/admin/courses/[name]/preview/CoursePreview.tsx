@@ -67,7 +67,7 @@ export default function CoursePreview({
       </div>
 
       <div
-        className="flex gap-1 overflow-x-auto pb-1"
+        className="flex gap-1 overflow-x-auto pb-1 sticky top-0 z-10 bg-bg/95 backdrop-blur -mx-4 px-4 py-1 border-b border-border/60"
         role="tablist"
         aria-label="Hole picker"
       >
