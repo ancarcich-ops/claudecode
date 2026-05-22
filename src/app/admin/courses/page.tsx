@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { COURSE_PRESETS } from "@/lib/courses";
+import OpenByNameInput from "./OpenByNameInput";
 
 // Lists every course we know about -- existing Course rows in the DB
 // plus preset names that haven't been touched yet. Click one to edit.
@@ -22,9 +23,12 @@ export default async function AdminCoursesPage() {
       <div>
         <h1 className="font-display text-2xl font-semibold">Course editor</h1>
         <p className="text-[12px] text-mute mt-1">
-          Pick a course to drop tee and green pins on a satellite map.
+          Pick a course to drop tee and green pins on a satellite map, or
+          open a brand-new one by name.
         </p>
       </div>
+
+      <OpenByNameInput />
 
       <section>
         <h2 className="text-[10px] uppercase tracking-wider text-mute mb-2">
