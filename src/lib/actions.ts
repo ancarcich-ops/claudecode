@@ -1395,6 +1395,15 @@ export async function adminImportFromGolfBertAction(formData: FormData) {
     }
   }
 
+  // Propagate the fresh par set to any matches at this course that
+  // still hold the default [4,4,3,5,...] layout (or anything else).
+  // Active rounds in progress are left alone -- a re-import shouldn't
+  // change pars mid-round. v1: refresh UPCOMING matches only.
+  await prisma.match.updateMany({
+    where: { courseName, status: "UPCOMING" },
+    data: { parData: JSON.stringify(pars) },
+  });
+
   revalidatePath(`/admin/courses/${encodeURIComponent(courseName)}`);
   return {
     courseName,

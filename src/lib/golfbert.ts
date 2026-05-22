@@ -205,6 +205,49 @@ function pickTeebox(boxes: GBHoleTeebox[]): GBHoleTeebox | null {
   return boxes[0];
 }
 
+// Pick a canonical par for a hole. We've seen GolfBert teeboxes carry
+// inconsistent par values (e.g. a 487y hole tagged par 3 on one tee
+// and par 5 on another) -- take the mode across all teeboxes, then
+// fall back to yardage-based heuristic if every box disagrees or the
+// par looks nonsensical for the length.
+function pickPar(
+  boxes: GBHoleTeebox[],
+  yardage: number | null,
+): number | null {
+  const parsFromBoxes = boxes
+    .map((b) => b.par)
+    .filter((p): p is number => Number.isFinite(p));
+  // Mode across teeboxes.
+  let modePar: number | null = null;
+  if (parsFromBoxes.length > 0) {
+    const counts = new Map<number, number>();
+    for (const p of parsFromBoxes) counts.set(p, (counts.get(p) ?? 0) + 1);
+    let best = -1;
+    for (const [p, c] of counts) {
+      if (c > best) {
+        best = c;
+        modePar = p;
+      }
+    }
+  }
+  // Sanity check the mode against the hole length. Par 3 above ~290y
+  // or par 5 below ~440y is almost certainly wrong; prefer a length-
+  // based bucket in that case.
+  const heuristic =
+    yardage == null
+      ? null
+      : yardage < 260
+        ? 3
+        : yardage < 470
+          ? 4
+          : 5;
+  if (modePar != null && yardage != null) {
+    if (modePar === 3 && yardage > 290) return heuristic;
+    if (modePar === 5 && yardage < 440) return heuristic;
+  }
+  return modePar ?? heuristic;
+}
+
 function classifySurface(
   surfacetype: string,
 ): "green" | "fairway" | "bunker" | "water" | "oob" | "other" {
@@ -282,10 +325,29 @@ export async function importCourseFromGolfBert(
       }
     }
 
+    // Tee position fallback chain. Some GolfBert courses (Riverbend
+    // is one) ship teeboxes without `coordinates`. For those, use the
+    // hole's `range.start` (the tee area on the hole geometry) as a
+    // backup. Last resort: first vertex of the hole's vector trace.
+    const teeFromBox =
+      tee?.coordinates?.lat != null && tee?.coordinates?.long != null
+        ? { lat: tee.coordinates.lat, lng: tee.coordinates.long }
+        : null;
+    const teeFromRange =
+      h.range?.start?.lat != null && h.range?.start?.long != null
+        ? { lat: h.range.start.lat, lng: h.range.start.long }
+        : null;
+    const teeFromVector =
+      h.vectors && h.vectors.length > 0 && h.vectors[0].lat != null
+        ? { lat: h.vectors[0].lat, lng: h.vectors[0].long }
+        : null;
+    const resolvedTee = teeFromBox ?? teeFromRange ?? teeFromVector;
+
+    const yardage = tee?.length ?? null;
     imported.push({
       number: h.number,
-      par: tee?.par ?? null,
-      yardage: tee?.length ?? null,
+      par: pickPar(teeboxes, yardage),
+      yardage,
       greenLat,
       greenLng,
       greenPolygon: greenPoly
@@ -294,8 +356,8 @@ export async function importCourseFromGolfBert(
       fairwayPolygon: fairwayPoly
         ? fairwayPoly.polygon.map((p) => ({ lat: p.lat, lng: p.long }))
         : null,
-      teeLat: tee?.coordinates?.lat ?? null,
-      teeLng: tee?.coordinates?.long ?? null,
+      teeLat: resolvedTee?.lat ?? null,
+      teeLng: resolvedTee?.lng ?? null,
       hazards,
     });
   }
