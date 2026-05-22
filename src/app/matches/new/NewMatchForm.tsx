@@ -1,13 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { toast } from "sonner";
 import type { CoursePreset } from "@/lib/courses";
+import { findClosestCoursesAction } from "@/lib/actions";
 import PlayerNameInput from "@/components/PlayerNameInput";
 import {
   ALL_SIDE_GAMES,
   COMING_SOON_SIDE_GAMES,
   type SideGameKind,
 } from "@/lib/sideGames";
+
+type NearbyCourse = { name: string; yards: number };
 
 type PlayerRow = { name: string; handicap: string; userId: string | null };
 type ScoringMode = "NET" | "GROSS" | "CUSTOM";
@@ -100,6 +104,8 @@ export default function NewMatchForm({
       return next;
     });
   const [courseName, setCourseName] = useState("");
+  const [nearby, setNearby] = useState<NearbyCourse[] | null>(null);
+  const [locating, startLocating] = useTransition();
   const [holes, setHoles] = useState<9 | 18>(18);
   // 1 = full or front 9, 10 = back 9. Only meaningful when holes === 9.
   const [startingHole, setStartingHole] = useState<1 | 10>(1);
@@ -132,6 +138,46 @@ export default function NewMatchForm({
       setHoles(preset.holes);
       if (preset.holes === 18) setStartingHole(1);
     }
+  };
+
+  // Geolocation-based suggestion. Only courses that have a centerLat /
+  // centerLng on record are scored -- i.e. ones a user has imported
+  // from GolfBert or OSM, or hand-marked. Brand-new presets without
+  // coords are skipped (deliberate: avoids guessing).
+  const findNearbyCourses = () => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      toast.error("Location not available on this device");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        startLocating(async () => {
+          try {
+            const r = await findClosestCoursesAction({
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+            });
+            setNearby(r);
+            if (r.length === 0) {
+              toast.info("No mapped courses within 50 miles");
+            } else if (!courseName.trim()) {
+              // Auto-fill the nearest if the box is empty.
+              onCourseChange(r[0].name);
+            }
+          } catch (err) {
+            toast.error((err as Error).message);
+          }
+        });
+      },
+      (err) => {
+        toast.error(
+          err.code === err.PERMISSION_DENIED
+            ? "Allow location to find nearby courses"
+            : "Couldn't read your location",
+        );
+      },
+      { enableHighAccuracy: false, maximumAge: 60_000, timeout: 10_000 },
+    );
   };
 
   const onHolesChange = (value: 9 | 18) => {
@@ -281,9 +327,19 @@ export default function NewMatchForm({
       {/* Step 1: Course + tee + scoring + visibility + notes */}
       <div hidden={step !== 0} className="card p-5 space-y-4">
         <div>
-          <label className="label" htmlFor="courseName">
-            Course
-          </label>
+          <div className="flex items-baseline justify-between gap-2">
+            <label className="label" htmlFor="courseName">
+              Course
+            </label>
+            <button
+              type="button"
+              onClick={findNearbyCourses}
+              disabled={locating}
+              className="text-[11px] text-mute hover:text-ink underline disabled:opacity-50"
+            >
+              {locating ? "Locating…" : "Find course near me"}
+            </button>
+          </div>
           <input
             id="courseName"
             name="courseName"
@@ -294,6 +350,31 @@ export default function NewMatchForm({
             list="course-presets"
             autoComplete="off"
           />
+          {nearby && nearby.length > 0 && (
+            <div className="mt-1.5 border border-border rounded-md divide-y divide-border bg-panel/40 overflow-hidden">
+              {nearby.map((c) => {
+                const miles = c.yards / 1760;
+                return (
+                  <button
+                    key={c.name}
+                    type="button"
+                    onClick={() => {
+                      onCourseChange(c.name);
+                      setNearby(null);
+                    }}
+                    className="w-full text-left px-2.5 py-2 text-sm hover:bg-panel/70 flex items-center justify-between gap-2"
+                  >
+                    <span className="truncate">{c.name}</span>
+                    <span className="text-[10.5px] font-mono text-mute shrink-0">
+                      {miles < 0.5
+                        ? `${c.yards}y`
+                        : `${miles.toFixed(miles < 10 ? 1 : 0)}mi`}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
           <datalist id="course-presets">
             {recentCourses.map((c) => (
               <option key={`recent-${c}`} value={c} label="Recent" />
