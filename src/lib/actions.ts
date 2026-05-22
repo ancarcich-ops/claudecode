@@ -1258,6 +1258,26 @@ export async function adminGolfBertPingAction() {
   return await gb.ping();
 }
 
+// Admin: look up a single GolfBert course by id WITHOUT importing.
+// Used by single-course subscribers to discover what their licensed
+// course is (the API will 403 every id except theirs).
+export async function adminGolfBertDescribeAction(courseId: number) {
+  const user = await requireUser();
+  const { isUserAdmin } = await import("./admin");
+  if (!isUserAdmin(user)) throw new Error("Admin only");
+  if (!Number.isFinite(courseId) || courseId <= 0) {
+    throw new Error("Valid GolfBert course id required");
+  }
+  const gb = await import("./golfbert");
+  const c = await gb.getCourse(courseId);
+  return {
+    id: c.id,
+    name: c.name,
+    city: c.address?.city ?? null,
+    state: c.address?.state ?? null,
+  };
+}
+
 // Admin: search GolfBert by name. Returns a thin list the UI can
 // render so the admin can pick the right course id.
 export async function adminGolfBertSearchAction(name: string) {
