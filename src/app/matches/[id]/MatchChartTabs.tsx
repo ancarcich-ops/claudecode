@@ -31,12 +31,21 @@ export type SideGameSeries = {
   wolf?: { rows: SgRow[] };
 };
 
+type OddsHoleRow = { hole: number } & Record<string, number>;
+
 export default function MatchChartTabs({
   oddsSeries,
+  oddsHoleSeries,
+  oddsXMode,
   players,
   sideGames,
 }: {
   oddsSeries: OddsRow[];
+  // Once the round starts, the server bucketises odds snapshots by
+  // hole and the chart switches to a hole-based x-axis. Null while
+  // the match is still pre-round.
+  oddsHoleSeries: OddsHoleRow[] | null;
+  oddsXMode: "time" | "hole";
   players: PlayerMeta[];
   sideGames: SideGameSeries;
 }) {
@@ -96,7 +105,12 @@ export default function MatchChartTabs({
       )}
 
       {active === "ODDS" && (
-        <OddsChart series={oddsSeries} players={players} />
+        <OddsChart
+          series={oddsSeries}
+          holeSeries={oddsHoleSeries}
+          xMode={oddsXMode}
+          players={players}
+        />
       )}
       {active === "STABLEFORD" && sideGames.stableford && (
         <SideGameChart

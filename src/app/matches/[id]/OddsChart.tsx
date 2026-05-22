@@ -14,16 +14,34 @@ import {
 import ChartTooltip from "./ChartTooltip";
 
 type Row = { t: number } & Record<string, number>;
+type HoleRow = { hole: number } & Record<string, number>;
 type PlayerMeta = { id: string; displayName: string; color: string };
 
 export default function OddsChart({
   series,
+  holeSeries,
+  xMode,
   players,
 }: {
   series: Row[];
+  // Hole-bucketed series, supplied once the round has started. When
+  // present, this is plotted instead of the time series so the line
+  // moves left-to-right hole-by-hole rather than smearing across the
+  // wall-clock gap between wagers.
+  holeSeries?: HoleRow[] | null;
+  xMode?: "time" | "hole";
   players: PlayerMeta[];
 }) {
-  if (series.length < 2) {
+  // Pick the active data set + dataKey based on mode. Falling back to
+  // time mode when hole data is missing keeps this safe to render
+  // during the brief window between round start and the first snapshot
+  // after that.
+  const effectiveMode: "time" | "hole" =
+    xMode === "hole" && holeSeries && holeSeries.length >= 2 ? "hole" : "time";
+  const activeSeries: (Row | HoleRow)[] =
+    effectiveMode === "hole" ? holeSeries! : series;
+
+  if (activeSeries.length < 2) {
     return (
       <div className="h-56 flex items-center justify-center text-sm text-mute border border-dashed border-border rounded-md">
         Odds chart appears once the market has movement.
@@ -31,8 +49,8 @@ export default function OddsChart({
     );
   }
 
-  const last = series[series.length - 1];
-  const lastIdx = series.length - 1;
+  const last = activeSeries[activeSeries.length - 1];
+  const lastIdx = activeSeries.length - 1;
 
   // Custom dot renderer for Line: only emit a circle at the final point so we
   // get an emphasized "live" marker without dots peppering the whole line.
@@ -79,7 +97,7 @@ export default function OddsChart({
     <div className="h-64">
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart
-          data={series}
+          data={activeSeries}
           margin={{ top: 8, right: 16, bottom: 4, left: 4 }}
         >
           <defs>
@@ -102,18 +120,38 @@ export default function OddsChart({
             vertical={false}
             strokeDasharray="2 4"
           />
-          <XAxis
-            dataKey="t"
-            type="number"
-            scale="time"
-            domain={["dataMin", "dataMax"]}
-            ticks={[series[0].t, last.t]}
-            tickFormatter={(_v, i) => (i === 0 ? "Open" : "Now")}
-            tick={{ fontSize: 11, fill: "#8aa094" }}
-            stroke="transparent"
-            tickLine={false}
-            axisLine={false}
-          />
+          {effectiveMode === "time" ? (
+            <XAxis
+              dataKey="t"
+              type="number"
+              scale="time"
+              domain={["dataMin", "dataMax"]}
+              ticks={[(series[0] as Row).t, (last as Row).t]}
+              tickFormatter={(_v, i) => (i === 0 ? "Open" : "Now")}
+              tick={{ fontSize: 11, fill: "#8aa094" }}
+              stroke="transparent"
+              tickLine={false}
+              axisLine={false}
+            />
+          ) : (
+            // Hole-based axis fixed at [0, 18] so the line shows true
+            // progress through the round (a 9-hole-thru match doesn't
+            // stretch to fill the full width). Bucket 0 is the pre-round
+            // opening snapshot -- shown as the leading tick "Open".
+            // Stride ticks at 1/6/12/18 to stay legible on phone widths.
+            <XAxis
+              dataKey="hole"
+              type="number"
+              scale="linear"
+              domain={[0, 18]}
+              ticks={[0, 1, 6, 12, 18]}
+              tickFormatter={(v) => (v === 0 ? "Open" : `${v}`)}
+              tick={{ fontSize: 11, fill: "#8aa094" }}
+              stroke="transparent"
+              tickLine={false}
+              axisLine={false}
+            />
+          )}
           <YAxis
             domain={[0, 1]}
             ticks={[0.25, 0.5, 0.75]}
@@ -148,10 +186,14 @@ export default function OddsChart({
                 }
                 label={props.label}
                 labelFormatter={(v) =>
-                  new Date(Number(v)).toLocaleTimeString(undefined, {
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })
+                  effectiveMode === "hole"
+                    ? Number(v) === 0
+                      ? "Opening"
+                      : `Hole ${Number(v)}`
+                    : new Date(Number(v)).toLocaleTimeString(undefined, {
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })
                 }
                 valueFormatter={(value, key) => {
                   const p = players.find((pl) => pl.id === key);

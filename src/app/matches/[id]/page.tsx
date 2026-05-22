@@ -141,6 +141,62 @@ export default async function MatchPage({
     }
   }
 
+  // Once the round has started, the chart switches its x-axis from
+  // time-based to hole-based -- a long flat line at 50% for an idle
+  // wager-free hour reads as "broken chart" to most viewers. Bucketing
+  // by hole shows the actual round shape: where the line moved, and
+  // when.
+  //
+  // "Round started" = any score entry exists. Pre-match (no scores)
+  // keeps the time-based view so the build-up of opening calls is
+  // still legible.
+  const scoreEvents: { hole: number; t: number }[] = [];
+  for (const p of match.players) {
+    for (const s of p.scores) {
+      scoreEvents.push({ hole: s.hole, t: s.createdAt.getTime() });
+    }
+  }
+  const earliestPerHole = new Map<number, number>();
+  for (const e of scoreEvents) {
+    const prev = earliestPerHole.get(e.hole);
+    if (prev == null || e.t < prev) earliestPerHole.set(e.hole, e.t);
+  }
+  const roundStarted = earliestPerHole.size > 0;
+
+  type HoleRow = { hole: number } & Record<string, number>;
+  let oddsXMode: "time" | "hole" = "time";
+  let oddsHoleSeries: HoleRow[] | null = null;
+
+  if (roundStarted) {
+    oddsXMode = "hole";
+    // Map each snapshot to the hole that was active at its timestamp.
+    // Hole-at-time T = max hole whose earliest score was logged at or
+    // before T. Snapshots before any score entry land in bucket 0
+    // ("pre-round" -- shown as the leading point on the chart).
+    const holeStartPairs = Array.from(earliestPerHole.entries()).sort(
+      (a, b) => a[0] - b[0],
+    );
+    function holeAtTime(t: number): number {
+      let h = 0;
+      for (const [hole, startT] of holeStartPairs) {
+        if (startT <= t && hole > h) h = hole;
+      }
+      return h;
+    }
+    // Last snapshot per hole bucket -- later overwrites earlier so we
+    // keep the most recent odds in each bucket. Map preserves insert
+    // order, but we sort by hole at the end to be safe.
+    const byHole = new Map<number, Row>();
+    for (const row of series) byHole.set(holeAtTime(row.t), row);
+    const sortedHoles = Array.from(byHole.keys()).sort((a, b) => a - b);
+    oddsHoleSeries = sortedHoles.map((h) => {
+      const row = byHole.get(h)!;
+      const out: HoleRow = { hole: h } as HoleRow;
+      for (const p of match.players) out[p.id] = row[p.id] ?? 0;
+      return out;
+    });
+  }
+
   const wagerCounts: Record<string, number> = {};
   for (const w of match.wagers) {
     wagerCounts[w.pickedPlayerId] = (wagerCounts[w.pickedPlayerId] ?? 0) + 1;
@@ -773,6 +829,8 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
         </div>
         <MatchChartTabs
           oddsSeries={series}
+          oddsHoleSeries={oddsHoleSeries}
+          oddsXMode={oddsXMode}
           players={playerMeta.map((p) => ({
             id: p.id,
             displayName: p.displayName,
