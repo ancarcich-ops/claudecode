@@ -6,7 +6,7 @@
 // hole in the "Course pars" editor on the match page.
 
 export type CourseAccess = "public" | "private" | "resort" | "municipal";
-export type CourseRegion = "LA" | "OC" | "IE" | "PNW";
+export type CourseRegion = "LA" | "OC" | "IE" | "CV" | "SD" | "VC" | "PNW" | "TX";
 
 export type CoursePreset = {
   id: string;
@@ -619,6 +619,69 @@ export const COURSE_PRESETS: CoursePreset[] = [
     pars: [5, 4, 5, 3, 4, 4, 4, 3, 4, 4, 3, 5, 4, 4, 5, 4, 3, 4],
   },
 
+  // --- Coachella Valley ---
+  { id: "pga-west-stadium", name: "PGA West - Stadium Course", city: "La Quinta, CA", region: "CV", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "pga-west-nicklaus-tournament", name: "PGA West - Nicklaus Tournament Course", city: "La Quinta, CA", region: "CV", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "la-quinta-country-club", name: "La Quinta Country Club", city: "La Quinta, CA", region: "CV", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "la-quinta-resort-mountain", name: "La Quinta Resort - Mountain Course", city: "La Quinta, CA", region: "CV", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "la-quinta-resort-dunes", name: "La Quinta Resort - Dunes Course", city: "La Quinta, CA", region: "CV", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "mission-hills-dinah-shore", name: "Mission Hills Country Club - Dinah Shore Tournament", city: "Rancho Mirage, CA", region: "CV", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "mission-hills-pete-dye-challenge", name: "Mission Hills CC - Pete Dye Challenge", city: "Rancho Mirage, CA", region: "CV", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "desert-willow-firecliff", name: "Desert Willow - Firecliff", city: "Palm Desert, CA", region: "CV", access: "municipal", holes: 18, pars: p(18, 72) },
+  { id: "desert-willow-mountain-view", name: "Desert Willow - Mountain View", city: "Palm Desert, CA", region: "CV", access: "municipal", holes: 18, pars: p(18, 72) },
+  { id: "indian-wells-celebrity", name: "Indian Wells Golf Resort - Celebrity", city: "Indian Wells, CA", region: "CV", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "indian-wells-players", name: "Indian Wells Golf Resort - Players", city: "Indian Wells, CA", region: "CV", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "jw-marriott-palm", name: "JW Marriott Desert Springs - Palm Course", city: "Palm Desert, CA", region: "CV", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "jw-marriott-valley", name: "JW Marriott Desert Springs - Valley Course", city: "Palm Desert, CA", region: "CV", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "the-reserve-club", name: "The Reserve Club at Indian Wells", city: "Indian Wells, CA", region: "CV", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "stone-eagle", name: "Stone Eagle Golf Club", city: "Palm Desert, CA", region: "CV", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "toscana-cc", name: "Toscana Country Club", city: "Indian Wells, CA", region: "CV", access: "private", holes: 18, pars: p(18, 72) },
+
+  // --- San Diego ---
+  { id: "torrey-pines-north", name: "Torrey Pines - North", city: "La Jolla, CA", region: "SD", access: "municipal", holes: 18, pars: p(18, 72) },
+  { id: "torrey-pines-south", name: "Torrey Pines - South", city: "La Jolla, CA", region: "SD", access: "municipal", holes: 18, pars: p(18, 72) },
+  { id: "aviara", name: "Aviara Golf Club", city: "Carlsbad, CA", region: "SD", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "maderas", name: "Maderas Golf Club", city: "Poway, CA", region: "SD", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "grand-golf-club", name: "The Grand Golf Club", city: "San Diego, CA", region: "SD", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "coronado-muni", name: "Coronado Municipal Golf Course", city: "Coronado, CA", region: "SD", access: "municipal", holes: 18, pars: p(18, 72) },
+  { id: "encinitas-ranch", name: "Encinitas Ranch Golf Course", city: "Encinitas, CA", region: "SD", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "riverwalk", name: "Riverwalk Golf Club", city: "San Diego, CA", region: "SD", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "steele-canyon", name: "Steele Canyon Golf Club", city: "Jamul, CA", region: "SD", access: "public", holes: 18, pars: p(18, 71) },
+  { id: "carlton-oaks", name: "Carlton Oaks Golf Club", city: "Santee, CA", region: "SD", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "rancho-bernardo-inn", name: "Rancho Bernardo Inn Golf Resort", city: "San Diego, CA", region: "SD", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "twin-oaks", name: "Twin Oaks Golf Course", city: "San Marcos, CA", region: "SD", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "san-diego-cc", name: "San Diego Country Club", city: "Chula Vista, CA", region: "SD", access: "private", holes: 18, pars: p(18, 72) },
+
+  // --- Ventura County ---
+  { id: "saticoy-cc", name: "Saticoy Country Club", city: "Somis, CA", region: "VC", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "buenaventura", name: "Buenaventura Golf Course", city: "Ventura, CA", region: "VC", access: "municipal", holes: 18, pars: p(18, 70) },
+  { id: "olivas-links", name: "Olivas Links", city: "Ventura, CA", region: "VC", access: "municipal", holes: 18, pars: p(18, 72) },
+  { id: "sterling-hills", name: "Sterling Hills Golf Club", city: "Camarillo, CA", region: "VC", access: "public", holes: 18, pars: p(18, 71) },
+  { id: "camarillo-springs", name: "Camarillo Springs Golf Course", city: "Camarillo, CA", region: "VC", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "river-ridge-vineyard", name: "River Ridge - Vineyard Course", city: "Oxnard, CA", region: "VC", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "river-ridge-victoria-lakes", name: "River Ridge - Victoria Lakes Course", city: "Oxnard, CA", region: "VC", access: "public", holes: 18, pars: p(18, 72) },
+
+  // --- Austin, TX ---
+  { id: "austin-cc", name: "Austin Country Club", city: "Austin, TX", region: "TX", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "barton-creek-fazio-foothills", name: "Barton Creek Resort - Fazio Foothills", city: "Austin, TX", region: "TX", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "barton-creek-fazio-canyons", name: "Barton Creek Resort - Fazio Canyons", city: "Austin, TX", region: "TX", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "barton-creek-crenshaw-cliffside", name: "Barton Creek Resort - Crenshaw Cliffside", city: "Austin, TX", region: "TX", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "lions-muni", name: "Lions Municipal Golf Course", city: "Austin, TX", region: "TX", access: "municipal", holes: 18, pars: p(18, 71) },
+  { id: "lost-creek-cc", name: "Lost Creek Country Club", city: "Austin, TX", region: "TX", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "hills-cc-hills-course", name: "The Hills Country Club - Hills Course", city: "Austin, TX", region: "TX", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "spanish-oaks", name: "Spanish Oaks Golf Club", city: "Bee Cave, TX", region: "TX", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "ut-golf-club", name: "University of Texas Golf Club", city: "Austin, TX", region: "TX", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "falconhead", name: "Falconhead Golf Club", city: "Austin, TX", region: "TX", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "roy-kizer", name: "Roy Kizer Golf Course", city: "Austin, TX", region: "TX", access: "municipal", holes: 18, pars: p(18, 71) },
+  { id: "avery-ranch", name: "Avery Ranch Golf Club", city: "Austin, TX", region: "TX", access: "public", holes: 18, pars: p(18, 72) },
+
+  // --- Inland Empire extras ---
+  { id: "tukwet-champions", name: "Tukwet Canyon - Champions", city: "Beaumont, CA", region: "IE", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "tukwet-legends", name: "Tukwet Canyon - Legends", city: "Beaumont, CA", region: "IE", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "soboba-springs", name: "Soboba Springs Golf Course", city: "San Jacinto, CA", region: "IE", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "glen-ivy", name: "Glen Ivy Golf Club", city: "Corona, CA", region: "IE", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "cherry-hills-sun-city", name: "Cherry Hills Country Club", city: "Menifee, CA", region: "IE", access: "public", holes: 18, pars: p(18, 72) },
+
   // --- Pacific Northwest (sample / dev courses) ---
   {
     id: "riverbend-golf-complex",
@@ -713,6 +776,78 @@ export const COURSE_PRESET_COORDS: Record<string, { lat: number; lng: number }> 
   "bighorn-gc-canyons": { lat: 33.7019, lng: -116.4097 },
   "bighorn-gc-mountains": { lat: 33.7019, lng: -116.4097 },
   "riverbend-golf-complex": { lat: 47.4017, lng: -122.2272 },
+
+  // --- Coachella Valley ---
+  // PGA West, La Quinta Resort, Mission Hills, Desert Willow,
+  // Indian Wells Resort, and JW Marriott Desert Springs are
+  // multi-course properties -- both courses at each share a
+  // clubhouse coordinate.
+  "pga-west-stadium": { lat: 33.6524, lng: -116.2706 },
+  "pga-west-nicklaus-tournament": { lat: 33.6524, lng: -116.2706 },
+  "la-quinta-country-club": { lat: 33.6924, lng: -116.2815 },
+  "la-quinta-resort-mountain": { lat: 33.6760, lng: -116.3000 },
+  "la-quinta-resort-dunes": { lat: 33.6760, lng: -116.3000 },
+  "mission-hills-dinah-shore": { lat: 33.7647, lng: -116.4145 },
+  "mission-hills-pete-dye-challenge": { lat: 33.7647, lng: -116.4145 },
+  "desert-willow-firecliff": { lat: 33.7668, lng: -116.3666 },
+  "desert-willow-mountain-view": { lat: 33.7668, lng: -116.3666 },
+  "indian-wells-celebrity": { lat: 33.7166, lng: -116.3372 },
+  "indian-wells-players": { lat: 33.7166, lng: -116.3372 },
+  "jw-marriott-palm": { lat: 33.7548, lng: -116.3612 },
+  "jw-marriott-valley": { lat: 33.7548, lng: -116.3612 },
+  "the-reserve-club": { lat: 33.6720, lng: -116.3247 },
+  "stone-eagle": { lat: 33.7040, lng: -116.4140 },
+  "toscana-cc": { lat: 33.7170, lng: -116.2940 },
+
+  // --- San Diego ---
+  // Torrey Pines North + South share their clubhouse.
+  "torrey-pines-north": { lat: 32.9045, lng: -117.2454 },
+  "torrey-pines-south": { lat: 32.9045, lng: -117.2454 },
+  aviara: { lat: 33.0931, lng: -117.2852 },
+  maderas: { lat: 33.0094, lng: -117.0500 },
+  "grand-golf-club": { lat: 32.9450, lng: -117.1980 },
+  "coronado-muni": { lat: 32.6890, lng: -117.1730 },
+  "encinitas-ranch": { lat: 33.0685, lng: -117.2767 },
+  riverwalk: { lat: 32.7670, lng: -117.1640 },
+  "steele-canyon": { lat: 32.7150, lng: -116.9580 },
+  "carlton-oaks": { lat: 32.8392, lng: -117.0111 },
+  "rancho-bernardo-inn": { lat: 33.0315, lng: -117.0669 },
+  "twin-oaks": { lat: 33.1667, lng: -117.1604 },
+  "san-diego-cc": { lat: 32.6260, lng: -117.0820 },
+
+  // --- Ventura County ---
+  // River Ridge Vineyard + Victoria Lakes share a clubhouse.
+  "saticoy-cc": { lat: 34.2575, lng: -119.0010 },
+  buenaventura: { lat: 34.2475, lng: -119.2390 },
+  "olivas-links": { lat: 34.2390, lng: -119.2500 },
+  "sterling-hills": { lat: 34.2400, lng: -119.0010 },
+  "camarillo-springs": { lat: 34.2033, lng: -118.9920 },
+  "river-ridge-vineyard": { lat: 34.2311, lng: -119.2035 },
+  "river-ridge-victoria-lakes": { lat: 34.2311, lng: -119.2035 },
+
+  // --- Austin, TX ---
+  // Barton Creek Resort - Fazio Foothills / Fazio Canyons / Crenshaw
+  // Cliffside share the resort clubhouse.
+  "austin-cc": { lat: 30.3446, lng: -97.7983 },
+  "barton-creek-fazio-foothills": { lat: 30.2912, lng: -97.8583 },
+  "barton-creek-fazio-canyons": { lat: 30.2912, lng: -97.8583 },
+  "barton-creek-crenshaw-cliffside": { lat: 30.2912, lng: -97.8583 },
+  "lions-muni": { lat: 30.2902, lng: -97.7770 },
+  "lost-creek-cc": { lat: 30.2860, lng: -97.8400 },
+  "hills-cc-hills-course": { lat: 30.3500, lng: -97.9920 },
+  "spanish-oaks": { lat: 30.3160, lng: -97.9530 },
+  "ut-golf-club": { lat: 30.3760, lng: -97.8810 },
+  falconhead: { lat: 30.3060, lng: -97.9430 },
+  "roy-kizer": { lat: 30.1820, lng: -97.7430 },
+  "avery-ranch": { lat: 30.5060, lng: -97.7860 },
+
+  // --- Inland Empire extras ---
+  // Tukwet Canyon Champions + Legends share the clubhouse.
+  "tukwet-champions": { lat: 33.9410, lng: -116.9970 },
+  "tukwet-legends": { lat: 33.9410, lng: -116.9970 },
+  "soboba-springs": { lat: 33.7800, lng: -116.9580 },
+  "glen-ivy": { lat: 33.7500, lng: -117.4920 },
+  "cherry-hills-sun-city": { lat: 33.7100, lng: -117.1820 },
 };
 
 export function findPresetByName(name: string): CoursePreset | undefined {
