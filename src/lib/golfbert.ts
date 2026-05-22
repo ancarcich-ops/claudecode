@@ -326,22 +326,46 @@ export async function importCourseFromGolfBert(
     }
 
     // Tee position fallback chain. Some GolfBert courses (Riverbend
-    // is one) ship teeboxes without `coordinates`. For those, use the
-    // hole's `range.start` (the tee area on the hole geometry) as a
-    // backup. Last resort: first vertex of the hole's vector trace.
+    // is one) ship teeboxes without `coordinates`. Without a labelled
+    // tee, pick the candidate point FARTHEST from the green -- that's
+    // the tee end of the hole regardless of which direction GolfBert
+    // traces the geometry. range.start / range.end / vector vertices
+    // are all candidates.
     const teeFromBox =
       tee?.coordinates?.lat != null && tee?.coordinates?.long != null
         ? { lat: tee.coordinates.lat, lng: tee.coordinates.long }
         : null;
-    const teeFromRange =
-      h.range?.start?.lat != null && h.range?.start?.long != null
-        ? { lat: h.range.start.lat, lng: h.range.start.long }
-        : null;
-    const teeFromVector =
-      h.vectors && h.vectors.length > 0 && h.vectors[0].lat != null
-        ? { lat: h.vectors[0].lat, lng: h.vectors[0].long }
-        : null;
-    const resolvedTee = teeFromBox ?? teeFromRange ?? teeFromVector;
+    let resolvedTee: { lat: number; lng: number } | null = teeFromBox;
+    if (!resolvedTee && greenLat != null && greenLng != null) {
+      const candidates: { lat: number; lng: number }[] = [];
+      if (h.range?.start?.lat != null && h.range?.start?.long != null)
+        candidates.push({ lat: h.range.start.lat, lng: h.range.start.long });
+      if (h.range?.end?.lat != null && h.range?.end?.long != null)
+        candidates.push({ lat: h.range.end.lat, lng: h.range.end.long });
+      if (h.vectors) {
+        for (const v of h.vectors) {
+          if (v.lat != null && v.long != null)
+            candidates.push({ lat: v.lat, lng: v.long });
+        }
+      }
+      // Distance squared in degrees -- monotonic with great-circle
+      // distance over golf-hole scales, no sqrt needed.
+      let best: { lat: number; lng: number } | null = null;
+      let bestD = -1;
+      for (const c of candidates) {
+        const dLat = c.lat - greenLat;
+        const dLng = c.lng - greenLng;
+        const d = dLat * dLat + dLng * dLng;
+        if (d > bestD) {
+          bestD = d;
+          best = c;
+        }
+      }
+      // Sanity: the chosen point must be ~50y+ from the green to count
+      // as a tee. Closer than that and it's almost certainly a green-
+      // area trace (~50y ≈ 0.00045° at most latitudes).
+      if (best && bestD > 0.00045 * 0.00045) resolvedTee = best;
+    }
 
     const yardage = tee?.length ?? null;
     imported.push({
