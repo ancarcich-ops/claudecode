@@ -1331,6 +1331,15 @@ export async function adminImportFromGolfBertAction(formData: FormData) {
     },
   });
 
+  // Wipe existing hazards for this course before re-creating from
+  // GolfBert. Each re-import was duplicating rows: after five imports
+  // a hole with 4 sand traps had 20 SAND chips. Idempotency wins over
+  // preserving hand-marked hazards here -- v1 has no user-marked
+  // hazards yet, and a `source` column would let us scope this later.
+  const wipeRes = await prisma.courseHazard.deleteMany({
+    where: { courseId: course.id },
+  });
+
   // Upsert each hole. We always overwrite when GolfBert has the
   // value -- this is curated data; preserve admin-source rows only
   // if GolfBert returned null for that field.
@@ -1410,6 +1419,7 @@ export async function adminImportFromGolfBertAction(formData: FormData) {
     golfbertId,
     holesWritten,
     hazardsWritten,
+    hazardsWiped: wipeRes.count,
     par: pars.reduce((a, b) => a + b, 0),
   };
 }
