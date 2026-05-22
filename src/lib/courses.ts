@@ -908,6 +908,74 @@ export const COURSE_PRESETS: CoursePreset[] = [
   { id: "el-tigre-golf-club", name: "El Tigre Golf Club", city: "Nuevo Vallarta, Nayarit", region: "MX", access: "public", holes: 18, pars: p(18, 72) },
   { id: "club-de-golf-chapultepec", name: "Club de Golf Chapultepec", city: "Mexico City", region: "MX", access: "private", holes: 18, pars: p(18, 71) },
 
+  // --- Oregon (Bend high desert, Portland metro, Eugene/Coast) ---
+  { id: "pronghorn-nicklaus", name: "Pronghorn Club - Nicklaus Course", city: "Bend, OR", region: "PNW", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "pronghorn-fazio", name: "Pronghorn Club - Fazio Course", city: "Bend, OR", region: "PNW", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "tetherow", name: "Tetherow Golf Club", city: "Bend, OR", region: "PNW", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "brasada-ranch", name: "Brasada Ranch Golf Course", city: "Powell Butte, OR", region: "PNW", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "black-butte-big-meadow", name: "Black Butte Ranch - Big Meadow Course", city: "Sisters, OR", region: "PNW", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "black-butte-glaze-meadow", name: "Black Butte Ranch - Glaze Meadow Course", city: "Sisters, OR", region: "PNW", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "crosswater", name: "Crosswater Club at Sunriver", city: "Sunriver, OR", region: "PNW", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "sunriver-meadows", name: "Sunriver Resort - Meadows Course", city: "Sunriver, OR", region: "PNW", access: "resort", holes: 18, pars: p(18, 71) },
+  { id: "sunriver-woodlands", name: "Sunriver Resort - Woodlands Course", city: "Sunriver, OR", region: "PNW", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "aspen-lakes", name: "Aspen Lakes Golf Course", city: "Sisters, OR", region: "PNW", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "juniper", name: "Juniper Golf Club", city: "Redmond, OR", region: "PNW", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "reserve-north", name: "The Reserve Vineyards & Golf Club - North Course", city: "Aloha, OR", region: "PNW", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "reserve-south", name: "The Reserve Vineyards & Golf Club - South Course", city: "Aloha, OR", region: "PNW", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "oregon-golf-club", name: "The Oregon Golf Club", city: "West Linn, OR", region: "PNW", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "langdon-farms", name: "Langdon Farms Golf Club", city: "Aurora, OR", region: "PNW", access: "public", holes: 18, pars: p(18, 71) },
+  { id: "heron-lakes-great-blue", name: "Heron Lakes - Great Blue Course", city: "Portland, OR", region: "PNW", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "heron-lakes-greenback", name: "Heron Lakes - Greenback Course", city: "Portland, OR", region: "PNW", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "eastmoreland", name: "Eastmoreland Golf Course", city: "Portland, OR", region: "PNW", access: "municipal", holes: 18, pars: p(18, 72) },
+  { id: "waverley", name: "Waverley Country Club", city: "Portland, OR", region: "PNW", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "columbia-edgewater", name: "Columbia Edgewater Country Club", city: "Portland, OR", region: "PNW", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "tokatee", name: "Tokatee Golf Club", city: "Blue River, OR", region: "PNW", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "eugene-cc", name: "Eugene Country Club", city: "Eugene, OR", region: "PNW", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "salishan", name: "Salishan Spa & Golf Resort", city: "Gleneden Beach, OR", region: "PNW", access: "resort", holes: 18, pars: p(18, 71) },
+  { id: "stone-creek", name: "Stone Creek Golf Club", city: "Oregon City, OR", region: "PNW", access: "municipal", holes: 18, pars: p(18, 72) },
+
+  // --- Washington (beyond Chambers Bay + Riverbend) ---
+  { id: "sahalee", name: "Sahalee Country Club", city: "Sammamish, WA", region: "PNW", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "aldarra", name: "Aldarra Golf Club", city: "Sammamish, WA", region: "PNW", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "home-course", name: "The Home Course", city: "DuPont, WA", region: "PNW", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "tumble-creek", name: "Tumble Creek Club at Suncadia", city: "Cle Elum, WA", region: "PNW", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "suncadia-prospector", name: "Suncadia Resort - Prospector Course", city: "Cle Elum, WA", region: "PNW", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "suncadia-rope-rider", name: "Suncadia Resort - Rope Rider Course", city: "Cle Elum, WA", region: "PNW", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "mccormick-woods", name: "McCormick Woods Golf Club", city: "Port Orchard, WA", region: "PNW", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "trophy-lake", name: "Trophy Lake Golf & Casting", city: "Port Orchard, WA", region: "PNW", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "gold-mountain-olympic", name: "Gold Mountain Golf Club - Olympic Course", city: "Bremerton, WA", region: "PNW", access: "municipal", holes: 18, pars: p(18, 72) },
+  { id: "gold-mountain-cascade", name: "Gold Mountain Golf Club - Cascade Course", city: "Bremerton, WA", region: "PNW", access: "municipal", holes: 18, pars: p(18, 71) },
+  { id: "newcastle-coal-creek", name: "Newcastle Golf Club - Coal Creek Course", city: "Newcastle, WA", region: "PNW", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "newcastle-china-creek", name: "Newcastle Golf Club - China Creek Course", city: "Newcastle, WA", region: "PNW", access: "public", holes: 18, pars: p(18, 71) },
+  { id: "tacoma-cc", name: "Tacoma Country & Golf Club", city: "Lakewood, WA", region: "PNW", access: "private", holes: 18, pars: p(18, 71) },
+
+  // --- NorCal expansion (Monterey Peninsula, Bay Area, wine country) ---
+  // Lincoln Park (SF) is published as par 68 but the p() helper has
+  // no canonical 68 layout, so default to p(18, 72); four holes will
+  // be off-by-one in the seeded scorecard. Catalog metadata only --
+  // full scorecard can be overridden per course later.
+  { id: "cypress-point", name: "Cypress Point Club", city: "Pebble Beach, CA", region: "NC", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "poppy-hills", name: "Poppy Hills Golf Course", city: "Pebble Beach, CA", region: "NC", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "mpcc-dunes", name: "Monterey Peninsula Country Club - Dunes Course", city: "Pebble Beach, CA", region: "NC", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "mpcc-shore", name: "Monterey Peninsula Country Club - Shore Course", city: "Pebble Beach, CA", region: "NC", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "quail-lodge", name: "Quail Lodge Golf Club", city: "Carmel, CA", region: "NC", access: "resort", holes: 18, pars: p(18, 71) },
+  { id: "pacific-grove", name: "Pacific Grove Golf Links", city: "Pacific Grove, CA", region: "NC", access: "municipal", holes: 18, pars: p(18, 70) },
+  { id: "bayonet", name: "Bayonet & Black Horse - Bayonet Course", city: "Seaside, CA", region: "NC", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "black-horse", name: "Bayonet & Black Horse - Black Horse Course", city: "Seaside, CA", region: "NC", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "lake-merced", name: "Lake Merced Golf Club", city: "Daly City, CA", region: "NC", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "stanford", name: "Stanford Golf Course", city: "Stanford, CA", region: "NC", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "crystal-springs", name: "Crystal Springs Golf Club", city: "Burlingame, CA", region: "NC", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "lincoln-park-sf", name: "Lincoln Park Golf Course", city: "San Francisco, CA", region: "NC", access: "municipal", holes: 18, pars: p(18, 72) },
+  { id: "meadow-club", name: "Meadow Club", city: "Fairfax, CA", region: "NC", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "the-bridges", name: "The Bridges Golf Club", city: "San Ramon, CA", region: "NC", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "wente-vineyards", name: "Wente Vineyards Golf Course", city: "Livermore, CA", region: "NC", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "tilden-park", name: "Tilden Park Golf Course", city: "Berkeley, CA", region: "NC", access: "municipal", holes: 18, pars: p(18, 70) },
+  { id: "silverado-north", name: "Silverado Resort - North Course", city: "Napa, CA", region: "NC", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "silverado-south", name: "Silverado Resort - South Course", city: "Napa, CA", region: "NC", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "sonoma-golf-club", name: "Sonoma Golf Club", city: "Sonoma, CA", region: "NC", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "mayacama", name: "Mayacama Golf Club", city: "Santa Rosa, CA", region: "NC", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "cordevalle", name: "CordeValle", city: "San Martin, CA", region: "NC", access: "private", holes: 18, pars: p(18, 72) },
+
   // --- Pacific Northwest (sample / dev courses) ---
   {
     id: "riverbend-golf-complex",
@@ -1304,6 +1372,80 @@ export const COURSE_PRESET_COORDS: Record<string, { lat: number; lng: number }> 
   "marina-vallarta-golf-club": { lat: 20.6610, lng: -105.2510 },
   "el-tigre-golf-club": { lat: 20.7050, lng: -105.2900 },
   "club-de-golf-chapultepec": { lat: 19.4070, lng: -99.2280 },
+
+  // --- Oregon ---
+  // Pronghorn (Nicklaus + Fazio), Black Butte (Big Meadow + Glaze
+  // Meadow), Sunriver (Meadows + Woodlands; Crosswater has its own
+  // clubhouse), Reserve Vineyards (N + S), and Heron Lakes (Great
+  // Blue + Greenback) each share their clubhouse coord.
+  "pronghorn-nicklaus": { lat: 44.0892, lng: -121.1564 },
+  "pronghorn-fazio": { lat: 44.0892, lng: -121.1564 },
+  tetherow: { lat: 44.0244, lng: -121.3624 },
+  "brasada-ranch": { lat: 44.2356, lng: -120.9889 },
+  "black-butte-big-meadow": { lat: 44.3897, lng: -121.6361 },
+  "black-butte-glaze-meadow": { lat: 44.3897, lng: -121.6361 },
+  crosswater: { lat: 43.8589, lng: -121.4644 },
+  "sunriver-meadows": { lat: 43.8794, lng: -121.4408 },
+  "sunriver-woodlands": { lat: 43.8794, lng: -121.4408 },
+  "aspen-lakes": { lat: 44.2825, lng: -121.4744 },
+  juniper: { lat: 44.2522, lng: -121.1869 },
+  "reserve-north": { lat: 45.4756, lng: -122.8956 },
+  "reserve-south": { lat: 45.4756, lng: -122.8956 },
+  "oregon-golf-club": { lat: 45.3239, lng: -122.6786 },
+  "langdon-farms": { lat: 45.2589, lng: -122.7592 },
+  "heron-lakes-great-blue": { lat: 45.6058, lng: -122.6997 },
+  "heron-lakes-greenback": { lat: 45.6058, lng: -122.6997 },
+  eastmoreland: { lat: 45.4775, lng: -122.6353 },
+  waverley: { lat: 45.4347, lng: -122.6406 },
+  "columbia-edgewater": { lat: 45.5664, lng: -122.6206 },
+  tokatee: { lat: 44.1750, lng: -122.2417 },
+  "eugene-cc": { lat: 44.0758, lng: -123.0931 },
+  salishan: { lat: 44.9233, lng: -124.0181 },
+  "stone-creek": { lat: 45.3522, lng: -122.5836 },
+
+  // --- Washington ---
+  // Suncadia (Prospector + Rope Rider), Gold Mountain (Olympic +
+  // Cascade), and Newcastle (Coal Creek + China Creek) each share a
+  // clubhouse coord. Tumble Creek is private side of the Suncadia
+  // property and has its own coord.
+  sahalee: { lat: 47.6253, lng: -122.0561 },
+  aldarra: { lat: 47.6217, lng: -121.9911 },
+  "home-course": { lat: 47.1100, lng: -122.6406 },
+  "tumble-creek": { lat: 47.2475, lng: -121.0356 },
+  "suncadia-prospector": { lat: 47.2161, lng: -121.0903 },
+  "suncadia-rope-rider": { lat: 47.2161, lng: -121.0903 },
+  "mccormick-woods": { lat: 47.4806, lng: -122.7194 },
+  "trophy-lake": { lat: 47.4731, lng: -122.6831 },
+  "gold-mountain-olympic": { lat: 47.5519, lng: -122.7811 },
+  "gold-mountain-cascade": { lat: 47.5519, lng: -122.7811 },
+  "newcastle-coal-creek": { lat: 47.5419, lng: -122.1656 },
+  "newcastle-china-creek": { lat: 47.5419, lng: -122.1656 },
+  "tacoma-cc": { lat: 47.1683, lng: -122.5306 },
+
+  // --- NorCal expansion ---
+  // MPCC (Dunes + Shore), Bayonet & Black Horse (both), and
+  // Silverado (North + South) each share a clubhouse coord.
+  "cypress-point": { lat: 36.5808, lng: -121.9658 },
+  "poppy-hills": { lat: 36.5747, lng: -121.9433 },
+  "mpcc-dunes": { lat: 36.5897, lng: -121.9447 },
+  "mpcc-shore": { lat: 36.5897, lng: -121.9447 },
+  "quail-lodge": { lat: 36.5219, lng: -121.8881 },
+  "pacific-grove": { lat: 36.6358, lng: -121.9347 },
+  bayonet: { lat: 36.6422, lng: -121.7872 },
+  "black-horse": { lat: 36.6422, lng: -121.7872 },
+  "lake-merced": { lat: 37.7028, lng: -122.4858 },
+  stanford: { lat: 37.4267, lng: -122.1856 },
+  "crystal-springs": { lat: 37.5358, lng: -122.3781 },
+  "lincoln-park-sf": { lat: 37.7836, lng: -122.4992 },
+  "meadow-club": { lat: 37.9711, lng: -122.6097 },
+  "the-bridges": { lat: 37.7397, lng: -121.9061 },
+  "wente-vineyards": { lat: 37.6394, lng: -121.7375 },
+  "tilden-park": { lat: 37.9011, lng: -122.2547 },
+  "silverado-north": { lat: 38.3514, lng: -122.2611 },
+  "silverado-south": { lat: 38.3514, lng: -122.2611 },
+  "sonoma-golf-club": { lat: 38.2867, lng: -122.4575 },
+  mayacama: { lat: 38.5481, lng: -122.7975 },
+  cordevalle: { lat: 37.0656, lng: -121.5611 },
 };
 
 export function findPresetByName(name: string): CoursePreset | undefined {
