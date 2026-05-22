@@ -96,9 +96,16 @@ function parsePolygon(
     if (!Array.isArray(arr)) return null;
     const out: { lat: number; lng: number }[] = [];
     for (const p of arr) {
+      // Two shapes in the wild: legacy [[lat,lng],...] tuples and the
+      // GolfBert importer's [{lat,lng},...] objects. Accept both.
       if (Array.isArray(p) && p.length >= 2) {
         const lat = Number(p[0]);
         const lng = Number(p[1]);
+        if (Number.isFinite(lat) && Number.isFinite(lng))
+          out.push({ lat, lng });
+      } else if (p && typeof p === "object" && "lat" in p && "lng" in p) {
+        const lat = Number((p as { lat: unknown }).lat);
+        const lng = Number((p as { lng: unknown }).lng);
         if (Number.isFinite(lat) && Number.isFinite(lng))
           out.push({ lat, lng });
       }
