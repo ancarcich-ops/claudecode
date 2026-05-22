@@ -1405,5 +1405,39 @@ export async function adminImportFromGolfBertAction(formData: FormData) {
   };
 }
 
+// Admin: rename a Course in place. Used to fix mis-labeled records --
+// for example when a GolfBert import landed in a course row created
+// under the wrong name. Matches are NOT remapped here -- a separate
+// pass would need to update Match.courseName rows that referenced the
+// old name; v1 callers should rename before any matches exist.
+export async function adminRenameCourseAction(formData: FormData) {
+  const user = await requireUser();
+  const { isUserAdmin } = await import("./admin");
+  if (!isUserAdmin(user)) throw new Error("Admin only");
+  const oldName = String(formData.get("oldName") ?? "").trim();
+  const newName = String(formData.get("newName") ?? "").trim();
+  if (!oldName) throw new Error("Existing course name required");
+  if (!newName) throw new Error("New course name required");
+  if (oldName === newName) throw new Error("New name matches the old name");
+  const existing = await prisma.course.findUnique({
+    where: { name: newName },
+  });
+  if (existing) throw new Error(`A course named "${newName}" already exists`);
+  await prisma.course.update({
+    where: { name: oldName },
+    data: { name: newName },
+  });
+  // Update any matches that referenced the old courseName so future
+  // on-course views still find geometry.
+  await prisma.match.updateMany({
+    where: { courseName: oldName },
+    data: { courseName: newName },
+  });
+  revalidatePath(`/admin/courses/${encodeURIComponent(oldName)}`);
+  revalidatePath(`/admin/courses/${encodeURIComponent(newName)}`);
+  revalidatePath(`/admin/courses`);
+  return { newName };
+}
+
 // Admin: ping GolfBert + search wrappers above.
 export { getCurrentUser };
