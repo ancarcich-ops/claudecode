@@ -305,13 +305,9 @@ export default function HoleStudyMode({
                   Clear
                 </button>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="grid grid-cols-2 gap-2 text-center">
                 <DistStat label="To aim" yds={toAimYds} accent />
                 <DistStat label="To pin" yds={aimToPinYds} />
-                <DistStat
-                  label="Carry"
-                  yds={Math.round(toAimYds)}
-                />
               </div>
             </>
           ) : (
