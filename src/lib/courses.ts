@@ -6,7 +6,18 @@
 // hole in the "Course pars" editor on the match page.
 
 export type CourseAccess = "public" | "private" | "resort" | "municipal";
-export type CourseRegion = "LA" | "OC" | "IE" | "CV" | "SD" | "VC" | "PNW" | "TX";
+export type CourseRegion =
+  | "LA"
+  | "OC"
+  | "IE"
+  | "CV"
+  | "SD"
+  | "VC"
+  | "NC"
+  | "AZ"
+  | "NV"
+  | "PNW"
+  | "TX";
 
 export type CoursePreset = {
   id: string;
@@ -682,6 +693,63 @@ export const COURSE_PRESETS: CoursePreset[] = [
   { id: "glen-ivy", name: "Glen Ivy Golf Club", city: "Corona, CA", region: "IE", access: "public", holes: 18, pars: p(18, 72) },
   { id: "cherry-hills-sun-city", name: "Cherry Hills Country Club", city: "Menifee, CA", region: "IE", access: "public", holes: 18, pars: p(18, 72) },
 
+  // --- NorCal Bay Area / Monterey Peninsula ---
+  { id: "pebble-beach-golf-links", name: "Pebble Beach Golf Links", city: "Pebble Beach, CA", region: "NC", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "spyglass-hill", name: "Spyglass Hill Golf Course", city: "Pebble Beach, CA", region: "NC", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "spanish-bay", name: "The Links at Spanish Bay", city: "Pebble Beach, CA", region: "NC", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "olympic-club-lake", name: "Olympic Club - Lake Course", city: "San Francisco, CA", region: "NC", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "olympic-club-ocean", name: "Olympic Club - Ocean Course", city: "San Francisco, CA", region: "NC", access: "private", holes: 18, pars: p(18, 70) },
+  { id: "tpc-harding-park", name: "TPC Harding Park", city: "San Francisco, CA", region: "NC", access: "municipal", holes: 18, pars: p(18, 72) },
+  { id: "pasatiempo", name: "Pasatiempo Golf Club", city: "Santa Cruz, CA", region: "NC", access: "public", holes: 18, pars: p(18, 70) },
+  { id: "half-moon-bay-old", name: "Half Moon Bay - Old Course", city: "Half Moon Bay, CA", region: "NC", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "half-moon-bay-ocean", name: "Half Moon Bay - Ocean Course", city: "Half Moon Bay, CA", region: "NC", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "san-francisco-golf-club", name: "San Francisco Golf Club", city: "San Francisco, CA", region: "NC", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "presidio-golf-course", name: "Presidio Golf Course", city: "San Francisco, CA", region: "NC", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "sharp-park", name: "Sharp Park Golf Course", city: "Pacifica, CA", region: "NC", access: "municipal", holes: 18, pars: p(18, 72) },
+
+  // --- Phoenix / Scottsdale, AZ ---
+  { id: "tpc-scottsdale-stadium", name: "TPC Scottsdale - Stadium Course", city: "Scottsdale, AZ", region: "AZ", access: "resort", holes: 18, pars: p(18, 71) },
+  { id: "tpc-scottsdale-champions", name: "TPC Scottsdale - Champions Course", city: "Scottsdale, AZ", region: "AZ", access: "resort", holes: 18, pars: p(18, 71) },
+  { id: "troon-north-pinnacle", name: "Troon North - Pinnacle Course", city: "Scottsdale, AZ", region: "AZ", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "troon-north-monument", name: "Troon North - Monument Course", city: "Scottsdale, AZ", region: "AZ", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "grayhawk-talon", name: "Grayhawk - Talon Course", city: "Scottsdale, AZ", region: "AZ", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "grayhawk-raptor", name: "Grayhawk - Raptor Course", city: "Scottsdale, AZ", region: "AZ", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "we-ko-pa-saguaro", name: "We-Ko-Pa Golf Club - Saguaro Course", city: "Fort McDowell, AZ", region: "AZ", access: "public", holes: 18, pars: p(18, 71) },
+  { id: "we-ko-pa-cholla", name: "We-Ko-Pa Golf Club - Cholla Course", city: "Fort McDowell, AZ", region: "AZ", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "boulders-north", name: "The Boulders - North Course", city: "Carefree, AZ", region: "AZ", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "boulders-south", name: "The Boulders - South Course", city: "Carefree, AZ", region: "AZ", access: "resort", holes: 18, pars: p(18, 71) },
+
+  // --- Las Vegas, NV ---
+  { id: "shadow-creek", name: "Shadow Creek", city: "North Las Vegas, NV", region: "NV", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "cascata", name: "Cascata", city: "Boulder City, NV", region: "NV", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "wynn-golf-club", name: "Wynn Golf Club", city: "Las Vegas, NV", region: "NV", access: "resort", holes: 18, pars: p(18, 70) },
+  { id: "tpc-las-vegas", name: "TPC Las Vegas", city: "Las Vegas, NV", region: "NV", access: "public", holes: 18, pars: p(18, 71) },
+  { id: "bali-hai", name: "Bali Hai Golf Club", city: "Las Vegas, NV", region: "NV", access: "public", holes: 18, pars: p(18, 71) },
+  { id: "lv-paiute-snow-mountain", name: "Las Vegas Paiute - Snow Mountain Course", city: "Las Vegas, NV", region: "NV", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "lv-paiute-sun-mountain", name: "Las Vegas Paiute - Sun Mountain Course", city: "Las Vegas, NV", region: "NV", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "lv-paiute-wolf", name: "Las Vegas Paiute - Wolf Course", city: "Las Vegas, NV", region: "NV", access: "public", holes: 18, pars: p(18, 72) },
+
+  // --- Pacific Northwest expansion ---
+  { id: "chambers-bay", name: "Chambers Bay", city: "University Place, WA", region: "PNW", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "bandon-dunes", name: "Bandon Dunes Golf Resort - Bandon Dunes", city: "Bandon, OR", region: "PNW", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "bandon-pacific-dunes", name: "Bandon Dunes Golf Resort - Pacific Dunes", city: "Bandon, OR", region: "PNW", access: "resort", holes: 18, pars: p(18, 71) },
+  { id: "bandon-old-macdonald", name: "Bandon Dunes Golf Resort - Old Macdonald", city: "Bandon, OR", region: "PNW", access: "resort", holes: 18, pars: p(18, 71) },
+  { id: "bandon-trails", name: "Bandon Dunes Golf Resort - Bandon Trails", city: "Bandon, OR", region: "PNW", access: "resort", holes: 18, pars: p(18, 71) },
+  { id: "pumpkin-ridge-witch-hollow", name: "Pumpkin Ridge - Witch Hollow", city: "North Plains, OR", region: "PNW", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "pumpkin-ridge-ghost-creek", name: "Pumpkin Ridge - Ghost Creek", city: "North Plains, OR", region: "PNW", access: "public", holes: 18, pars: p(18, 71) },
+
+  // --- Dallas + Houston, TX ---
+  { id: "colonial-cc", name: "Colonial Country Club", city: "Fort Worth, TX", region: "TX", access: "private", holes: 18, pars: p(18, 70) },
+  { id: "trinity-forest", name: "Trinity Forest Golf Club", city: "Dallas, TX", region: "TX", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "maridoe", name: "Maridoe Golf Club", city: "Carrollton, TX", region: "TX", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "vaquero-club", name: "Vaquero Club", city: "Westlake, TX", region: "TX", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "northwood-club", name: "Northwood Club", city: "Dallas, TX", region: "TX", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "memorial-park", name: "Memorial Park Golf Course", city: "Houston, TX", region: "TX", access: "municipal", holes: 18, pars: p(18, 70) },
+  { id: "blackhorse-north", name: "BlackHorse Golf Club - North Course", city: "Cypress, TX", region: "TX", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "blackhorse-south", name: "BlackHorse Golf Club - South Course", city: "Cypress, TX", region: "TX", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "wildcat-highlands", name: "The Wildcat Golf Club - Highlands Course", city: "Houston, TX", region: "TX", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "wildcat-lakes", name: "The Wildcat Golf Club - Lakes Course", city: "Houston, TX", region: "TX", access: "public", holes: 18, pars: p(18, 72) },
+
   // --- Pacific Northwest (sample / dev courses) ---
   {
     id: "riverbend-golf-complex",
@@ -848,6 +916,73 @@ export const COURSE_PRESET_COORDS: Record<string, { lat: number; lng: number }> 
   "soboba-springs": { lat: 33.7800, lng: -116.9580 },
   "glen-ivy": { lat: 33.7500, lng: -117.4920 },
   "cherry-hills-sun-city": { lat: 33.7100, lng: -117.1820 },
+
+  // --- NorCal Bay Area / Monterey Peninsula ---
+  // Olympic Club Lake + Ocean share the clubhouse. Half Moon Bay
+  // Old + Ocean share the clubhouse.
+  "pebble-beach-golf-links": { lat: 36.5683, lng: -121.9489 },
+  "spyglass-hill": { lat: 36.5786, lng: -121.9528 },
+  "spanish-bay": { lat: 36.6125, lng: -121.9461 },
+  "olympic-club-lake": { lat: 37.7117, lng: -122.4936 },
+  "olympic-club-ocean": { lat: 37.7117, lng: -122.4936 },
+  "tpc-harding-park": { lat: 37.7253, lng: -122.4942 },
+  pasatiempo: { lat: 37.0017, lng: -122.0419 },
+  "half-moon-bay-old": { lat: 37.4475, lng: -122.4422 },
+  "half-moon-bay-ocean": { lat: 37.4475, lng: -122.4422 },
+  "san-francisco-golf-club": { lat: 37.7117, lng: -122.4781 },
+  "presidio-golf-course": { lat: 37.7864, lng: -122.4631 },
+  "sharp-park": { lat: 37.6306, lng: -122.4933 },
+
+  // --- Phoenix / Scottsdale, AZ ---
+  // TPC Scottsdale Stadium + Champions, Troon North Pinnacle +
+  // Monument, Grayhawk Talon + Raptor, We-Ko-Pa Saguaro + Cholla,
+  // and The Boulders North + South each share a clubhouse.
+  "tpc-scottsdale-stadium": { lat: 33.6394, lng: -111.9056 },
+  "tpc-scottsdale-champions": { lat: 33.6394, lng: -111.9056 },
+  "troon-north-pinnacle": { lat: 33.7656, lng: -111.8650 },
+  "troon-north-monument": { lat: 33.7656, lng: -111.8650 },
+  "grayhawk-talon": { lat: 33.6739, lng: -111.8847 },
+  "grayhawk-raptor": { lat: 33.6739, lng: -111.8847 },
+  "we-ko-pa-saguaro": { lat: 33.6178, lng: -111.6878 },
+  "we-ko-pa-cholla": { lat: 33.6178, lng: -111.6878 },
+  "boulders-north": { lat: 33.8228, lng: -111.9189 },
+  "boulders-south": { lat: 33.8228, lng: -111.9189 },
+
+  // --- Las Vegas, NV ---
+  // Las Vegas Paiute Snow + Sun + Wolf share the resort clubhouse.
+  "shadow-creek": { lat: 36.2814, lng: -115.1297 },
+  cascata: { lat: 35.9633, lng: -114.8786 },
+  "wynn-golf-club": { lat: 36.1300, lng: -115.1656 },
+  "tpc-las-vegas": { lat: 36.2092, lng: -115.3033 },
+  "bali-hai": { lat: 36.0883, lng: -115.1717 },
+  "lv-paiute-snow-mountain": { lat: 36.4233, lng: -115.3964 },
+  "lv-paiute-sun-mountain": { lat: 36.4233, lng: -115.3964 },
+  "lv-paiute-wolf": { lat: 36.4233, lng: -115.3964 },
+
+  // --- Pacific Northwest expansion ---
+  // Bandon Dunes 4 courses share the resort lodge coord; Pumpkin
+  // Ridge Witch Hollow + Ghost Creek share theirs.
+  "chambers-bay": { lat: 47.2058, lng: -122.5853 },
+  "bandon-dunes": { lat: 43.1864, lng: -124.3858 },
+  "bandon-pacific-dunes": { lat: 43.1864, lng: -124.3858 },
+  "bandon-old-macdonald": { lat: 43.1864, lng: -124.3858 },
+  "bandon-trails": { lat: 43.1864, lng: -124.3858 },
+  "pumpkin-ridge-witch-hollow": { lat: 45.6175, lng: -123.0061 },
+  "pumpkin-ridge-ghost-creek": { lat: 45.6175, lng: -123.0061 },
+
+  // --- Dallas + Houston, TX ---
+  // BlackHorse North + South share a clubhouse. Wildcat Highlands +
+  // Lakes share theirs.
+  "colonial-cc": { lat: 32.7081, lng: -97.3617 },
+  "trinity-forest": { lat: 32.7144, lng: -96.7406 },
+  maridoe: { lat: 32.9956, lng: -96.9450 },
+  "vaquero-club": { lat: 32.9831, lng: -97.1942 },
+  "northwood-club": { lat: 32.8961, lng: -96.7747 },
+  "memorial-park": { lat: 29.7669, lng: -95.4322 },
+  "blackhorse-north": { lat: 29.9583, lng: -95.7281 },
+  "blackhorse-south": { lat: 29.9583, lng: -95.7281 },
+  "wildcat-highlands": { lat: 29.6261, lng: -95.3608 },
+  "wildcat-lakes": { lat: 29.6261, lng: -95.3608 },
 };
 
 export function findPresetByName(name: string): CoursePreset | undefined {

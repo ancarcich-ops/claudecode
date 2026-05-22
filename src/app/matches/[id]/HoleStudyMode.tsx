@@ -322,7 +322,7 @@ export default function HoleStudyMode({
                 <DistStat label="Back" yds={back} />
               </div>
               <div className="text-center text-[9.5px] uppercase tracking-wider text-mute pb-1.5">
-                Tap on the course to plan your shots and see custom carry distances
+                Tap on the course to see custom aim distances
               </div>
             </>
           )}
