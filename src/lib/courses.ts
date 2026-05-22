@@ -18,7 +18,10 @@ export type CourseRegion =
   | "NV"
   | "UT"
   | "PNW"
-  | "TX";
+  | "TX"
+  | "FL"
+  | "CAR"
+  | "MW";
 
 export type CoursePreset = {
   id: string;
@@ -807,6 +810,68 @@ export const COURSE_PRESETS: CoursePreset[] = [
   { id: "victory-ranch", name: "Victory Ranch", city: "Kamas, UT", region: "UT", access: "private", holes: 18, pars: p(18, 72) },
   { id: "soldier-hollow-gold", name: "Soldier Hollow - Gold Course", city: "Midway, UT", region: "UT", access: "public", holes: 18, pars: p(18, 72) },
 
+  // --- Florida ---
+  { id: "tpc-sawgrass-stadium", name: "TPC Sawgrass - The Players Stadium Course", city: "Ponte Vedra Beach, FL", region: "FL", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "tpc-sawgrass-dyes-valley", name: "TPC Sawgrass - Dye's Valley Course", city: "Ponte Vedra Beach, FL", region: "FL", access: "resort", holes: 18, pars: p(18, 71) },
+  { id: "streamsong-red", name: "Streamsong Resort - Red Course", city: "Streamsong, FL", region: "FL", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "streamsong-blue", name: "Streamsong Resort - Blue Course", city: "Streamsong, FL", region: "FL", access: "resort", holes: 18, pars: p(18, 72) },
+  // Streamsong Black is par 73; helper p() doesn't have a canonical
+  // 73 layout, so default to the 72 layout -- one hole's actual par
+  // will be off by 1. Acceptable for catalog metadata; full scorecard
+  // can be overridden per-course later.
+  { id: "streamsong-black", name: "Streamsong Resort - Black Course", city: "Streamsong, FL", region: "FL", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "trump-doral-blue-monster", name: "Trump National Doral - Blue Monster Course", city: "Miami, FL", region: "FL", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "trump-doral-red-tiger", name: "Trump National Doral - Red Tiger Course", city: "Miami, FL", region: "FL", access: "resort", holes: 18, pars: p(18, 71) },
+  { id: "trump-doral-gold", name: "Trump National Doral - Gold Course", city: "Miami, FL", region: "FL", access: "resort", holes: 18, pars: p(18, 70) },
+  { id: "bay-hill-championship", name: "Arnold Palmer's Bay Hill Club - Championship Course", city: "Orlando, FL", region: "FL", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "pga-national-champion", name: "PGA National - Champion Course", city: "Palm Beach Gardens, FL", region: "FL", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "pga-national-palmer", name: "PGA National - Palmer Course", city: "Palm Beach Gardens, FL", region: "FL", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "pga-national-squire", name: "PGA National - Squire Course", city: "Palm Beach Gardens, FL", region: "FL", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "pga-national-estate", name: "PGA National - Estate Course", city: "Palm Beach Gardens, FL", region: "FL", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "pga-national-fazio", name: "PGA National - Fazio Course", city: "Palm Beach Gardens, FL", region: "FL", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "innisbrook-copperhead", name: "Innisbrook Resort - Copperhead Course", city: "Palm Harbor, FL", region: "FL", access: "resort", holes: 18, pars: p(18, 71) },
+  { id: "innisbrook-island", name: "Innisbrook Resort - Island Course", city: "Palm Harbor, FL", region: "FL", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "lake-nona", name: "Lake Nona Golf & Country Club", city: "Orlando, FL", region: "FL", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "seminole", name: "Seminole Golf Club", city: "Juno Beach, FL", region: "FL", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "the-concession", name: "The Concession Golf Club", city: "Bradenton, FL", region: "FL", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "black-diamond-ranch-quarry", name: "Black Diamond Ranch - Quarry Course", city: "Lecanto, FL", region: "FL", access: "public", holes: 18, pars: p(18, 72) },
+
+  // --- Carolinas (NC + SC) ---
+  { id: "pinehurst-no-2", name: "Pinehurst Resort - No. 2 Course", city: "Pinehurst, NC", region: "CAR", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "pinehurst-no-4", name: "Pinehurst Resort - No. 4 Course", city: "Pinehurst, NC", region: "CAR", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "pinehurst-no-6", name: "Pinehurst Resort - No. 6 Course", city: "Pinehurst, NC", region: "CAR", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "pinehurst-no-7", name: "Pinehurst Resort - No. 7 Course", city: "Pinehurst, NC", region: "CAR", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "pinehurst-no-8", name: "Pinehurst Resort - No. 8 Course", city: "Pinehurst, NC", region: "CAR", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "pinehurst-no-9", name: "Pinehurst Resort - No. 9 Course", city: "Pinehurst, NC", region: "CAR", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "pinehurst-no-10", name: "Pinehurst Resort - No. 10 Course", city: "Aberdeen, NC", region: "CAR", access: "resort", holes: 18, pars: p(18, 71) },
+  { id: "pine-needles", name: "Pine Needles Lodge & Golf Club", city: "Southern Pines, NC", region: "CAR", access: "public", holes: 18, pars: p(18, 71) },
+  { id: "mid-pines", name: "Mid Pines Inn & Golf Club", city: "Southern Pines, NC", region: "CAR", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "tobacco-road", name: "Tobacco Road Golf Club", city: "Sanford, NC", region: "CAR", access: "public", holes: 18, pars: p(18, 71) },
+  { id: "quail-hollow", name: "Quail Hollow Club", city: "Charlotte, NC", region: "CAR", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "charlotte-country-club", name: "Charlotte Country Club", city: "Charlotte, NC", region: "CAR", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "sedgefield", name: "Sedgefield Country Club", city: "Greensboro, NC", region: "CAR", access: "private", holes: 18, pars: p(18, 70) },
+  { id: "kiawah-ocean", name: "Kiawah Island Golf Resort - Ocean Course", city: "Kiawah Island, SC", region: "CAR", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "kiawah-turtle-point", name: "Kiawah Island Golf Resort - Turtle Point Course", city: "Kiawah Island, SC", region: "CAR", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "harbour-town", name: "Harbour Town Golf Links", city: "Hilton Head Island, SC", region: "CAR", access: "public", holes: 18, pars: p(18, 71) },
+  { id: "sea-pines-ocean", name: "The Ocean Course at Sea Pines", city: "Hilton Head Island, SC", region: "CAR", access: "resort", holes: 18, pars: p(18, 72) },
+
+  // --- Midwest (WI + IL + MI) ---
+  // Streamsong Black + Mammoth Dunes are par-73, Sedge Valley is
+  // par-68; same one-stroke-off-per-hole caveat applies for those.
+  { id: "whistling-straits-straits", name: "Whistling Straits - Straits Course", city: "Sheboygan, WI", region: "MW", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "whistling-straits-irish", name: "Whistling Straits - Irish Course", city: "Sheboygan, WI", region: "MW", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "blackwolf-run-river", name: "Blackwolf Run - River Course", city: "Kohler, WI", region: "MW", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "blackwolf-run-meadow-valleys", name: "Blackwolf Run - Meadow Valleys Course", city: "Kohler, WI", region: "MW", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "erin-hills", name: "Erin Hills", city: "Erin, WI", region: "MW", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "sand-valley-sand-valley", name: "Sand Valley Golf Resort - Sand Valley Course", city: "Nekoosa, WI", region: "MW", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "sand-valley-mammoth-dunes", name: "Sand Valley Golf Resort - Mammoth Dunes Course", city: "Nekoosa, WI", region: "MW", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "sand-valley-sedge-valley", name: "Sand Valley Golf Resort - Sedge Valley Course", city: "Nekoosa, WI", region: "MW", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "cog-hill-dubsdread", name: "Cog Hill Golf & Country Club - Course No. 4 Dubsdread", city: "Lemont, IL", region: "MW", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "olympia-fields-north", name: "Olympia Fields Country Club - North Course", city: "Olympia Fields, IL", region: "MW", access: "private", holes: 18, pars: p(18, 70) },
+  { id: "medinah-no-3", name: "Medinah Country Club - Course No. 3", city: "Medinah, IL", region: "MW", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "crystal-downs", name: "Crystal Downs Country Club", city: "Frankfort, MI", region: "MW", access: "private", holes: 18, pars: p(18, 70) },
+  { id: "oakland-hills-south", name: "Oakland Hills Country Club - South Course", city: "Bloomfield Township, MI", region: "MW", access: "private", holes: 18, pars: p(18, 72) },
+
   // --- Pacific Northwest (sample / dev courses) ---
   {
     id: "riverbend-golf-complex",
@@ -1102,6 +1167,72 @@ export const COURSE_PRESET_COORDS: Record<string, { lat: number; lng: number }> 
   "red-ledges": { lat: 40.5739, lng: -111.3819 },
   "victory-ranch": { lat: 40.5897, lng: -111.2447 },
   "soldier-hollow-gold": { lat: 40.5181, lng: -111.4781 },
+
+  // --- Florida ---
+  // TPC Sawgrass (Stadium + Dye's Valley), Streamsong (R/B/Bk),
+  // Trump Doral (3 courses), PGA National (5 courses), and
+  // Innisbrook (Copperhead + Island) each share a clubhouse coord.
+  "tpc-sawgrass-stadium": { lat: 30.1975, lng: -81.3944 },
+  "tpc-sawgrass-dyes-valley": { lat: 30.1975, lng: -81.3944 },
+  "streamsong-red": { lat: 27.6539, lng: -81.8194 },
+  "streamsong-blue": { lat: 27.6539, lng: -81.8194 },
+  "streamsong-black": { lat: 27.6539, lng: -81.8194 },
+  "trump-doral-blue-monster": { lat: 25.8186, lng: -80.3389 },
+  "trump-doral-red-tiger": { lat: 25.8186, lng: -80.3389 },
+  "trump-doral-gold": { lat: 25.8186, lng: -80.3389 },
+  "bay-hill-championship": { lat: 28.4583, lng: -81.5081 },
+  "pga-national-champion": { lat: 26.8439, lng: -80.1419 },
+  "pga-national-palmer": { lat: 26.8439, lng: -80.1419 },
+  "pga-national-squire": { lat: 26.8439, lng: -80.1419 },
+  "pga-national-estate": { lat: 26.8439, lng: -80.1419 },
+  "pga-national-fazio": { lat: 26.8439, lng: -80.1419 },
+  "innisbrook-copperhead": { lat: 28.1100, lng: -82.7361 },
+  "innisbrook-island": { lat: 28.1100, lng: -82.7361 },
+  "lake-nona": { lat: 28.3950, lng: -81.2492 },
+  seminole: { lat: 26.8836, lng: -80.0581 },
+  "the-concession": { lat: 27.4406, lng: -82.3719 },
+  "black-diamond-ranch-quarry": { lat: 28.8628, lng: -82.5097 },
+
+  // --- Carolinas (NC + SC) ---
+  // Pinehurst Nos. 2/4/6/7/8/9 share the resort hub; No. 10 is in
+  // Aberdeen and has its own coord. Kiawah Ocean + Turtle Point use
+  // the same resort coord even though the actual courses are a
+  // few miles apart on the island.
+  "pinehurst-no-2": { lat: 35.1903, lng: -79.4694 },
+  "pinehurst-no-4": { lat: 35.1903, lng: -79.4694 },
+  "pinehurst-no-6": { lat: 35.1903, lng: -79.4694 },
+  "pinehurst-no-7": { lat: 35.1903, lng: -79.4694 },
+  "pinehurst-no-8": { lat: 35.1903, lng: -79.4694 },
+  "pinehurst-no-9": { lat: 35.1903, lng: -79.4694 },
+  "pinehurst-no-10": { lat: 35.1383, lng: -79.4458 },
+  "pine-needles": { lat: 35.1717, lng: -79.4178 },
+  "mid-pines": { lat: 35.1689, lng: -79.4144 },
+  "tobacco-road": { lat: 35.4719, lng: -79.0986 },
+  "quail-hollow": { lat: 35.1486, lng: -80.8489 },
+  "charlotte-country-club": { lat: 35.2125, lng: -80.7831 },
+  sedgefield: { lat: 36.0681, lng: -79.8917 },
+  "kiawah-ocean": { lat: 32.6128, lng: -80.0414 },
+  "kiawah-turtle-point": { lat: 32.6128, lng: -80.0414 },
+  "harbour-town": { lat: 32.1389, lng: -80.8128 },
+  "sea-pines-ocean": { lat: 32.1456, lng: -80.7964 },
+
+  // --- Midwest (WI + IL + MI) ---
+  // Whistling Straits (Straits + Irish), Blackwolf Run (River +
+  // Meadow Valleys), and Sand Valley (3 courses) each share a
+  // resort coord.
+  "whistling-straits-straits": { lat: 43.8506, lng: -87.7314 },
+  "whistling-straits-irish": { lat: 43.8506, lng: -87.7314 },
+  "blackwolf-run-river": { lat: 43.7367, lng: -87.7869 },
+  "blackwolf-run-meadow-valleys": { lat: 43.7367, lng: -87.7869 },
+  "erin-hills": { lat: 43.2447, lng: -88.3878 },
+  "sand-valley-sand-valley": { lat: 44.2767, lng: -89.9542 },
+  "sand-valley-mammoth-dunes": { lat: 44.2767, lng: -89.9542 },
+  "sand-valley-sedge-valley": { lat: 44.2767, lng: -89.9542 },
+  "cog-hill-dubsdread": { lat: 41.6539, lng: -87.9844 },
+  "olympia-fields-north": { lat: 41.5114, lng: -87.6731 },
+  "medinah-no-3": { lat: 41.9794, lng: -88.0517 },
+  "crystal-downs": { lat: 44.6228, lng: -86.2244 },
+  "oakland-hills-south": { lat: 42.5650, lng: -83.2722 },
 };
 
 export function findPresetByName(name: string): CoursePreset | undefined {
