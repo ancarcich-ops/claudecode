@@ -21,7 +21,8 @@ export type CourseRegion =
   | "TX"
   | "FL"
   | "CAR"
-  | "MW";
+  | "MW"
+  | "MX";
 
 export type CoursePreset = {
   id: string;
@@ -872,6 +873,41 @@ export const COURSE_PRESETS: CoursePreset[] = [
   { id: "crystal-downs", name: "Crystal Downs Country Club", city: "Frankfort, MI", region: "MW", access: "private", holes: 18, pars: p(18, 70) },
   { id: "oakland-hills-south", name: "Oakland Hills Country Club - South Course", city: "Bloomfield Township, MI", region: "MW", access: "private", holes: 18, pars: p(18, 72) },
 
+  // --- Mexico ---
+  // Loreto, Los Cabos circuit, Riviera Maya / Cancun, Puerto Vallarta
+  // / Riviera Nayarit, and CDMX. Skipped: Diamante Oasis short course
+  // (12 holes par 36) -- doesn't fit the 9/18 schema; can add later
+  // if we extend the helper.
+  { id: "tpc-danzante-bay", name: "TPC Danzante Bay at Villa del Palmar", city: "Loreto, BCS", region: "MX", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "diamante-dunes", name: "Diamante Cabo - Dunes Course", city: "Cabo San Lucas, BCS", region: "MX", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "diamante-el-cardonal", name: "Diamante Cabo - El Cardonal Course", city: "Cabo San Lucas, BCS", region: "MX", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "quivira-golf-club", name: "Quivira Golf Club", city: "Cabo San Lucas, BCS", region: "MX", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "cabo-del-sol-cove", name: "Cabo del Sol - Cove Club", city: "San Jose del Cabo, BCS", region: "MX", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "cabo-del-sol-desert", name: "Cabo del Sol - Desert Course", city: "San Jose del Cabo, BCS", region: "MX", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "cabo-real-golf-club", name: "Cabo Real Golf Club", city: "Los Cabos, BCS", region: "MX", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "querencia-golf-club", name: "Querencia Golf Club", city: "San Jose del Cabo, BCS", region: "MX", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "palmilla-golf-club", name: "Palmilla Golf Club", city: "San Jose del Cabo, BCS", region: "MX", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "el-dorado-golf-club", name: "El Dorado Golf Club", city: "San Jose del Cabo, BCS", region: "MX", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "puerto-los-cabos", name: "Puerto Los Cabos Golf Club", city: "San Jose del Cabo, BCS", region: "MX", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "chileno-bay-club", name: "Chileno Bay Club", city: "Cabo San Lucas, BCS", region: "MX", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "twin-dolphin-golf-club", name: "Twin Dolphin Golf Club", city: "Cabo San Lucas, BCS", region: "MX", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "cabo-san-lucas-country-club", name: "Cabo San Lucas Country Club", city: "Cabo San Lucas, BCS", region: "MX", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "vidanta-los-cabos", name: "Vidanta Golf Los Cabos", city: "San Jose del Cabo, BCS", region: "MX", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "mayakoba-el-camaleon", name: "Mayakoba El Camaleon Golf Club", city: "Playa del Carmen, QR", region: "MX", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "iberostar-playa-paraiso", name: "Iberostar Playa Paraiso Golf Club", city: "Playa del Carmen, QR", region: "MX", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "riviera-maya-golf-club", name: "Riviera Maya Golf Club", city: "Akumal, QR", region: "MX", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "moon-palace-jaguar", name: "Moon Palace Golf Club - Jaguar Course", city: "Cancun, QR", region: "MX", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "moon-palace-dunes", name: "Moon Palace Golf Club - Dunes Course", city: "Cancun, QR", region: "MX", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "cancun-country-club", name: "Cancun Country Club", city: "Cancun, QR", region: "MX", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "playa-mujeres-golf-club", name: "Playa Mujeres Golf Club", city: "Cancun, QR", region: "MX", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "vidanta-vallarta-norman", name: "Vidanta Vallarta - Norman Signature Course", city: "Nuevo Vallarta, Nayarit", region: "MX", access: "resort", holes: 18, pars: p(18, 71) },
+  { id: "vidanta-vallarta-nicklaus", name: "Vidanta Vallarta - Nicklaus Course", city: "Nuevo Vallarta, Nayarit", region: "MX", access: "resort", holes: 18, pars: p(18, 71) },
+  { id: "punta-mita-pacifico", name: "Punta Mita - Pacifico Course", city: "Punta de Mita, Nayarit", region: "MX", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "punta-mita-bahia", name: "Punta Mita - Bahia Course", city: "Punta de Mita, Nayarit", region: "MX", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "marina-vallarta-golf-club", name: "Marina Vallarta Golf Club", city: "Puerto Vallarta, Jalisco", region: "MX", access: "public", holes: 18, pars: p(18, 71) },
+  { id: "el-tigre-golf-club", name: "El Tigre Golf Club", city: "Nuevo Vallarta, Nayarit", region: "MX", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "club-de-golf-chapultepec", name: "Club de Golf Chapultepec", city: "Mexico City", region: "MX", access: "private", holes: 18, pars: p(18, 71) },
+
   // --- Pacific Northwest (sample / dev courses) ---
   {
     id: "riverbend-golf-complex",
@@ -1233,6 +1269,41 @@ export const COURSE_PRESET_COORDS: Record<string, { lat: number; lng: number }> 
   "medinah-no-3": { lat: 41.9794, lng: -88.0517 },
   "crystal-downs": { lat: 44.6228, lng: -86.2244 },
   "oakland-hills-south": { lat: 42.5650, lng: -83.2722 },
+
+  // --- Mexico ---
+  // Diamante (Dunes + El Cardonal), Cabo del Sol (Cove + Desert),
+  // Moon Palace (Jaguar + Dunes), Punta Mita (Pacifico + Bahia),
+  // and Vidanta Vallarta (Norman + Nicklaus) each share a resort
+  // coord.
+  "tpc-danzante-bay": { lat: 25.7470, lng: -111.2870 },
+  "diamante-dunes": { lat: 22.9450, lng: -110.0610 },
+  "diamante-el-cardonal": { lat: 22.9450, lng: -110.0610 },
+  "quivira-golf-club": { lat: 22.8870, lng: -110.0250 },
+  "cabo-del-sol-cove": { lat: 22.9300, lng: -109.8170 },
+  "cabo-del-sol-desert": { lat: 22.9300, lng: -109.8170 },
+  "cabo-real-golf-club": { lat: 22.9690, lng: -109.7780 },
+  "querencia-golf-club": { lat: 23.0050, lng: -109.7410 },
+  "palmilla-golf-club": { lat: 23.0150, lng: -109.7220 },
+  "el-dorado-golf-club": { lat: 23.0260, lng: -109.6920 },
+  "puerto-los-cabos": { lat: 23.0700, lng: -109.6620 },
+  "chileno-bay-club": { lat: 22.9550, lng: -109.7960 },
+  "twin-dolphin-golf-club": { lat: 22.9420, lng: -109.8470 },
+  "cabo-san-lucas-country-club": { lat: 22.9070, lng: -109.9230 },
+  "vidanta-los-cabos": { lat: 23.0530, lng: -109.6800 },
+  "mayakoba-el-camaleon": { lat: 20.6940, lng: -87.0410 },
+  "iberostar-playa-paraiso": { lat: 20.7530, lng: -86.9750 },
+  "riviera-maya-golf-club": { lat: 20.4140, lng: -87.3260 },
+  "moon-palace-jaguar": { lat: 21.0500, lng: -86.8330 },
+  "moon-palace-dunes": { lat: 21.0500, lng: -86.8330 },
+  "cancun-country-club": { lat: 21.0660, lng: -86.8540 },
+  "playa-mujeres-golf-club": { lat: 21.2630, lng: -86.8000 },
+  "vidanta-vallarta-norman": { lat: 20.6940, lng: -105.2960 },
+  "vidanta-vallarta-nicklaus": { lat: 20.6940, lng: -105.2960 },
+  "punta-mita-pacifico": { lat: 20.7700, lng: -105.5290 },
+  "punta-mita-bahia": { lat: 20.7700, lng: -105.5290 },
+  "marina-vallarta-golf-club": { lat: 20.6610, lng: -105.2510 },
+  "el-tigre-golf-club": { lat: 20.7050, lng: -105.2900 },
+  "club-de-golf-chapultepec": { lat: 19.4070, lng: -99.2280 },
 };
 
 export function findPresetByName(name: string): CoursePreset | undefined {
