@@ -47,6 +47,7 @@ import WolfEditor from "./WolfEditor";
 import WolfSettings from "./WolfSettings";
 import WinCelebration from "@/components/WinCelebration";
 import OnCourseMode from "./OnCourseMode";
+import HoleStudyMode from "./HoleStudyMode";
 import { getCourseHazardsByName, getCourseHolesByName } from "@/lib/course";
 import { getWindForCoord } from "@/lib/weather";
 import AutoRefresh from "@/components/AutoRefresh";
@@ -393,16 +394,21 @@ export default async function MatchPage({
       </header>
 
       {/* On-course launcher hoisted above the tabs as a primary CTA
-          during a live round so it never gets buried behind a tab. */}
+          during a live round so it never gets buried behind a tab.
+          Pre-round (UPCOMING) the on-course button is suppressed --
+          GPS distances make no sense yet -- but the preview entry
+          stays so players can study the holes in advance. */}
       {canLogScores && (
         <section className="card p-4">
           <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
             <div>
               <h2 className="font-display text-base font-semibold text-ink">
-                On course
+                {match.status === "UPCOMING" ? "Prep" : "On course"}
               </h2>
               <p className="text-[11px] text-mute mt-0.5">
-                GPS distances to the green + one-tap score entry. Mobile-first.
+                {match.status === "UPCOMING"
+                  ? "Walk the course before the round. Distances from each tee."
+                  : "GPS distances to the green + one-tap score entry. Mobile-first."}
               </p>
             </div>
             {(() => {
@@ -416,27 +422,48 @@ export default async function MatchPage({
               );
             })()}
           </div>
-          <OnCourseMode
-            matchId={match.id}
-            courseName={match.courseName}
-            holes={match.holes}
-            matchStartingHole={matchStart}
-            startingHole={onCourseStartingHole}
-            pars={pars}
-            scoresByHole={
-              myMatchPlayer
-                ? Object.fromEntries(
-                    myMatchPlayer.scores.map((s) => [s.hole, s.strokes]),
-                  )
-                : undefined
-            }
-            holeGeoByHole={holeGeoByHole}
-            hazardsByHole={hazardsByHole}
-            myMatchPlayerId={myMatchPlayer?.id ?? null}
-            wind={
-              wind ? { speedMph: wind.speedMph, fromDeg: wind.fromDeg } : null
-            }
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <HoleStudyMode
+              holes={match.holes}
+              matchStartingHole={matchStart}
+              startingHole={onCourseStartingHole}
+              pars={pars}
+              scoresByHole={
+                myMatchPlayer
+                  ? Object.fromEntries(
+                      myMatchPlayer.scores.map((s) => [s.hole, s.strokes]),
+                    )
+                  : undefined
+              }
+              holeGeoByHole={holeGeoByHole}
+              hazardsByHole={hazardsByHole}
+            />
+            {match.status !== "UPCOMING" && (
+              <OnCourseMode
+                matchId={match.id}
+                courseName={match.courseName}
+                holes={match.holes}
+                matchStartingHole={matchStart}
+                startingHole={onCourseStartingHole}
+                pars={pars}
+                scoresByHole={
+                  myMatchPlayer
+                    ? Object.fromEntries(
+                        myMatchPlayer.scores.map((s) => [s.hole, s.strokes]),
+                      )
+                    : undefined
+                }
+                holeGeoByHole={holeGeoByHole}
+                hazardsByHole={hazardsByHole}
+                myMatchPlayerId={myMatchPlayer?.id ?? null}
+                wind={
+                  wind
+                    ? { speedMph: wind.speedMph, fromDeg: wind.fromDeg }
+                    : null
+                }
+              />
+            )}
+          </div>
         </section>
       )}
 

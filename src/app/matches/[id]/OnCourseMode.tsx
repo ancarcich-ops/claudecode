@@ -512,7 +512,7 @@ export default function OnCourseMode({
 
 // ===== Sub-components =================================================
 
-function HolePicker({
+export function HolePicker({
   firstHole,
   lastHole,
   activeHole,
