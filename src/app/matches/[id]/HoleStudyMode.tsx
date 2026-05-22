@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   deriveGreenDistances,
   distanceYards,
@@ -41,6 +41,17 @@ export default function HoleStudyMode({
   const [hole, setHole] = useState<number>(
     Math.max(firstHole, Math.min(lastHole, startingHole ?? firstHole)),
   );
+  // Aim point: a single lat/lng the player has dropped on the map to
+  // plan a layup / target line. Cleared automatically when the active
+  // hole changes -- aim is per-hole, not global.
+  const [aimPoint, setAimPoint] = useState<{ lat: number; lng: number } | null>(
+    null,
+  );
+  // Aim is per-hole. Clear it when the user switches holes so a layup
+  // pin from hole 6 doesn't carry over to hole 7's satellite.
+  useEffect(() => {
+    setAimPoint(null);
+  }, [hole]);
 
   const par = pars[hole - firstHole] ?? 4;
   const geo = holeGeoByHole[hole];
@@ -83,6 +94,12 @@ export default function HoleStudyMode({
   // Distances FROM the anchor, mirroring OnCourseMode's derivation.
   const { front, center, back } = deriveGreenDistances(anchor, geo ?? null);
   const headlineYds = geo?.distanceYds ?? center ?? null;
+
+  // Aim distances. Anchored at the same point the player marker sits.
+  const toAimYds =
+    anchor && aimPoint ? distanceYards(anchor, aimPoint) : null;
+  const aimToPinYds =
+    aimPoint && greenCenter ? distanceYards(aimPoint, greenCenter) : null;
 
   // Hazards decorated with carry distance from the anchor. Sorted near->far.
   const holeHazards = (hazardsByHole[hole] ?? [])
@@ -138,6 +155,18 @@ export default function HoleStudyMode({
       variant: "tiny",
       tone: h.kind === "WATER" ? "water" : h.kind === "SAND" ? "sand" : "white",
       orientation: "above",
+      dim: aimPoint != null,
+    });
+  }
+  if (aimPoint && toAimYds != null) {
+    landmarks.push({
+      id: "aim",
+      lat: aimPoint.lat,
+      lng: aimPoint.lng,
+      prefix: "AIM",
+      yds: Math.round(toAimYds),
+      variant: "accent",
+      orientation: "above",
     });
   }
 
@@ -168,6 +197,8 @@ export default function HoleStudyMode({
             greenBack={greenBack}
             greenPolygon={geo?.greenPolygon ?? null}
             hazards={[]}
+            aim={aimPoint}
+            onAim={(p) => setAimPoint(p)}
             landmarks={landmarks}
           />
         ) : (
@@ -252,11 +283,44 @@ export default function HoleStudyMode({
         }}
       >
         <div className="max-w-md mx-auto rounded-xl bg-bg/75 backdrop-blur-md border border-white/8 p-3">
-          <div className="grid grid-cols-3 gap-2 text-center mb-2">
-            <DistStat label="Front" yds={front} />
-            <DistStat label="Center" yds={center} accent />
-            <DistStat label="Back" yds={back} />
-          </div>
+          {aimPoint && toAimYds != null ? (
+            // Aim mode: replace the front/center/back row with the
+            // plan-a-shot trio. Tap anywhere else on the map to move
+            // the aim, or hit Clear to drop back to the green view.
+            <>
+              <div className="flex items-center justify-between mb-2 px-0.5">
+                <div className="text-[9px] uppercase tracking-wider text-accent">
+                  Aim set
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAimPoint(null)}
+                  className="text-[10px] uppercase tracking-wider text-mute hover:text-ink"
+                >
+                  Clear
+                </button>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <DistStat label="To aim" yds={toAimYds} accent />
+                <DistStat label="To pin" yds={aimToPinYds} />
+                <DistStat
+                  label="Carry"
+                  yds={Math.round(toAimYds)}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="grid grid-cols-3 gap-2 text-center mb-2">
+                <DistStat label="Front" yds={front} />
+                <DistStat label="Center" yds={center} accent />
+                <DistStat label="Back" yds={back} />
+              </div>
+              <div className="text-center text-[9.5px] uppercase tracking-wider text-mute pb-1.5">
+                Tap the satellite to plan a shot
+              </div>
+            </>
+          )}
           {holeHazards.length > 0 ? (
             <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/8">
               {holeHazards.map((h) => (
