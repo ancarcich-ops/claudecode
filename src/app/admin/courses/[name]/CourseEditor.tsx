@@ -315,8 +315,16 @@ export default function CourseEditor({
           <div className="font-medium truncate text-sm">{courseName}</div>
           {city && <div className="text-[10px] text-mute">{city}</div>}
         </div>
-        <div className="text-[11px] text-mute font-mono shrink-0">
-          {completed}/{holes.length} done
+        <div className="flex items-center gap-3 shrink-0">
+          <Link
+            href={`/admin/courses/${encodeURIComponent(courseName)}/preview`}
+            className="text-[11px] text-mute hover:text-ink underline"
+          >
+            Preview holes
+          </Link>
+          <div className="text-[11px] text-mute font-mono">
+            {completed}/{holes.length} done
+          </div>
         </div>
       </div>
 
