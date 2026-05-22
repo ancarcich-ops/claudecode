@@ -95,7 +95,9 @@ export default function HoleStudyMode({
     .sort((a, b) => (a.distance ?? 1e9) - (b.distance ?? 1e9));
 
   // Landmarks: green-center "PIN" (headline), front-of-green "F" if
-  // available + distinct, plus the two closest hazards as tiny pills.
+  // available + distinct, plus EVERY hazard as a small kind+carry pill.
+  // Preview suppresses the colored hazard circles (passed empty below)
+  // so the satellite stays clean -- labels alone carry the meaning.
   const landmarks: Landmark[] = [];
   if (greenCenter && center != null) {
     landmarks.push({
@@ -118,7 +120,7 @@ export default function HoleStudyMode({
       orientation: "below",
     });
   }
-  for (const h of holeHazards.slice(0, 3)) {
+  for (const h of holeHazards) {
     if (h.distance == null) continue;
     landmarks.push({
       id: `hz-${h.id}`,
@@ -165,12 +167,7 @@ export default function HoleStudyMode({
             greenFront={greenFront}
             greenBack={greenBack}
             greenPolygon={geo?.greenPolygon ?? null}
-            hazards={holeHazards.map((h) => ({
-              id: h.id,
-              kind: h.kind,
-              lat: h.lat,
-              lng: h.lng,
-            }))}
+            hazards={[]}
             landmarks={landmarks}
           />
         ) : (
