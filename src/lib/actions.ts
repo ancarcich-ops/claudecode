@@ -1424,6 +1424,54 @@ export async function adminImportFromGolfBertAction(formData: FormData) {
   };
 }
 
+// Public (signed-in) helper: given the player's lat/lng, return the
+// closest courses we know coordinates for. Used by the new-match
+// wizard's "find course near me" autosuggest. Capped at a sensible
+// radius so users far from any mapped course don't get nonsense
+// suggestions from across the country.
+export async function findClosestCoursesAction(input: {
+  lat: number;
+  lng: number;
+  limit?: number;
+  maxYards?: number;
+}) {
+  await requireUser();
+  const { lat, lng } = input;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    throw new Error("Valid lat/lng required");
+  }
+  const limit = Math.max(1, Math.min(10, input.limit ?? 5));
+  const maxYards = Math.max(1000, input.maxYards ?? 50 * 1760); // 50 miles default
+  const rows = await prisma.course.findMany({
+    where: { centerLat: { not: null }, centerLng: { not: null } },
+    select: { name: true, centerLat: true, centerLng: true },
+  });
+  // Haversine, inlined to avoid pulling in @/lib/course from a server
+  // action (it imports prisma, which is fine, but the inlined version
+  // keeps this self-contained).
+  const R = 6371000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const scored = rows
+    .map((c) => {
+      const cLat = c.centerLat as number;
+      const cLng = c.centerLng as number;
+      const dLat = toRad(cLat - lat);
+      const dLng = toRad(cLng - lng);
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRad(lat)) *
+          Math.cos(toRad(cLat)) *
+          Math.sin(dLng / 2) ** 2;
+      const meters = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return { name: c.name, yards: meters * 1.0936133 };
+    })
+    .filter((c) => c.yards <= maxYards)
+    .sort((a, b) => a.yards - b.yards)
+    .slice(0, limit)
+    .map((c) => ({ name: c.name, yards: Math.round(c.yards) }));
+  return scored;
+}
+
 // Admin: rename a Course in place. Used to fix mis-labeled records --
 // for example when a GolfBert import landed in a course row created
 // under the wrong name. Matches are NOT remapped here -- a separate
