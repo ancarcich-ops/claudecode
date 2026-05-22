@@ -640,10 +640,21 @@ function NoCenterPrompt({
         {city && <div className="text-[12px] text-mute">{city}</div>}
       </div>
       <p className="text-sm text-mute">
-        No center coordinates saved yet. Give the editor a starting point
-        — either your current GPS location or paste lat/lng from Google
-        Maps.
+        No center coordinates saved yet. Either import the course from
+        GolfBert (the center comes with it) or seed a starting point
+        from your current GPS location / pasted lat-lng.
       </p>
+
+      {/* GolfBert import skips the rest of this prompt: the import
+          sets centerLat/Lng + every hole's geometry in one go, then
+          the editor reloads into its full view. */}
+      <div className="rounded-md border border-border bg-panel/40 p-3">
+        <GolfBertPanel courseName={courseName} />
+      </div>
+
+      <div className="text-[10px] uppercase tracking-wider text-mute text-center">
+        or seed a starting point manually
+      </div>
       <button
         type="button"
         onClick={useGps}
