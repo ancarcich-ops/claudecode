@@ -681,6 +681,9 @@ export const COURSE_PRESETS: CoursePreset[] = [
   { id: "camarillo-springs", name: "Camarillo Springs Golf Course", city: "Camarillo, CA", region: "VC", access: "public", holes: 18, pars: p(18, 72) },
   { id: "river-ridge-vineyard", name: "River Ridge - Vineyard Course", city: "Oxnard, CA", region: "VC", access: "public", holes: 18, pars: p(18, 72) },
   { id: "river-ridge-victoria-lakes", name: "River Ridge - Victoria Lakes Course", city: "Oxnard, CA", region: "VC", access: "public", holes: 18, pars: p(18, 72) },
+  // North Ranch has 27 holes (Oaks/Lakes/Valley nines); seeded as a
+  // single par-72 18-hole combo.
+  { id: "north-ranch-cc", name: "North Ranch Country Club", city: "Westlake Village, CA", region: "VC", access: "private", holes: 18, pars: p(18, 72) },
 
   // --- Austin, TX ---
   { id: "austin-cc", name: "Austin Country Club", city: "Austin, TX", region: "TX", access: "private", holes: 18, pars: p(18, 72) },
@@ -1242,6 +1245,7 @@ export const COURSE_PRESET_COORDS: Record<string, { lat: number; lng: number }> 
   "camarillo-springs": { lat: 34.2033, lng: -118.9920 },
   "river-ridge-vineyard": { lat: 34.2311, lng: -119.2035 },
   "river-ridge-victoria-lakes": { lat: 34.2311, lng: -119.2035 },
+  "north-ranch-cc": { lat: 34.1597, lng: -118.8089 },
 
   // --- Austin, TX ---
   // Barton Creek Resort - Fazio Foothills / Fazio Canyons / Crenshaw
