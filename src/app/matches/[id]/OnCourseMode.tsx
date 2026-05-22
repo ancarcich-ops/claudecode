@@ -634,7 +634,7 @@ function SetPinFab({
   );
 }
 
-function WindDial({
+export function WindDial({
   speedMph,
   fromDeg,
   breeze,

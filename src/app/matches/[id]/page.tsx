@@ -437,6 +437,11 @@ export default async function MatchPage({
               }
               holeGeoByHole={holeGeoByHole}
               hazardsByHole={hazardsByHole}
+              wind={
+                wind
+                  ? { speedMph: wind.speedMph, fromDeg: wind.fromDeg }
+                  : null
+              }
             />
             {match.status !== "UPCOMING" && (
               <OnCourseMode
