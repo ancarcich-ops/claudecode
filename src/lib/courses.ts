@@ -932,6 +932,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
   { id: "tokatee", name: "Tokatee Golf Club", city: "Blue River, OR", region: "PNW", access: "public", holes: 18, pars: p(18, 72) },
   { id: "eugene-cc", name: "Eugene Country Club", city: "Eugene, OR", region: "PNW", access: "private", holes: 18, pars: p(18, 72) },
   { id: "salishan", name: "Salishan Spa & Golf Resort", city: "Gleneden Beach, OR", region: "PNW", access: "resort", holes: 18, pars: p(18, 71) },
+  { id: "stone-creek", name: "Stone Creek Golf Club", city: "Oregon City, OR", region: "PNW", access: "municipal", holes: 18, pars: p(18, 72) },
 
   // --- Washington (beyond Chambers Bay + Riverbend) ---
   { id: "sahalee", name: "Sahalee Country Club", city: "Sammamish, WA", region: "PNW", access: "private", holes: 18, pars: p(18, 72) },
@@ -1400,6 +1401,7 @@ export const COURSE_PRESET_COORDS: Record<string, { lat: number; lng: number }> 
   tokatee: { lat: 44.1750, lng: -122.2417 },
   "eugene-cc": { lat: 44.0758, lng: -123.0931 },
   salishan: { lat: 44.9233, lng: -124.0181 },
+  "stone-creek": { lat: 45.3522, lng: -122.5836 },
 
   // --- Washington ---
   // Suncadia (Prospector + Rope Rider), Gold Mountain (Olympic +
