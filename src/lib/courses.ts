@@ -685,6 +685,74 @@ export const COURSE_PRESETS: CoursePreset[] = [
   // single par-72 18-hole combo.
   { id: "north-ranch-cc", name: "North Ranch Country Club", city: "Westlake Village, CA", region: "VC", access: "private", holes: 18, pars: p(18, 72) },
 
+  // --- SoCal infill (public + private gaps across LA/OC/IE/SD/CV/VC) ---
+  // Skipped from this batch (par-3/executive/short courses don't fit
+  // the 9/18 schema, or course is closed): Pico Rivera GC, David L.
+  // Baker, Casta del Sol, Salt Creek GC (closed 2018), Mission Bay
+  // GC, Welk Fountains/Oaks, Cimarron Pebble, Lake Sherwood CC.
+  { id: "sherwood-cc", name: "Sherwood Country Club", city: "Thousand Oaks, CA", region: "LA", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "marshall-canyon-gc", name: "Marshall Canyon Golf Course", city: "La Verne, CA", region: "LA", access: "municipal", holes: 18, pars: p(18, 71) },
+  { id: "skylinks-long-beach", name: "Skylinks at Long Beach", city: "Long Beach, CA", region: "LA", access: "municipal", holes: 18, pars: p(18, 72) },
+  { id: "recreation-park-18", name: "Recreation Park Golf Course 18", city: "Long Beach, CA", region: "LA", access: "municipal", holes: 18, pars: p(18, 72) },
+  { id: "mountain-meadows-gc", name: "Mountain Meadows Golf Course", city: "Pomona, CA", region: "LA", access: "municipal", holes: 18, pars: p(18, 72) },
+  { id: "diamond-bar-gc", name: "Diamond Bar Golf Course", city: "Diamond Bar, CA", region: "LA", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "whittier-narrows-gc", name: "Whittier Narrows Golf Course", city: "Rosemead, CA", region: "LA", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "knollwood-gc", name: "Knollwood Golf Course", city: "Granada Hills, CA", region: "LA", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "calabasas-cc", name: "Calabasas Country Club", city: "Calabasas, CA", region: "LA", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "el-caballero-cc", name: "El Caballero Country Club", city: "Tarzana, CA", region: "LA", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "hacienda-gc", name: "Hacienda Golf Club", city: "La Habra Heights, CA", region: "LA", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "annandale-gc", name: "Annandale Golf Club", city: "Pasadena, CA", region: "LA", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "mountaingate-cc", name: "Mountaingate Country Club", city: "Los Angeles, CA", region: "LA", access: "private", holes: 18, pars: p(18, 71) },
+  // Braemar has 27 holes (Trails/Vista/Tigertail nines); seeded as a
+  // single par-72 18 from the Trails/Vista combo.
+  { id: "braemar-cc", name: "Braemar Country Club", city: "Tarzana, CA", region: "LA", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "hillcrest-cc-la", name: "Hillcrest Country Club", city: "Los Angeles, CA", region: "LA", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "friendly-hills-cc", name: "Friendly Hills Country Club", city: "Whittier, CA", region: "LA", access: "private", holes: 18, pars: p(18, 70) },
+
+  { id: "san-juan-hills-gc", name: "San Juan Hills Golf Club", city: "San Juan Capistrano, CA", region: "OC", access: "public", holes: 18, pars: p(18, 71) },
+  { id: "dad-miller-gc", name: "Dad Miller Golf Course", city: "Anaheim, CA", region: "OC", access: "municipal", holes: 18, pars: p(18, 71) },
+  { id: "meadowlark-gc", name: "Meadowlark Golf Course", city: "Huntington Beach, CA", region: "OC", access: "public", holes: 18, pars: p(18, 70) },
+  { id: "lakewood-cc", name: "Lakewood Country Club", city: "Lakewood, CA", region: "OC", access: "private", holes: 18, pars: p(18, 72) },
+
+  { id: "western-hills-cc", name: "Western Hills Country Club", city: "Chino Hills, CA", region: "IE", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "sierra-lakes-gc", name: "Sierra Lakes Golf Club", city: "Fontana, CA", region: "IE", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "eagle-glen-gc", name: "Eagle Glen Golf Club", city: "Corona, CA", region: "IE", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "indian-hills-gc", name: "Indian Hills Golf Club", city: "Riverside, CA", region: "IE", access: "public", holes: 18, pars: p(18, 70) },
+  { id: "bear-creek-gc", name: "Bear Creek Golf Club", city: "Murrieta, CA", region: "IE", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "cross-creek-gc", name: "Cross Creek Golf Club", city: "Temecula, CA", region: "IE", access: "public", holes: 18, pars: p(18, 71) },
+  { id: "scga-rancho-california", name: "SCGA Members Club at Rancho California", city: "Murrieta, CA", region: "IE", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "journey-pechanga", name: "Journey at Pechanga", city: "Temecula, CA", region: "IE", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "temecula-creek-inn", name: "Temecula Creek Inn Golf Course", city: "Temecula, CA", region: "IE", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "pala-mesa-resort", name: "Pala Mesa Resort", city: "Fallbrook, CA", region: "IE", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "redhawk-gc", name: "Redhawk Golf Club", city: "Temecula, CA", region: "IE", access: "public", holes: 18, pars: p(18, 72) },
+
+  { id: "mission-trails-gc", name: "Mission Trails Golf Course", city: "San Diego, CA", region: "SD", access: "public", holes: 18, pars: p(18, 71) },
+  { id: "crossings-carlsbad", name: "The Crossings at Carlsbad", city: "Carlsbad, CA", region: "SD", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "bonita-gc", name: "Bonita Golf Course", city: "Bonita, CA", region: "SD", access: "public", holes: 18, pars: p(18, 71) },
+  { id: "cottonwood-ivanhoe", name: "Cottonwood at Rancho San Diego - Ivanhoe Course", city: "El Cajon, CA", region: "SD", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "cottonwood-monte-vista", name: "Cottonwood at Rancho San Diego - Monte Vista Course", city: "El Cajon, CA", region: "SD", access: "public", holes: 18, pars: p(18, 71) },
+  { id: "sycuan-oak-glen", name: "Sycuan Golf Resort - Oak Glen Course", city: "El Cajon, CA", region: "SD", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "sycuan-willow-glen", name: "Sycuan Golf Resort - Willow Glen Course", city: "El Cajon, CA", region: "SD", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "castle-creek-cc", name: "Castle Creek Country Club", city: "Escondido, CA", region: "SD", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "pauma-valley-cc", name: "Pauma Valley Country Club", city: "Pauma Valley, CA", region: "SD", access: "private", holes: 18, pars: p(18, 72) },
+
+  { id: "marriott-shadow-ridge", name: "Marriott Shadow Ridge Golf Club", city: "Palm Desert, CA", region: "CV", access: "resort", holes: 18, pars: p(18, 71) },
+  { id: "westin-mh-gary-player", name: "Westin Mission Hills - Gary Player Course", city: "Rancho Mirage, CA", region: "CV", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "westin-mh-pete-dye", name: "Westin Mission Hills - Pete Dye Resort Course", city: "Rancho Mirage, CA", region: "CV", access: "resort", holes: 18, pars: p(18, 70) },
+  { id: "cimarron-boulder", name: "Cimarron Golf Resort - Boulder Course", city: "Cathedral City, CA", region: "CV", access: "resort", holes: 18, pars: p(18, 71) },
+  { id: "tahquitz-creek-resort", name: "Tahquitz Creek Golf Resort - Resort Course", city: "Palm Springs, CA", region: "CV", access: "municipal", holes: 18, pars: p(18, 72) },
+  { id: "tahquitz-creek-legend", name: "Tahquitz Creek Golf Resort - Legend Course", city: "Palm Springs, CA", region: "CV", access: "municipal", holes: 18, pars: p(18, 71) },
+  { id: "escena-gc", name: "Escena Golf Club", city: "Palm Springs, CA", region: "CV", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "heritage-palms-gc", name: "Heritage Palms Golf Club", city: "Indio, CA", region: "CV", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "indian-springs-cc", name: "Indian Springs Country Club", city: "Indio, CA", region: "CV", access: "public", holes: 18, pars: p(18, 72) },
+
+  { id: "tierra-rejada-gc", name: "Tierra Rejada Golf Club", city: "Moorpark, CA", region: "VC", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "wood-ranch-gc", name: "Wood Ranch Golf Club", city: "Simi Valley, CA", region: "VC", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "spanish-hills-cc", name: "Spanish Hills Country Club", city: "Camarillo, CA", region: "VC", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "las-posas-cc", name: "Las Posas Country Club", city: "Camarillo, CA", region: "VC", access: "private", holes: 18, pars: p(18, 71) },
+  // Moorpark CC is 27 holes; seeded as a single par-72 18 entry.
+  { id: "moorpark-cc", name: "Moorpark Country Club", city: "Moorpark, CA", region: "VC", access: "private", holes: 18, pars: p(18, 72) },
+
   // --- Austin, TX ---
   { id: "austin-cc", name: "Austin Country Club", city: "Austin, TX", region: "TX", access: "private", holes: 18, pars: p(18, 72) },
   { id: "barton-creek-fazio-foothills", name: "Barton Creek Resort - Fazio Foothills", city: "Austin, TX", region: "TX", access: "resort", holes: 18, pars: p(18, 72) },
@@ -1246,6 +1314,70 @@ export const COURSE_PRESET_COORDS: Record<string, { lat: number; lng: number }> 
   "river-ridge-vineyard": { lat: 34.2311, lng: -119.2035 },
   "river-ridge-victoria-lakes": { lat: 34.2311, lng: -119.2035 },
   "north-ranch-cc": { lat: 34.1597, lng: -118.8089 },
+
+  // --- SoCal infill ---
+  // Cottonwood (Ivanhoe + Monte Vista), Sycuan (Oak Glen + Willow
+  // Glen), Westin Mission Hills (Player + Pete Dye), and Tahquitz
+  // Creek (Resort + Legend) share their facility coord.
+  "sherwood-cc": { lat: 34.1538, lng: -118.8462 },
+  "marshall-canyon-gc": { lat: 34.1610, lng: -117.7588 },
+  "skylinks-long-beach": { lat: 33.8156, lng: -118.1095 },
+  "recreation-park-18": { lat: 33.7825, lng: -118.1297 },
+  "mountain-meadows-gc": { lat: 34.0976, lng: -117.7715 },
+  "diamond-bar-gc": { lat: 34.0237, lng: -117.8174 },
+  "whittier-narrows-gc": { lat: 34.0414, lng: -118.0703 },
+  "knollwood-gc": { lat: 34.2806, lng: -118.5028 },
+  "calabasas-cc": { lat: 34.1429, lng: -118.6736 },
+  "el-caballero-cc": { lat: 34.1659, lng: -118.5485 },
+  "hacienda-gc": { lat: 33.9579, lng: -117.9495 },
+  "annandale-gc": { lat: 34.1464, lng: -118.1748 },
+  "mountaingate-cc": { lat: 34.1057, lng: -118.4846 },
+  "braemar-cc": { lat: 34.1450, lng: -118.5391 },
+  "hillcrest-cc-la": { lat: 34.0468, lng: -118.4133 },
+  "friendly-hills-cc": { lat: 33.9376, lng: -117.9925 },
+
+  "san-juan-hills-gc": { lat: 33.5267, lng: -117.6481 },
+  "dad-miller-gc": { lat: 33.8463, lng: -117.9489 },
+  "meadowlark-gc": { lat: 33.7182, lng: -118.0318 },
+  "lakewood-cc": { lat: 33.8333, lng: -118.1419 },
+
+  "western-hills-cc": { lat: 33.9425, lng: -117.7384 },
+  "sierra-lakes-gc": { lat: 34.1583, lng: -117.4500 },
+  "eagle-glen-gc": { lat: 33.7549, lng: -117.5277 },
+  "indian-hills-gc": { lat: 33.9686, lng: -117.4669 },
+  "bear-creek-gc": { lat: 33.5739, lng: -117.2569 },
+  "cross-creek-gc": { lat: 33.4769, lng: -117.2206 },
+  "scga-rancho-california": { lat: 33.5867, lng: -117.1497 },
+  "journey-pechanga": { lat: 33.4525, lng: -117.1213 },
+  "temecula-creek-inn": { lat: 33.4734, lng: -117.1418 },
+  "pala-mesa-resort": { lat: 33.3854, lng: -117.1742 },
+  "redhawk-gc": { lat: 33.4669, lng: -117.0975 },
+
+  "mission-trails-gc": { lat: 32.7878, lng: -117.0301 },
+  "crossings-carlsbad": { lat: 33.1306, lng: -117.3194 },
+  "bonita-gc": { lat: 32.6611, lng: -117.0286 },
+  "cottonwood-ivanhoe": { lat: 32.7593, lng: -116.8956 },
+  "cottonwood-monte-vista": { lat: 32.7593, lng: -116.8956 },
+  "sycuan-oak-glen": { lat: 32.7833, lng: -116.8722 },
+  "sycuan-willow-glen": { lat: 32.7833, lng: -116.8722 },
+  "castle-creek-cc": { lat: 33.2369, lng: -117.0875 },
+  "pauma-valley-cc": { lat: 33.3032, lng: -116.9906 },
+
+  "marriott-shadow-ridge": { lat: 33.7745, lng: -116.3492 },
+  "westin-mh-gary-player": { lat: 33.8156, lng: -116.4053 },
+  "westin-mh-pete-dye": { lat: 33.8156, lng: -116.4053 },
+  "cimarron-boulder": { lat: 33.8301, lng: -116.4823 },
+  "tahquitz-creek-resort": { lat: 33.8033, lng: -116.5142 },
+  "tahquitz-creek-legend": { lat: 33.8033, lng: -116.5142 },
+  "escena-gc": { lat: 33.8334, lng: -116.5008 },
+  "heritage-palms-gc": { lat: 33.7406, lng: -116.2581 },
+  "indian-springs-cc": { lat: 33.7117, lng: -116.2331 },
+
+  "tierra-rejada-gc": { lat: 34.2706, lng: -118.8487 },
+  "wood-ranch-gc": { lat: 34.2522, lng: -118.7295 },
+  "spanish-hills-cc": { lat: 34.2342, lng: -119.0500 },
+  "las-posas-cc": { lat: 34.2197, lng: -119.0464 },
+  "moorpark-cc": { lat: 34.2731, lng: -118.8753 },
 
   // --- Austin, TX ---
   // Barton Creek Resort - Fazio Foothills / Fazio Canyons / Crenshaw
