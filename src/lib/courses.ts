@@ -631,6 +631,90 @@ export const COURSE_PRESETS: CoursePreset[] = [
   },
 ];
 
+// Clubhouse / property-center coordinates per preset id. Kept in a
+// separate map (rather than inlined on each preset row above) so the
+// table is easy to read and easy to backfill. Used by the new-match
+// wizard's "find course near me" affordance for any course that
+// doesn't yet have its own Course row with a centerLat/centerLng.
+// Precision target: ~10m -- enough to pick the right course out of
+// a metro area, not a substitute for the per-hole geometry we get
+// from GolfBert / OSM.
+export const COURSE_PRESET_COORDS: Record<string, { lat: number; lng: number }> = {
+  "riviera-cc": { lat: 34.0461, lng: -118.5095 },
+  "bel-air-cc": { lat: 34.0928, lng: -118.4517 },
+  "la-cc-north": { lat: 34.0738, lng: -118.4192 },
+  "wilshire-cc": { lat: 34.0758, lng: -118.3318 },
+  "brentwood-cc": { lat: 34.0533, lng: -118.4756 },
+  "lakeside-gc": { lat: 34.1547, lng: -118.3614 },
+  "rancho-park": { lat: 34.0463, lng: -118.4178 },
+  // Wilson + Harding share a clubhouse in Los Feliz.
+  "griffith-wilson": { lat: 34.1336, lng: -118.2861 },
+  "griffith-harding": { lat: 34.1336, lng: -118.2861 },
+  "hansen-dam": { lat: 34.2630, lng: -118.3873 },
+  "woodley-lakes": { lat: 34.1830, lng: -118.4858 },
+  "alondra-park": { lat: 33.8867, lng: -118.3358 },
+  "los-verdes": { lat: 33.7430, lng: -118.3870 },
+  // Sepulveda Balboa + Encino share the same clubhouse area.
+  "sepulveda-balboa": { lat: 34.1737, lng: -118.4942 },
+  "sepulveda-encino": { lat: 34.1737, lng: -118.4942 },
+  "el-dorado-park": { lat: 33.8146, lng: -118.0867 },
+  "heartwell-park": { lat: 33.8278, lng: -118.1300 },
+  "rio-hondo": { lat: 33.9433, lng: -118.1494 },
+  "westchester-gc": { lat: 33.9637, lng: -118.4072 },
+  "penmar-gc": { lat: 33.9956, lng: -118.4633 },
+  // Brookside #1 + #2 share a clubhouse next to the Rose Bowl.
+  "brookside-1": { lat: 34.1647, lng: -118.1730 },
+  "brookside-2": { lat: 34.1647, lng: -118.1730 },
+  "trump-la": { lat: 33.7378, lng: -118.3553 },
+  // Industry Hills - Pacific Palms clubhouse for both courses.
+  "industry-hills-eisenhower": { lat: 34.0297, lng: -117.9425 },
+  "industry-hills-zaharias": { lat: 34.0297, lng: -117.9425 },
+  "rustic-canyon": { lat: 34.2914, lng: -118.8717 },
+  "angeles-national": { lat: 34.2697, lng: -118.3358 },
+  // Sand Canyon CC -- all three nines share a clubhouse.
+  "sand-canyon-vd": { lat: 34.4189, lng: -118.4583 },
+  "sand-canyon-dm": { lat: 34.4189, lng: -118.4583 },
+  "sand-canyon-mv": { lat: 34.4189, lng: -118.4583 },
+  // Pelican Hill - South + North share the clubhouse.
+  "pelican-hill-south": { lat: 33.5953, lng: -117.8336 },
+  "pelican-hill-north": { lat: 33.5953, lng: -117.8336 },
+  "strawberry-farms": { lat: 33.6711, lng: -117.7886 },
+  "aliso-viejo-cc": { lat: 33.5814, lng: -117.7150 },
+  "tijeras-creek": { lat: 33.6336, lng: -117.5953 },
+  "tustin-ranch": { lat: 33.7611, lng: -117.7728 },
+  "black-gold": { lat: 33.9072, lng: -117.7569 },
+  "coyote-hills": { lat: 33.8961, lng: -117.9272 },
+  "birch-hills": { lat: 33.9214, lng: -117.8836 },
+  "arroyo-trabuco": { lat: 33.5825, lng: -117.6628 },
+  "anaheim-hills": { lat: 33.8550, lng: -117.7461 },
+  // Coto de Caza - South + North share a clubhouse.
+  "coto-de-caza-south": { lat: 33.6072, lng: -117.5853 },
+  "coto-de-caza-north": { lat: 33.6072, lng: -117.5853 },
+  "newport-beach-cc": { lat: 33.6122, lng: -117.8742 },
+  "big-canyon-cc": { lat: 33.6258, lng: -117.8736 },
+  // Mile Square - Classic + Player's share the clubhouse.
+  "mile-square-classic": { lat: 33.7028, lng: -117.9447 },
+  "mile-square-players": { lat: 33.7028, lng: -117.9447 },
+  // Costa Mesa CC - both nines share the clubhouse off Mesa Verde Dr.
+  "costa-mesa-mesa-linda": { lat: 33.6711, lng: -117.9419 },
+  "costa-mesa-los-lagos": { lat: 33.6711, lng: -117.9419 },
+  "monarch-beach": { lat: 33.4836, lng: -117.7106 },
+  talega: { lat: 33.4683, lng: -117.5808 },
+  "san-clemente-muni": { lat: 33.4358, lng: -117.6175 },
+  shorecliffs: { lat: 33.4361, lng: -117.6028 },
+  "el-niguel-cc": { lat: 33.5025, lng: -117.7081 },
+  "newport-beach-gc": { lat: 33.6606, lng: -117.8736 },
+  "santa-ana-cc": { lat: 33.6694, lng: -117.8533 },
+  "yorba-linda-cc": { lat: 33.8911, lng: -117.7747 },
+  "oak-quarry-gc": { lat: 33.9831, lng: -117.4625 },
+  "goose-creek-gc": { lat: 33.9853, lng: -117.5142 },
+  "hidden-valley-gc": { lat: 33.9275, lng: -117.5814 },
+  // Bighorn - Canyons + Mountains share the clubhouse.
+  "bighorn-gc-canyons": { lat: 33.7019, lng: -116.4097 },
+  "bighorn-gc-mountains": { lat: 33.7019, lng: -116.4097 },
+  "riverbend-golf-complex": { lat: 47.4017, lng: -122.2272 },
+};
+
 export function findPresetByName(name: string): CoursePreset | undefined {
   const normalized = name.trim().toLowerCase();
   if (!normalized) return undefined;

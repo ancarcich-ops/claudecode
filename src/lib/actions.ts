@@ -1442,28 +1442,42 @@ export async function findClosestCoursesAction(input: {
   }
   const limit = Math.max(1, Math.min(10, input.limit ?? 5));
   const maxYards = Math.max(1000, input.maxYards ?? 50 * 1760); // 50 miles default
+
+  const { COURSE_PRESETS, COURSE_PRESET_COORDS } = await import("./courses");
+
+  // Gather candidates from both sources. DB rows win on name collision
+  // (they have GolfBert / OSM-imported precise coords); presets without
+  // a Course row fill the rest of the catalog.
   const rows = await prisma.course.findMany({
     where: { centerLat: { not: null }, centerLng: { not: null } },
     select: { name: true, centerLat: true, centerLng: true },
   });
-  // Haversine, inlined to avoid pulling in @/lib/course from a server
-  // action (it imports prisma, which is fine, but the inlined version
-  // keeps this self-contained).
+  const byName = new Map<string, { lat: number; lng: number }>();
+  for (const p of COURSE_PRESETS) {
+    const c = COURSE_PRESET_COORDS[p.id];
+    if (c) byName.set(p.name, { lat: c.lat, lng: c.lng });
+  }
+  for (const r of rows) {
+    byName.set(r.name, {
+      lat: r.centerLat as number,
+      lng: r.centerLng as number,
+    });
+  }
+
+  // Haversine, inlined so this action stays self-contained.
   const R = 6371000;
   const toRad = (d: number) => (d * Math.PI) / 180;
-  const scored = rows
-    .map((c) => {
-      const cLat = c.centerLat as number;
-      const cLng = c.centerLng as number;
-      const dLat = toRad(cLat - lat);
-      const dLng = toRad(cLng - lng);
+  const scored = Array.from(byName.entries())
+    .map(([name, c]) => {
+      const dLat = toRad(c.lat - lat);
+      const dLng = toRad(c.lng - lng);
       const a =
         Math.sin(dLat / 2) ** 2 +
         Math.cos(toRad(lat)) *
-          Math.cos(toRad(cLat)) *
+          Math.cos(toRad(c.lat)) *
           Math.sin(dLng / 2) ** 2;
       const meters = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return { name: c.name, yards: meters * 1.0936133 };
+      return { name, yards: meters * 1.0936133 };
     })
     .filter((c) => c.yards <= maxYards)
     .sort((a, b) => a.yards - b.yards)
