@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
+  adminGolfBertDescribeAction,
   adminGolfBertPingAction,
   adminGolfBertSearchAction,
   adminImportFromGolfBertAction,
@@ -35,7 +36,17 @@ export default function GolfBertPanel({
   const [query, setQuery] = useState(courseName);
   const [candidates, setCandidates] = useState<Candidate[] | null>(null);
   const [pickedId, setPickedId] = useState<number | null>(null);
+  const [manualId, setManualId] = useState("");
+  const [lookup, setLookup] = useState<Candidate | null>(null);
   const [pinged, setPinged] = useState<"unknown" | "ok" | "fail">("unknown");
+
+  // Effective id: explicit manual entry wins over a search pick, so the
+  // single-course subscriber can paste an id without first searching.
+  const effectiveId = (() => {
+    const n = Number(manualId.trim());
+    if (Number.isFinite(n) && n > 0) return n;
+    return pickedId;
+  })();
 
   const ping = () => {
     startTransition(async () => {
@@ -47,6 +58,28 @@ export default function GolfBertPanel({
         );
       } catch (err) {
         setPinged("fail");
+        toast.error((err as Error).message);
+      }
+    });
+  };
+
+  const lookupId = (idOverride?: number) => {
+    const n = idOverride ?? Number(manualId.trim());
+    if (!Number.isFinite(n) || n <= 0) {
+      toast.error("Enter a numeric GolfBert course id first");
+      return;
+    }
+    startTransition(async () => {
+      try {
+        const r = await adminGolfBertDescribeAction(n);
+        setLookup(r);
+        toast.success(
+          `Found: ${r.name}${r.city ? ` (${r.city}${r.state ? ", " + r.state : ""})` : ""}`,
+        );
+        // Echo the id back to the input so the import button picks it up.
+        setManualId(String(r.id));
+      } catch (err) {
+        setLookup(null);
         toast.error((err as Error).message);
       }
     });
@@ -66,10 +99,10 @@ export default function GolfBertPanel({
   };
 
   const importCourse = () => {
-    if (pickedId == null) return;
+    if (effectiveId == null) return;
     const fd = new FormData();
     fd.set("courseName", courseName);
-    fd.set("golfbertId", String(pickedId));
+    fd.set("golfbertId", String(effectiveId));
     startTransition(async () => {
       try {
         const r = await adminImportFromGolfBertAction(fd);
@@ -120,7 +153,66 @@ export default function GolfBertPanel({
 
           <div className="space-y-1.5">
             <label className="text-[10px] uppercase tracking-wider text-mute">
-              Search GolfBert by name
+              Import by GolfBert course id
+            </label>
+            <div className="flex gap-1.5">
+              <input
+                className="input flex-1 text-sm font-mono"
+                value={manualId}
+                onChange={(e) => {
+                  setManualId(e.target.value.replace(/[^0-9]/g, ""));
+                  setLookup(null);
+                }}
+                placeholder="e.g. 4803"
+                inputMode="numeric"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    lookupId();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => lookupId()}
+                disabled={pending || !manualId.trim()}
+                className="btn btn-ghost text-xs h-9"
+              >
+                Look up
+              </button>
+            </div>
+            {lookup && (
+              <div className="border border-border rounded-md px-2.5 py-2 bg-panel/50">
+                <div className="text-sm">{lookup.name}</div>
+                {(lookup.city || lookup.state) && (
+                  <div className="text-[10px] text-mute">
+                    {[lookup.city, lookup.state].filter(Boolean).join(", ")}
+                  </div>
+                )}
+                <div className="text-[10px] font-mono text-mute mt-0.5">
+                  id {lookup.id}
+                </div>
+              </div>
+            )}
+            <p className="text-[10px] text-mute leading-snug">
+              Single-course plans: type your licensed id and click{" "}
+              <b>Look up</b> to confirm the course name, then{" "}
+              <b>Import</b>. Don&rsquo;t know the id? Try{" "}
+              <button
+                type="button"
+                onClick={() => lookupId(4803)}
+                disabled={pending}
+                className="underline hover:text-fg"
+              >
+                Chambers Bay (4803)
+              </button>{" "}
+              &mdash; GolfBert&rsquo;s usual default sample.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] uppercase tracking-wider text-mute">
+              Or search GolfBert by name
             </label>
             <div className="flex gap-1.5">
               <input
@@ -187,10 +279,10 @@ export default function GolfBertPanel({
             <button
               type="button"
               onClick={importCourse}
-              disabled={pending || pickedId == null}
+              disabled={pending || effectiveId == null}
               className="btn btn-primary text-xs h-8"
             >
-              Import {pickedId != null ? `id ${pickedId}` : "selected course"}
+              Import {effectiveId != null ? `id ${effectiveId}` : "selected course"}
             </button>
             <span className="text-[11px] text-mute">
               Writes greens, tees, hazards, and pars into{" "}
