@@ -22,7 +22,12 @@ export type CourseRegion =
   | "FL"
   | "CAR"
   | "MW"
-  | "MX";
+  | "MX"
+  | "HI"
+  | "NE"
+  | "UK"
+  | "CO"
+  | "SE";
 
 export type CoursePreset = {
   id: string;
@@ -976,6 +981,125 @@ export const COURSE_PRESETS: CoursePreset[] = [
   { id: "mayacama", name: "Mayacama Golf Club", city: "Santa Rosa, CA", region: "NC", access: "private", holes: 18, pars: p(18, 72) },
   { id: "cordevalle", name: "CordeValle", city: "San Martin, CA", region: "NC", access: "private", holes: 18, pars: p(18, 72) },
 
+  // --- Hawaii ---
+  // Kapalua Plantation is par 73 -- helper p() lacks a 73 layout, so
+  // it defaults to p(18, 72); one hole's seeded par will be off-by-one.
+  // Catalog metadata only; full scorecard can be overridden per course.
+  { id: "kapalua-plantation", name: "Kapalua Plantation Course", city: "Kapalua, HI", region: "HI", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "kapalua-bay", name: "Kapalua Bay Course", city: "Kapalua, HI", region: "HI", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "wailea-gold", name: "Wailea Golf Club - Gold Course", city: "Wailea, HI", region: "HI", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "wailea-emerald", name: "Wailea Golf Club - Emerald Course", city: "Wailea, HI", region: "HI", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "wailea-old-blue", name: "Wailea Golf Club - Old Blue Course", city: "Wailea, HI", region: "HI", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "kaanapali-royal", name: "Kaanapali Golf Courses - Royal Course", city: "Lahaina, HI", region: "HI", access: "resort", holes: 18, pars: p(18, 71) },
+  { id: "kaanapali-kai", name: "Kaanapali Golf Courses - Kai Course", city: "Lahaina, HI", region: "HI", access: "resort", holes: 18, pars: p(18, 70) },
+  { id: "mauna-kea", name: "Mauna Kea Golf Course", city: "Kohala Coast, HI", region: "HI", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "mauna-lani-south", name: "Mauna Lani - Francis H. I'i Brown South Course", city: "Kohala Coast, HI", region: "HI", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "mauna-lani-north", name: "Mauna Lani - Francis H. I'i Brown North Course", city: "Kohala Coast, HI", region: "HI", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "hualalai", name: "Hualalai Golf Club", city: "Ka'upulehu-Kona, HI", region: "HI", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "hapuna", name: "Hapuna Golf Course", city: "Kohala Coast, HI", region: "HI", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "waikoloa-beach", name: "Waikoloa Beach Golf Club - Beach Course", city: "Waikoloa, HI", region: "HI", access: "resort", holes: 18, pars: p(18, 70) },
+  { id: "waikoloa-kings", name: "Waikoloa Beach Golf Club - Kings' Course", city: "Waikoloa, HI", region: "HI", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "princeville-makai", name: "Princeville Makai Golf Club", city: "Princeville, HI", region: "HI", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "poipu-bay", name: "Poipu Bay Golf Course", city: "Koloa, HI", region: "HI", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "kauai-lagoons", name: "Ocean Course at Hokuala (Kauai Lagoons)", city: "Lihue, HI", region: "HI", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "ko-olina", name: "Ko Olina Golf Club", city: "Kapolei, HI", region: "HI", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "turtle-bay-palmer", name: "Turtle Bay Resort - Palmer Course", city: "Kahuku, HI", region: "HI", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "turtle-bay-fazio", name: "Turtle Bay Resort - Fazio Course", city: "Kahuku, HI", region: "HI", access: "resort", holes: 18, pars: p(18, 71) },
+
+  // --- Northeast US (NY / NJ / PA / MA / RI) ---
+  // NGLA + Garden City are published as par 73; helper p() lacks a 73
+  // layout so they default to p(18, 72); one hole's seeded par off-by-
+  // one. Catalog metadata only.
+  { id: "bethpage-black", name: "Bethpage State Park - Black Course", city: "Farmingdale, NY", region: "NE", access: "municipal", holes: 18, pars: p(18, 71) },
+  { id: "bethpage-red", name: "Bethpage State Park - Red Course", city: "Farmingdale, NY", region: "NE", access: "municipal", holes: 18, pars: p(18, 70) },
+  { id: "shinnecock-hills", name: "Shinnecock Hills Golf Club", city: "Southampton, NY", region: "NE", access: "private", holes: 18, pars: p(18, 70) },
+  { id: "national-golf-links", name: "National Golf Links of America", city: "Southampton, NY", region: "NE", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "friars-head", name: "Friar's Head", city: "Riverhead, NY", region: "NE", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "sebonack", name: "Sebonack Golf Club", city: "Southampton, NY", region: "NE", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "garden-city-gc", name: "Garden City Golf Club", city: "Garden City, NY", region: "NE", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "maidstone", name: "Maidstone Club", city: "East Hampton, NY", region: "NE", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "winged-foot-west", name: "Winged Foot Golf Club - West Course", city: "Mamaroneck, NY", region: "NE", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "winged-foot-east", name: "Winged Foot Golf Club - East Course", city: "Mamaroneck, NY", region: "NE", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "quaker-ridge", name: "Quaker Ridge Golf Club", city: "Scarsdale, NY", region: "NE", access: "private", holes: 18, pars: p(18, 70) },
+  { id: "oak-hill-east", name: "Oak Hill Country Club - East Course", city: "Rochester, NY", region: "NE", access: "private", holes: 18, pars: p(18, 70) },
+  { id: "pine-valley", name: "Pine Valley Golf Club", city: "Pine Valley, NJ", region: "NE", access: "private", holes: 18, pars: p(18, 70) },
+  { id: "baltusrol-lower", name: "Baltusrol Golf Club - Lower Course", city: "Springfield, NJ", region: "NE", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "baltusrol-upper", name: "Baltusrol Golf Club - Upper Course", city: "Springfield, NJ", region: "NE", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "liberty-national", name: "Liberty National Golf Club", city: "Jersey City, NJ", region: "NE", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "trump-bedminster", name: "Trump National Bedminster", city: "Bedminster, NJ", region: "NE", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "plainfield-cc", name: "Plainfield Country Club", city: "Edison, NJ", region: "NE", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "oakmont", name: "Oakmont Country Club", city: "Oakmont, PA", region: "NE", access: "private", holes: 18, pars: p(18, 70) },
+  { id: "merion-east", name: "Merion Golf Club - East Course", city: "Ardmore, PA", region: "NE", access: "private", holes: 18, pars: p(18, 70) },
+  { id: "aronimink", name: "Aronimink Golf Club", city: "Newtown Square, PA", region: "NE", access: "private", holes: 18, pars: p(18, 70) },
+  { id: "tpc-boston", name: "TPC Boston", city: "Norton, MA", region: "NE", access: "public", holes: 18, pars: p(18, 71) },
+  { id: "the-country-club-brookline", name: "The Country Club - Composite Course", city: "Brookline, MA", region: "NE", access: "private", holes: 18, pars: p(18, 70) },
+  { id: "newport-cc", name: "Newport Country Club", city: "Newport, RI", region: "NE", access: "private", holes: 18, pars: p(18, 70) },
+
+  // --- UK + Ireland ---
+  // ROI courses (Ballybunion, Lahinch, Portmarnock, Old Head) are
+  // grouped under "UK" with the British Isles courses to keep regions
+  // manageable. Can split into an "IE" region later if catalog grows.
+  { id: "st-andrews-old", name: "The Old Course at St Andrews", city: "St Andrews, Fife", region: "UK", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "st-andrews-new", name: "The New Course at St Andrews", city: "St Andrews, Fife", region: "UK", access: "public", holes: 18, pars: p(18, 71) },
+  { id: "st-andrews-jubilee", name: "The Jubilee Course at St Andrews", city: "St Andrews, Fife", region: "UK", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "st-andrews-castle", name: "The Castle Course at St Andrews", city: "St Andrews, Fife", region: "UK", access: "public", holes: 18, pars: p(18, 71) },
+  { id: "carnoustie-championship", name: "Carnoustie Golf Links - Championship Course", city: "Carnoustie, Angus", region: "UK", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "muirfield", name: "Muirfield (Honourable Company of Edinburgh Golfers)", city: "Gullane, East Lothian", region: "UK", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "royal-troon-old", name: "Royal Troon - Old Course", city: "Troon, South Ayrshire", region: "UK", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "turnberry-ailsa", name: "Turnberry Resort - Ailsa Course", city: "Turnberry, South Ayrshire", region: "UK", access: "resort", holes: 18, pars: p(18, 70) },
+  { id: "royal-dornoch-championship", name: "Royal Dornoch - Championship Course", city: "Dornoch, Sutherland", region: "UK", access: "private", holes: 18, pars: p(18, 70) },
+  { id: "loch-lomond", name: "Loch Lomond Golf Club", city: "Luss, Argyll and Bute", region: "UK", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "kingsbarns", name: "Kingsbarns Golf Links", city: "Kingsbarns, Fife", region: "UK", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "royal-birkdale", name: "Royal Birkdale Golf Club", city: "Southport, Merseyside", region: "UK", access: "private", holes: 18, pars: p(18, 70) },
+  { id: "royal-liverpool-hoylake", name: "Royal Liverpool Golf Club (Hoylake)", city: "Hoylake, Merseyside", region: "UK", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "royal-st-georges", name: "Royal St George's Golf Club", city: "Sandwich, Kent", region: "UK", access: "private", holes: 18, pars: p(18, 70) },
+  { id: "wentworth-west", name: "Wentworth Club - West Course", city: "Virginia Water, Surrey", region: "UK", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "sunningdale-old", name: "Sunningdale Golf Club - Old Course", city: "Sunningdale, Berkshire", region: "UK", access: "private", holes: 18, pars: p(18, 70) },
+  { id: "royal-portrush-dunluce", name: "Royal Portrush Golf Club - Dunluce Course", city: "Portrush, County Antrim", region: "UK", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "royal-county-down-championship", name: "Royal County Down Golf Club - Championship Course", city: "Newcastle, County Down", region: "UK", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "ballybunion-old", name: "Ballybunion Golf Club - Old Course", city: "Ballybunion, County Kerry", region: "UK", access: "public", holes: 18, pars: p(18, 71) },
+  { id: "lahinch-old", name: "Lahinch Golf Club - Old Course", city: "Lahinch, County Clare", region: "UK", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "portmarnock", name: "Portmarnock Golf Club", city: "Portmarnock, County Dublin", region: "UK", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "old-head", name: "Old Head Golf Links", city: "Kinsale, County Cork", region: "UK", access: "resort", holes: 18, pars: p(18, 72) },
+
+  // --- Colorado + Mountain West ---
+  { id: "castle-pines-golf-club", name: "Castle Pines Golf Club", city: "Castle Rock, CO", region: "CO", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "cherry-hills-country-club", name: "Cherry Hills Country Club", city: "Cherry Hills Village, CO", region: "CO", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "sanctuary-golf-course", name: "Sanctuary Golf Course", city: "Sedalia, CO", region: "CO", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "colorado-golf-club", name: "Colorado Golf Club", city: "Parker, CO", region: "CO", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "broadmoor-east", name: "The Broadmoor - East Course", city: "Colorado Springs, CO", region: "CO", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "broadmoor-west", name: "The Broadmoor - West Course", city: "Colorado Springs, CO", region: "CO", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "garden-of-the-gods-club", name: "Garden of the Gods Club", city: "Colorado Springs, CO", region: "CO", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "maroon-creek-club", name: "Maroon Creek Club", city: "Aspen, CO", region: "CO", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "aspen-golf-club", name: "Aspen Golf Club", city: "Aspen, CO", region: "CO", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "roaring-fork-club", name: "Roaring Fork Club", city: "Basalt, CO", region: "CO", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "country-club-of-the-rockies", name: "Country Club of the Rockies", city: "Edwards, CO", region: "CO", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "red-sky-norman", name: "Red Sky Golf Club - Norman Course", city: "Wolcott, CO", region: "CO", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "red-sky-fazio", name: "Red Sky Golf Club - Fazio Course", city: "Wolcott, CO", region: "CO", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "ballyneal-golf-club", name: "Ballyneal Golf Club", city: "Holyoke, CO", region: "CO", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "spanish-peaks-mountain-club", name: "The Club at Spanish Peaks", city: "Big Sky, MT", region: "CO", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "old-works-golf-course", name: "Old Works Golf Course", city: "Anaconda, MT", region: "CO", access: "public", holes: 18, pars: p(18, 72) },
+
+  // --- Georgia + Alabama RTJ Trail ---
+  { id: "sea-island-seaside", name: "Sea Island Resort - Seaside Course", city: "St. Simons Island, GA", region: "SE", access: "resort", holes: 18, pars: p(18, 70) },
+  { id: "sea-island-plantation", name: "Sea Island Resort - Plantation Course", city: "St. Simons Island, GA", region: "SE", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "sea-island-retreat", name: "Sea Island Resort - Retreat Course", city: "St. Simons Island, GA", region: "SE", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "reynolds-great-waters", name: "Reynolds Lake Oconee - Great Waters Course", city: "Greensboro, GA", region: "SE", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "reynolds-oconee", name: "Reynolds Lake Oconee - The Oconee Course", city: "Greensboro, GA", region: "SE", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "reynolds-national", name: "Reynolds Lake Oconee - The National", city: "Greensboro, GA", region: "SE", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "reynolds-landing", name: "Reynolds Lake Oconee - The Landing", city: "Greensboro, GA", region: "SE", access: "resort", holes: 18, pars: p(18, 72) },
+  { id: "east-lake", name: "East Lake Golf Club", city: "Atlanta, GA", region: "SE", access: "private", holes: 18, pars: p(18, 70) },
+  { id: "atlanta-athletic-highlands", name: "Atlanta Athletic Club - Highlands Course", city: "Johns Creek, GA", region: "SE", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "peachtree", name: "Peachtree Golf Club", city: "Atlanta, GA", region: "SE", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "augusta-national", name: "Augusta National Golf Club", city: "Augusta, GA", region: "SE", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "rtj-capitol-hill-senator", name: "RTJ Trail - Capitol Hill - Senator Course", city: "Prattville, AL", region: "SE", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "rtj-capitol-hill-judge", name: "RTJ Trail - Capitol Hill - Judge Course", city: "Prattville, AL", region: "SE", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "rtj-capitol-hill-legislator", name: "RTJ Trail - Capitol Hill - Legislator Course", city: "Prattville, AL", region: "SE", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "rtj-ross-bridge", name: "RTJ Trail - Ross Bridge", city: "Hoover, AL", region: "SE", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "rtj-grand-national-lake", name: "RTJ Trail - Grand National - Lake Course", city: "Opelika, AL", region: "SE", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "rtj-grand-national-links", name: "RTJ Trail - Grand National - Links Course", city: "Opelika, AL", region: "SE", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "rtj-magnolia-grove-falls", name: "RTJ Trail - Magnolia Grove - Falls Course", city: "Mobile, AL", region: "SE", access: "public", holes: 18, pars: p(18, 71) },
+
   // --- Pacific Northwest (sample / dev courses) ---
   {
     id: "riverbend-golf-complex",
@@ -1446,6 +1570,130 @@ export const COURSE_PRESET_COORDS: Record<string, { lat: number; lng: number }> 
   "sonoma-golf-club": { lat: 38.2867, lng: -122.4575 },
   mayacama: { lat: 38.5481, lng: -122.7975 },
   cordevalle: { lat: 37.0656, lng: -121.5611 },
+
+  // --- Hawaii ---
+  // Kapalua (Plantation + Bay), Wailea (Gold/Emerald, Old Blue shifted
+  // a touch), Kaanapali (Royal + Kai), Mauna Lani (S + N), Waikoloa
+  // (Beach + Kings'), and Turtle Bay (Palmer + Fazio) share their
+  // resort clubhouse coord.
+  "kapalua-plantation": { lat: 20.9978, lng: -156.6614 },
+  "kapalua-bay": { lat: 20.9978, lng: -156.6614 },
+  "wailea-gold": { lat: 20.6917, lng: -156.4393 },
+  "wailea-emerald": { lat: 20.6917, lng: -156.4393 },
+  "wailea-old-blue": { lat: 20.6878, lng: -156.4421 },
+  "kaanapali-royal": { lat: 20.9220, lng: -156.6957 },
+  "kaanapali-kai": { lat: 20.9220, lng: -156.6957 },
+  "mauna-kea": { lat: 20.0033, lng: -155.8253 },
+  "mauna-lani-south": { lat: 19.9395, lng: -155.8730 },
+  "mauna-lani-north": { lat: 19.9395, lng: -155.8730 },
+  hualalai: { lat: 19.8253, lng: -155.9849 },
+  hapuna: { lat: 19.9968, lng: -155.8268 },
+  "waikoloa-beach": { lat: 19.9213, lng: -155.8862 },
+  "waikoloa-kings": { lat: 19.9213, lng: -155.8862 },
+  "princeville-makai": { lat: 22.2244, lng: -159.4831 },
+  "poipu-bay": { lat: 21.8754, lng: -159.4456 },
+  "kauai-lagoons": { lat: 21.9694, lng: -159.3469 },
+  "ko-olina": { lat: 21.3340, lng: -158.1257 },
+  "turtle-bay-palmer": { lat: 21.7036, lng: -157.9990 },
+  "turtle-bay-fazio": { lat: 21.7036, lng: -157.9990 },
+
+  // --- Northeast US ---
+  // Bethpage (Black + Red), Winged Foot (W + E), and Baltusrol
+  // (Lower + Upper) share their clubhouse coord.
+  "bethpage-black": { lat: 40.7414, lng: -73.4581 },
+  "bethpage-red": { lat: 40.7414, lng: -73.4581 },
+  "shinnecock-hills": { lat: 40.8940, lng: -72.4399 },
+  "national-golf-links": { lat: 40.9114, lng: -72.4504 },
+  "friars-head": { lat: 40.9641, lng: -72.7242 },
+  sebonack: { lat: 40.9076, lng: -72.4569 },
+  "garden-city-gc": { lat: 40.7290, lng: -73.6462 },
+  maidstone: { lat: 40.9644, lng: -72.1858 },
+  "winged-foot-west": { lat: 40.9575, lng: -73.7522 },
+  "winged-foot-east": { lat: 40.9575, lng: -73.7522 },
+  "quaker-ridge": { lat: 40.9659, lng: -73.7613 },
+  "oak-hill-east": { lat: 43.1121, lng: -77.5296 },
+  "pine-valley": { lat: 39.7890, lng: -74.9720 },
+  "baltusrol-lower": { lat: 40.7029, lng: -74.3277 },
+  "baltusrol-upper": { lat: 40.7029, lng: -74.3277 },
+  "liberty-national": { lat: 40.6949, lng: -74.0725 },
+  "trump-bedminster": { lat: 40.6604, lng: -74.7085 },
+  "plainfield-cc": { lat: 40.5945, lng: -74.3900 },
+  oakmont: { lat: 40.5269, lng: -79.8275 },
+  "merion-east": { lat: 40.0019, lng: -75.3116 },
+  aronimink: { lat: 40.0112, lng: -75.4088 },
+  "tpc-boston": { lat: 41.9820, lng: -71.2240 },
+  "the-country-club-brookline": { lat: 42.3149, lng: -71.1474 },
+  "newport-cc": { lat: 41.4572, lng: -71.3415 },
+
+  // --- UK + Ireland ---
+  // St Andrews Old/New/Jubilee share the Links Trust clubhouse hub;
+  // Castle Course is a few miles east on the cliffs (separate coord).
+  "st-andrews-old": { lat: 56.3434, lng: -2.8027 },
+  "st-andrews-new": { lat: 56.3434, lng: -2.8027 },
+  "st-andrews-jubilee": { lat: 56.3434, lng: -2.8027 },
+  "st-andrews-castle": { lat: 56.3289, lng: -2.7407 },
+  "carnoustie-championship": { lat: 56.4988, lng: -2.7156 },
+  muirfield: { lat: 56.0436, lng: -2.8198 },
+  "royal-troon-old": { lat: 55.5450, lng: -4.6491 },
+  "turnberry-ailsa": { lat: 55.3122, lng: -4.8378 },
+  "royal-dornoch-championship": { lat: 57.8762, lng: -4.0257 },
+  "loch-lomond": { lat: 56.0517, lng: -4.6378 },
+  kingsbarns: { lat: 56.2944, lng: -2.6553 },
+  "royal-birkdale": { lat: 53.6256, lng: -3.0285 },
+  "royal-liverpool-hoylake": { lat: 53.3847, lng: -3.1843 },
+  "royal-st-georges": { lat: 51.2789, lng: 1.3478 },
+  "wentworth-west": { lat: 51.4045, lng: -0.5917 },
+  "sunningdale-old": { lat: 51.3892, lng: -0.6395 },
+  "royal-portrush-dunluce": { lat: 55.2056, lng: -6.6433 },
+  "royal-county-down-championship": { lat: 54.2208, lng: -5.8897 },
+  "ballybunion-old": { lat: 52.5106, lng: -9.6803 },
+  "lahinch-old": { lat: 52.9347, lng: -9.3531 },
+  portmarnock: { lat: 53.4194, lng: -6.1303 },
+  "old-head": { lat: 51.6075, lng: -8.5350 },
+
+  // --- Colorado + Mountain West ---
+  // The Broadmoor (East + West) and Red Sky (Norman + Fazio) share
+  // their resort clubhouse coord.
+  "castle-pines-golf-club": { lat: 39.4403, lng: -104.8942 },
+  "cherry-hills-country-club": { lat: 39.6429, lng: -104.9626 },
+  "sanctuary-golf-course": { lat: 39.4723, lng: -104.9195 },
+  "colorado-golf-club": { lat: 39.4737, lng: -104.7358 },
+  "broadmoor-east": { lat: 38.7872, lng: -104.8500 },
+  "broadmoor-west": { lat: 38.7872, lng: -104.8500 },
+  "garden-of-the-gods-club": { lat: 38.8795, lng: -104.8684 },
+  "maroon-creek-club": { lat: 39.2056, lng: -106.8573 },
+  "aspen-golf-club": { lat: 39.2002, lng: -106.8460 },
+  "roaring-fork-club": { lat: 39.3548, lng: -107.0216 },
+  "country-club-of-the-rockies": { lat: 39.6364, lng: -106.5663 },
+  "red-sky-norman": { lat: 39.6861, lng: -106.6911 },
+  "red-sky-fazio": { lat: 39.6861, lng: -106.6911 },
+  "ballyneal-golf-club": { lat: 40.4194, lng: -102.2628 },
+  "spanish-peaks-mountain-club": { lat: 45.2600, lng: -111.3700 },
+  "old-works-golf-course": { lat: 46.1314, lng: -112.9354 },
+
+  // --- Georgia + Alabama RTJ Trail ---
+  // Sea Island (Seaside + Plantation + Retreat) and Reynolds Lake
+  // Oconee (4 courses) share the resort hub coord. Capitol Hill
+  // (Senator + Judge + Legislator) and Grand National (Lake + Links)
+  // each share their RTJ Trail facility coord.
+  "sea-island-seaside": { lat: 31.1381, lng: -81.4056 },
+  "sea-island-plantation": { lat: 31.1381, lng: -81.4056 },
+  "sea-island-retreat": { lat: 31.1381, lng: -81.4056 },
+  "reynolds-great-waters": { lat: 33.4730, lng: -83.1970 },
+  "reynolds-oconee": { lat: 33.4730, lng: -83.1970 },
+  "reynolds-national": { lat: 33.4730, lng: -83.1970 },
+  "reynolds-landing": { lat: 33.4730, lng: -83.1970 },
+  "east-lake": { lat: 33.7435, lng: -84.3028 },
+  "atlanta-athletic-highlands": { lat: 34.0117, lng: -84.2074 },
+  peachtree: { lat: 33.8819, lng: -84.3236 },
+  "augusta-national": { lat: 33.5032, lng: -82.0198 },
+  "rtj-capitol-hill-senator": { lat: 32.4431, lng: -86.3971 },
+  "rtj-capitol-hill-judge": { lat: 32.4431, lng: -86.3971 },
+  "rtj-capitol-hill-legislator": { lat: 32.4431, lng: -86.3971 },
+  "rtj-ross-bridge": { lat: 33.4199, lng: -86.8965 },
+  "rtj-grand-national-lake": { lat: 32.6747, lng: -85.4290 },
+  "rtj-grand-national-links": { lat: 32.6747, lng: -85.4290 },
+  "rtj-magnolia-grove-falls": { lat: 30.7405, lng: -88.2079 },
 };
 
 export function findPresetByName(name: string): CoursePreset | undefined {
