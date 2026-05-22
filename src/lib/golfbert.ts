@@ -210,7 +210,7 @@ function pickTeebox(boxes: GBHoleTeebox[]): GBHoleTeebox | null {
 // and par 5 on another) -- take the mode across all teeboxes, then
 // fall back to yardage-based heuristic if every box disagrees or the
 // par looks nonsensical for the length.
-function pickPar(
+export function pickPar(
   boxes: GBHoleTeebox[],
   yardage: number | null,
 ): number | null {
