@@ -73,6 +73,13 @@ model Match {
   startingHole Int         @default(1)
   status       String      @default("UPCOMING")
   scoringMode  String      @default("NET")
+  // "INDIVIDUAL" (every player against every player) or "SCRAMBLE"
+  // (2 teams; one score per team per hole). Default INDIVIDUAL to
+  // keep existing matches unchanged.
+  format       String      @default("INDIVIDUAL")
+  // Scramble-only settings JSON: handicapMode + optional teamNames.
+  // Null for INDIVIDUAL matches.
+  scrambleConfig String?
   parData      String?
   createdById  String
   createdBy    User        @relation("MatchCreator", fields: [createdById], references: [id])
@@ -128,6 +135,9 @@ model MatchPlayer {
   displayName String
   handicap    Float
   seat        Int
+  // Team assignment for scramble matches: 0 = Team A, 1 = Team B.
+  // Null for INDIVIDUAL matches.
+  team        Int?
 
   scores      ScoreEntry[]
   wagers      Wager[]
