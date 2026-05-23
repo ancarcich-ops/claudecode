@@ -212,11 +212,11 @@ export async function createMatchAction(formData: FormData) {
   // valid-but-broken match (one team with 0 captain, odds engine
   // synthesises a single player only).
   if (format === "SCRAMBLE") {
-    if (drafts.length < 2) throw new Error("Scramble needs at least 2 players");
+    if (drafts.length < 2) throw new Error("Teams format needs at least 2 players");
     const aCount = drafts.filter((d) => d.team === 0).length;
     const bCount = drafts.filter((d) => d.team === 1).length;
     if (aCount === 0 || bCount === 0) {
-      throw new Error("Scramble needs at least one player on each team");
+      throw new Error("Each team needs at least one player");
     }
   }
 

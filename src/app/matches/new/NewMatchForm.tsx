@@ -629,10 +629,10 @@ export default function NewMatchForm({
                   aria-pressed={active}
                 >
                   <span className="text-sm font-medium leading-none">
-                    {f === "INDIVIDUAL" ? "Individual" : "Scramble"}
+                    {f === "INDIVIDUAL" ? "Individual" : "Teams"}
                   </span>
                   <span className="text-[10px] uppercase tracking-wider text-mute font-mono">
-                    {f === "INDIVIDUAL" ? "stroke play" : "2 teams"}
+                    {f === "INDIVIDUAL" ? "stroke play" : "team vs team"}
                   </span>
                 </button>
               );
