@@ -714,6 +714,9 @@ export const COURSE_PRESETS: CoursePreset[] = [
   { id: "meadowlark-gc", name: "Meadowlark Golf Course", city: "Huntington Beach, CA", region: "OC", access: "public", holes: 18, pars: p(18, 70) },
   { id: "lakewood-cc", name: "Lakewood Country Club", city: "Lakewood, CA", region: "OC", access: "private", holes: 18, pars: p(18, 72) },
   { id: "westridge-gc", name: "Westridge Golf Club", city: "La Habra, CA", region: "OC", access: "public", holes: 18, pars: p(18, 71) },
+  // On Naval Weapons Station Seal Beach but the championship 18
+  // (Destroyer) is open to civilians at daily-fee rates.
+  { id: "navy-seal-beach-destroyer", name: "Navy Golf Course Seal Beach - Destroyer Course", city: "Cypress, CA", region: "OC", access: "public", holes: 18, pars: p(18, 72) },
 
   { id: "western-hills-cc", name: "Western Hills Country Club", city: "Chino Hills, CA", region: "IE", access: "private", holes: 18, pars: p(18, 72) },
   { id: "sierra-lakes-gc", name: "Sierra Lakes Golf Club", city: "Fontana, CA", region: "IE", access: "public", holes: 18, pars: p(18, 72) },
@@ -1342,6 +1345,7 @@ export const COURSE_PRESET_COORDS: Record<string, { lat: number; lng: number }> 
   "meadowlark-gc": { lat: 33.7182, lng: -118.0318 },
   "lakewood-cc": { lat: 33.8333, lng: -118.1419 },
   "westridge-gc": { lat: 33.9404, lng: -117.9568 },
+  "navy-seal-beach-destroyer": { lat: 33.8350, lng: -118.0581 },
 
   "western-hills-cc": { lat: 33.9425, lng: -117.7384 },
   "sierra-lakes-gc": { lat: 34.1583, lng: -117.4500 },
