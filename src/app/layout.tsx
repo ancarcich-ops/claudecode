@@ -132,6 +132,7 @@ export default async function RootLayout({
         <Onboarding
           enabled={!!user}
           username={user?.username}
+          hasGroup={groups.length > 0}
           photoUploadEnabled={!!process.env.BLOB_READ_WRITE_TOKEN}
         />
         <Sounds />
