@@ -713,7 +713,10 @@ export const COURSE_PRESETS: CoursePreset[] = [
   { id: "dad-miller-gc", name: "Dad Miller Golf Course", city: "Anaheim, CA", region: "OC", access: "municipal", holes: 18, pars: p(18, 71) },
   { id: "meadowlark-gc", name: "Meadowlark Golf Course", city: "Huntington Beach, CA", region: "OC", access: "public", holes: 18, pars: p(18, 70) },
   { id: "lakewood-cc", name: "Lakewood Country Club", city: "Lakewood, CA", region: "OC", access: "private", holes: 18, pars: p(18, 72) },
-  { id: "westridge-gc", name: "Westridge Golf Club", city: "La Habra, CA", region: "OC", access: "public", holes: 18, pars: p(18, 71) },
+  // Per-hole pars transcribed from the club's official scorecard
+  // (westridgegolfclub.com). Out: 4,5,3,5,4,4,3,4,4 = 36. In:
+  // 4,3,4,4,5,3,4,4,5 = 36. Total par 72.
+  { id: "westridge-gc", name: "Westridge Golf Club", city: "La Habra, CA", region: "OC", access: "public", holes: 18, pars: [4, 5, 3, 5, 4, 4, 3, 4, 4, 4, 3, 4, 4, 5, 3, 4, 4, 5] },
   // On Naval Weapons Station Seal Beach but the championship 18
   // (Destroyer) is open to civilians at daily-fee rates.
   { id: "navy-seal-beach-destroyer", name: "Navy Golf Course Seal Beach - Destroyer Course", city: "Cypress, CA", region: "OC", access: "public", holes: 18, pars: p(18, 72) },
