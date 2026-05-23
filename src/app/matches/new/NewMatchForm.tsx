@@ -8,7 +8,11 @@ import PlayerNameInput from "@/components/PlayerNameInput";
 import {
   ALL_SIDE_GAMES,
   COMING_SOON_SIDE_GAMES,
+  TEAM_VS_TEAM_RULES,
+  teamVsTeamRuleBlurb,
+  teamVsTeamRuleLabel,
   type SideGameKind,
+  type TeamVsTeamRule,
 } from "@/lib/sideGames";
 
 type NearbyCourse = { name: string; yards: number };
@@ -136,6 +140,12 @@ export default function NewMatchForm({
   const [scrambleHcpMode, setScrambleHcpMode] = useState<
     "GROSS" | "AVG" | "USGA_4P"
   >("GROSS");
+  // Team-vs-Team side game configuration. The team picker (chips
+  // per player row) shares state with the SCRAMBLE format's chips
+  // -- PlayerRow.team is the single source of truth and surfaces
+  // whenever EITHER scramble is the format OR the TEAM_VS_TEAM
+  // side game is enabled.
+  const [tvtRule, setTvtRule] = useState<TeamVsTeamRule>("BEST_BALL");
 
   const presetByName = useMemo(() => {
     const m = new Map<string, CoursePreset>();
@@ -909,7 +919,7 @@ export default function NewMatchForm({
                   format=SCRAMBLE). The visible Team A/B chips only
                   render when scramble is active. */}
               <input type="hidden" name="playerTeam" value={String(p.team)} />
-              {format === "SCRAMBLE" && (
+              {(format === "SCRAMBLE" || sideGames.has("TEAM_VS_TEAM")) && (
                 <div className="flex items-center gap-1.5 pl-1">
                   <span className="text-[10px] uppercase tracking-wider text-mute font-mono">
                     Team
@@ -994,6 +1004,55 @@ export default function NewMatchForm({
                 </label>
               );
             })}
+            {/* Team-vs-Team config panel. Slots in below the
+                checkbox row so picking the game and choosing the
+                rule stay visually connected. The team assignment
+                lives on the Players step (shared with scramble's
+                A/B chips); a one-line hint here points back to it
+                when nobody's been split yet. Hidden tvtRule input
+                + reuses the existing playerTeam[] inputs to send
+                the config payload. */}
+            {sideGames.has("TEAM_VS_TEAM") && (
+              <div className="rounded-md border border-accent/30 bg-accent/[0.04] px-3 py-3 mt-1 space-y-3">
+                <input type="hidden" name="tvtRule" value={tvtRule} />
+                <div>
+                  <div className="text-[11px] uppercase tracking-wider text-accent font-mono mb-1.5">
+                    Team-vs-team rule
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {TEAM_VS_TEAM_RULES.map((r) => {
+                      const active = tvtRule === r;
+                      return (
+                        <button
+                          key={r}
+                          type="button"
+                          onClick={() => setTvtRule(r)}
+                          className={
+                            "rounded-md border px-2.5 py-1.5 text-left transition-colors " +
+                            (active
+                              ? "border-accent bg-accent/10 text-ink"
+                              : "border-border text-mute hover:text-ink")
+                          }
+                          aria-pressed={active}
+                        >
+                          <div className="text-[12px] font-medium">
+                            {teamVsTeamRuleLabel(r)}
+                          </div>
+                          <div className="text-[10px] text-mute leading-tight mt-0.5">
+                            {teamVsTeamRuleBlurb(r)}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="text-[10.5px] text-mute leading-snug">
+                  {format === "SCRAMBLE"
+                    ? "Side game reuses the scramble teams (A/B chips on the Players step)."
+                    : "Assign each player to Team A or B using the chips on the Players step."}
+                </div>
+              </div>
+            )}
             {COMING_SOON_SIDE_GAMES.map((g) => (
               <div
                 key={g.kind}

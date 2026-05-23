@@ -346,6 +346,46 @@ export async function createMatchAction(formData: FormData) {
     include: { players: true },
   });
 
+  // Team-vs-Team side game config: build now that we have real
+  // matchPlayerIds. The team picker on the new-match form uses
+  // the same playerTeam[] hidden inputs as the scramble format
+  // (single source of truth), so we read those off the drafts
+  // we already validated.
+  if (sideGameKinds.includes("TEAM_VS_TEAM")) {
+    const tvtRuleRaw = String(formData.get("tvtRule") ?? "BEST_BALL");
+    const { TEAM_VS_TEAM_RULES, stringifyTeamVsTeamConfig } = await import(
+      "./sideGames"
+    );
+    type TvtRule = (typeof TEAM_VS_TEAM_RULES)[number];
+    const rule: TvtRule = (TEAM_VS_TEAM_RULES as readonly string[]).includes(
+      tvtRuleRaw,
+    )
+      ? (tvtRuleRaw as TvtRule)
+      : "BEST_BALL";
+    const teamPlayers: Record<0 | 1, string[]> = { 0: [], 1: [] };
+    for (let i = 0; i < match.players.length && i < drafts.length; i++) {
+      const t = drafts[i].team;
+      teamPlayers[t].push(match.players[i].id);
+    }
+    // Only persist a usable config -- if either team is empty (e.g.
+    // INDIVIDUAL match where nobody touched the chips) the side game
+    // stays opt-in: SideGame.config remains null, computeAllSideGames
+    // skips it, UI shows a "configure now" CTA later.
+    if (teamPlayers[0].length > 0 && teamPlayers[1].length > 0) {
+      await prisma.sideGame.update({
+        where: {
+          matchId_kind: { matchId: match.id, kind: "TEAM_VS_TEAM" },
+        },
+        data: {
+          config: stringifyTeamVsTeamConfig({
+            teams: teamPlayers,
+            rule,
+          }),
+        },
+      });
+    }
+  }
+
   await recordOddsSnapshot(match.id);
   revalidatePath("/");
   redirect(`/matches/${match.id}`);
