@@ -13,7 +13,15 @@ import {
 
 type NearbyCourse = { name: string; yards: number };
 
-type PlayerRow = { name: string; handicap: string; userId: string | null };
+type PlayerRow = {
+  name: string;
+  handicap: string;
+  userId: string | null;
+  // Team assignment used only when format === "SCRAMBLE". Default 0
+  // for even indices, 1 for odd, so an unedited 4-player match opens
+  // as a clean 2v2 split.
+  team: 0 | 1;
+};
 type ScoringMode = "NET" | "GROSS" | "CUSTOM";
 
 // Past round the user created, normalized to wizard state shape. Tapping
@@ -91,8 +99,9 @@ export default function NewMatchForm({
       name: defaultPlayerName,
       handicap: defaultPlayerHandicap,
       userId: currentUserId,
+      team: 0,
     },
-    { name: "", handicap: "15", userId: null },
+    { name: "", handicap: "15", userId: null, team: 1 },
   ]);
   const [sideGames, setSideGames] = useState<Set<SideGameKind>>(new Set());
 
@@ -117,6 +126,16 @@ export default function NewMatchForm({
   const [startingHole, setStartingHole] = useState<1 | 10>(1);
   const [scoringMode, setScoringMode] = useState<ScoringMode>("NET");
   const modeCopy = MODE_COPY[scoringMode];
+  // Match format: INDIVIDUAL is the existing all-vs-all play; SCRAMBLE
+  // is 2 teams sharing one ball-per-team-per-hole. When SCRAMBLE is
+  // active the scoringMode picker is suppressed in favour of the team-
+  // handicap picker below.
+  const [format, setFormat] = useState<"INDIVIDUAL" | "SCRAMBLE">(
+    "INDIVIDUAL",
+  );
+  const [scrambleHcpMode, setScrambleHcpMode] = useState<
+    "GROSS" | "AVG" | "USGA_4P"
+  >("GROSS");
 
   const presetByName = useMemo(() => {
     const m = new Map<string, CoursePreset>();
@@ -200,7 +219,19 @@ export default function NewMatchForm({
     players.length < 6 &&
     setPlayers((rows) => [
       ...rows,
-      { name: "", handicap: "18", userId: null },
+      {
+        name: "",
+        handicap: "18",
+        userId: null,
+        // New player joins the team with fewer members so scramble
+        // matches stay balanced by default; ties go to team 1 so the
+        // 3rd player on a 2-player match defaults to "Team B".
+        team:
+          rows.filter((r) => r.team === 0).length <=
+          rows.filter((r) => r.team === 1).length
+            ? 0
+            : 1,
+      },
     ]);
   const removePlayer = (i: number) =>
     setPlayers((rows) =>
@@ -216,10 +247,13 @@ export default function NewMatchForm({
     setStartingHole(t.startingHole);
     setScoringMode(t.scoringMode);
     setPlayers(
-      t.players.map((p) => ({
+      t.players.map((p, i) => ({
         name: p.name,
         handicap: p.handicap,
         userId: p.userId,
+        // Templates don't carry team data -- default alternating so a
+        // scramble-converted template lands on a sensible split.
+        team: (i % 2) as 0 | 1,
       })),
     );
     setSideGames(new Set(t.sideGames));
@@ -559,7 +593,59 @@ export default function NewMatchForm({
             </div>
           </div>
         )}
+
+        {/* Match format. Individual is the existing all-vs-all play;
+            scramble is 2 teams sharing one ball-per-team-per-hole.
+            When scramble is selected, the scoring picker below
+            collapses into the team-handicap picker -- individual
+            handicap math doesn't apply when only the team's score
+            counts. */}
         <div>
+          <label className="label">Format</label>
+          <input type="hidden" name="format" value={format} />
+          <input
+            type="hidden"
+            name="scrambleConfig"
+            value={
+              format === "SCRAMBLE"
+                ? JSON.stringify({ handicapMode: scrambleHcpMode })
+                : ""
+            }
+          />
+          <div className="grid grid-cols-2 gap-2">
+            {(["INDIVIDUAL", "SCRAMBLE"] as const).map((f) => {
+              const active = format === f;
+              return (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setFormat(f)}
+                  className={
+                    "flex flex-col items-center justify-center gap-0.5 rounded-md border px-2 py-2 transition min-h-[3.25rem] " +
+                    (active
+                      ? "border-accent bg-accent/10 text-ink"
+                      : "border-border text-mute hover:text-ink")
+                  }
+                  aria-pressed={active}
+                >
+                  <span className="text-sm font-medium leading-none">
+                    {f === "INDIVIDUAL" ? "Individual" : "Scramble"}
+                  </span>
+                  <span className="text-[10px] uppercase tracking-wider text-mute font-mono">
+                    {f === "INDIVIDUAL" ? "all vs all" : "2 teams"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-[11px] text-mute mt-1.5">
+            {format === "INDIVIDUAL"
+              ? "Every player keeps their own score; live odds price each player to win the match."
+              : "Players split into 2 teams. Each team logs one score per hole; live odds price team-vs-team."}
+          </p>
+        </div>
+
+        <div hidden={format !== "INDIVIDUAL"}>
           <label className="label">Scoring</label>
           <input type="hidden" name="scoringMode" value={scoringMode} />
           <div className="grid grid-cols-3 gap-2">
@@ -590,6 +676,55 @@ export default function NewMatchForm({
             })}
           </div>
           <p className="text-[11px] text-mute mt-1.5">{modeCopy.help}</p>
+        </div>
+
+        {/* Scramble team-handicap picker. Replaces the individual
+            scoring picker above when format=SCRAMBLE. Values feed the
+            scrambleConfig hidden input above; scoringMode is still
+            sent but coerced to GROSS server-side for scrambles. */}
+        <div hidden={format !== "SCRAMBLE"}>
+          <label className="label">Team handicap</label>
+          <div className="grid grid-cols-3 gap-2">
+            {(["GROSS", "AVG", "USGA_4P"] as const).map((m) => {
+              const active = scrambleHcpMode === m;
+              const label =
+                m === "GROSS" ? "Gross" : m === "AVG" ? "Avg" : "USGA";
+              const sub =
+                m === "GROSS"
+                  ? "no allowance"
+                  : m === "AVG"
+                    ? "mean of HCPs"
+                    : "25/20/15/10";
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setScrambleHcpMode(m)}
+                  className={
+                    "flex flex-col items-center justify-center gap-0.5 rounded-md border px-2 py-2 transition min-h-[3.25rem] " +
+                    (active
+                      ? "border-accent bg-accent/10 text-ink"
+                      : "border-border text-mute hover:text-ink")
+                  }
+                  aria-pressed={active}
+                >
+                  <span className="text-sm font-medium leading-none">
+                    {label}
+                  </span>
+                  <span className="text-[10px] uppercase tracking-wider text-mute font-mono">
+                    {sub}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-[11px] text-mute mt-1.5">
+            {scrambleHcpMode === "GROSS"
+              ? "Pure team score with no handicap adjustment -- most casual scrambles."
+              : scrambleHcpMode === "AVG"
+                ? "Each team's allowance = average of teammate handicaps. Simple, fair on lopsided teams."
+                : "USGA percentages weighted to the low ball (25/20/15/10 for 4-person). Best for mixed-HCP teams."}
+          </p>
         </div>
 
         {templates.length > 0 && (
@@ -731,45 +866,78 @@ export default function NewMatchForm({
         </div>
         <div className="space-y-2">
           {players.map((p, i) => (
-            <div key={i} className="flex gap-2 items-start">
-              <PlayerNameInput
-                value={p.name}
-                userId={p.userId}
-                onChange={(next) =>
-                  setPlayer(i, { name: next.name, userId: next.userId })
-                }
-                placeholder={`Player ${i + 1}`}
-              />
-              <input
-                name="playerHandicap"
-                type="number"
-                step={scoringMode === "CUSTOM" ? "1" : "0.1"}
-                min={0}
-                value={p.handicap}
-                onChange={(e) => setPlayer(i, { handicap: e.target.value })}
-                placeholder={modeCopy.field}
-                title={
-                  scoringMode === "CUSTOM"
-                    ? `Strokes given to ${p.name || `player ${i + 1}`}`
-                    : modeCopy.field
-                }
-                aria-label={
-                  scoringMode === "CUSTOM"
-                    ? `Strokes given to ${p.name || `player ${i + 1}`}`
-                    : modeCopy.field
-                }
-                className="input w-20 shrink-0 text-center px-2"
-              />
-              <button
-                type="button"
-                className="btn btn-ghost px-2 shrink-0"
-                onClick={() => removePlayer(i)}
-                disabled={players.length <= 1}
-                aria-label={`Remove player ${i + 1}`}
-                title="Remove player"
-              >
-                <RemoveIcon />
-              </button>
+            <div key={i} className="space-y-1.5">
+              <div className="flex gap-2 items-start">
+                <PlayerNameInput
+                  value={p.name}
+                  userId={p.userId}
+                  onChange={(next) =>
+                    setPlayer(i, { name: next.name, userId: next.userId })
+                  }
+                  placeholder={`Player ${i + 1}`}
+                />
+                <input
+                  name="playerHandicap"
+                  type="number"
+                  step={scoringMode === "CUSTOM" ? "1" : "0.1"}
+                  min={0}
+                  value={p.handicap}
+                  onChange={(e) => setPlayer(i, { handicap: e.target.value })}
+                  placeholder={modeCopy.field}
+                  title={
+                    scoringMode === "CUSTOM"
+                      ? `Strokes given to ${p.name || `player ${i + 1}`}`
+                      : modeCopy.field
+                  }
+                  aria-label={
+                    scoringMode === "CUSTOM"
+                      ? `Strokes given to ${p.name || `player ${i + 1}`}`
+                      : modeCopy.field
+                  }
+                  className="input w-20 shrink-0 text-center px-2"
+                />
+                <button
+                  type="button"
+                  className="btn btn-ghost px-2 shrink-0"
+                  onClick={() => removePlayer(i)}
+                  disabled={players.length <= 1}
+                  aria-label={`Remove player ${i + 1}`}
+                  title="Remove player"
+                >
+                  <RemoveIcon />
+                </button>
+              </div>
+              {/* Hidden input always submits a team value (default 0
+                  for individual matches; server ignores it unless
+                  format=SCRAMBLE). The visible Team A/B chips only
+                  render when scramble is active. */}
+              <input type="hidden" name="playerTeam" value={String(p.team)} />
+              {format === "SCRAMBLE" && (
+                <div className="flex items-center gap-1.5 pl-1">
+                  <span className="text-[10px] uppercase tracking-wider text-mute font-mono">
+                    Team
+                  </span>
+                  {([0, 1] as const).map((t) => {
+                    const active = p.team === t;
+                    return (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setPlayer(i, { team: t })}
+                        className={
+                          "h-6 px-2.5 rounded-full text-[11px] font-medium border transition " +
+                          (active
+                            ? "border-accent bg-accent/10 text-ink"
+                            : "border-border text-mute hover:text-ink")
+                        }
+                        aria-pressed={active}
+                      >
+                        {t === 0 ? "A" : "B"}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           ))}
         </div>
