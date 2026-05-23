@@ -27,6 +27,9 @@
 //   --limit=N                Process at most N presets this run
 //                            (after filtering).
 //   --id=preset-id           Process a single preset (repeatable).
+//   --ids-from=path          Read additional preset ids from a file
+//                            (one per line; blank + #-comments
+//                            ignored). Merges with --id flags.
 //   --force                  Re-process even if the state file marks
 //                            this preset as already done.
 //   --daily-budget=N         Stop after ~N API calls (default 3400,
@@ -120,6 +123,21 @@ function parseCli() {
       flags.limit = parseInt(a.slice("--limit=".length), 10);
     }
     if (a.startsWith("--id=")) flags.ids.push(a.slice("--id=".length));
+    if (a.startsWith("--ids-from=")) {
+      // Read additional preset ids from a file (one per line, blank
+      // lines + lines starting with # are ignored). Useful for
+      // pinning a "do these first" list on day 1 without a 40-line
+      // --id chain on the command line.
+      const path = a.slice("--ids-from=".length);
+      const lines = readFileSync(path, "utf8")
+        .split("\n")
+        // Strip inline "# comment" tails so each line can carry a
+        // trailing annotation (distance, city, etc.) -- handy for
+        // hand-curated priority lists.
+        .map((s) => s.replace(/#.*$/, "").trim())
+        .filter((s) => s.length > 0);
+      flags.ids.push(...lines);
+    }
     if (a.startsWith("--daily-budget=")) {
       flags.dailyBudget = parseInt(a.slice("--daily-budget=".length), 10);
     }
