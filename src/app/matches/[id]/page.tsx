@@ -214,6 +214,53 @@ export default async function MatchPage({
     scores: p.scores.slice().sort((a, b) => a.hole - b.hole),
   }));
 
+  // displayEntities is what every player-facing view renders against.
+  // For INDIVIDUAL matches it's identical to playerMeta; for SCRAMBLE
+  // it collapses each team into a single entity carrying the captain's
+  // matchPlayerId (so existing per-player server actions keep working
+  // unchanged), the team's name + roster as the display label, the
+  // team handicap, and the team's probability/net score from the odds
+  // engine. The scorecard, market chart, market sidebar, and wager
+  // form all read this list -- so a 4-person scramble shows 2 rows
+  // everywhere instead of 4.
+  let displayEntities = playerMeta;
+  if (match.format === "SCRAMBLE") {
+    const { partitionTeams, captainForTeam, teamHandicap, teamLabel, parseScrambleConfig } =
+      await import("@/lib/scramble");
+    const scrambleConfig = parseScrambleConfig(match.scrambleConfig);
+    const teams = partitionTeams(match.players);
+    const built = ([0, 1] as const)
+      .map((t) => {
+        const team = teams[t];
+        if (team.length === 0) return null;
+        const captain = captainForTeam(team)!;
+        const roster = team
+          .map((p) => p.displayName)
+          .join(" & ");
+        // Team color uses the captain's seat color so existing
+        // per-seat colour helpers (charts, badges) stay consistent.
+        return {
+          id: captain.id,
+          seat: captain.seat,
+          displayName: `${teamLabel(t, scrambleConfig)} — ${roster}`,
+          handicap: teamHandicap(team, scrambleConfig.handicapMode),
+          color: colorForSeat(captain.seat),
+          wagerCount: team.reduce(
+            (sum, p) => sum + (wagerCounts[p.id] ?? 0),
+            0,
+          ),
+          probability: odds.probabilities[`team-${t}`] ?? 0,
+          netScore: odds.meta.netScores[`team-${t}`] ?? null,
+          // Scores live on the captain's row -- the score-logging
+          // server action takes a matchPlayerId, so writing through
+          // the captain Just Works.
+          scores: captain.scores.slice().sort((a, b) => a.hole - b.hole),
+        };
+      })
+      .filter((x): x is NonNullable<typeof x> => x != null);
+    if (built.length > 0) displayEntities = built;
+  }
+
   // On-course GPS data: per-hole green coordinates for this course, plus
   // the signed-in user's match-player id (if any) so they can log scores
   // directly from the on-course view.
@@ -539,6 +586,7 @@ export default async function MatchPage({
           matchStart,
           pars,
           playerMeta,
+          displayEntities,
           odds,
           modeLabel: strokeFieldLabel,
           projLabel,
@@ -655,6 +703,19 @@ type BuildMatchTabsArgs = {
     scores: Array<{ hole: number; strokes: number }>;
     seat: number;
   }>;
+  // Same shape as playerMeta but collapsed to 2 team rows in
+  // SCRAMBLE matches. Equal to playerMeta in INDIVIDUAL matches.
+  displayEntities: Array<{
+    id: string;
+    displayName: string;
+    color: string;
+    handicap: number;
+    wagerCount: number;
+    probability: number;
+    netScore: number | null;
+    scores: Array<{ hole: number; strokes: number }>;
+    seat: number;
+  }>;
   odds: {
     weights: { model: number; crowd: number; live: number };
     meta: { holesPlayed: number; coursePar: number; totalWagers: number };
@@ -712,6 +773,7 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
     matchStart,
     pars,
     playerMeta,
+    displayEntities,
     odds,
     modeLabel,
     projLabel,
@@ -807,7 +869,7 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
               holes={match.holes}
               startingHole={matchStart}
               pars={pars}
-              players={playerMeta}
+              players={displayEntities}
               locked={!canLogScores}
             />
           </>
@@ -837,7 +899,7 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
           oddsSeries={series}
           oddsHoleSeries={oddsHoleSeries}
           oddsXMode={oddsXMode}
-          players={playerMeta.map((p) => ({
+          players={displayEntities.map((p) => ({
             id: p.id,
             displayName: p.displayName,
             color: p.color,
@@ -845,7 +907,7 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
           sideGames={sgSeries}
         />
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {playerMeta.map((p) => (
+          {displayEntities.map((p) => (
             <div key={p.id} className="border border-border rounded-md p-3">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
@@ -913,7 +975,7 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
           <WagerForm
             action={placeWagerAction}
             matchId={match.id}
-            players={playerMeta}
+            players={displayEntities}
             currentPickId={myWager?.pickedPlayerId ?? null}
           />
         )}
