@@ -26,16 +26,22 @@ import {
 const STORAGE_KEY = "sticks.onboarded.v3";
 
 type StepKey = "welcome" | "avatar" | "group" | "card-guide" | "launch";
-const STEPS: StepKey[] = ["welcome", "avatar", "group", "card-guide", "launch"];
+const ALL_STEPS: StepKey[] = ["welcome", "avatar", "group", "card-guide", "launch"];
 
 export default function Onboarding({
   enabled,
   username,
+  // True when the user is already a member of at least one group --
+  // we drop the "create / join a group" step in that case so users
+  // who arrived via an invite-link signup aren't asked for a code
+  // they already used.
+  hasGroup = false,
   photoUploadEnabled = false,
 }: {
   enabled: boolean;
   // Used as the avatar generator seed when the user hasn't picked one yet.
   username?: string;
+  hasGroup?: boolean;
   // True when BLOB_READ_WRITE_TOKEN is configured server-side; gates the
   // photo-upload affordance in the avatar step.
   photoUploadEnabled?: boolean;
@@ -44,6 +50,12 @@ export default function Onboarding({
   const [visible, setVisible] = useState(false);
   const [stepIdx, setStepIdx] = useState(0);
   const [pending, startTransition] = useTransition();
+
+  // STEPS is derived from the user's current state so the group step
+  // disappears entirely for users who joined via an invite link. The
+  // progress dots, advance() logic, and back navigation all read from
+  // this filtered list -- no other branching needed.
+  const STEPS = ALL_STEPS.filter((s) => !(s === "group" && hasGroup));
 
   useEffect(() => {
     if (!enabled) return;
