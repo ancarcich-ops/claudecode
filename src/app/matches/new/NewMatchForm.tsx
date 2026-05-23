@@ -131,10 +131,12 @@ export default function NewMatchForm({
   const [scoringMode, setScoringMode] = useState<ScoringMode>("NET");
   const modeCopy = MODE_COPY[scoringMode];
   // Match format: INDIVIDUAL is the existing all-vs-all play; SCRAMBLE
-  // is 2 teams sharing one ball-per-team-per-hole. When SCRAMBLE is
-  // active the scoringMode picker is suppressed in favour of the team-
-  // handicap picker below.
-  const [format, setFormat] = useState<"INDIVIDUAL" | "SCRAMBLE">(
+  // is 2 teams sharing one ball-per-team-per-hole. BOTH is a
+  // client-side shortcut for "individual scoring AND team-vs-team
+  // side game on" -- the server still receives format=INDIVIDUAL but
+  // TEAM_VS_TEAM is auto-added to the side-games list and the team
+  // rule picker surfaces alongside the scoring picker.
+  const [format, setFormat] = useState<"INDIVIDUAL" | "SCRAMBLE" | "BOTH">(
     "INDIVIDUAL",
   );
   const [scrambleHcpMode, setScrambleHcpMode] = useState<
@@ -146,6 +148,29 @@ export default function NewMatchForm({
   // whenever EITHER scramble is the format OR the TEAM_VS_TEAM
   // side game is enabled.
   const [tvtRule, setTvtRule] = useState<TeamVsTeamRule>("BEST_BALL");
+
+  // Keep sideGames in sync with the format picker. BOTH implies the
+  // TEAM_VS_TEAM side game is on; SCRAMBLE implies it's off (team
+  // play is the primary format, no overlay needed). INDIVIDUAL is
+  // hands-off -- the user can still toggle TEAM_VS_TEAM manually on
+  // step 2 if they want without flipping the format card.
+  useEffect(() => {
+    if (format === "BOTH") {
+      setSideGames((curr) => {
+        if (curr.has("TEAM_VS_TEAM")) return curr;
+        const next = new Set(curr);
+        next.add("TEAM_VS_TEAM");
+        return next;
+      });
+    } else if (format === "SCRAMBLE") {
+      setSideGames((curr) => {
+        if (!curr.has("TEAM_VS_TEAM")) return curr;
+        const next = new Set(curr);
+        next.delete("TEAM_VS_TEAM");
+        return next;
+      });
+    }
+  }, [format]);
 
   const presetByName = useMemo(() => {
     const m = new Map<string, CoursePreset>();
@@ -653,7 +678,15 @@ export default function NewMatchForm({
             counts. */}
         <div>
           <label className="label">Format</label>
-          <input type="hidden" name="format" value={format} />
+          {/* "Both" is a client-side shortcut for INDIVIDUAL + the
+              TEAM_VS_TEAM side game. Server still receives
+              format=INDIVIDUAL; the side-games hidden inputs +
+              tvtRule carry the team-vs-team config. */}
+          <input
+            type="hidden"
+            name="format"
+            value={format === "BOTH" ? "INDIVIDUAL" : format}
+          />
           <input
             type="hidden"
             name="scrambleConfig"
@@ -663,9 +696,15 @@ export default function NewMatchForm({
                 : ""
             }
           />
-          <div className="grid grid-cols-2 gap-2">
-            {(["INDIVIDUAL", "SCRAMBLE"] as const).map((f) => {
+          <div className="grid grid-cols-3 gap-2">
+            {(["INDIVIDUAL", "SCRAMBLE", "BOTH"] as const).map((f) => {
               const active = format === f;
+              const label =
+                f === "INDIVIDUAL"
+                  ? "Individual"
+                  : f === "SCRAMBLE"
+                    ? "Teams"
+                    : "Both";
               return (
                 <button
                   key={f}
@@ -679,9 +718,7 @@ export default function NewMatchForm({
                   }
                   aria-pressed={active}
                 >
-                  <span className="text-sm font-medium">
-                    {f === "INDIVIDUAL" ? "Individual" : "Teams"}
-                  </span>
+                  <span className="text-sm font-medium">{label}</span>
                 </button>
               );
             })}
@@ -689,11 +726,16 @@ export default function NewMatchForm({
           <p className="text-[11px] text-mute mt-1.5">
             {format === "INDIVIDUAL"
               ? "Every player keeps their own score; live odds price each player to win the match."
-              : "Players split into 2 teams. Each team logs one score per hole; live odds price team-vs-team."}
+              : format === "SCRAMBLE"
+                ? "Players split into 2 teams. Each team logs one score per hole; live odds price team-vs-team."
+                : "Each player keeps their own score AND teams are scored from those individual scores. Live odds still price players individually; a team-vs-team side game tracks the team competition."}
           </p>
         </div>
 
-        <div hidden={format !== "INDIVIDUAL"}>
+        {/* Scoring picker shows for INDIVIDUAL or BOTH (BOTH still
+            uses individual handicap math; the team handicap mode in
+            the SCRAMBLE branch doesn't apply). */}
+        <div hidden={format === "SCRAMBLE"}>
           <label className="label">Scoring</label>
           <input type="hidden" name="scoringMode" value={scoringMode} />
           <div className="grid grid-cols-3 gap-2">
@@ -724,6 +766,45 @@ export default function NewMatchForm({
             })}
           </div>
           <p className="text-[11px] text-mute mt-1.5">{modeCopy.help}</p>
+        </div>
+
+        {/* Team rule picker for the BOTH format: shows alongside the
+            scoring picker so the user configures both layers without
+            walking to step 2. Bound to the same tvtRule state as the
+            step-2 picker so the rule choice survives navigation. */}
+        <div hidden={format !== "BOTH"}>
+          <label className="label">Team rule</label>
+          <div className="grid grid-cols-2 gap-1.5">
+            {TEAM_VS_TEAM_RULES.map((r) => {
+              const active = tvtRule === r;
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setTvtRule(r)}
+                  className={
+                    "rounded-md border px-2.5 py-1.5 text-left transition-colors " +
+                    (active
+                      ? "border-accent bg-accent/10 text-ink"
+                      : "border-border text-mute hover:text-ink")
+                  }
+                  aria-pressed={active}
+                >
+                  <div className="text-[12px] font-medium">
+                    {teamVsTeamRuleLabel(r)}
+                  </div>
+                  <div className="text-[10px] text-mute leading-tight mt-0.5">
+                    {teamVsTeamRuleBlurb(r)}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-[11px] text-mute mt-1.5">
+            How each hole's team score is computed from the players'
+            individual strokes. Assign players to Team A or B on the
+            Players step.
+          </p>
         </div>
 
         {/* Scramble team-handicap picker. Replaces the individual
