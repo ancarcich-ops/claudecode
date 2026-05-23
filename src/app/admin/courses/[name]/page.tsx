@@ -12,6 +12,13 @@ export default async function AdminCoursePage({
     where: { name },
     include: { holes: { orderBy: { hole: "asc" } } },
   });
+  const hazards = course
+    ? await prisma.courseHazard.findMany({
+        where: { courseId: course.id },
+        orderBy: [{ hole: "asc" }, { createdAt: "asc" }],
+        select: { id: true, hole: true, kind: true, lat: true, lng: true },
+      })
+    : [];
   const preset = findPresetByName(name);
   const holes = preset?.holes ?? 18;
 
@@ -44,6 +51,7 @@ export default async function AdminCoursePage({
       centerLat={course?.centerLat ?? null}
       centerLng={course?.centerLng ?? null}
       holes={holeRows}
+      hazards={hazards}
     />
   );
 }

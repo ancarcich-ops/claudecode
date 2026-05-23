@@ -9,6 +9,8 @@ import {
   adminRenameCourseAction,
   adminSaveHoleGeoAction,
   adminSetCourseCenterAction,
+  deleteHazardAction,
+  markHazardAction,
 } from "@/lib/actions";
 import GolfBertPanel from "./GolfBertPanel";
 
@@ -28,7 +30,23 @@ type HoleRow = {
   greenLng: number | null;
 };
 
-type Pending = { hole: number; kind: "tee" | "green" } | null;
+type Hazard = {
+  id: string;
+  hole: number;
+  // String not enum-typed -- schema stores it as a free string and the
+  // server action normalises to WATER/SAND/OOB/OTHER on write.
+  kind: string;
+  lat: number;
+  lng: number;
+};
+
+// Hazard placement keeps the same "pick + click" pattern as tee/green
+// pins, just with extra kinds. After placing a hazard the target
+// stays the same so you can drop a string of bunkers without round-
+// tripping back to the sidebar.
+type Pending =
+  | { hole: number; kind: "tee" | "green" | "water" | "sand" }
+  | null;
 
 function mercY(latDeg: number): number {
   const lat = (latDeg * Math.PI) / 180;
@@ -45,17 +63,20 @@ export default function CourseEditor({
   centerLat,
   centerLng,
   holes: initialHoles,
+  hazards: initialHazards,
 }: {
   courseName: string;
   city: string | null;
   centerLat: number | null;
   centerLng: number | null;
   holes: HoleRow[];
+  hazards: Hazard[];
 }) {
   const router = useRouter();
   const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   const [pending, startTransition] = useTransition();
   const [holes, setHoles] = useState<HoleRow[]>(initialHoles);
+  const [hazards, setHazards] = useState<Hazard[]>(initialHazards);
   const [target, setTarget] = useState<Pending>(null);
 
   // If the course has any existing geometry, default the map center
@@ -180,37 +201,94 @@ export default function CourseEditor({
     const cx = ((e.clientX - rect.left) / rect.width) * size.w;
     const cy = ((e.clientY - rect.top) / rect.height) * size.h;
     const { lat, lng } = unproject(cx, cy);
-    // Optimistic update.
+    const targetSnapshot = target;
+
+    if (targetSnapshot.kind === "water" || targetSnapshot.kind === "sand") {
+      const hazardKind = targetSnapshot.kind.toUpperCase();
+      // Optimistic add with a temp id so the marker shows up
+      // immediately. The real DB id gets reconciled on refresh; in
+      // the meantime any delete attempt against the temp id is a
+      // no-op (action catches missing rows silently).
+      const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      setHazards((cur) => [
+        ...cur,
+        { id: tempId, hole: targetSnapshot.hole, kind: hazardKind, lat, lng },
+      ]);
+      const fd = new FormData();
+      fd.set("courseName", courseName);
+      fd.set("hole", String(targetSnapshot.hole));
+      fd.set("kind", hazardKind);
+      fd.set("lat", String(lat));
+      fd.set("lng", String(lng));
+      startTransition(async () => {
+        try {
+          await markHazardAction(fd);
+          toast.success(
+            `Added ${targetSnapshot.kind} on hole ${targetSnapshot.hole}`,
+          );
+          // Keep the same target so the user can chain several
+          // bunkers / water carries on one hole without bouncing
+          // back to the sidebar.
+          router.refresh();
+        } catch (err) {
+          // Roll back the optimistic marker on failure.
+          setHazards((cur) => cur.filter((h) => h.id !== tempId));
+          toast.error((err as Error).message);
+        }
+      });
+      return;
+    }
+
+    // Tee or green pin -- existing behaviour.
     setHoles((cur) =>
       cur.map((h) => {
-        if (h.hole !== target.hole) return h;
-        if (target.kind === "tee")
+        if (h.hole !== targetSnapshot.hole) return h;
+        if (targetSnapshot.kind === "tee")
           return { ...h, teeLat: lat, teeLng: lng };
         return { ...h, greenLat: lat, greenLng: lng };
       }),
     );
     const fd = new FormData();
     fd.set("courseName", courseName);
-    fd.set("hole", String(target.hole));
-    fd.set("kind", target.kind);
+    fd.set("hole", String(targetSnapshot.hole));
+    fd.set("kind", targetSnapshot.kind);
     fd.set("lat", String(lat));
     fd.set("lng", String(lng));
     startTransition(async () => {
       try {
         await adminSaveHoleGeoAction(fd);
         toast.success(
-          `Saved ${target.kind} for hole ${target.hole}`,
+          `Saved ${targetSnapshot.kind} for hole ${targetSnapshot.hole}`,
         );
         // Auto-advance: if we just set the tee, queue up the green
         // for the same hole; if we just set the green, queue up the
         // next hole's tee. Small but compounds.
-        if (target.kind === "tee") {
-          setTarget({ hole: target.hole, kind: "green" });
-        } else if (target.hole < holes.length) {
-          setTarget({ hole: target.hole + 1, kind: "tee" });
+        if (targetSnapshot.kind === "tee") {
+          setTarget({ hole: targetSnapshot.hole, kind: "green" });
+        } else if (targetSnapshot.hole < holes.length) {
+          setTarget({ hole: targetSnapshot.hole + 1, kind: "tee" });
         } else {
           setTarget(null);
         }
+        router.refresh();
+      } catch (err) {
+        toast.error((err as Error).message);
+      }
+    });
+  };
+
+  // Hazard click handler: confirm + delete. Reachable only when no
+  // target is set (placement mode trumps deletion).
+  const onHazardClick = (hz: Hazard) => {
+    if (target) return;
+    if (!window.confirm(`Delete this ${hz.kind.toLowerCase()} hazard?`)) return;
+    setHazards((cur) => cur.filter((h) => h.id !== hz.id));
+    const fd = new FormData();
+    fd.set("hazardId", hz.id);
+    startTransition(async () => {
+      try {
+        await deleteHazardAction(fd);
+        toast.success("Hazard removed");
         router.refresh();
       } catch (err) {
         toast.error((err as Error).message);
@@ -388,6 +466,38 @@ export default function CourseEditor({
                 height={size.h}
                 preserveAspectRatio="none"
               />
+              {/* Hazards: small colored dots, click to delete (only
+                  when no target is active so we don't intercept
+                  placement clicks). */}
+              {hazards.map((hz) => {
+                const { cx, cy } = project(hz.lat, hz.lng);
+                const fill =
+                  hz.kind === "WATER"
+                    ? "#3b82f6"
+                    : hz.kind === "SAND"
+                      ? "#d4a85c"
+                      : "#94a3b8";
+                return (
+                  <g
+                    key={hz.id}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onHazardClick(hz);
+                    }}
+                    style={{ cursor: target ? "crosshair" : "pointer" }}
+                  >
+                    <circle
+                      cx={cx}
+                      cy={cy}
+                      r="5"
+                      fill={fill}
+                      fillOpacity="0.85"
+                      stroke="#0b0f0c"
+                      strokeWidth="1"
+                    />
+                  </g>
+                );
+              })}
               {/* All saved pins. Tee = small dark square, green = circle. */}
               {holes.flatMap((h) => {
                 const out = [] as React.ReactElement[];
@@ -509,13 +619,15 @@ export default function CourseEditor({
 
           {target && (
             <div className="absolute top-2 right-2 rounded-md bg-accent/90 text-bg px-3 py-1.5 text-xs font-medium shadow-lg pointer-events-none">
-              Tap map to set {target.kind} for hole {target.hole}
+              {target.kind === "water" || target.kind === "sand"
+                ? `Tap map to add ${target.kind} on hole ${target.hole} (chain multiple)`
+                : `Tap map to set ${target.kind} for hole ${target.hole}`}
             </div>
           )}
           {!target && (
             <div className="absolute bottom-2 left-2 rounded-md bg-bg/70 backdrop-blur-md border border-border px-2 py-1 text-[10px] text-mute pointer-events-none">
-              Pick a pin from the sidebar, then click the map. Shift+drag
-              to pan.
+              Pick a pin from the sidebar, then click the map. Tap an
+              existing hazard to delete. Shift+drag to pan.
             </div>
           )}
         </div>
@@ -529,15 +641,19 @@ export default function CourseEditor({
             {holes.map((h) => {
               const teeSet = h.teeLat != null && h.teeLng != null;
               const greenSet = h.greenLat != null && h.greenLng != null;
-              const isTarget = (k: "tee" | "green") =>
+              const isTarget = (k: "tee" | "green" | "water" | "sand") =>
                 target?.hole === h.hole && target.kind === k;
+              const holeHazardCount = hazards.filter(
+                (hz) => hz.hole === h.hole,
+              ).length;
               return (
                 <li key={h.hole} className="px-3 py-2 space-y-1.5">
                   <div className="flex items-center justify-between">
                     <div className="text-sm font-medium">Hole {h.hole}</div>
                     <div className="text-[10px] text-mute font-mono">
                       {teeSet ? "T ✓" : "T –"}{" "}
-                      {greenSet ? "G ✓" : "G –"}
+                      {greenSet ? "G ✓" : "G –"}{" "}
+                      {holeHazardCount > 0 ? `H ${holeHazardCount}` : ""}
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
@@ -599,6 +715,46 @@ export default function CourseEditor({
                         ×
                       </button>
                     )}
+                  </div>
+                  {/* Hazard buttons. Placement stays in "add" mode after
+                      each click so you can chain several bunkers / water
+                      carries on the same hole without bouncing back to
+                      the sidebar. */}
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setTarget(
+                          isTarget("water")
+                            ? null
+                            : { hole: h.hole, kind: "water" },
+                        )
+                      }
+                      disabled={pending}
+                      className={
+                        "btn h-7 text-[11px] flex-1 " +
+                        (isTarget("water") ? "btn-primary" : "btn-ghost")
+                      }
+                    >
+                      {isTarget("water") ? "Stop water" : "+ Water"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setTarget(
+                          isTarget("sand")
+                            ? null
+                            : { hole: h.hole, kind: "sand" },
+                        )
+                      }
+                      disabled={pending}
+                      className={
+                        "btn h-7 text-[11px] flex-1 " +
+                        (isTarget("sand") ? "btn-primary" : "btn-ghost")
+                      }
+                    >
+                      {isTarget("sand") ? "Stop sand" : "+ Sand"}
+                    </button>
                   </div>
                 </li>
               );
