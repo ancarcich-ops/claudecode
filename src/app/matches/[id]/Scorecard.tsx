@@ -40,6 +40,11 @@ export default function Scorecard({
   // so the user has context for the running score.
   const scrollRef = useRef<HTMLDivElement>(null);
   const nextHoleCellRef = useRef<HTMLTableCellElement>(null);
+  // Captures the FIRST hole cell so we can measure where the sticky
+  // team/player column ends -- its offsetLeft is the sticky column's
+  // rendered width, which varies between INDIVIDUAL (player names,
+  // ~128px) and SCRAMBLE (team labels, ~160-200px).
+  const firstHoleCellRef = useRef<HTMLTableCellElement>(null);
   const maxScored = players.reduce(
     (m, p) =>
       Math.max(m, p.scores.reduce((mm, s) => Math.max(mm, s.hole), 0)),
@@ -55,10 +60,17 @@ export default function Scorecard({
     const cell = nextHoleCellRef.current;
     const container = scrollRef.current;
     if (!cell || !container) return;
-    // Show one hole of "what just happened" before the next hole. The
-    // sticky-left player-name column is ~128px and each hole cell is
-    // ~40px wide, so we land the next column ~168px from the left edge.
-    const target = cell.offsetLeft - 168;
+    // Position the next-to-play hole one full hole-width AFTER the
+    // sticky column so the just-played hole is also fully visible.
+    // firstHoleCellRef.offsetLeft = where the first hole cell starts =
+    // sticky column's rendered width. Falling back to 168 if the ref
+    // hasn't attached yet (rare; only during hot-reload jitter).
+    const stickyEnd = firstHoleCellRef.current?.offsetLeft ?? 128;
+    const holeCellWidth = cell.offsetWidth || 40;
+    // Subtract stickyEnd + holeCellWidth so the prev hole lands just
+    // after the sticky column; subtract an extra ~8px gutter so the
+    // prev-hole cell isn't kissing the sticky-column border.
+    const target = cell.offsetLeft - stickyEnd - holeCellWidth - 8;
     container.scrollLeft = Math.max(0, target);
   }, [maxScored]);
 
@@ -81,10 +93,16 @@ export default function Scorecard({
             <th className="text-left font-normal text-xs uppercase tracking-wider px-2 py-2 sticky left-0 bg-panel z-10 min-w-[8rem]">
               Hole
             </th>
-            {holeNumbers.map((h) => (
+            {holeNumbers.map((h, idx) => (
               <th
                 key={h}
-                ref={h === nextHoleNum ? nextHoleCellRef : undefined}
+                ref={
+                  h === nextHoleNum
+                    ? nextHoleCellRef
+                    : idx === 0
+                      ? firstHoleCellRef
+                      : undefined
+                }
                 className={
                   "font-mono text-xs px-1 py-2 text-center min-w-[2.5rem] " +
                   (h === nextHoleNum && maxScored > 0 ? "text-accent" : "")
