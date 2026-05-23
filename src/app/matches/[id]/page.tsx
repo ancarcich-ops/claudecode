@@ -133,9 +133,24 @@ export default async function MatchPage({
       series.push(row);
     }
   }
+  // Append a trailing "now" point if current odds differ from the
+  // last persisted snapshot. SCRAMBLE matches need a special lookup:
+  // odds.probabilities is keyed by team-0 / team-1, not player IDs,
+  // so a naive odds.probabilities[p.id] returns undefined for every
+  // teammate and the chart's last data point would crash to 0% on
+  // both lines.
+  const isScrambleForOddsLookup = match.format === "SCRAMBLE";
+  const probabilityFor = (p: (typeof match.players)[number]): number => {
+    if (isScrambleForOddsLookup) {
+      const team = p.team;
+      if (team !== 0 && team !== 1) return 0;
+      return odds.probabilities[`team-${team}`] ?? 0;
+    }
+    return odds.probabilities[p.id] ?? 0;
+  };
   if (series.length > 0) {
     const current: Row = { t: Date.now() } as Row;
-    for (const p of match.players) current[p.id] = odds.probabilities[p.id] ?? 0;
+    for (const p of match.players) current[p.id] = probabilityFor(p);
     if (!probsEqual(series[series.length - 1], current)) {
       series.push(current);
     }
