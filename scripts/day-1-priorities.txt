@@ -18,23 +18,29 @@ lakewood-cc               # 13.8mi Lakewood CC
 brentwood-cc              # 13.8mi Brentwood CC
 rio-hondo                 # 14.1mi Rio Hondo GC
 riviera-cc                # 14.3mi Riviera CC
+los-amigos-gc             # 15.4mi Los Amigos GC (Downey)
 wilshire-cc               # 14.5mi Wilshire CC
 recreation-park-18        # 15.5mi Recreation Park 18 (Long Beach)
 skylinks-long-beach       # 15.9mi Skylinks at Long Beach
 bel-air-cc                # 16.0mi Bel-Air CC
 el-dorado-park            # 17.1mi El Dorado Park GC (Long Beach)
 mountaingate-cc           # 17.4mi Mountaingate CC
+old-ranch-cc              # 18.3mi Old Ranch CC (Seal Beach)
 navy-seal-beach-destroyer # 18.5mi Navy GC Seal Beach - Destroyer (Cypress)
 griffith-wilson           # 19.0mi Griffith Park - Wilson
 griffith-harding          # 19.0mi Griffith Park - Harding
 lakeside-gc               # 19.7mi Lakeside GC
+montebello-gc             # 20.0mi Montebello GC
 braemar-cc                # 21.1mi Braemar CC (Tarzana)
 whittier-narrows-gc       # 21.2mi Whittier Narrows GC
 annandale-gc              # 22.4mi Annandale GC (Pasadena)
+california-cc             # 22.4mi California CC (Whittier)
+los-coyotes-cc            # 22.4mi Los Coyotes CC (Buena Park)
 meadowlark-gc             # 22.5mi Meadowlark GC (Huntington Beach)
 woodley-lakes             # 22.5mi Woodley Lakes GC
 friendly-hills-cc         # 22.6mi Friendly Hills CC (Whittier)
 el-caballero-cc           # 22.7mi El Caballero CC (Tarzana)
+debell-gc                 # 22.7mi DeBell GC (Burbank)
 brookside-1               # 23.5mi Brookside #1
 brookside-2               # 23.5mi Brookside #2
 westridge-gc              # 24.6mi Westridge GC (La Habra)
@@ -42,6 +48,7 @@ dad-miller-gc             # 24.7mi Dad Miller GC (Anaheim)
 hacienda-gc               # 25.3mi Hacienda GC (La Habra Heights)
 calabasas-cc              # 25.3mi Calabasas CC
 coyote-hills              # 25.9mi Coyote Hills GC (Fullerton)
+santa-anita-gc            # 26.7mi Santa Anita GC (Arcadia)
 hansen-dam                # 27.2mi Hansen Dam GC
 industry-hills-eisenhower # 27.3mi Industry Hills - Eisenhower
 industry-hills-zaharias   # 27.3mi Industry Hills - Babe Zaharias
@@ -49,6 +56,7 @@ mile-square-classic       # 27.4mi Mile Square - Classic
 mile-square-players       # 27.4mi Mile Square - Player's
 angeles-national          # 27.7mi Angeles National GC
 costa-mesa-mesa-linda     # 28.6mi Costa Mesa CC - Mesa Linda
+mesa-verde-cc             # 29.0mi Mesa Verde CC (Costa Mesa)
 
 # Explicit user request:
 oregon-golf-club          # PNW, West Linn OR -- requested in day 1

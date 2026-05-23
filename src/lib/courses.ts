@@ -718,6 +718,31 @@ export const COURSE_PRESETS: CoursePreset[] = [
   // (Destroyer) is open to civilians at daily-fee rates.
   { id: "navy-seal-beach-destroyer", name: "Navy Golf Course Seal Beach - Destroyer Course", city: "Cypress, CA", region: "OC", access: "public", holes: 18, pars: p(18, 72) },
 
+  // LA + OC deep-infill batch -- public/muni gaps + private clubs
+  // the catalog was missing. Skipped from research: Vista Valencia
+  // (par-61 exec), Cypress GC Los Alamitos (closed 2004), Whittier
+  // Hills (doesn't exist), Coto Valley Club (no golf), Santiago GC
+  // Orange (couldn't verify as regulation).
+  { id: "debell-gc", name: "DeBell Golf Club", city: "Burbank, CA", region: "LA", access: "municipal", holes: 18, pars: p(18, 71) },
+  { id: "montebello-gc", name: "Montebello Golf Course", city: "Montebello, CA", region: "LA", access: "municipal", holes: 18, pars: p(18, 71) },
+  { id: "los-amigos-gc", name: "Los Amigos Golf Course", city: "Downey, CA", region: "LA", access: "municipal", holes: 18, pars: p(18, 71) },
+  { id: "santa-anita-gc", name: "Santa Anita Golf Course", city: "Arcadia, CA", region: "LA", access: "municipal", holes: 18, pars: p(18, 71) },
+  // Royal Vista is 27 holes; seeded as a single par-72 18 combo.
+  { id: "royal-vista-gc", name: "Royal Vista Golf Club", city: "Walnut, CA", region: "LA", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "crystalaire-cc", name: "Crystalaire Country Club", city: "Llano, CA", region: "LA", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "antelope-valley-cc", name: "Antelope Valley Country Club", city: "Palmdale, CA", region: "LA", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "glendora-cc", name: "Glendora Country Club", city: "Glendora, CA", region: "LA", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "california-cc", name: "California Country Club", city: "Whittier, CA", region: "LA", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "valencia-cc", name: "Valencia Country Club", city: "Valencia, CA", region: "LA", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "south-hills-cc", name: "South Hills Country Club", city: "West Covina, CA", region: "LA", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "rancho-vista-gc", name: "Rancho Vista Golf Club", city: "Palmdale, CA", region: "LA", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "old-ranch-cc", name: "Old Ranch Country Club", city: "Seal Beach, CA", region: "OC", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "mesa-verde-cc", name: "Mesa Verde Country Club", city: "Costa Mesa, CA", region: "OC", access: "private", holes: 18, pars: p(18, 71) },
+  // Los Coyotes is 27 holes; seeded as a single par-72 18 combo.
+  { id: "los-coyotes-cc", name: "Los Coyotes Country Club", city: "Buena Park, CA", region: "OC", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "marbella-cc", name: "Marbella Country Club", city: "San Juan Capistrano, CA", region: "OC", access: "private", holes: 18, pars: p(18, 70) },
+  { id: "mission-viejo-cc", name: "Mission Viejo Country Club", city: "Mission Viejo, CA", region: "OC", access: "private", holes: 18, pars: p(18, 72) },
+
   { id: "western-hills-cc", name: "Western Hills Country Club", city: "Chino Hills, CA", region: "IE", access: "private", holes: 18, pars: p(18, 72) },
   { id: "sierra-lakes-gc", name: "Sierra Lakes Golf Club", city: "Fontana, CA", region: "IE", access: "public", holes: 18, pars: p(18, 72) },
   { id: "eagle-glen-gc", name: "Eagle Glen Golf Club", city: "Corona, CA", region: "IE", access: "public", holes: 18, pars: p(18, 72) },
@@ -1346,6 +1371,25 @@ export const COURSE_PRESET_COORDS: Record<string, { lat: number; lng: number }> 
   "lakewood-cc": { lat: 33.8333, lng: -118.1419 },
   "westridge-gc": { lat: 33.9404, lng: -117.9568 },
   "navy-seal-beach-destroyer": { lat: 33.8350, lng: -118.0581 },
+
+  // LA + OC deep-infill coords.
+  "debell-gc": { lat: 34.1900, lng: -118.2864 },
+  "montebello-gc": { lat: 34.0292, lng: -118.0857 },
+  "los-amigos-gc": { lat: 33.9354, lng: -118.1216 },
+  "santa-anita-gc": { lat: 34.1314, lng: -118.0349 },
+  "royal-vista-gc": { lat: 33.9982, lng: -117.8480 },
+  "crystalaire-cc": { lat: 34.4836, lng: -117.7458 },
+  "antelope-valley-cc": { lat: 34.5973, lng: -118.1601 },
+  "glendora-cc": { lat: 34.1611, lng: -117.8403 },
+  "california-cc": { lat: 34.0258, lng: -118.0356 },
+  "valencia-cc": { lat: 34.4239, lng: -118.5664 },
+  "south-hills-cc": { lat: 34.0466, lng: -117.8929 },
+  "rancho-vista-gc": { lat: 34.5953, lng: -118.1827 },
+  "old-ranch-cc": { lat: 33.7793, lng: -118.0784 },
+  "mesa-verde-cc": { lat: 33.6739, lng: -117.9322 },
+  "los-coyotes-cc": { lat: 33.8740, lng: -117.9870 },
+  "marbella-cc": { lat: 33.5108, lng: -117.6499 },
+  "mission-viejo-cc": { lat: 33.6056, lng: -117.6709 },
 
   "western-hills-cc": { lat: 33.9425, lng: -117.7384 },
   "sierra-lakes-gc": { lat: 34.1583, lng: -117.4500 },
