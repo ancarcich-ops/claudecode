@@ -93,6 +93,14 @@ model Match {
   // Stored on the player's `handicap` field regardless of mode; this flag decides whether the
   // scoring math subtracts it and whether the UI labels it Handicap or Strokes.
   scoringMode  String      @default("NET")
+  // "INDIVIDUAL" (every player against every player) or "SCRAMBLE" (2
+  // teams; one score per team per hole). Default INDIVIDUAL to keep
+  // existing matches unchanged.
+  format       String      @default("INDIVIDUAL")
+  // Scramble-only settings JSON: {"handicapMode":"GROSS"|"AVG"|"USGA_4P","teamNames":{"0":"Team A","1":"Team B"}}.
+  // Null for INDIVIDUAL matches. Read by the odds engine + scorecard
+  // render to apply the right team-handicap formula and labelling.
+  scrambleConfig String?
   // JSON-encoded array of pars (length == holes). Null means "treat every hole as par 4".
   parData      String?
   createdById  String
@@ -160,6 +168,12 @@ model MatchPlayer {
   displayName String
   handicap    Float
   seat        Int
+  // Team assignment for scramble matches: 0 = Team A, 1 = Team B.
+  // Null for INDIVIDUAL matches. Score entries in scramble are written
+  // against the "captain" (lowest-seat member of each team); the other
+  // teammates have no ScoreEntry rows but render alongside the captain
+  // in the team-row scorecard.
+  team        Int?
 
   scores      ScoreEntry[]
   wagers      Wager[]
