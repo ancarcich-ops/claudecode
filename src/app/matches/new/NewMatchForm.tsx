@@ -621,18 +621,15 @@ export default function NewMatchForm({
                   type="button"
                   onClick={() => setFormat(f)}
                   className={
-                    "flex flex-col items-center justify-center gap-0.5 rounded-md border px-2 py-2 transition min-h-[3.25rem] " +
+                    "flex items-center justify-center rounded-md border px-2 py-2 transition min-h-[3.25rem] " +
                     (active
                       ? "border-accent bg-accent/10 text-ink"
                       : "border-border text-mute hover:text-ink")
                   }
                   aria-pressed={active}
                 >
-                  <span className="text-sm font-medium leading-none">
+                  <span className="text-sm font-medium">
                     {f === "INDIVIDUAL" ? "Individual" : "Teams"}
-                  </span>
-                  <span className="text-[10px] uppercase tracking-wider text-mute font-mono">
-                    {f === "INDIVIDUAL" ? "stroke play" : "team vs team"}
                   </span>
                 </button>
               );
