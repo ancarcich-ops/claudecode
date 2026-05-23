@@ -361,6 +361,20 @@ export default async function MatchPage({
       p.scores.map((s) => [s.hole, s.strokes]),
     ),
   }));
+  // Team-vs-team config: persisted on the SideGame row in JSON, lazy-
+  // parsed here so the compute engine gets a typed object. Null when
+  // the side game is enabled but never configured (e.g. INDIVIDUAL
+  // match where no team chips were touched) -- engine omits the
+  // leaderboard and the UI can surface a "configure now" CTA.
+  const tvtSideGame = (match.sideGames ?? []).find(
+    (sg) => sg.kind === "TEAM_VS_TEAM",
+  );
+  const teamVsTeamConfig = tvtSideGame
+    ? (await import("@/lib/sideGames")).parseTeamVsTeamConfig(
+        tvtSideGame.config,
+      )
+    : null;
+
   const sideGameSections = computeAllSideGames({
     enabled: enabledKinds,
     players: match.players.map((p) => ({
@@ -380,6 +394,7 @@ export default async function MatchPage({
     snakeEvents,
     wolfEvents,
     wolfConfig,
+    teamVsTeamConfig,
   });
   const sideGameLabel: Record<SideGameKind, string> = Object.fromEntries(
     ALL_SIDE_GAMES.map((g) => [g.kind, g.label]),
