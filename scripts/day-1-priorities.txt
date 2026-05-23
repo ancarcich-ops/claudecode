@@ -36,6 +36,7 @@ friendly-hills-cc         # 22.6mi Friendly Hills CC (Whittier)
 el-caballero-cc           # 22.7mi El Caballero CC (Tarzana)
 brookside-1               # 23.5mi Brookside #1
 brookside-2               # 23.5mi Brookside #2
+westridge-gc              # 24.6mi Westridge GC (La Habra)
 dad-miller-gc             # 24.7mi Dad Miller GC (Anaheim)
 hacienda-gc               # 25.3mi Hacienda GC (La Habra Heights)
 calabasas-cc              # 25.3mi Calabasas CC
