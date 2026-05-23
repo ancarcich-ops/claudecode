@@ -84,7 +84,7 @@ export default function PlayerRowLive({
         <div className="mt-2 flex items-center gap-2 flex-wrap">
           <span className="inline-flex items-center gap-1 rounded-full bg-panel2 border border-border px-2 py-0.5">
             <span className="font-mono text-[10px] uppercase tracking-wider text-mute">
-              thru {player.holesPlayed}/{totalHoles}
+              thru {player.holesPlayed} of {totalHoles}
             </span>
             <span
               className={"font-mono text-[10px] tabular-nums " + netColor}
@@ -93,7 +93,10 @@ export default function PlayerRowLive({
             </span>
           </span>
           {player.momentum && <MomentumChip m={player.momentum} />}
-          <span className="ml-auto -mr-1">
+          <span className="ml-auto flex flex-col items-end -mr-1 gap-0.5">
+            <span className="font-mono text-[8px] uppercase tracking-wider text-mute leading-none">
+              Net trend
+            </span>
             <Sparkline values={player.cumulativeNet} />
           </span>
         </div>
