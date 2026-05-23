@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import type { CoursePreset } from "@/lib/courses";
 import { findClosestCoursesAction } from "@/lib/actions";
@@ -214,6 +214,47 @@ export default function NewMatchForm({
       { enableHighAccuracy: false, maximumAge: 60_000, timeout: 10_000 },
     );
   };
+
+  // Auto-prefill the nearest course on mount if the input is empty.
+  // Runs once -- if location is denied or unavailable, fail silently
+  // (the manual "Find course near me" button stays available with its
+  // usual loud-failure messaging). Skips entirely when the input has
+  // already been filled (template clone, browser back nav, etc.).
+  const autoLocatedRef = useRef(false);
+  useEffect(() => {
+    if (autoLocatedRef.current) return;
+    if (courseName.trim().length > 0) return;
+    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    autoLocatedRef.current = true;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        startLocating(async () => {
+          try {
+            const r = await findClosestCoursesAction({
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+            });
+            // Only fill when nothing's been typed in the meantime --
+            // the geo callback can fire after the user started typing.
+            if (r.length > 0 && !courseName.trim()) {
+              onCourseChange(r[0].name);
+              setNearby(r);
+            }
+          } catch {
+            // silent on auto-attempt
+          }
+        });
+      },
+      () => {
+        // silent on auto-attempt -- user denied, timeout, etc.
+      },
+      { enableHighAccuracy: false, maximumAge: 60_000, timeout: 10_000 },
+    );
+    // Intentionally an empty dep array: we only want to fire once per
+    // mount. courseName is read off the closure but the ref guard +
+    // the inner courseName check prevent re-runs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onHolesChange = (value: 9 | 18) => {
     setHoles(value);
