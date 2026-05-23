@@ -543,6 +543,8 @@ export default async function MatchPage({
           modeLabel: strokeFieldLabel,
           projLabel,
           series,
+          oddsHoleSeries,
+          oddsXMode,
           sgSeries,
           sideGameSections,
           sideGameLabel,
@@ -660,6 +662,8 @@ type BuildMatchTabsArgs = {
   modeLabel: string;
   projLabel: string;
   series: ({ t: number } & Record<string, number>)[];
+  oddsHoleSeries: ({ hole: number } & Record<string, number>)[] | null;
+  oddsXMode: "time" | "hole";
   sgSeries: SideGameSeries;
   sideGameSections: Array<{
     kind: SideGameKind;
@@ -712,6 +716,8 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
     modeLabel,
     projLabel,
     series,
+    oddsHoleSeries,
+    oddsXMode,
     sgSeries,
     sideGameSections,
     sideGameLabel,
