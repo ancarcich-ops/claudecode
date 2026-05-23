@@ -26,6 +26,18 @@ function creds() {
   return { apiKey, accessKeyId, secretAccessKey };
 }
 
+// Lightweight call counter so bulk importers can pace themselves
+// against Golfbert's daily quota (3,572/day on the All-Courses plan).
+// The counter is process-local -- fine for the one-off scripts; the
+// live Next.js app doesn't need to read it.
+let gbCallCount = 0;
+export function getGolfbertCallCount(): number {
+  return gbCallCount;
+}
+export function resetGolfbertCallCount(): void {
+  gbCallCount = 0;
+}
+
 async function gbFetch<T>(path: string): Promise<T> {
   const { apiKey, accessKeyId, secretAccessKey } = creds();
   const opts = {
@@ -40,6 +52,7 @@ async function gbFetch<T>(path: string): Promise<T> {
   // X-Amz-Date based on the credentials.
   aws4.sign(opts as aws4.Request, { accessKeyId, secretAccessKey });
   const url = `https://${HOST}${path}`;
+  gbCallCount++;
   const res = await fetch(url, {
     method: opts.method,
     headers: opts.headers as Record<string, string>,
