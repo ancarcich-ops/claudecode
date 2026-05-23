@@ -154,10 +154,27 @@ export async function createMatchAction(formData: FormData) {
   const notes = String(formData.get("notes") ?? "").trim() || null;
   const parDataRaw = String(formData.get("parData") ?? "").trim();
   const scoringModeRaw = String(formData.get("scoringMode") ?? "NET");
-  const scoringMode =
+  let scoringMode: "NET" | "GROSS" | "CUSTOM" =
     scoringModeRaw === "GROSS" || scoringModeRaw === "CUSTOM"
       ? scoringModeRaw
       : "NET";
+
+  // Format + scramble config. The new-match form posts format
+  // ("INDIVIDUAL" | "SCRAMBLE") and a JSON scrambleConfig blob; we
+  // re-parse via the canonical helper to apply defaults + strip any
+  // junk the client tried to slip in. scoringMode is forced to GROSS
+  // for scrambles -- team-handicap mode (held in scrambleConfig)
+  // does the actual allowance math.
+  const formatRaw = String(formData.get("format") ?? "INDIVIDUAL");
+  const format: "INDIVIDUAL" | "SCRAMBLE" =
+    formatRaw === "SCRAMBLE" ? "SCRAMBLE" : "INDIVIDUAL";
+  let scrambleConfigJson: string | null = null;
+  if (format === "SCRAMBLE") {
+    const scrambleRaw = String(formData.get("scrambleConfig") ?? "");
+    const { parseScrambleConfig } = await import("./scramble");
+    scrambleConfigJson = JSON.stringify(parseScrambleConfig(scrambleRaw));
+    scoringMode = "GROSS";
+  }
 
   if (!courseName) throw new Error("Course name required");
   if (!scheduledAtRaw) throw new Error("Tee time required");
@@ -169,12 +186,17 @@ export async function createMatchAction(formData: FormData) {
   const explicitUserIds = formData
     .getAll("playerUserId")
     .map((v) => String(v).trim());
+  // Team assignments. Always submitted (even on individual matches);
+  // only honoured server-side when format === SCRAMBLE. Anything not
+  // 0 or 1 silently coerces to 0.
+  const teamsRaw = formData.getAll("playerTeam").map((v) => Number(v));
 
-  const drafts: PlayerDraft[] = names
+  const drafts: (PlayerDraft & { team: 0 | 1 })[] = names
     .map((name, i) => ({
       displayName: name,
       handicap: hcps[i],
       explicitUserId: explicitUserIds[i] || null,
+      team: (teamsRaw[i] === 1 ? 1 : 0) as 0 | 1,
     }))
     .filter((p) => p.displayName.length > 0);
 
@@ -184,6 +206,19 @@ export async function createMatchAction(formData: FormData) {
   if (drafts.length < 1) throw new Error("Need at least one player");
   if (drafts.some((p) => Number.isNaN(p.handicap)))
     throw new Error("Handicaps must be numbers");
+
+  // Scramble requires at least one player on each team. A 4-person
+  // round that left everyone on Team A would otherwise create a
+  // valid-but-broken match (one team with 0 captain, odds engine
+  // synthesises a single player only).
+  if (format === "SCRAMBLE") {
+    if (drafts.length < 2) throw new Error("Scramble needs at least 2 players");
+    const aCount = drafts.filter((d) => d.team === 0).length;
+    const bCount = drafts.filter((d) => d.team === 1).length;
+    if (aCount === 0 || bCount === 0) {
+      throw new Error("Scramble needs at least one player on each team");
+    }
+  }
 
   // parData arrives as a JSON-encoded number array from the autocomplete-
   // matched course preset. Validate it - bad/missing values fall back to
@@ -281,6 +316,8 @@ export async function createMatchAction(formData: FormData) {
       notes,
       parData,
       scoringMode,
+      format,
+      scrambleConfig: scrambleConfigJson,
       createdById: user.id,
       groupId,
       players: {
@@ -295,6 +332,10 @@ export async function createMatchAction(formData: FormData) {
             handicap: p.handicap,
             seat: i,
             userId: linked?.id,
+            // Team only meaningful for SCRAMBLE; null for individual
+            // keeps the DB clean + queries on individual matches don't
+            // need to filter by team.
+            team: format === "SCRAMBLE" ? p.team : null,
           };
         }),
       },
