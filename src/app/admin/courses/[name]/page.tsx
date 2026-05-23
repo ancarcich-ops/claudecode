@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { findPresetByName } from "@/lib/courses";
+import { COURSE_PRESET_COORDS, findPresetByName } from "@/lib/courses";
 import CourseEditor from "./CourseEditor";
 
 export default async function AdminCoursePage({
@@ -20,6 +20,7 @@ export default async function AdminCoursePage({
       })
     : [];
   const preset = findPresetByName(name);
+  const presetCoord = preset ? COURSE_PRESET_COORDS[preset.id] : null;
   const holes = preset?.holes ?? 18;
 
   // Compose a uniform per-hole geometry array for the editor.
@@ -48,8 +49,13 @@ export default async function AdminCoursePage({
     <CourseEditor
       courseName={name}
       city={preset?.city ?? null}
-      centerLat={course?.centerLat ?? null}
-      centerLng={course?.centerLng ?? null}
+      // Fall back to the catalog's clubhouse coord when the Course DB
+      // row doesn't have a center yet -- saves the user from pasting
+      // lat/lng manually for any preset we already have coords for.
+      // The first save (any tee/green/hazard placement) will create
+      // the Course row and write the saved center back.
+      centerLat={course?.centerLat ?? (preset ? presetCoord?.lat ?? null : null)}
+      centerLng={course?.centerLng ?? (preset ? presetCoord?.lng ?? null : null)}
       holes={holeRows}
       hazards={hazards}
     />
