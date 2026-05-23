@@ -16,7 +16,8 @@ export type SideGameKind =
   | "NASSAU"
   | "BBB"
   | "SNAKE"
-  | "WOLF";
+  | "WOLF"
+  | "TEAM_VS_TEAM";
 
 // Per-hole event kinds. Stored in SideGameEvent.kind for BBB rows.
 export const BBB_EVENT_KINDS = ["BINGO", "BANGO", "BONGO"] as const;
@@ -83,6 +84,123 @@ export function stringifyWolfConfig(c: WolfConfig): string {
   return JSON.stringify(c);
 }
 
+// ---- Team-vs-Team side game --------------------------------------------
+// Runs on top of any match (INDIVIDUAL or SCRAMBLE). Splits players into
+// 2 teams (assignment stored in TeamVsTeamConfig.teams as arrays of
+// matchPlayerIds) and computes a per-hole team score using one of five
+// configurable rules.
+
+export type TeamVsTeamRule =
+  // Lowest single player score on each team -- match-play "best ball".
+  | "BEST_BALL"
+  // Highest single player score on each team -- "worst ball" / nasty.
+  | "WORST_BALL"
+  // Sum of (lowest + highest) on each team -- "Daytona" / Vegas style.
+  | "HIGH_LOW"
+  // Sum of all team players' gross strokes.
+  | "SUM"
+  // Sum of all team players' net (handicap-adjusted) strokes.
+  | "AGGREGATE_NET";
+
+export const TEAM_VS_TEAM_RULES: TeamVsTeamRule[] = [
+  "BEST_BALL",
+  "WORST_BALL",
+  "HIGH_LOW",
+  "SUM",
+  "AGGREGATE_NET",
+];
+
+export type TeamVsTeamConfig = {
+  // matchPlayerId arrays per team. Stored as { "0": [...], "1": [...] }
+  // in JSON; parsed back into a typed object here.
+  teams: { 0: string[]; 1: string[] };
+  rule: TeamVsTeamRule;
+  // Optional display names; falls back to "Team A" / "Team B".
+  teamNames?: { 0?: string; 1?: string };
+};
+
+function isTeamVsTeamRule(s: unknown): s is TeamVsTeamRule {
+  return (
+    typeof s === "string" &&
+    (TEAM_VS_TEAM_RULES as readonly string[]).includes(s)
+  );
+}
+
+export function parseTeamVsTeamConfig(
+  raw: string | null | undefined,
+): TeamVsTeamConfig | null {
+  if (!raw) return null;
+  try {
+    const obj = JSON.parse(raw);
+    if (!obj || typeof obj !== "object") return null;
+    const teams = obj.teams;
+    if (
+      !teams ||
+      !Array.isArray(teams[0]) ||
+      !Array.isArray(teams[1]) ||
+      teams[0].some((x: unknown) => typeof x !== "string") ||
+      teams[1].some((x: unknown) => typeof x !== "string")
+    ) {
+      return null;
+    }
+    const rule: TeamVsTeamRule = isTeamVsTeamRule(obj.rule)
+      ? obj.rule
+      : "BEST_BALL";
+    const teamNames =
+      obj.teamNames && typeof obj.teamNames === "object"
+        ? {
+            0:
+              typeof obj.teamNames[0] === "string" && obj.teamNames[0].length > 0
+                ? obj.teamNames[0]
+                : undefined,
+            1:
+              typeof obj.teamNames[1] === "string" && obj.teamNames[1].length > 0
+                ? obj.teamNames[1]
+                : undefined,
+          }
+        : undefined;
+    return { teams: { 0: teams[0], 1: teams[1] }, rule, teamNames };
+  } catch {
+    return null;
+  }
+}
+
+export function stringifyTeamVsTeamConfig(c: TeamVsTeamConfig): string {
+  return JSON.stringify(c);
+}
+
+// Compact rule descriptions used in the side-game picker + leaderboard
+// subtitle so the player understands what's being summed per hole.
+export function teamVsTeamRuleLabel(rule: TeamVsTeamRule): string {
+  switch (rule) {
+    case "BEST_BALL":
+      return "Best ball";
+    case "WORST_BALL":
+      return "Worst ball";
+    case "HIGH_LOW":
+      return "High + low";
+    case "SUM":
+      return "Sum of strokes";
+    case "AGGREGATE_NET":
+      return "Aggregate net";
+  }
+}
+
+export function teamVsTeamRuleBlurb(rule: TeamVsTeamRule): string {
+  switch (rule) {
+    case "BEST_BALL":
+      return "Each team's score on a hole = its lowest player's score";
+    case "WORST_BALL":
+      return "Each team's score on a hole = its highest player's score";
+    case "HIGH_LOW":
+      return "Each team's score = lowest + highest player on the hole";
+    case "SUM":
+      return "Each team's score = sum of all teammates' gross strokes";
+    case "AGGREGATE_NET":
+      return "Each team's score = sum of all teammates' net strokes";
+  }
+}
+
 export const ALL_SIDE_GAMES: {
   kind: SideGameKind;
   label: string;
@@ -123,6 +241,12 @@ export const ALL_SIDE_GAMES: {
     label: "Wolf",
     blurb:
       "Rotating wolf per hole picks a partner or goes solo. Win lone = +4.",
+  },
+  {
+    kind: "TEAM_VS_TEAM",
+    label: "Team vs team",
+    blurb:
+      "Split into 2 teams; per-hole team score from best ball, high-low, sum, or net.",
   },
 ];
 
@@ -387,6 +511,111 @@ export function computeNassau(
       "Total",
     ),
   ];
+}
+
+// ---- Team-vs-Team -------------------------------------------------------
+// Splits the player list into two teams (from config) and produces a
+// single Leaderboard with 2 rows -- one per team. Lower team total wins;
+// the per-hole team score is computed via the configured rule. Returns
+// null if the config is missing or refers to no playable team.
+export function computeTeamVsTeam(
+  players: LiveScorePlayer[],
+  pars: number[],
+  holes: number,
+  scoringMode: ScoringMode,
+  config: TeamVsTeamConfig,
+  startingHole: number = 1,
+): Leaderboard | null {
+  const byId = new Map(players.map((p) => [p.id, p]));
+  const teamA = config.teams[0]
+    .map((id) => byId.get(id))
+    .filter((p): p is LiveScorePlayer => p != null);
+  const teamB = config.teams[1]
+    .map((id) => byId.get(id))
+    .filter((p): p is LiveScorePlayer => p != null);
+  if (teamA.length === 0 || teamB.length === 0) return null;
+
+  // Per-hole score for one team under the active rule. Returns null
+  // when not every team member has logged a stroke yet (rules that
+  // need only one player -- BEST_BALL / WORST_BALL -- still wait
+  // until everyone has scored so the comparison is fair across teams).
+  const scoreHole = (
+    team: LiveScorePlayer[],
+    holeIndex0: number,
+  ): number | null => {
+    const hole = startingHole + holeIndex0;
+    const strokes: number[] = [];
+    for (const p of team) {
+      const gross = p.scoresByHole[hole];
+      if (typeof gross !== "number") return null;
+      const value =
+        config.rule === "AGGREGATE_NET"
+          ? netStrokesForHole(gross, p.handicap, holeIndex0, holes, scoringMode)
+          : gross;
+      strokes.push(value);
+    }
+    if (strokes.length === 0) return null;
+    switch (config.rule) {
+      case "BEST_BALL":
+        return Math.min(...strokes);
+      case "WORST_BALL":
+        return Math.max(...strokes);
+      case "HIGH_LOW":
+        return Math.min(...strokes) + Math.max(...strokes);
+      case "SUM":
+      case "AGGREGATE_NET":
+        return strokes.reduce((a, b) => a + b, 0);
+    }
+  };
+
+  const totalFor = (team: LiveScorePlayer[]) => {
+    let total = 0;
+    let counted = 0;
+    for (let i = 0; i < holes; i++) {
+      const s = scoreHole(team, i);
+      if (s == null) continue;
+      total += s;
+      counted++;
+    }
+    return { total, counted };
+  };
+
+  const a = totalFor(teamA);
+  const b = totalFor(teamB);
+
+  const teamNameA = config.teamNames?.[0] ?? "Team A";
+  const teamNameB = config.teamNames?.[1] ?? "Team B";
+  const fmt = (n: { total: number; counted: number }) =>
+    n.counted === 0
+      ? "—"
+      : `${n.total} (${n.counted}h)`;
+
+  // Use the captain's matchPlayerId as the row's playerId so the
+  // existing leaderboard renderer's keyed lookups don't blow up if
+  // they expect a real player id; captain = first member of the team.
+  return {
+    key: "TEAM_VS_TEAM",
+    kind: "TEAM_VS_TEAM",
+    title: "Team vs team",
+    subtitle: teamVsTeamRuleBlurb(config.rule),
+    rows: rankRows(
+      [
+        {
+          playerId: teamA[0].id,
+          player: `${teamNameA} — ${teamA.map((p) => p.displayName).join(" & ")}`,
+          numeric: a.counted === 0 ? Infinity : a.total,
+          value: fmt(a),
+        },
+        {
+          playerId: teamB[0].id,
+          player: `${teamNameB} — ${teamB.map((p) => p.displayName).join(" & ")}`,
+          numeric: b.counted === 0 ? Infinity : b.total,
+          value: fmt(b),
+        },
+      ],
+      false, // lower total wins
+    ),
+  };
 }
 
 // ---- Bingo Bango Bongo --------------------------------------------------
@@ -850,6 +1079,10 @@ export function computeAllSideGames(input: {
   snakeEvents?: SnakeEvent[];
   wolfEvents?: WolfEvent[];
   wolfConfig?: WolfConfig;
+  // Team-vs-team needs team assignments + a scoring rule. Null when
+  // the side game is enabled but not yet configured -- the leaderboard
+  // is omitted in that case so the UI can show a "configure now" CTA.
+  teamVsTeamConfig?: TeamVsTeamConfig | null;
 }): { kind: SideGameKind; leaderboards: Leaderboard[] }[] {
   const {
     enabled,
@@ -863,6 +1096,7 @@ export function computeAllSideGames(input: {
     snakeEvents = [],
     wolfEvents = [],
     wolfConfig = {},
+    teamVsTeamConfig = null,
   } = input;
   const out: { kind: SideGameKind; leaderboards: Leaderboard[] }[] = [];
   for (const kind of enabled) {
@@ -900,6 +1134,18 @@ export function computeAllSideGames(input: {
           ),
         ],
       });
+    } else if (kind === "TEAM_VS_TEAM") {
+      // Skip when not yet configured -- UI shows the configure CTA.
+      if (!teamVsTeamConfig) continue;
+      const lb = computeTeamVsTeam(
+        players,
+        pars,
+        holes,
+        scoringMode,
+        teamVsTeamConfig,
+        startingHole,
+      );
+      if (lb) out.push({ kind, leaderboards: [lb] });
     }
   }
   return out;
@@ -912,7 +1158,8 @@ export function isSideGameKind(s: string): s is SideGameKind {
     s === "NASSAU" ||
     s === "BBB" ||
     s === "SNAKE" ||
-    s === "WOLF"
+    s === "WOLF" ||
+    s === "TEAM_VS_TEAM"
   );
 }
 
