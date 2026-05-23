@@ -105,6 +105,12 @@ export default function NewMatchForm({
     });
   const [courseName, setCourseName] = useState("");
   const [nearby, setNearby] = useState<NearbyCourse[] | null>(null);
+  // Controls visibility of the custom course-search dropdown. iOS
+  // Safari's native <datalist> renders as 3 chips on the keyboard
+  // accessory bar, which is useless for browsing a 500-course
+  // catalog -- so the dropdown is a regular scrollable list below
+  // the input that opens on focus.
+  const [courseFocused, setCourseFocused] = useState(false);
   const [locating, startLocating] = useTransition();
   const [holes, setHoles] = useState<9 | 18>(18);
   // 1 = full or front 9, 10 = back 9. Only meaningful when holes === 9.
@@ -238,17 +244,32 @@ export default function NewMatchForm({
     )}:${pad(d.getMinutes())}`;
   });
 
-  const groupedPresets = useMemo(() => {
-    const byRegion = new Map<string, CoursePreset[]>();
-    for (const p of presets) {
-      const arr = byRegion.get(p.region) ?? [];
-      arr.push(p);
-      byRegion.set(p.region, arr);
+  // Filtered list shown in the focus-triggered dropdown. Empty query
+  // returns the full catalog A-Z (capped) so the dropdown also works
+  // as a browse view; a typed query narrows by substring match on
+  // name or city, with name-prefix matches floated to the top.
+  // Hidden entirely once the typed value exactly matches a preset --
+  // the green confirmation block below the input takes over.
+  const courseResults = useMemo(() => {
+    if (matchedPreset && courseName.trim() === matchedPreset.name) return [];
+    const q = courseName.trim().toLowerCase();
+    if (!q) {
+      return [...presets]
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .slice(0, 100);
     }
-    for (const arr of byRegion.values())
-      arr.sort((a, b) => a.name.localeCompare(b.name));
-    return byRegion;
-  }, [presets]);
+    const matches = presets.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) || p.city.toLowerCase().includes(q),
+    );
+    matches.sort((a, b) => {
+      const aPrefix = a.name.toLowerCase().startsWith(q) ? 0 : 1;
+      const bPrefix = b.name.toLowerCase().startsWith(q) ? 0 : 1;
+      if (aPrefix !== bPrefix) return aPrefix - bPrefix;
+      return a.name.localeCompare(b.name);
+    });
+    return matches.slice(0, 100);
+  }, [courseName, matchedPreset, presets]);
 
   // Per-step validation. The Next button is disabled when the current
   // step has unfilled / invalid data. The final step always validates
@@ -347,7 +368,8 @@ export default function NewMatchForm({
             placeholder="Start typing - Riviera, Pelican Hill, Rancho Park..."
             value={courseName}
             onChange={(e) => onCourseChange(e.target.value)}
-            list="course-presets"
+            onFocus={() => setCourseFocused(true)}
+            onBlur={() => setCourseFocused(false)}
             autoComplete="off"
           />
           {nearby && nearby.length > 0 && (
@@ -375,23 +397,64 @@ export default function NewMatchForm({
               })}
             </div>
           )}
-          <datalist id="course-presets">
-            {recentCourses.map((c) => (
-              <option key={`recent-${c}`} value={c} label="Recent" />
-            ))}
-            {Array.from(groupedPresets.entries()).flatMap(([region, list]) =>
-              list.map((p) => (
-                <option
-                  key={p.id}
-                  value={p.name}
-                  label={`${p.city} · ${region} · par ${p.pars.reduce(
-                    (a, b) => a + b,
-                    0,
-                  )} · ${p.holes}H · ${p.access}`}
-                />
-              )),
+          {/* Focus-triggered course search dropdown. Hidden when the
+              "Find course near me" list is active to avoid overlap.
+              Recent picks float above the catalog matches. onMouseDown
+              + preventDefault keeps the input from blurring before the
+              click registers, so taps select cleanly. */}
+          {courseFocused &&
+            !(nearby && nearby.length > 0) &&
+            courseResults.length > 0 && (
+              <div className="mt-1.5 border border-border rounded-md bg-panel/95 backdrop-blur overflow-hidden max-h-72 overflow-y-auto">
+                {recentCourses.length > 0 && !courseName.trim() && (
+                  <>
+                    <div className="px-2.5 py-1 text-[9.5px] uppercase tracking-wider text-mute bg-panel2/40">
+                      Recent
+                    </div>
+                    {recentCourses.map((c) => (
+                      <button
+                        key={`recent-${c}`}
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          onCourseChange(c);
+                          setCourseFocused(false);
+                        }}
+                        className="w-full text-left px-2.5 py-2 text-sm hover:bg-panel/70 border-b border-border last:border-b-0"
+                      >
+                        {c}
+                      </button>
+                    ))}
+                    <div className="px-2.5 py-1 text-[9.5px] uppercase tracking-wider text-mute bg-panel2/40 border-y border-border">
+                      All courses
+                    </div>
+                  </>
+                )}
+                <div className="divide-y divide-border">
+                  {courseResults.map((p) => {
+                    const totalPar = p.pars.reduce((a, b) => a + b, 0);
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          onCourseChange(p.name);
+                          setCourseFocused(false);
+                        }}
+                        className="w-full text-left px-2.5 py-2 hover:bg-panel/70 block"
+                      >
+                        <div className="text-sm leading-tight">{p.name}</div>
+                        <div className="text-[10.5px] text-mute font-mono mt-0.5">
+                          {p.city} · {p.region} · par {totalPar} · {p.holes}H ·{" "}
+                          {p.access}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             )}
-          </datalist>
 
           {matchedPreset ? (
             <div className="mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs rounded-md border border-accent/30 bg-accent/5 px-3 py-2">
