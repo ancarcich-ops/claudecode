@@ -102,7 +102,10 @@ export default function PlayerRowSettled({
           </span>
         )}
         {player.cumulativeNet.length > 0 && (
-          <span className="ml-auto -mr-1">
+          <span className="ml-auto flex flex-col items-end -mr-1 gap-0.5">
+            <span className="font-mono text-[8px] uppercase tracking-wider text-mute leading-none">
+              Net trend
+            </span>
             <Sparkline
               values={player.cumulativeNet}
               tone={isWinner ? "gold" : "accent"}
