@@ -36,6 +36,15 @@
 //   --no-db                  Run the pars pass only -- skip the DB
 //                            writes. For when you want to refresh
 //                            courses.ts but leave Postgres alone.
+//   --gb-id=N                Pin the Golfbert course id directly,
+//                            skipping the search step. Used to
+//                            resolve multi-matches or no-matches by
+//                            hand: look up the right id in
+//                            Golfbert's UI, then run
+//                              --id=preset --gb-id=12345
+//                            Requires exactly one --id. Implies
+//                            --force so a prior multi-match/no-match
+//                            state doesn't filter the preset out.
 //
 // State + outputs:
 //   scripts/golfbert-state.json  -- per-preset outcome (matched /
@@ -104,6 +113,7 @@ function parseCli() {
     limit: null as number | null,
     dailyBudget: 3400,
     ids: [] as string[],
+    gbId: null as number | null,
   };
   for (const a of args) {
     if (a.startsWith("--limit=")) {
@@ -113,6 +123,20 @@ function parseCli() {
     if (a.startsWith("--daily-budget=")) {
       flags.dailyBudget = parseInt(a.slice("--daily-budget=".length), 10);
     }
+    if (a.startsWith("--gb-id=")) {
+      flags.gbId = parseInt(a.slice("--gb-id=".length), 10);
+    }
+  }
+  if (flags.gbId != null) {
+    if (flags.ids.length !== 1 || !Number.isFinite(flags.gbId)) {
+      console.error(
+        "--gb-id requires exactly one --id and a numeric Golfbert course id.",
+      );
+      process.exit(1);
+    }
+    // --gb-id implies --force so the preset's prior state (likely
+    // multi-match or no-match) doesn't filter it out.
+    flags.force = true;
   }
   return flags;
 }
@@ -327,8 +351,19 @@ async function main() {
     const tag = `[${i + 1}/${presets.length}, calls=${callsSoFar}]`;
 
     try {
-      const candidates = await findCandidates(preset);
-      const choice = pickBestMatch(candidates, preset);
+      // --gb-id pins the Golfbert id directly and skips the search
+      // step. Used to resolve multi-matches or no-matches by hand:
+      // look up the right id in Golfbert's UI, then run
+      //   --id=preset-id --gb-id=12345
+      // The fake "choice" record carries forward the same shape the
+      // search path produces, so the rest of the loop is unchanged.
+      const choice: gb.GBCourse | "multi" | null = flags.gbId != null
+        ? ({
+            id: flags.gbId,
+            name: preset.name,
+            address: undefined,
+          } as gb.GBCourse)
+        : pickBestMatch(await findCandidates(preset), preset);
 
       if (choice === null) {
         state.set(preset.id, {
@@ -341,6 +376,12 @@ async function main() {
         continue;
       }
       if (choice === "multi") {
+        // We only land here on the search path -- and findCandidates
+        // returns the list synchronously into pickBestMatch, so we have
+        // to re-run the search to capture the candidate list for the
+        // state file. Cheap (already-cached on Golfbert's side in
+        // practice), and avoids restructuring the function signatures.
+        const candidates = await findCandidates(preset);
         state.set(preset.id, {
           kind: "multi-match",
           presetId: preset.id,
