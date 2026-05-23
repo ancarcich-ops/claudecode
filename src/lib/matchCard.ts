@@ -5,6 +5,7 @@
 
 import { parseParData } from "./odds";
 import { colorForSeat } from "./colors";
+import { parseScrambleConfig, teamHandicap as scrambleTeamHandicap } from "./scramble";
 
 // ----- Public types -----
 
@@ -91,6 +92,8 @@ type RawPlayer = {
   displayName: string;
   seat: number;
   handicap: number;
+  // Nullable -- only set on SCRAMBLE matches (0 = Team A, 1 = Team B).
+  team?: number | null;
   user: {
     username: string;
     avatarSeed: string | null;
@@ -110,13 +113,20 @@ type RawMatch = {
   status: string;
   parData: string | null;
   scoringMode: string;
+  // "INDIVIDUAL" (default) or "SCRAMBLE". For SCRAMBLE the
+  // builder collapses N player rows into 2 team rows.
+  format?: string;
+  scrambleConfig?: string | null;
   players: RawPlayer[];
   _count: { wagers: number };
 };
 
 export function buildMatchCardData(
   m: RawMatch,
-  // Win probabilities keyed by matchPlayerId.
+  // Win probabilities keyed by id. For INDIVIDUAL matches this is
+  // matchPlayerId; for SCRAMBLE the caller can pass either
+  // matchPlayerId (we'll dedup by team) or the synthetic "team-0" /
+  // "team-1" keys -- the card loop reads from whichever is present.
   probabilities: Record<string, number>,
   // matchPlayerId the current viewer has wagered on for this match,
   // if any. Drives the per-player "Picked" badge.
@@ -126,10 +136,69 @@ export function buildMatchCardData(
   const startingHole = m.startingHole ?? 1;
   const pars = parseParData(m.parData, totalHoles);
 
+  // For SCRAMBLE matches: collapse the N player rows into 2 synthetic
+  // "team players" so the existing per-player card loop produces 2
+  // team cards instead of N individual cards. Each synthetic team
+  // carries the captain's matchPlayerId (so the probabilities lookup,
+  // myPick highlight, and downstream rank/sort by id all keep
+  // working), the captain's scores (which IS the team's scores in
+  // scramble), the team's handicap (per scrambleConfig), and a
+  // display name labelling the team + roster.
+  const isScramble = m.format === "SCRAMBLE";
+  let cardPlayers: RawPlayer[];
+  if (isScramble) {
+    const teams: Record<0 | 1, RawPlayer[]> = { 0: [], 1: [] };
+    for (const p of m.players) {
+      if (p.team === 0) teams[0].push(p);
+      else if (p.team === 1) teams[1].push(p);
+    }
+    teams[0].sort((a, b) => a.seat - b.seat);
+    teams[1].sort((a, b) => a.seat - b.seat);
+    const config = parseScrambleConfig(m.scrambleConfig ?? null);
+    cardPlayers = ([0, 1] as const)
+      .map((t) => {
+        const roster = teams[t];
+        if (roster.length === 0) return null;
+        const captain = roster[0];
+        // scrambleTeamHandicap expects {handicap, seat, team} per
+        // player; build a minimal shape from the roster.
+        const teamHcp = scrambleTeamHandicap(
+          roster.map((r) => ({
+            handicap: r.handicap,
+            seat: r.seat,
+            team: t,
+            id: r.id,
+            displayName: r.displayName,
+          })),
+          config.handicapMode,
+        );
+        const name =
+          (t === 0
+            ? config.teamNames?.[0] ?? "Team A"
+            : config.teamNames?.[1] ?? "Team B") +
+          " — " +
+          roster.map((r) => r.displayName).join(" & ");
+        return {
+          ...captain,
+          displayName: name,
+          handicap: teamHcp,
+          _count: {
+            wagers: roster.reduce(
+              (sum, r) => sum + (r._count?.wagers ?? 0),
+              0,
+            ),
+          },
+        };
+      })
+      .filter((x): x is RawPlayer => x != null);
+  } else {
+    cardPlayers = m.players;
+  }
+
   // Group max thru = first hole nobody has scored yet. For LIVE cards
   // this is the "current" hole.
   let maxLoggedHole = 0;
-  for (const p of m.players) {
+  for (const p of cardPlayers) {
     for (const s of p.scores) {
       if (s.hole > maxLoggedHole) maxLoggedHole = s.hole;
     }
@@ -138,7 +207,7 @@ export function buildMatchCardData(
   const currentHole = Math.min(maxLoggedHole + 1, lastHole);
 
   // Final standings (settled) -- rank by net.
-  const playerNets = m.players.map((p) => {
+  const playerNets = cardPlayers.map((p) => {
     const gross = p.scores.reduce((s, x) => s + x.strokes, 0);
     return { id: p.id, net: gross - p.handicap, gross };
   });
@@ -146,7 +215,7 @@ export function buildMatchCardData(
   const rankFor = (id: string) =>
     m.status === "COMPLETED" ? rankedIds.indexOf(id) + 1 : 0;
 
-  const players: PlayerCard[] = m.players.map((p) => {
+  const players: PlayerCard[] = cardPlayers.map((p) => {
     const byHole = new Map(p.scores.map((s) => [s.hole, s.strokes]));
     const dots: DotKind[] = [];
     // Chronological order of holes the player actually scored, with the
