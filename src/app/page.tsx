@@ -7,6 +7,10 @@ import AutoRefresh from "@/components/AutoRefresh";
 import LiveCardStats from "@/components/LiveCardStats";
 import MatchCard from "@/components/match-card/MatchCard";
 import { buildMatchCardData } from "@/lib/matchCard";
+import {
+  parseScrambleConfig,
+  teamHandicap as scrambleTeamHandicap,
+} from "@/lib/scramble";
 import { StaggerGroup, StaggerItem } from "@/components/Stagger";
 import EmptyIllustration from "@/components/EmptyIllustration";
 import PlayerAvatar from "@/components/Avatar";
@@ -209,21 +213,87 @@ function buildCardData(m: GridMatch, myPickPlayerId: string | null) {
   const pars = parseParData(m.parData, m.holes);
   const scoringMode = m.scoringMode as "NET" | "GROSS" | "CUSTOM";
   const startingHole = m.startingHole ?? 1;
-  const odds = computeOdds({
-    status: m.status as "UPCOMING" | "IN_PROGRESS" | "COMPLETED",
-    holes: m.holes,
-    startingHole,
-    pars,
-    scoringMode,
-    players: m.players.map((p) => ({
+
+  // SCRAMBLE matches feed the odds engine 2 synthetic team inputs
+  // instead of N per-player inputs -- mirrors what loadMatchWithOdds
+  // does on the detail page so the home card line matches the detail
+  // page's market. The probabilities engine emits keys "team-0" /
+  // "team-1"; we remap to captain matchPlayerIds since buildMatchCardData's
+  // synthetic cardPlayers carry the captain's id.
+  const isScramble = m.format === "SCRAMBLE";
+  let oddsInputs;
+  let captainIdByTeam: Record<0 | 1, string | null> = { 0: null, 1: null };
+  if (isScramble) {
+    const config = parseScrambleConfig(m.scrambleConfig);
+    const teams: Record<0 | 1, typeof m.players> = { 0: [], 1: [] };
+    for (const p of m.players) {
+      if (p.team === 0) teams[0].push(p);
+      else if (p.team === 1) teams[1].push(p);
+    }
+    teams[0].sort((a, b) => a.seat - b.seat);
+    teams[1].sort((a, b) => a.seat - b.seat);
+    oddsInputs = ([0, 1] as const)
+      .map((t) => {
+        const roster = teams[t];
+        if (roster.length === 0) return null;
+        const captain = roster[0];
+        captainIdByTeam[t] = captain.id;
+        return {
+          id: `team-${t}`,
+          handicap: scrambleTeamHandicap(
+            roster.map((r) => ({
+              handicap: r.handicap,
+              seat: r.seat,
+              team: t,
+              id: r.id,
+              displayName: r.displayName,
+            })),
+            config.handicapMode,
+          ),
+          wagerCount: roster.reduce(
+            (sum, r) => sum + r._count.wagers,
+            0,
+          ),
+          scoresByHole: Object.fromEntries(
+            captain.scores.map((s) => [s.hole, s.strokes]),
+          ),
+        };
+      })
+      .filter((x): x is NonNullable<typeof x> => x != null);
+  } else {
+    oddsInputs = m.players.map((p) => ({
       id: p.id,
       handicap: p.handicap,
       wagerCount: p._count.wagers,
       scoresByHole: Object.fromEntries(
         p.scores.map((s) => [s.hole, s.strokes]),
       ),
-    })),
+    }));
+  }
+
+  const odds = computeOdds({
+    status: m.status as "UPCOMING" | "IN_PROGRESS" | "COMPLETED",
+    holes: m.holes,
+    startingHole,
+    pars,
+    scoringMode,
+    players: oddsInputs,
   });
+
+  // For scramble, remap team-0/team-1 -> captain matchPlayerId so the
+  // card's per-player probability lookup hits.
+  let probabilities = odds.probabilities;
+  if (isScramble) {
+    const remapped: Record<string, number> = {};
+    for (const t of [0, 1] as const) {
+      const captainId = captainIdByTeam[t];
+      if (captainId) {
+        remapped[captainId] = odds.probabilities[`team-${t}`] ?? 0;
+      }
+    }
+    probabilities = remapped;
+  }
+
   return buildMatchCardData(
     {
       ...m,
@@ -239,7 +309,7 @@ function buildCardData(m: GridMatch, myPickPlayerId: string | null) {
           : null,
       })),
     },
-    odds.probabilities,
+    probabilities,
     myPickPlayerId,
   );
 }
