@@ -632,7 +632,7 @@ export default function NewMatchForm({
                     {f === "INDIVIDUAL" ? "Individual" : "Scramble"}
                   </span>
                   <span className="text-[10px] uppercase tracking-wider text-mute font-mono">
-                    {f === "INDIVIDUAL" ? "all vs all" : "2 teams"}
+                    {f === "INDIVIDUAL" ? "stroke play" : "2 teams"}
                   </span>
                 </button>
               );
