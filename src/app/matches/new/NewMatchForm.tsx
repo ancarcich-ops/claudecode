@@ -587,9 +587,8 @@ export default function NewMatchForm({
             </div>
           ) : (
             <p className="text-[11px] text-mute mt-1">
-              Pick from {presets.length} SoCal courses, or type any name.
-              Hole pars autofill when you match a preset (always editable
-              later).
+              Pick from our pre-mapped courses or type any course name to
+              add new courses to the list.
             </p>
           )}
         </div>
