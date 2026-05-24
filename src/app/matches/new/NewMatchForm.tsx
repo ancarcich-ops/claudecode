@@ -852,19 +852,28 @@ export default function NewMatchForm({
             <button
               type="button"
               onClick={() => setTemplatesOpen((v) => !v)}
-              className="w-full flex items-center justify-between px-3 py-2.5"
+              className="w-full flex items-start justify-between gap-3 px-3 py-2.5 text-left"
               aria-expanded={templatesOpen}
             >
-              <span className="flex items-center gap-2">
-                <span aria-hidden>↺</span>
-                <span className="text-sm font-medium text-ink">
-                  Start from a past round
-                </span>
-                <span className="font-mono text-[10px] text-mute">
-                  {templates.length}
+              <span className="flex items-start gap-2 min-w-0">
+                <span aria-hidden className="mt-0.5">↺</span>
+                <span className="min-w-0">
+                  <span className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-ink">
+                      Start from a past round
+                    </span>
+                    <span className="font-mono text-[10px] text-mute">
+                      {templates.length}
+                    </span>
+                  </span>
+                  <span className="block text-[11px] text-mute mt-0.5 leading-snug">
+                    Copy course, holes, scoring, players, and side games
+                    from one of your previous matches -- everything is
+                    still editable after.
+                  </span>
                 </span>
               </span>
-              <span className="text-mute text-xs">
+              <span className="text-mute text-xs shrink-0">
                 {templatesOpen ? "Hide" : "Show"}
               </span>
             </button>
