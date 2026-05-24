@@ -617,57 +617,45 @@ export default function NewMatchForm({
             </div>
           </div>
           <div>
-            <label className="label" htmlFor="holes">
-              Holes
-            </label>
-            <select
-              id="holes"
-              name="holes"
-              className="input text-center"
-              value={holes}
-              onChange={(e) => onHolesChange(Number(e.target.value) as 9 | 18)}
-            >
-              <option value="18">18</option>
-              <option value="9">9</option>
-            </select>
-          </div>
-        </div>
-        {holes === 9 && (
-          <div>
-            <label className="label">Which nine</label>
-            <input
-              type="hidden"
-              name="startingHole"
-              value={startingHole}
-            />
-            <div className="grid grid-cols-2 gap-2">
-              {([1, 10] as const).map((n) => {
-                const active = startingHole === n;
+            <label className="label">Holes</label>
+            {/* 3-option picker collapses the old "Holes + Which nine"
+                pair into a single decision. Each option writes both
+                state values so downstream (pars autofill, scorecard
+                starting hole, ParsEditor) Just Works. */}
+            <input type="hidden" name="holes" value={holes} />
+            <input type="hidden" name="startingHole" value={startingHole} />
+            <div className="grid grid-cols-3 gap-2">
+              {(
+                [
+                  { key: "18", holes: 18 as const, start: 1 as const, label: "18" },
+                  { key: "F9", holes: 9 as const, start: 1 as const, label: "Front 9" },
+                  { key: "B9", holes: 9 as const, start: 10 as const, label: "Back 9" },
+                ] as const
+              ).map((opt) => {
+                const active = holes === opt.holes && startingHole === opt.start;
                 return (
                   <button
-                    key={n}
+                    key={opt.key}
                     type="button"
-                    onClick={() => setStartingHole(n)}
+                    onClick={() => {
+                      onHolesChange(opt.holes);
+                      setStartingHole(opt.start);
+                    }}
                     className={
-                      "flex flex-col items-center justify-center gap-0.5 rounded-md border px-2 py-2 transition min-h-[3.25rem] " +
+                      "flex items-center justify-center rounded-md border px-2 py-2 transition min-h-[3.25rem] " +
                       (active
                         ? "border-accent bg-accent/10 text-ink"
                         : "border-border text-mute hover:text-ink")
                     }
                     aria-pressed={active}
                   >
-                    <span className="text-sm font-medium leading-none">
-                      {n === 1 ? "Front 9" : "Back 9"}
-                    </span>
-                    <span className="text-[10px] leading-none opacity-70">
-                      {n === 1 ? "Holes 1-9" : "Holes 10-18"}
-                    </span>
+                    <span className="text-sm font-medium">{opt.label}</span>
                   </button>
                 );
               })}
             </div>
           </div>
-        )}
+        </div>
 
         {/* Match format. Individual is the existing all-vs-all play;
             scramble is 2 teams sharing one ball-per-team-per-hole.
