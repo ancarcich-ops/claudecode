@@ -683,6 +683,10 @@ export default function NewMatchForm({
                 : ""
             }
           />
+          {/* Always submitted; server reads it only when
+              TEAM_VS_TEAM is in the side-games list (which auto-
+              happens when format=BOTH via the useEffect invariant). */}
+          <input type="hidden" name="tvtRule" value={tvtRule} />
           <div className="grid grid-cols-3 gap-2">
             {(["INDIVIDUAL", "SCRAMBLE", "BOTH"] as const).map((f) => {
               const active = format === f;
@@ -1078,7 +1082,12 @@ export default function NewMatchForm({
             scores come in.
           </p>
           <div className="space-y-2">
-            {ALL_SIDE_GAMES.map((g) => {
+            {/* TEAM_VS_TEAM is intentionally hidden from this list --
+                the only way to enable it is via the "Both" format
+                option on step 0, which also exposes the rule picker
+                inline. Pulling it from the checkbox list keeps INDIV
+                matches from showing an irrelevant team toggle. */}
+            {ALL_SIDE_GAMES.filter((g) => g.kind !== "TEAM_VS_TEAM").map((g) => {
               const disabledByHoles = g.requires18 && holes !== 18;
               const active = sideGames.has(g.kind);
               return (
@@ -1113,55 +1122,6 @@ export default function NewMatchForm({
                 </label>
               );
             })}
-            {/* Team-vs-Team config panel. Slots in below the
-                checkbox row so picking the game and choosing the
-                rule stay visually connected. The team assignment
-                lives on the Players step (shared with scramble's
-                A/B chips); a one-line hint here points back to it
-                when nobody's been split yet. Hidden tvtRule input
-                + reuses the existing playerTeam[] inputs to send
-                the config payload. */}
-            {sideGames.has("TEAM_VS_TEAM") && (
-              <div className="rounded-md border border-accent/30 bg-accent/[0.04] px-3 py-3 mt-1 space-y-3">
-                <input type="hidden" name="tvtRule" value={tvtRule} />
-                <div>
-                  <div className="text-[11px] uppercase tracking-wider text-accent font-mono mb-1.5">
-                    Team-vs-team rule
-                  </div>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {TEAM_VS_TEAM_RULES.map((r) => {
-                      const active = tvtRule === r;
-                      return (
-                        <button
-                          key={r}
-                          type="button"
-                          onClick={() => setTvtRule(r)}
-                          className={
-                            "rounded-md border px-2.5 py-1.5 text-left transition-colors " +
-                            (active
-                              ? "border-accent bg-accent/10 text-ink"
-                              : "border-border text-mute hover:text-ink")
-                          }
-                          aria-pressed={active}
-                        >
-                          <div className="text-[12px] font-medium">
-                            {teamVsTeamRuleLabel(r)}
-                          </div>
-                          <div className="text-[10px] text-mute leading-tight mt-0.5">
-                            {teamVsTeamRuleBlurb(r)}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div className="text-[10.5px] text-mute leading-snug">
-                  {format === "SCRAMBLE"
-                    ? "Side game reuses the scramble teams (A/B chips on the Players step)."
-                    : "Assign each player to Team A or B using the chips on the Players step."}
-                </div>
-              </div>
-            )}
             {COMING_SOON_SIDE_GAMES.map((g) => (
               <div
                 key={g.kind}
