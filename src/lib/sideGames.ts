@@ -183,9 +183,9 @@ export function teamVsTeamRuleLabel(rule: TeamVsTeamRule): string {
     case "WORST_BALL":
       return "Worst Ball";
     case "HIGH_LOW":
-      return "High + Low";
+      return "Low Ball, Low Total";
     case "HIGH_LOW_BALL":
-      return "High / Low";
+      return "Low Ball / High Ball";
     case "SUM":
       return "Sum of Strokes";
     case "AGGREGATE_NET":
