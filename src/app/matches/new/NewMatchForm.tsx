@@ -781,49 +781,11 @@ export default function NewMatchForm({
           <p className="text-[11px] text-mute mt-1.5">{modeCopy.help}</p>
         </div>
 
-        {/* Team rule picker for the BOTH format: shows alongside the
-            scoring picker so the user configures both layers without
-            walking to step 2. Bound to the same tvtRule state as the
-            step-2 picker so the rule choice survives navigation. */}
-        <div hidden={format !== "BOTH" && format !== "SCRAMBLE"}>
-          <label className="label">Team rule</label>
-          <div className="grid grid-cols-2 gap-1.5">
-            {TEAM_VS_TEAM_RULES.map((r) => {
-              const active = tvtRule === r;
-              return (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => setTvtRule(r)}
-                  className={
-                    "rounded-md border px-2.5 py-1.5 text-left transition-colors " +
-                    (active
-                      ? "border-accent bg-accent/10 text-ink"
-                      : "border-border text-mute hover:text-ink")
-                  }
-                  aria-pressed={active}
-                >
-                  <div className="text-[12px] font-medium">
-                    {teamVsTeamRuleLabel(r)}
-                  </div>
-                  <div className="text-[10px] text-mute leading-tight mt-0.5">
-                    {teamVsTeamRuleBlurb(r)}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-          <p className="text-[11px] text-mute mt-1.5">
-            How each hole's team score is computed from the players'
-            individual strokes. Assign players to Team A or B on the
-            Players step.
-          </p>
-        </div>
-
         {/* Scramble team-handicap picker. Replaces the individual
-            scoring picker above when format=SCRAMBLE. Values feed the
-            scrambleConfig hidden input above; scoringMode is still
-            sent but coerced to GROSS server-side for scrambles. */}
+            scoring picker above when format=SCRAMBLE. Stays above
+            the team rule picker so the "what's the allowance" decision
+            sits in the same slot as "what's the scoring" for the
+            Individual format. */}
         <div hidden={format !== "SCRAMBLE"}>
           <label className="label">Team handicap</label>
           <div className="grid grid-cols-3 gap-2">
@@ -900,6 +862,46 @@ export default function NewMatchForm({
               : scrambleHcpMode === "AVG"
                 ? "Each team's allowance = average of teammate handicaps. Simple, fair on lopsided teams."
                 : "Group decides each team's allowance manually -- type the strokes per team above."}
+          </p>
+        </div>
+
+        {/* Team rule picker shows under Both AND Teams. For Both it
+            sits below the individual scoring picker; for Teams it
+            sits below the team handicap picker -- handicap-first
+            mirrors how "what's the allowance" lives above the scoring
+            details on the Individual flow. */}
+        <div hidden={format !== "BOTH" && format !== "SCRAMBLE"}>
+          <label className="label">Team rule</label>
+          <div className="grid grid-cols-2 gap-1.5">
+            {TEAM_VS_TEAM_RULES.map((r) => {
+              const active = tvtRule === r;
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setTvtRule(r)}
+                  className={
+                    "rounded-md border px-2.5 py-1.5 text-left transition-colors " +
+                    (active
+                      ? "border-accent bg-accent/10 text-ink"
+                      : "border-border text-mute hover:text-ink")
+                  }
+                  aria-pressed={active}
+                >
+                  <div className="text-[12px] font-medium">
+                    {teamVsTeamRuleLabel(r)}
+                  </div>
+                  <div className="text-[10px] text-mute leading-tight mt-0.5">
+                    {teamVsTeamRuleBlurb(r)}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-[11px] text-mute mt-1.5">
+            How each hole's team score is computed from the players'
+            individual strokes. Assign players to Team A or B on the
+            Players step.
           </p>
         </div>
 
