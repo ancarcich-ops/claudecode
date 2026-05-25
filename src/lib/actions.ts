@@ -434,10 +434,21 @@ export async function createMatchAction(formData: FormData) {
             }
           }
         }
+        const autoPress = obj?.autoPress === true;
+        const rawThreshold = Number(obj?.autoPressThreshold);
+        const autoPressThreshold =
+          autoPress && Number.isFinite(rawThreshold) && rawThreshold >= 1
+            ? Math.floor(rawThreshold)
+            : undefined;
         await prisma.sideGame.update({
           where: { matchId_kind: { matchId: match.id, kind: "MATCH" } },
           data: {
-            config: stringifyMatchConfig({ strokesMode, manualStrokes }),
+            config: stringifyMatchConfig({
+              strokesMode,
+              manualStrokes,
+              autoPress,
+              ...(autoPressThreshold ? { autoPressThreshold } : {}),
+            }),
           },
         });
       } catch {

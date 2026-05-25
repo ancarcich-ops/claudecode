@@ -187,6 +187,10 @@ export default function NewMatchForm({
   const [matchManualStrokes, setMatchManualStrokes] = useState<
     Record<number, string>
   >({});
+  // Match auto-press: only meaningful for 2-player matches; the
+  // server compute ignores it otherwise.
+  const [matchAutoPress, setMatchAutoPress] = useState(false);
+  const [matchAutoPressThreshold, setMatchAutoPressThreshold] = useState("2");
 
   // Keep sideGames in sync with the format picker. Both Teams
   // (SCRAMBLE) and Both auto-enable TEAM_VS_TEAM so the rule picker
@@ -782,6 +786,9 @@ export default function NewMatchForm({
                     manualStrokesByIndex: players.map(
                       (_, i) => Number(matchManualStrokes[i] ?? "0") || 0,
                     ),
+                    autoPress: matchAutoPress,
+                    autoPressThreshold:
+                      Number(matchAutoPressThreshold) || 2,
                   })
                 : ""
             }
@@ -1403,6 +1410,49 @@ export default function NewMatchForm({
                               />
                             </div>
                           ))}
+                        </div>
+                      )}
+                      {/* Auto-press: 2-player matches only. */}
+                      <label
+                        className={
+                          "flex items-start gap-2.5 cursor-pointer " +
+                          (players.length !== 2 ? "opacity-50" : "")
+                        }
+                      >
+                        <input
+                          type="checkbox"
+                          checked={matchAutoPress && players.length === 2}
+                          disabled={players.length !== 2}
+                          onChange={(e) => setMatchAutoPress(e.target.checked)}
+                          className="mt-0.5 shrink-0 accent-accent"
+                        />
+                        <span className="min-w-0">
+                          <span className="block text-[12px] font-medium">
+                            Auto press
+                          </span>
+                          <span className="block text-[10.5px] text-mute leading-snug">
+                            {players.length === 2
+                              ? "New press line starts each time the lead crosses the threshold."
+                              : "2-player matches only."}
+                          </span>
+                        </span>
+                      </label>
+                      {matchAutoPress && players.length === 2 && (
+                        <div className="flex items-center gap-2">
+                          <label className="text-[11px] text-mute">
+                            Threshold (down by)
+                          </label>
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            min={1}
+                            max={holes}
+                            value={matchAutoPressThreshold}
+                            onChange={(e) =>
+                              setMatchAutoPressThreshold(e.target.value)
+                            }
+                            className="input w-16 text-center text-sm py-1"
+                          />
                         </div>
                       )}
                     </div>

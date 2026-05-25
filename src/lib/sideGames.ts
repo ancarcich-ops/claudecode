@@ -218,6 +218,12 @@ export type MatchConfig = {
   // matchPlayerId -> total strokes used as the effective handicap for
   // the Match leaderboard. Honored only when strokesMode === "MANUAL".
   manualStrokes?: Record<string, number>;
+  // Auto-press: in a 2-player match, whenever the running differential
+  // hits abs(threshold) a fresh "press" line is started from the next
+  // hole. All lines accrue independently; the leaderboard shows the
+  // sum across all lines.
+  autoPress?: boolean;
+  autoPressThreshold?: number; // default 2 when autoPress is on
 };
 
 export function parseMatchConfig(
@@ -237,7 +243,13 @@ export function parseMatchConfig(
         }
       }
     }
-    return { strokesMode, manualStrokes };
+    const autoPress = obj.autoPress === true;
+    const rawThreshold = Number(obj.autoPressThreshold);
+    const autoPressThreshold =
+      autoPress && Number.isFinite(rawThreshold) && rawThreshold >= 1
+        ? Math.floor(rawThreshold)
+        : undefined;
+    return { strokesMode, manualStrokes, autoPress, autoPressThreshold };
   } catch {
     return null;
   }
@@ -618,10 +630,24 @@ function matchPairTallies(
   // to plot the cumulative series; computeMatch passes `holes`.
   upToHoleIdx: number,
   config?: MatchConfig | null,
-): { totals: Map<string, number>; thruHole: number } {
+): { totals: Map<string, number>; thruHole: number; presses: number } {
   const totals = new Map<string, number>();
   for (const p of players) totals.set(p.id, 0);
   let thruHole = 0;
+  // Auto-press only applies to a 2-player match. For round-robin (3+)
+  // we ignore the autoPress flag -- press semantics are pair-only.
+  const pressEnabled =
+    !!config?.autoPress && players.length === 2 && config.autoPress;
+  const pressThreshold = Math.max(
+    1,
+    Math.floor(config?.autoPressThreshold ?? 2),
+  );
+  // Each press line tracks (startHole, diff). diff is from p0's POV
+  // (positive => p0 ahead). totals[p0] += sum(line.diff); totals[p1]
+  // -= same.
+  const lines: { startHole: number; diff: number; pressed: boolean }[] = [
+    { startHole: 0, diff: 0, pressed: false },
+  ];
   for (let i = 0; i < upToHoleIdx; i++) {
     const h = startingHole + i;
     if (players.some((p) => typeof p.scoresByHole[h] !== "number")) break;
@@ -638,20 +664,48 @@ function matchPairTallies(
         ),
       };
     });
-    for (let a = 0; a < nets.length; a++) {
-      for (let b = a + 1; b < nets.length; b++) {
-        if (nets[a].net < nets[b].net) {
-          totals.set(nets[a].id, (totals.get(nets[a].id) ?? 0) + 1);
-          totals.set(nets[b].id, (totals.get(nets[b].id) ?? 0) - 1);
-        } else if (nets[b].net < nets[a].net) {
-          totals.set(nets[b].id, (totals.get(nets[b].id) ?? 0) + 1);
-          totals.set(nets[a].id, (totals.get(nets[a].id) ?? 0) - 1);
+    if (pressEnabled) {
+      // Update every active line (line.startHole <= i).
+      let delta = 0;
+      if (nets[0].net < nets[1].net) delta = 1;
+      else if (nets[1].net < nets[0].net) delta = -1;
+      for (const line of lines) {
+        if (line.startHole > i) continue;
+        line.diff += delta;
+      }
+      // After updating, spawn a new line if any existing un-pressed
+      // line crossed the threshold this hole. Only the most-recent
+      // un-pressed line triggers a new press (so we don't fan out
+      // exponentially on a single blow-out hole).
+      const trigger = lines
+        .filter((l) => !l.pressed && Math.abs(l.diff) >= pressThreshold)
+        .pop();
+      if (trigger && i + 1 < holes) {
+        trigger.pressed = true;
+        lines.push({ startHole: i + 1, diff: 0, pressed: false });
+      }
+    } else {
+      // Standard round-robin pair tally for 2+ players, no press.
+      for (let a = 0; a < nets.length; a++) {
+        for (let b = a + 1; b < nets.length; b++) {
+          if (nets[a].net < nets[b].net) {
+            totals.set(nets[a].id, (totals.get(nets[a].id) ?? 0) + 1);
+            totals.set(nets[b].id, (totals.get(nets[b].id) ?? 0) - 1);
+          } else if (nets[b].net < nets[a].net) {
+            totals.set(nets[b].id, (totals.get(nets[b].id) ?? 0) + 1);
+            totals.set(nets[a].id, (totals.get(nets[a].id) ?? 0) - 1);
+          }
         }
       }
     }
     thruHole = h;
   }
-  return { totals, thruHole };
+  if (pressEnabled) {
+    const sum = lines.reduce((a, l) => a + l.diff, 0);
+    totals.set(players[0].id, sum);
+    totals.set(players[1].id, -sum);
+  }
+  return { totals, thruHole, presses: pressEnabled ? lines.length - 1 : 0 };
 }
 
 function formatMatchPoints(n: number): string {
@@ -667,7 +721,7 @@ export function computeMatch(
   startingHole: number = 1,
   config?: MatchConfig | null,
 ): Leaderboard {
-  const { totals, thruHole } = matchPairTallies(
+  const { totals, thruHole, presses } = matchPairTallies(
     players,
     pars,
     holes,
@@ -687,11 +741,12 @@ export function computeMatch(
   });
   const strokesNote =
     config?.strokesMode === "MANUAL" ? " · manual strokes" : "";
+  const pressNote = presses > 0 ? ` · ${presses} press${presses === 1 ? "" : "es"}` : "";
   const subtitle =
     thruHole === 0
       ? "No holes scored yet"
       : players.length === 2
-        ? `Match play · thru ${thruHole}${strokesNote}`
+        ? `Match play · thru ${thruHole}${strokesNote}${pressNote}`
         : `Round-robin · thru ${thruHole}${strokesNote}`;
   return {
     key: "MATCH",
@@ -1977,6 +2032,14 @@ export function runningMatch(
   const running: Record<string, number> = Object.fromEntries(
     players.map((p) => [p.id, 0]),
   );
+  const pressEnabled = !!config?.autoPress && players.length === 2;
+  const pressThreshold = Math.max(
+    1,
+    Math.floor(config?.autoPressThreshold ?? 2),
+  );
+  const lines: { startHole: number; diff: number; pressed: boolean }[] = [
+    { startHole: 0, diff: 0, pressed: false },
+  ];
   let through = 0;
   for (let i = 0; i < holes; i++) {
     const h = startingHole + i;
@@ -1994,6 +2057,28 @@ export function runningMatch(
         ),
       };
     });
+    if (pressEnabled) {
+      let delta = 0;
+      if (nets[0].net < nets[1].net) delta = 1;
+      else if (nets[1].net < nets[0].net) delta = -1;
+      for (const line of lines) {
+        if (line.startHole > i) continue;
+        line.diff += delta;
+      }
+      const trigger = lines
+        .filter((l) => !l.pressed && Math.abs(l.diff) >= pressThreshold)
+        .pop();
+      if (trigger && i + 1 < holes) {
+        trigger.pressed = true;
+        lines.push({ startHole: i + 1, diff: 0, pressed: false });
+      }
+      const sum = lines.reduce((a, l) => a + l.diff, 0);
+      running[players[0].id] = sum;
+      running[players[1].id] = -sum;
+      rows.push({ hole: h, ...running });
+      through = h;
+      continue;
+    }
     for (let a = 0; a < nets.length; a++) {
       for (let b = a + 1; b < nets.length; b++) {
         if (nets[a].net < nets[b].net) {
