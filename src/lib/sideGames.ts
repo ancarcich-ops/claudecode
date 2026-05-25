@@ -272,6 +272,10 @@ export type TargetsConfig = {
   // Shared target number every player aims for. Single number for v1;
   // per-player targets can layer on later if asked.
   target: number;
+  // Optional ante (per player). When > 0, the leaderboard surfaces a
+  // pot and per-player payout. All-hit or no-hit refunds (each gets 0
+  // net). Otherwise winners split the loser pot evenly.
+  ante?: number;
 };
 
 export function targetsStatLabel(stat: TargetsStat): string {
@@ -292,7 +296,11 @@ export function parseTargetsConfig(
       typeof obj.target === "number" && Number.isFinite(obj.target)
         ? Math.max(0, Math.floor(obj.target))
         : 0;
-    return { stat, target };
+    const ante =
+      typeof obj.ante === "number" && Number.isFinite(obj.ante) && obj.ante > 0
+        ? obj.ante
+        : undefined;
+    return { stat, target, ante };
   } catch {
     return null;
   }
@@ -903,6 +911,15 @@ function qualifiesForTarget(
   return gross <= par - 1;
 }
 
+// Compact money formatter -- whole dollars when round, one decimal
+// otherwise. Used by Targets payout cells.
+function fmtMoney(n: number): string {
+  const sign = n < 0 ? "−" : "";
+  const v = Math.abs(n);
+  const txt = Number.isInteger(v) ? `${v}` : v.toFixed(1);
+  return `${sign}$${txt}`;
+}
+
 export function computeTargets(
   players: LiveScorePlayer[],
   pars: number[],
@@ -911,7 +928,8 @@ export function computeTargets(
   startingHole: number = 1,
 ): Leaderboard {
   let maxScoredHole = 0;
-  const rows = players.map((p) => {
+  // First pass: count hits per player.
+  const perPlayer = players.map((p) => {
     let hits = 0;
     let played = 0;
     for (let i = 0; i < holes; i++) {
@@ -923,22 +941,51 @@ export function computeTargets(
       const par = pars[i] ?? 4;
       if (qualifiesForTarget(config.stat, gross, par)) hits++;
     }
-    const hit = hits >= config.target;
+    return { player: p, hits, played, hit: hits >= config.target };
+  });
+
+  // Pot math: each winner pulls their share of the losers' antes.
+  // If all-hit or no-hit, everyone gets 0 net (effectively refunded).
+  const ante = config.ante ?? 0;
+  const winners = perPlayer.filter((x) => x.hit);
+  const losers = perPlayer.filter((x) => !x.hit);
+  const allOrNone =
+    ante <= 0 || winners.length === 0 || losers.length === 0;
+  const winnerShare =
+    !allOrNone && winners.length > 0
+      ? (ante * losers.length) / winners.length
+      : 0;
+
+  const rows = perPlayer.map((x) => {
+    const checkmark = x.hit ? " ✓" : x.played > 0 ? "" : " —";
+    let valueText = `${x.hits}/${config.target}${checkmark}`;
+    if (ante > 0) {
+      const payout = allOrNone ? 0 : x.hit ? winnerShare : -ante;
+      valueText = `${valueText} · ${fmtMoney(payout)}`;
+    }
     return {
-      playerId: p.id,
-      player: p.displayName,
-      // Sort by progress: hits desc, then "% of target" desc. We pack
-      // both into one numeric so the existing rankRows helper keeps
-      // working -- big multiplier on hits ensures it dominates.
-      numeric: hits,
-      value: `${hits}/${config.target}${hit ? " ✓" : played > 0 ? "" : " —"}`,
+      playerId: x.player.id,
+      player: x.player.displayName,
+      numeric: x.hits,
+      value: valueText,
     };
   });
+
   const targetLabel = targetsStatLabel(config.stat);
-  const subtitle =
-    maxScoredHole === 0
-      ? `${targetLabel} · target ${config.target}`
-      : `${targetLabel} · target ${config.target} · thru ${maxScoredHole}`;
+  const baseLine = `${targetLabel} · target ${config.target}`;
+  const potLine =
+    ante > 0
+      ? ` · pot ${fmtMoney(ante * players.length)}${
+          allOrNone && winners.length === 0
+            ? " (no winners yet)"
+            : allOrNone && losers.length === 0
+              ? " (refunded — all hit)"
+              : ""
+        }`
+      : "";
+  const thruLine =
+    maxScoredHole === 0 ? "" : ` · thru ${maxScoredHole}`;
+  const subtitle = `${baseLine}${thruLine}${potLine}`;
   return {
     key: "TARGETS",
     kind: "TARGETS",
