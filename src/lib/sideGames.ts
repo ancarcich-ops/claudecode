@@ -95,8 +95,12 @@ export type TeamVsTeamRule =
   | "BEST_BALL"
   // Highest single player score on each team -- "worst ball" / nasty.
   | "WORST_BALL"
-  // Sum of (lowest + highest) on each team -- "Daytona" / Vegas style.
+  // 2 pts/hole: 1 for the lowest individual on the hole, 1 for the
+  // lower team sum; cross-team ties push.
   | "HIGH_LOW"
+  // 2 pts/hole: low-ball vs low-ball + high-ball vs high-ball,
+  // lowest of each pair wins; ties push.
+  | "HIGH_LOW_BALL"
   // Sum of all team players' gross strokes.
   | "SUM"
   // Sum of all team players' net (handicap-adjusted) strokes.
@@ -106,6 +110,7 @@ export const TEAM_VS_TEAM_RULES: TeamVsTeamRule[] = [
   "BEST_BALL",
   "WORST_BALL",
   "HIGH_LOW",
+  "HIGH_LOW_BALL",
   "SUM",
   "AGGREGATE_NET",
 ];
@@ -179,6 +184,8 @@ export function teamVsTeamRuleLabel(rule: TeamVsTeamRule): string {
       return "Worst ball";
     case "HIGH_LOW":
       return "High + low";
+    case "HIGH_LOW_BALL":
+      return "High / Low";
     case "SUM":
       return "Sum of strokes";
     case "AGGREGATE_NET":
@@ -194,6 +201,8 @@ export function teamVsTeamRuleBlurb(rule: TeamVsTeamRule): string {
       return "Each team's score on a hole = its highest player's score";
     case "HIGH_LOW":
       return "2 points per hole: 1 for the lowest individual, 1 for the lowest team sum; ties push";
+    case "HIGH_LOW_BALL":
+      return "Compare the two low scores (“low ball”) and the two high scores (“high ball”) against each other. The lowest of each group wins.";
     case "SUM":
       return "Each team's score = sum of all teammates' gross strokes";
     case "AGGREGATE_NET":
@@ -540,13 +549,13 @@ export function computeTeamVsTeam(
   const rosterA = `${teamNameA} — ${teamA.map((p) => p.displayName).join(" & ")}`;
   const rosterB = `${teamNameB} — ${teamB.map((p) => p.displayName).join(" & ")}`;
 
-  // HIGH_LOW is points-based with cross-team comparison rather than
-  // a per-team stroke aggregation. Each fully-scored hole awards
-  // 2 points: 1 for the lowest individual on the hole (the team of
-  // the low player; ties between opposing teams = no point) and 1
-  // for the lower team sum (a tie pushes -- no point). Higher
-  // points wins, so the leaderboard ranks higher-is-better.
-  if (config.rule === "HIGH_LOW") {
+  // HIGH_LOW and HIGH_LOW_BALL are points-based cross-team comparisons
+  // rather than per-team stroke aggregations. Each fully-scored hole
+  // awards 2 points; ties push (no point). Higher points wins.
+  //   HIGH_LOW:      1 for lowest individual on the hole, 1 for lower team sum.
+  //   HIGH_LOW_BALL: 1 for low-ball (lower team min), 1 for high-ball
+  //                  (lower team max).
+  if (config.rule === "HIGH_LOW" || config.rule === "HIGH_LOW_BALL") {
     let aPts = 0;
     let bPts = 0;
     let counted = 0;
@@ -565,16 +574,26 @@ export function computeTeamVsTeam(
       const bStrokes = collect(teamB, i);
       if (!aStrokes || !bStrokes) continue;
       counted++;
-      const aMin = Math.min(...aStrokes);
-      const bMin = Math.min(...bStrokes);
-      if (aMin < bMin) aPts++;
-      else if (bMin < aMin) bPts++;
-      // else: low ties across teams -- no point awarded
-      const aSum = aStrokes.reduce((x, y) => x + y, 0);
-      const bSum = bStrokes.reduce((x, y) => x + y, 0);
-      if (aSum < bSum) aPts++;
-      else if (bSum < aSum) bPts++;
-      // else: team sums tie -- push, no point
+      if (config.rule === "HIGH_LOW") {
+        const aMin = Math.min(...aStrokes);
+        const bMin = Math.min(...bStrokes);
+        if (aMin < bMin) aPts++;
+        else if (bMin < aMin) bPts++;
+        const aSum = aStrokes.reduce((x, y) => x + y, 0);
+        const bSum = bStrokes.reduce((x, y) => x + y, 0);
+        if (aSum < bSum) aPts++;
+        else if (bSum < aSum) bPts++;
+      } else {
+        // HIGH_LOW_BALL: low ball + high ball, each a head-to-head.
+        const aMin = Math.min(...aStrokes);
+        const bMin = Math.min(...bStrokes);
+        if (aMin < bMin) aPts++;
+        else if (bMin < aMin) bPts++;
+        const aMax = Math.max(...aStrokes);
+        const bMax = Math.max(...bStrokes);
+        if (aMax < bMax) aPts++;
+        else if (bMax < aMax) bPts++;
+      }
     }
     const fmtPts = (pts: number) =>
       counted === 0 ? "—" : `${pts} pt${pts === 1 ? "" : "s"} (${counted}h)`;

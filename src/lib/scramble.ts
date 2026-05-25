@@ -147,7 +147,13 @@ export function teamHandicap<P extends Player>(
 // Rule string is intentionally typed loosely (string | undefined) so
 // callers can pass values straight off persisted side-game config
 // without an extra cast; unknown rules fall back to BEST_BALL.
-type RuleId = "BEST_BALL" | "WORST_BALL" | "HIGH_LOW" | "SUM" | "AGGREGATE_NET";
+type RuleId =
+  | "BEST_BALL"
+  | "WORST_BALL"
+  | "HIGH_LOW"
+  | "HIGH_LOW_BALL"
+  | "SUM"
+  | "AGGREGATE_NET";
 
 export function deriveTeamScoresByHole<
   P extends Player & {
@@ -166,6 +172,7 @@ export function deriveTeamScoresByHole<
       "BEST_BALL",
       "WORST_BALL",
       "HIGH_LOW",
+      "HIGH_LOW_BALL",
       "SUM",
       "AGGREGATE_NET",
     ] as const
@@ -215,13 +222,13 @@ export function deriveTeamScoresByHole<
         teamScore = Math.max(...vals);
         break;
       case "HIGH_LOW":
-        // HIGH_LOW is a points game (see computeTeamVsTeam in
+      case "HIGH_LOW_BALL":
+        // Both rules are points games (see computeTeamVsTeam in
         // sideGames.ts) -- the odds engine can't price points
         // directly. Fall back to team gross sum so live odds still
         // track who's outscoring whom; tends to correlate with the
         // points leaderboard since the team with more low-strokes
-        // wins both the individual-low and team-sum points more
-        // often. Leaderboard remains points-accurate.
+        // wins more head-to-heads. Leaderboard remains points-accurate.
         teamScore = vals.reduce((a, b) => a + b, 0);
         break;
       case "SUM":
