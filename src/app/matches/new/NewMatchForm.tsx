@@ -168,24 +168,17 @@ export default function NewMatchForm({
   // side game is enabled.
   const [tvtRule, setTvtRule] = useState<TeamVsTeamRule>("BEST_BALL");
 
-  // Keep sideGames in sync with the format picker. BOTH implies the
-  // TEAM_VS_TEAM side game is on; SCRAMBLE implies it's off (team
-  // play is the primary format, no overlay needed). INDIVIDUAL is
-  // hands-off -- the user can still toggle TEAM_VS_TEAM manually on
-  // step 2 if they want without flipping the format card.
+  // Keep sideGames in sync with the format picker. Both Teams
+  // (SCRAMBLE) and Both auto-enable TEAM_VS_TEAM so the rule picker
+  // above actually drives a team-vs-team leaderboard. INDIVIDUAL
+  // doesn't auto-toggle anything -- the user can still pick side
+  // games manually on step 2.
   useEffect(() => {
-    if (format === "BOTH") {
+    if (format === "BOTH" || format === "SCRAMBLE") {
       setSideGames((curr) => {
         if (curr.has("TEAM_VS_TEAM")) return curr;
         const next = new Set(curr);
         next.add("TEAM_VS_TEAM");
-        return next;
-      });
-    } else if (format === "SCRAMBLE") {
-      setSideGames((curr) => {
-        if (!curr.has("TEAM_VS_TEAM")) return curr;
-        const next = new Set(curr);
-        next.delete("TEAM_VS_TEAM");
         return next;
       });
     }
@@ -792,7 +785,7 @@ export default function NewMatchForm({
             scoring picker so the user configures both layers without
             walking to step 2. Bound to the same tvtRule state as the
             step-2 picker so the rule choice survives navigation. */}
-        <div hidden={format !== "BOTH"}>
+        <div hidden={format !== "BOTH" && format !== "SCRAMBLE"}>
           <label className="label">Team rule</label>
           <div className="grid grid-cols-2 gap-1.5">
             {TEAM_VS_TEAM_RULES.map((r) => {
