@@ -397,6 +397,13 @@ export default async function MatchPage({
   const matchConfig = matchSideGame
     ? (await import("@/lib/sideGames")).parseMatchConfig(matchSideGame.config)
     : null;
+  // Sixes config: just an optional per-dot wager for v1.
+  const sixesSideGame = (match.sideGames ?? []).find(
+    (sg) => sg.kind === "SIXES",
+  );
+  const sixesConfig = sixesSideGame
+    ? (await import("@/lib/sideGames")).parseSixesConfig(sixesSideGame.config)
+    : null;
 
   const sideGameSections = computeAllSideGames({
     enabled: enabledKinds,
@@ -420,6 +427,7 @@ export default async function MatchPage({
     teamVsTeamConfig,
     targetsConfig,
     matchConfig,
+    sixesConfig,
   });
   const sideGameLabel: Record<SideGameKind, string> = Object.fromEntries(
     ALL_SIDE_GAMES.map((g) => [g.kind, g.label]),

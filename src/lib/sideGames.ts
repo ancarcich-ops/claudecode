@@ -132,6 +132,9 @@ export type VegasOptions = {
   // EXPONENTIAL = 2x, 4x, 8x... Multiplier resets to 1x on any non-tied
   // hole.
   doubleHoles?: VegasDoubleHoles;
+  // Optional dollar wager per Vegas point. When > 0, the team rows
+  // append a $ amount and the subtitle notes the per-point stake.
+  stake?: number;
 };
 
 export type TeamVsTeamConfig = {
@@ -194,6 +197,12 @@ export function parseTeamVsTeamConfig(
               obj.vegas.doubleHoles === "EXPONENTIAL"
                 ? obj.vegas.doubleHoles
                 : "OFF",
+            stake:
+              typeof obj.vegas.stake === "number" &&
+              Number.isFinite(obj.vegas.stake) &&
+              obj.vegas.stake > 0
+                ? obj.vegas.stake
+                : undefined,
           }
         : undefined;
     return { teams: { 0: teams[0], 1: teams[1] }, rule, teamNames, vegas };
@@ -224,6 +233,9 @@ export type MatchConfig = {
   // sum across all lines.
   autoPress?: boolean;
   autoPressThreshold?: number; // default 2 when autoPress is on
+  // Optional dollar wager per dot. When > 0, the leaderboard appends
+  // $X per player based on their final dot total × stake.
+  stake?: number;
 };
 
 export function parseMatchConfig(
@@ -249,13 +261,46 @@ export function parseMatchConfig(
       autoPress && Number.isFinite(rawThreshold) && rawThreshold >= 1
         ? Math.floor(rawThreshold)
         : undefined;
-    return { strokesMode, manualStrokes, autoPress, autoPressThreshold };
+    const stake =
+      typeof obj.stake === "number" && Number.isFinite(obj.stake) && obj.stake > 0
+        ? obj.stake
+        : undefined;
+    return { strokesMode, manualStrokes, autoPress, autoPressThreshold, stake };
   } catch {
     return null;
   }
 }
 
 export function stringifyMatchConfig(c: MatchConfig): string {
+  return JSON.stringify(c);
+}
+
+// ---- Sixes config ------------------------------------------------------
+// Sixes shares match-play scoring shape with Match, so the only knob
+// for v1 is a dollar wager per dot. Strokes follow the match-level
+// scoringMode + per-player handicap as before.
+export type SixesConfig = {
+  stake?: number;
+};
+
+export function parseSixesConfig(
+  raw: string | null | undefined,
+): SixesConfig | null {
+  if (!raw) return null;
+  try {
+    const obj = JSON.parse(raw);
+    if (!obj || typeof obj !== "object") return null;
+    const stake =
+      typeof obj.stake === "number" && Number.isFinite(obj.stake) && obj.stake > 0
+        ? obj.stake
+        : undefined;
+    return { stake };
+  } catch {
+    return null;
+  }
+}
+
+export function stringifySixesConfig(c: SixesConfig): string {
   return JSON.stringify(c);
 }
 
@@ -721,6 +766,16 @@ function formatMatchPoints(n: number): string {
   return n > 0 ? `+${n}` : `${n}`;
 }
 
+// Compact money formatter -- whole dollars when round, one decimal
+// otherwise; uses a U+2212 minus for negatives so leaderboard cells
+// stay visually consistent across browsers.
+function fmtMoney(n: number): string {
+  const sign = n < 0 ? "−" : "";
+  const v = Math.abs(n);
+  const txt = Number.isInteger(v) ? `${v}` : v.toFixed(1);
+  return `${sign}$${txt}`;
+}
+
 export function computeMatch(
   players: LiveScorePlayer[],
   pars: number[],
@@ -738,24 +793,27 @@ export function computeMatch(
     holes,
     config,
   );
+  const stake = config?.stake ?? 0;
   const rows = players.map((p) => {
     const n = totals.get(p.id) ?? 0;
+    const base = formatMatchPoints(n);
     return {
       playerId: p.id,
       player: p.displayName,
       numeric: n,
-      value: formatMatchPoints(n),
+      value: stake > 0 ? `${base} · ${fmtMoney(n * stake)}` : base,
     };
   });
   const strokesNote =
     config?.strokesMode === "MANUAL" ? " · manual strokes" : "";
   const pressNote = presses > 0 ? ` · ${presses} press${presses === 1 ? "" : "es"}` : "";
+  const stakeNote = stake > 0 ? ` · ${fmtMoney(stake)}/dot` : "";
   const subtitle =
     thruHole === 0
       ? "No holes scored yet"
       : players.length === 2
-        ? `Match play · thru ${thruHole}${strokesNote}${pressNote}`
-        : `Round-robin · thru ${thruHole}${strokesNote}`;
+        ? `Match play · thru ${thruHole}${strokesNote}${pressNote}${stakeNote}`
+        : `Round-robin · thru ${thruHole}${strokesNote}${stakeNote}`;
   return {
     key: "MATCH",
     kind: "MATCH",
@@ -862,6 +920,7 @@ export function computeSixes(
   holes: number,
   scoringMode: ScoringMode,
   startingHole: number = 1,
+  config?: SixesConfig | null,
 ): Leaderboard | null {
   // Hard gate: Sixes is 4-player 18-hole only. Caller should already have
   // filtered via the requires* flags, but guard here too.
@@ -874,20 +933,23 @@ export function computeSixes(
     startingHole,
     holes,
   );
+  const stake = config?.stake ?? 0;
   const rows = players.map((p) => {
     const n = totals.get(p.id) ?? 0;
     const segs = segmentWins.get(p.id) ?? 0;
+    const base = `${segs}/3 · ${formatMatchPoints(n)}`;
     return {
       playerId: p.id,
       player: p.displayName,
       numeric: n,
-      value: `${segs}/3 · ${formatMatchPoints(n)}`,
+      value: stake > 0 ? `${base} · ${fmtMoney(n * stake)}` : base,
     };
   });
+  const stakeNote = stake > 0 ? ` · ${fmtMoney(stake)}/dot` : "";
   const subtitle =
     thruHole === 0
       ? "No holes scored yet"
-      : `Rotating partners · thru ${thruHole}`;
+      : `Rotating partners · thru ${thruHole}${stakeNote}`;
   return {
     key: "SIXES",
     kind: "SIXES",
@@ -909,15 +971,6 @@ function qualifiesForTarget(
   if (stat === "PAR_OR_BETTER") return gross <= par;
   // BIRDIE_OR_BETTER
   return gross <= par - 1;
-}
-
-// Compact money formatter -- whole dollars when round, one decimal
-// otherwise. Used by Targets payout cells.
-function fmtMoney(n: number): string {
-  const sign = n < 0 ? "−" : "";
-  const v = Math.abs(n);
-  const txt = Number.isInteger(v) ? `${v}` : v.toFixed(1);
-  return `${sign}$${txt}`;
 }
 
 export function computeTargets(
@@ -1163,26 +1216,35 @@ export function computeTeamVsTeam(
         // OFF: multiplier stays at 1, tied hole contributes nothing.
       }
     }
-    const fmtPts = (pts: number) =>
-      counted === 0 ? "—" : `${pts} pt${pts === 1 ? "" : "s"} (${counted}h)`;
+    const vStake = opt.stake ?? 0;
+    const teamSwing = aPts - bPts; // positive => A ahead; signed payout per team.
+    const fmtPts = (pts: number, swingFromHere: number) => {
+      if (counted === 0) return "—";
+      const base = `${pts} pt${pts === 1 ? "" : "s"} (${counted}h)`;
+      return vStake > 0 ? `${base} · ${fmtMoney(swingFromHere * vStake)}` : base;
+    };
+    const stakeNote =
+      vStake > 0
+        ? `${teamVsTeamRuleBlurb(config.rule)} · ${fmtMoney(vStake)}/pt`
+        : teamVsTeamRuleBlurb(config.rule);
     return {
       key: "TEAM_VS_TEAM",
       kind: "TEAM_VS_TEAM",
       title: "Team vs team",
-      subtitle: teamVsTeamRuleBlurb(config.rule),
+      subtitle: stakeNote,
       rows: rankRows(
         [
           {
             playerId: teamA[0].id,
             player: rosterA,
             numeric: counted === 0 ? -Infinity : aPts,
-            value: fmtPts(aPts),
+            value: fmtPts(aPts, teamSwing),
           },
           {
             playerId: teamB[0].id,
             player: rosterB,
             numeric: counted === 0 ? -Infinity : bPts,
-            value: fmtPts(bPts),
+            value: fmtPts(bPts, -teamSwing),
           },
         ],
         true, // higher Vegas points wins
@@ -1815,6 +1877,8 @@ export function computeAllSideGames(input: {
   // Match strokes mode + manual stroke overrides. Null = AUTO (current
   // default behavior using the match-level scoringMode + handicaps).
   matchConfig?: MatchConfig | null;
+  // Sixes stake (per dot). Null = no $ values shown.
+  sixesConfig?: SixesConfig | null;
 }): { kind: SideGameKind; leaderboards: Leaderboard[] }[] {
   const {
     enabled,
@@ -1831,6 +1895,7 @@ export function computeAllSideGames(input: {
     teamVsTeamConfig = null,
     targetsConfig = null,
     matchConfig = null,
+    sixesConfig = null,
   } = input;
   const out: { kind: SideGameKind; leaderboards: Leaderboard[] }[] = [];
   for (const kind of enabled) {
@@ -1895,7 +1960,14 @@ export function computeAllSideGames(input: {
         ],
       });
     } else if (kind === "SIXES") {
-      const lb = computeSixes(players, pars, holes, scoringMode, startingHole);
+      const lb = computeSixes(
+        players,
+        pars,
+        holes,
+        scoringMode,
+        startingHole,
+        sixesConfig,
+      );
       if (lb) out.push({ kind, leaderboards: [lb] });
     } else if (kind === "TARGETS") {
       if (!targetsConfig) continue;
