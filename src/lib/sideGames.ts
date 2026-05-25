@@ -193,7 +193,7 @@ export function teamVsTeamRuleBlurb(rule: TeamVsTeamRule): string {
     case "WORST_BALL":
       return "Each team's score on a hole = its highest player's score";
     case "HIGH_LOW":
-      return "Each team's score = lowest + highest player on the hole";
+      return "2 points per hole: 1 for the lowest individual, 1 for the lowest team sum; ties push";
     case "SUM":
       return "Each team's score = sum of all teammates' gross strokes";
     case "AGGREGATE_NET":
@@ -535,10 +535,79 @@ export function computeTeamVsTeam(
     .filter((p): p is LiveScorePlayer => p != null);
   if (teamA.length === 0 || teamB.length === 0) return null;
 
-  // Per-hole score for one team under the active rule. Returns null
-  // when not every team member has logged a stroke yet (rules that
-  // need only one player -- BEST_BALL / WORST_BALL -- still wait
-  // until everyone has scored so the comparison is fair across teams).
+  const teamNameA = config.teamNames?.[0] ?? "Team A";
+  const teamNameB = config.teamNames?.[1] ?? "Team B";
+  const rosterA = `${teamNameA} — ${teamA.map((p) => p.displayName).join(" & ")}`;
+  const rosterB = `${teamNameB} — ${teamB.map((p) => p.displayName).join(" & ")}`;
+
+  // HIGH_LOW is points-based with cross-team comparison rather than
+  // a per-team stroke aggregation. Each fully-scored hole awards
+  // 2 points: 1 for the lowest individual on the hole (the team of
+  // the low player; ties between opposing teams = no point) and 1
+  // for the lower team sum (a tie pushes -- no point). Higher
+  // points wins, so the leaderboard ranks higher-is-better.
+  if (config.rule === "HIGH_LOW") {
+    let aPts = 0;
+    let bPts = 0;
+    let counted = 0;
+    const collect = (team: LiveScorePlayer[], holeIndex0: number): number[] | null => {
+      const hole = startingHole + holeIndex0;
+      const strokes: number[] = [];
+      for (const p of team) {
+        const g = p.scoresByHole[hole];
+        if (typeof g !== "number") return null;
+        strokes.push(g);
+      }
+      return strokes.length > 0 ? strokes : null;
+    };
+    for (let i = 0; i < holes; i++) {
+      const aStrokes = collect(teamA, i);
+      const bStrokes = collect(teamB, i);
+      if (!aStrokes || !bStrokes) continue;
+      counted++;
+      const aMin = Math.min(...aStrokes);
+      const bMin = Math.min(...bStrokes);
+      if (aMin < bMin) aPts++;
+      else if (bMin < aMin) bPts++;
+      // else: low ties across teams -- no point awarded
+      const aSum = aStrokes.reduce((x, y) => x + y, 0);
+      const bSum = bStrokes.reduce((x, y) => x + y, 0);
+      if (aSum < bSum) aPts++;
+      else if (bSum < aSum) bPts++;
+      // else: team sums tie -- push, no point
+    }
+    const fmtPts = (pts: number) =>
+      counted === 0 ? "—" : `${pts} pt${pts === 1 ? "" : "s"} (${counted}h)`;
+    return {
+      key: "TEAM_VS_TEAM",
+      kind: "TEAM_VS_TEAM",
+      title: "Team vs team",
+      subtitle: teamVsTeamRuleBlurb(config.rule),
+      rows: rankRows(
+        [
+          {
+            playerId: teamA[0].id,
+            player: rosterA,
+            numeric: counted === 0 ? -Infinity : aPts,
+            value: fmtPts(aPts),
+          },
+          {
+            playerId: teamB[0].id,
+            player: rosterB,
+            numeric: counted === 0 ? -Infinity : bPts,
+            value: fmtPts(bPts),
+          },
+        ],
+        true, // higher points wins
+      ),
+    };
+  }
+
+  // Per-hole score for one team under the active stroke-based rule.
+  // Returns null when not every team member has logged a stroke yet
+  // (rules that need only one player -- BEST_BALL / WORST_BALL --
+  // still wait until everyone has scored so the comparison is fair
+  // across teams).
   const scoreHole = (
     team: LiveScorePlayer[],
     holeIndex0: number,
@@ -560,12 +629,11 @@ export function computeTeamVsTeam(
         return Math.min(...strokes);
       case "WORST_BALL":
         return Math.max(...strokes);
-      case "HIGH_LOW":
-        return Math.min(...strokes) + Math.max(...strokes);
       case "SUM":
       case "AGGREGATE_NET":
         return strokes.reduce((a, b) => a + b, 0);
     }
+    return null;
   };
 
   const totalFor = (team: LiveScorePlayer[]) => {
@@ -583,8 +651,6 @@ export function computeTeamVsTeam(
   const a = totalFor(teamA);
   const b = totalFor(teamB);
 
-  const teamNameA = config.teamNames?.[0] ?? "Team A";
-  const teamNameB = config.teamNames?.[1] ?? "Team B";
   const fmt = (n: { total: number; counted: number }) =>
     n.counted === 0
       ? "—"
@@ -602,13 +668,13 @@ export function computeTeamVsTeam(
       [
         {
           playerId: teamA[0].id,
-          player: `${teamNameA} — ${teamA.map((p) => p.displayName).join(" & ")}`,
+          player: rosterA,
           numeric: a.counted === 0 ? Infinity : a.total,
           value: fmt(a),
         },
         {
           playerId: teamB[0].id,
-          player: `${teamNameB} — ${teamB.map((p) => p.displayName).join(" & ")}`,
+          player: rosterB,
           numeric: b.counted === 0 ? Infinity : b.total,
           value: fmt(b),
         },
