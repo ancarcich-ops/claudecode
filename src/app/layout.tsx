@@ -10,6 +10,7 @@ import GroupSwitcher from "@/components/GroupSwitcher";
 import MobileTabBar from "@/components/MobileTabBar";
 import Onboarding from "@/components/Onboarding";
 import Sounds from "@/components/Sounds";
+import SticksSplash from "@/components/SticksSplash";
 import { Toaster } from "sonner";
 
 // Per the brand kit: Bricolage = display + wordmark, Geist = body,
@@ -129,6 +130,10 @@ export default async function RootLayout({
           {children}
         </main>
         {user && <MobileTabBar />}
+        {/* First-cold-load splash. Renders nothing on subsequent
+            navigations within the session -- guarded by
+            sessionStorage inside the component. */}
+        <SticksSplash />
         <Onboarding
           enabled={!!user}
           username={user?.username}

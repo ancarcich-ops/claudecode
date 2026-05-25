@@ -1,0 +1,158 @@
+/* Sticks brand splash. Dark fairway-at-5am surface; three emerald
+   bars rise like a closing candlestick chart; wordmark + tagline
+   fade in beneath. Used as a top-level overlay during the first
+   cold load of a session (see SticksSplash.tsx). */
+
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #0b0f0c;
+  color: #e8efe9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 56px;
+  /* Re-use the existing app-wide --font-display token (Bricolage
+     Grotesque, set in layout.tsx). Falls back to system-ui if the
+     variable isn't available so the splash never hangs on a font
+     fetch. */
+  font-family: var(--font-display), system-ui, sans-serif;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 240ms ease-out;
+  /* Critical: clicks should never reach the underlying app while
+     the splash is up. pointer-events: none in the fading state so
+     the user can tap through immediately. */
+  pointer-events: auto;
+}
+
+.splash.fading {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Faint emerald grid, mostly hidden by a radial mask centered just
+   above the wordmark so it reads as "darkness with a hint of
+   structure" rather than a wallpaper pattern. */
+.grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(0deg, rgba(52, 211, 153, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(52, 211, 153, 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+  -webkit-mask-image: radial-gradient(
+    circle at 50% 45%,
+    black 0%,
+    black 30%,
+    transparent 70%
+  );
+  mask-image: radial-gradient(
+    circle at 50% 45%,
+    black 0%,
+    black 30%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.mark {
+  width: 135px;
+  height: 135px;
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 56px;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  /* Tightens the visual gap with the mark to ~24px (they read as a
+     single lockup). The flex container's 56px gap then carries
+     down to the tagline. */
+  margin-top: -32px;
+  opacity: 0;
+  animation: sticksFadeUp 0.55s 0.55s both;
+}
+
+.dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #34d399;
+  /* Pulse starts after the entry animation has settled. Infinite so
+     the live signal keeps breathing for as long as the splash is
+     visible. */
+  animation: sticksPulse 2.4s 1.6s ease-out infinite;
+}
+
+.tagline {
+  text-align: center;
+  font-weight: 600;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  opacity: 0;
+  animation: sticksFadeUp 0.55s 0.95s both;
+}
+
+.taglineEm {
+  color: #34d399;
+}
+
+@keyframes sticksRise {
+  0% {
+    transform: scaleY(0.04);
+    opacity: 0;
+  }
+  60% {
+    transform: scaleY(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes sticksFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sticksPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(52, 211, 153, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0);
+  }
+}
+
+/* prefers-reduced-motion: skip the rise + fade-up. Bars appear at
+   final size; wordmark + tagline appear without sliding. Pulse dot
+   keeps breathing because it conveys the "live" status, not motion
+   for its own sake. */
+@media (prefers-reduced-motion: reduce) {
+  .splash rect,
+  .wordmark,
+  .tagline {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
