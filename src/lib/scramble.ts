@@ -14,15 +14,18 @@
 export type ScrambleHandicapMode =
   | "GROSS" // Team plays scratch -- no allowance.
   | "AVG" // Team allowance = mean of teammate handicaps.
-  | "USGA_4P"; // USGA 4-person scramble: 25% low + 20% + 15% + 10%.
+  | "CUSTOM"; // Group decides each team's allowance manually.
 
 export type ScrambleConfig = {
   handicapMode: ScrambleHandicapMode;
   // Display names override the default "Team A" / "Team B". Optional.
   teamNames?: { 0?: string; 1?: string };
+  // Per-team custom allowance, only honoured when handicapMode is
+  // "CUSTOM". Missing entries fall back to 0.
+  customAllowance?: { 0?: number; 1?: number };
 };
 
-const HANDICAP_MODES: ScrambleHandicapMode[] = ["GROSS", "AVG", "USGA_4P"];
+const HANDICAP_MODES: ScrambleHandicapMode[] = ["GROSS", "AVG", "CUSTOM"];
 
 export function parseScrambleConfig(raw: string | null | undefined): ScrambleConfig {
   if (!raw) return { handicapMode: "GROSS" };
@@ -47,7 +50,22 @@ export function parseScrambleConfig(raw: string | null | undefined): ScrambleCon
                 : undefined,
           }
         : undefined;
-    return { handicapMode: mode, teamNames };
+    const customAllowance =
+      obj.customAllowance && typeof obj.customAllowance === "object"
+        ? {
+            0:
+              typeof obj.customAllowance[0] === "number" &&
+              Number.isFinite(obj.customAllowance[0])
+                ? obj.customAllowance[0]
+                : undefined,
+            1:
+              typeof obj.customAllowance[1] === "number" &&
+              Number.isFinite(obj.customAllowance[1])
+                ? obj.customAllowance[1]
+                : undefined,
+          }
+        : undefined;
+    return { handicapMode: mode, teamNames, customAllowance };
   } catch {
     return { handicapMode: "GROSS" };
   }
@@ -95,35 +113,25 @@ export function captainForTeam<P extends Player>(team: P[]): P | null {
 }
 
 // Per-team handicap allowance. Always returned as a non-negative
-// number; modes that would produce 0 (GROSS) return 0. Modes that
-// would produce a fractional value are rounded to one decimal so
-// scorecards don't show 4-place noise.
+// number; modes that would produce 0 (GROSS) return 0. AVG rounds
+// to one decimal so scorecards don't show 4-place noise. CUSTOM
+// reads the user-typed allowance from scrambleConfig (passed via
+// the `custom` arg when called from the match-loading path).
 export function teamHandicap<P extends Player>(
   team: P[],
   mode: ScrambleHandicapMode,
+  customAllowance?: number,
 ): number {
   if (team.length === 0) return 0;
   if (mode === "GROSS") return 0;
+  if (mode === "CUSTOM") {
+    if (typeof customAllowance !== "number" || !Number.isFinite(customAllowance)) {
+      return 0;
+    }
+    return Math.max(0, customAllowance);
+  }
+  // mode === "AVG"
   const hcps = team.map((p) => p.handicap);
-  if (mode === "AVG") {
-    const avg = hcps.reduce((a, b) => a + b, 0) / hcps.length;
-    return Math.round(avg * 10) / 10;
-  }
-  // USGA 4-person: 25/20/15/10 weights against lowest-to-highest HCP.
-  // For 3-person teams use 30/20/10 (USGA's published variant). For
-  // 2-person use 35/15. For 1-person fall back to the player's own
-  // handicap (degenerate but doesn't blow up).
-  const sorted = [...hcps].sort((a, b) => a - b);
-  const weights: Record<number, number[]> = {
-    1: [1],
-    2: [0.35, 0.15],
-    3: [0.3, 0.2, 0.1],
-    4: [0.25, 0.2, 0.15, 0.1],
-  };
-  const w = weights[sorted.length] ?? weights[4];
-  let total = 0;
-  for (let i = 0; i < sorted.length && i < w.length; i++) {
-    total += sorted[i] * w[i];
-  }
-  return Math.round(total * 10) / 10;
+  const avg = hcps.reduce((a, b) => a + b, 0) / hcps.length;
+  return Math.round(avg * 10) / 10;
 }

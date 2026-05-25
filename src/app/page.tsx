@@ -249,6 +249,7 @@ function buildCardData(m: GridMatch, myPickPlayerId: string | null) {
               displayName: r.displayName,
             })),
             config.handicapMode,
+            config.customAllowance?.[t],
           ),
           wagerCount: roster.reduce(
             (sum, r) => sum + r._count.wagers,

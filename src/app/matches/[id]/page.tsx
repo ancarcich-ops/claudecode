@@ -258,7 +258,11 @@ export default async function MatchPage({
           id: captain.id,
           seat: captain.seat,
           displayName: `${teamLabel(t, scrambleConfig)} — ${roster}`,
-          handicap: teamHandicap(team, scrambleConfig.handicapMode),
+          handicap: teamHandicap(
+            team,
+            scrambleConfig.handicapMode,
+            scrambleConfig.customAllowance?.[t],
+          ),
           color: colorForSeat(captain.seat),
           wagerCount: team.reduce(
             (sum, p) => sum + (wagerCounts[p.id] ?? 0),

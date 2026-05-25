@@ -60,7 +60,11 @@ export async function loadMatchWithOdds(matchId: string) {
         const captain = captainForTeam(team)!;
         return {
           id: `team-${t}`,
-          handicap: teamHandicap(team, scrambleConfig.handicapMode),
+          handicap: teamHandicap(
+            team,
+            scrambleConfig.handicapMode,
+            scrambleConfig.customAllowance?.[t],
+          ),
           // Team wager count = wagers placed on any player in the team.
           wagerCount: team.reduce(
             (sum, p) => sum + p._count.wagers,
