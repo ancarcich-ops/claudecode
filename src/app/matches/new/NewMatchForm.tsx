@@ -267,11 +267,11 @@ export default function NewMatchForm({
     );
   };
 
-  // Auto-prefill the nearest course on mount if the input is empty.
-  // Runs once -- if location is denied or unavailable, fail silently
-  // (the manual "Find course near me" button stays available with its
-  // usual loud-failure messaging). Skips entirely when the input has
-  // already been filled (template clone, browser back nav, etc.).
+  // Auto-locate on mount: silently populate the nearby suggestion list
+  // when geolocation is available. We do NOT fill the course input --
+  // leaving it empty keeps the "Search 500+ courses…" placeholder
+  // visible so the search affordance is discoverable. The user picks
+  // from the suggestion list or types their own query.
   const autoLocatedRef = useRef(false);
   useEffect(() => {
     if (autoLocatedRef.current) return;
@@ -286,10 +286,9 @@ export default function NewMatchForm({
               lat: pos.coords.latitude,
               lng: pos.coords.longitude,
             });
-            // Only fill when nothing's been typed in the meantime --
+            // Only populate when nothing's been typed in the meantime --
             // the geo callback can fire after the user started typing.
             if (r.length > 0 && !courseName.trim()) {
-              onCourseChange(r[0].name);
               setNearby(r);
             }
           } catch {
@@ -502,16 +501,19 @@ export default function NewMatchForm({
             id="courseName"
             name="courseName"
             className="input"
-            placeholder="Start typing - Riviera, Pelican Hill, Rancho Park..."
+            placeholder="Search 500+ courses or type any name…"
             value={courseName}
             onChange={(e) => onCourseChange(e.target.value)}
             onFocus={() => setCourseFocused(true)}
             onBlur={() => setCourseFocused(false)}
             autoComplete="off"
           />
-          {nearby && nearby.length > 0 && (
+          {nearby && nearby.filter((c) => c.name !== courseName).length > 0 && (
             <div className="mt-1.5 border border-border rounded-md divide-y divide-border bg-panel/40 overflow-hidden">
-              {nearby.map((c) => {
+              <div className="px-2.5 py-1 text-[9.5px] uppercase tracking-wider text-mute bg-panel2/40">
+                Nearby — tap to pick, or search above
+              </div>
+              {nearby.filter((c) => c.name !== courseName).map((c) => {
                 const miles = c.yards / 1760;
                 return (
                   <button
