@@ -627,7 +627,7 @@ export default function NewMatchForm({
             <div className="grid grid-cols-3 gap-2">
               {(
                 [
-                  { key: "18", holes: 18 as const, start: 1 as const, label: "18" },
+                  { key: "18", holes: 18 as const, start: 1 as const, label: "Full 18" },
                   { key: "F9", holes: 9 as const, start: 1 as const, label: "Front 9" },
                   { key: "B9", holes: 9 as const, start: 10 as const, label: "Back 9" },
                 ] as const
