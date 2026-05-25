@@ -129,6 +129,19 @@ export default function NewMatchForm({
   // 1 = full or front 9, 10 = back 9. Only meaningful when holes === 9.
   const [startingHole, setStartingHole] = useState<1 | 10>(1);
   const [scoringMode, setScoringMode] = useState<ScoringMode>("NET");
+  // Wrapping the scoringMode setter so a transition INTO CUSTOM
+  // resets every player's strokes-given to "0". The field's meaning
+  // flips when CUSTOM is picked -- it's no longer the player's HCP
+  // index, it's the strokes the group decides to give them -- so
+  // carrying the prior handicap number across the transition is
+  // misleading. Other transitions (CUSTOM->NET, GROSS->NET) leave
+  // values alone since they're still measuring handicap.
+  const changeScoringMode = (next: ScoringMode) => {
+    if (next === "CUSTOM" && scoringMode !== "CUSTOM") {
+      setPlayers((rows) => rows.map((r) => ({ ...r, handicap: "0" })));
+    }
+    setScoringMode(next);
+  };
   const modeCopy = MODE_COPY[scoringMode];
   // Match format: INDIVIDUAL is the existing all-vs-all play; SCRAMBLE
   // is 2 teams sharing one ball-per-team-per-hole. BOTH is a
@@ -408,35 +421,9 @@ export default function NewMatchForm({
     if (step > 0) setStep(step - 1);
   };
 
-  // Wraps the server action so an unexpected throw surfaces as a
-  // visible toast instead of a silent dead-click. Next's redirect()
-  // also throws an internal "NEXT_REDIRECT" error to navigate -- we
-  // detect that via the `digest` shape and re-throw so navigation
-  // still happens. Anything else gets toasted with the error message.
-  const submitMatch = async (formData: FormData) => {
-    try {
-      await action(formData);
-    } catch (err) {
-      if (
-        err &&
-        typeof err === "object" &&
-        "digest" in err &&
-        typeof (err as { digest?: string }).digest === "string" &&
-        (err as { digest: string }).digest.startsWith("NEXT_")
-      ) {
-        // Redirect / not-found signals -- let Next handle them.
-        throw err;
-      }
-      const msg = err instanceof Error ? err.message : "Couldn't open the market";
-      toast.error(msg);
-      // Log the full error for Vercel + browser console diagnostics.
-      console.error("createMatchAction failed:", err);
-    }
-  };
-
   return (
     <form
-      action={submitMatch}
+      action={action}
       className="space-y-4"
       onSubmit={(e) => {
         // Belt-and-suspenders: even if a stray Enter / replay-click on
@@ -779,7 +766,7 @@ export default function NewMatchForm({
                 <button
                   key={m}
                   type="button"
-                  onClick={() => setScoringMode(m)}
+                  onClick={() => changeScoringMode(m)}
                   className={
                     "flex flex-col items-center justify-center gap-0.5 rounded-md border px-2 py-2 transition min-h-[3.25rem] " +
                     (active
