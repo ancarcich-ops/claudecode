@@ -98,7 +98,7 @@ export default function SticksSplash() {
 
       <div className={styles.tagline}>
         <div>All your games.</div>
-        <div className={styles.taglineEm}>One app.</div>
+        <div className={styles.taglineEm}>One place.</div>
       </div>
     </div>
   );
