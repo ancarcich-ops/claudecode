@@ -918,6 +918,10 @@ export default function NewMatchForm({
             individual strokes. Assign players to Team A or B on the
             Players step.
           </p>
+          <p className="text-[12px] text-mute mt-3 leading-snug">
+            Players split into 2 teams. Each team logs one score per
+            hole; live odds price team-vs-team.
+          </p>
         </div>
 
         {templates.length > 0 && (
