@@ -167,6 +167,12 @@ export default function NewMatchForm({
   // whenever EITHER scramble is the format OR the TEAM_VS_TEAM
   // side game is enabled.
   const [tvtRule, setTvtRule] = useState<TeamVsTeamRule>("BEST_BALL");
+  // Targets config -- only sent when TARGETS is selected. Defaults
+  // chosen to be sensible for an 18-hole round.
+  const [targetsStat, setTargetsStat] = useState<
+    "PAR_OR_BETTER" | "BIRDIE_OR_BETTER"
+  >("PAR_OR_BETTER");
+  const [targetsTarget, setTargetsTarget] = useState("10");
 
   // Keep sideGames in sync with the format picker. Both Teams
   // (SCRAMBLE) and Both auto-enable TEAM_VS_TEAM so the rule picker
@@ -726,6 +732,18 @@ export default function NewMatchForm({
               TEAM_VS_TEAM is in the side-games list (which auto-
               happens when format=BOTH via the useEffect invariant). */}
           <input type="hidden" name="tvtRule" value={tvtRule} />
+          <input
+            type="hidden"
+            name="targetsConfig"
+            value={
+              sideGames.has("TARGETS")
+                ? JSON.stringify({
+                    stat: targetsStat,
+                    target: Number(targetsTarget) || 0,
+                  })
+                : ""
+            }
+          />
           <div className="grid grid-cols-3 gap-2">
             {(["INDIVIDUAL", "SCRAMBLE", "BOTH"] as const).map((f) => {
               const active = format === f;
@@ -1198,33 +1216,89 @@ export default function NewMatchForm({
                   ? "Needs exactly 4 players"
                   : null;
               return (
-                <label
-                  key={g.kind}
-                  className={
-                    "flex items-start gap-3 rounded-md border px-3 py-2 cursor-pointer transition-colors " +
-                    (disabled
-                      ? "border-border opacity-50 cursor-not-allowed"
-                      : active
-                        ? "border-accent/50 bg-accent/5"
-                        : "border-border hover:border-accent/30")
-                  }
-                >
-                  <input
-                    type="checkbox"
-                    name="sideGame"
-                    value={g.kind}
-                    checked={active && !disabled}
-                    onChange={() => !disabled && toggleSideGame(g.kind)}
-                    disabled={disabled}
-                    className="mt-0.5 shrink-0 accent-accent"
-                  />
-                  <div className="min-w-0">
-                    <div className="text-sm font-medium">{g.label}</div>
-                    <div className="text-[11px] text-mute">
-                      {disabledReason ?? g.blurb}
+                <div key={g.kind}>
+                  <label
+                    className={
+                      "flex items-start gap-3 rounded-md border px-3 py-2 cursor-pointer transition-colors " +
+                      (disabled
+                        ? "border-border opacity-50 cursor-not-allowed"
+                        : active
+                          ? "border-accent/50 bg-accent/5"
+                          : "border-border hover:border-accent/30")
+                    }
+                  >
+                    <input
+                      type="checkbox"
+                      name="sideGame"
+                      value={g.kind}
+                      checked={active && !disabled}
+                      onChange={() => !disabled && toggleSideGame(g.kind)}
+                      disabled={disabled}
+                      className="mt-0.5 shrink-0 accent-accent"
+                    />
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium">{g.label}</div>
+                      <div className="text-[11px] text-mute">
+                        {disabledReason ?? g.blurb}
+                      </div>
                     </div>
-                  </div>
-                </label>
+                  </label>
+                  {/* Targets inline config: stat picker + per-player
+                      target number. Only shown when the game is
+                      actually selected. */}
+                  {g.kind === "TARGETS" && active && !disabled && (
+                    <div className="mt-2 ml-7 mr-1 rounded-md border border-border bg-panel2/40 p-2 space-y-2">
+                      <div>
+                        <div className="text-[10px] uppercase tracking-wider text-mute mb-1">
+                          Stat
+                        </div>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {(
+                            [
+                              ["PAR_OR_BETTER", "Pars or better"],
+                              ["BIRDIE_OR_BETTER", "Birdies or better"],
+                            ] as const
+                          ).map(([val, label]) => {
+                            const isActive = targetsStat === val;
+                            return (
+                              <button
+                                key={val}
+                                type="button"
+                                onClick={() => setTargetsStat(val)}
+                                className={
+                                  "rounded-md border px-2 py-1.5 text-[12px] " +
+                                  (isActive
+                                    ? "border-accent bg-accent/10 text-ink"
+                                    : "border-border text-mute hover:text-ink")
+                                }
+                                aria-pressed={isActive}
+                              >
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <label className="text-[11px] text-mute whitespace-nowrap">
+                          Target (per player)
+                        </label>
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          min={0}
+                          max={holes}
+                          value={targetsTarget}
+                          onChange={(e) => setTargetsTarget(e.target.value)}
+                          className="input w-20 text-center text-sm py-1"
+                        />
+                        <span className="text-[11px] text-mute">
+                          of {holes}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
               );
             })}
             {COMING_SOON_SIDE_GAMES.map((g) => (

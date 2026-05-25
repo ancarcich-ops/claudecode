@@ -386,6 +386,23 @@ export async function createMatchAction(formData: FormData) {
     }
   }
 
+  // Targets: read inline form config and persist on SideGame.config.
+  if (sideGameKinds.includes("TARGETS")) {
+    const raw = String(formData.get("targetsConfig") ?? "");
+    if (raw) {
+      const { parseTargetsConfig, stringifyTargetsConfig } = await import(
+        "./sideGames"
+      );
+      const parsed = parseTargetsConfig(raw);
+      if (parsed && parsed.target > 0) {
+        await prisma.sideGame.update({
+          where: { matchId_kind: { matchId: match.id, kind: "TARGETS" } },
+          data: { config: stringifyTargetsConfig(parsed) },
+        });
+      }
+    }
+  }
+
   await recordOddsSnapshot(match.id);
   revalidatePath("/");
   redirect(`/matches/${match.id}`);
