@@ -173,12 +173,27 @@ export default function NewMatchForm({
   // above actually drives a team-vs-team leaderboard. INDIVIDUAL
   // doesn't auto-toggle anything -- the user can still pick side
   // games manually on step 2.
+  //
+  // Teams also prunes any per-player side games already selected:
+  // when only one score per team per hole is logged, Stableford /
+  // Skins / Nassau / BBB / Wolf have nothing to score against.
+  // Snake survives because it's event-based (3-putts).
   useEffect(() => {
     if (format === "BOTH" || format === "SCRAMBLE") {
       setSideGames((curr) => {
-        if (curr.has("TEAM_VS_TEAM")) return curr;
         const next = new Set(curr);
         next.add("TEAM_VS_TEAM");
+        if (format === "SCRAMBLE") {
+          for (const k of next) {
+            if (k !== "SNAKE" && k !== "TEAM_VS_TEAM") next.delete(k);
+          }
+        }
+        // Only return a new Set if something actually changed.
+        if (next.size === curr.size) {
+          let same = true;
+          for (const k of next) if (!curr.has(k)) { same = false; break; }
+          if (same) return curr;
+        }
         return next;
       });
     }
@@ -1154,7 +1169,19 @@ export default function NewMatchForm({
                 option on step 0, which also exposes the rule picker
                 inline. Pulling it from the checkbox list keeps INDIV
                 matches from showing an irrelevant team toggle. */}
-            {ALL_SIDE_GAMES.filter((g) => g.kind !== "TEAM_VS_TEAM").map((g) => {
+            {ALL_SIDE_GAMES.filter((g) => {
+              // TEAM_VS_TEAM is never in this list -- it's only
+              // reachable via the format picker on step 0.
+              if (g.kind === "TEAM_VS_TEAM") return false;
+              // Teams (SCRAMBLE) logs ONE score per team per hole, so
+              // any side game that needs per-player scores (Stableford,
+              // Skins, Nassau, BBB, Wolf) has nothing to score against.
+              // Snake is event-based (3-putts) and works fine in
+              // scramble -- whoever takes the third putt holds the
+              // snake regardless of which ball the team played.
+              if (format === "SCRAMBLE" && g.kind !== "SNAKE") return false;
+              return true;
+            }).map((g) => {
               const disabledByHoles = g.requires18 && holes !== 18;
               const active = sideGames.has(g.kind);
               return (
