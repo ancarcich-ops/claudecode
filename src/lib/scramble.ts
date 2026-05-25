@@ -135,3 +135,98 @@ export function teamHandicap<P extends Player>(
   const avg = hcps.reduce((a, b) => a + b, 0) / hcps.length;
   return Math.round(avg * 10) / 10;
 }
+
+// Derive a team's per-hole gross scores from each teammate's scores
+// using one of the team-vs-team rules. Used by the SCRAMBLE odds path
+// when feeding the engine its team-level scoresByHole -- with per-
+// player entry, the captain-only-logs-team-score model is dropped
+// and team scores are computed via the rule (Best ball / Worst ball /
+// High + low / Sum / Aggregate net). Returns a hole -> stroke total
+// map; holes missing any teammate's entry are omitted.
+//
+// Rule string is intentionally typed loosely (string | undefined) so
+// callers can pass values straight off persisted side-game config
+// without an extra cast; unknown rules fall back to BEST_BALL.
+type RuleId = "BEST_BALL" | "WORST_BALL" | "HIGH_LOW" | "SUM" | "AGGREGATE_NET";
+
+export function deriveTeamScoresByHole<
+  P extends Player & {
+    scores: { hole: number; strokes: number }[];
+  },
+>(
+  team: P[],
+  rule: string | undefined,
+  pars: number[],
+  totalHoles: number,
+  startingHole = 1,
+): Record<number, number> {
+  if (team.length === 0) return {};
+  const r: RuleId = (
+    [
+      "BEST_BALL",
+      "WORST_BALL",
+      "HIGH_LOW",
+      "SUM",
+      "AGGREGATE_NET",
+    ] as const
+  ).includes(rule as RuleId)
+    ? (rule as RuleId)
+    : "BEST_BALL";
+
+  // Per-player score lookup by hole. AGGREGATE_NET also needs the
+  // per-player handicap-adjusted stroke -- computed inline so we don't
+  // pull in netStrokesForHole from sideGames.ts (avoids circular dep).
+  const scoreFor = (p: P, holeIndex0: number): number | null => {
+    const hole = startingHole + holeIndex0;
+    const entry = p.scores.find((s) => s.hole === hole);
+    if (!entry) return null;
+    if (r !== "AGGREGATE_NET") return entry.strokes;
+    // Net = gross - strokes-given on this hole. Strokes spread evenly
+    // by hole number: floor(hcp/holes) on each, +1 on the first
+    // (hcp % holes) holes. Same shape as src/lib/sideGames.ts's
+    // strokesGiven helper.
+    if (p.handicap <= 0) return entry.strokes;
+    const base = Math.floor(p.handicap / totalHoles);
+    const extra = p.handicap - base * totalHoles;
+    const strokes = base + (holeIndex0 < extra ? 1 : 0);
+    return entry.strokes - strokes;
+  };
+
+  const out: Record<number, number> = {};
+  for (let i = 0; i < totalHoles; i++) {
+    const hole = startingHole + i;
+    const vals: number[] = [];
+    let anyMissing = false;
+    for (const p of team) {
+      const v = scoreFor(p, i);
+      if (v == null) {
+        anyMissing = true;
+        break;
+      }
+      vals.push(v);
+    }
+    if (anyMissing || vals.length === 0) continue;
+    let teamScore: number;
+    switch (r) {
+      case "BEST_BALL":
+        teamScore = Math.min(...vals);
+        break;
+      case "WORST_BALL":
+        teamScore = Math.max(...vals);
+        break;
+      case "HIGH_LOW":
+        teamScore = Math.min(...vals) + Math.max(...vals);
+        break;
+      case "SUM":
+      case "AGGREGATE_NET":
+        teamScore = vals.reduce((a, b) => a + b, 0);
+        break;
+    }
+    // pars[] is read by the caller for downstream display; we don't
+    // need it here but accept it to mirror the side-game compute
+    // signature for symmetry.
+    void pars;
+    out[hole] = teamScore;
+  }
+  return out;
+}

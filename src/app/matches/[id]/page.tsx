@@ -903,7 +903,13 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
               holes={match.holes}
               startingHole={matchStart}
               pars={pars}
-              players={displayEntities}
+              // Always per-player entry. SCRAMBLE used to collapse to
+              // 2 team rows (captain logs the team's score), but the
+              // team-rule aggregations (sum, high-low, aggregate net)
+              // need every player's individual score to compute. The
+              // 2-team summary still surfaces via the market chart +
+              // the Team vs Team leaderboard card below.
+              players={playerMeta}
               locked={!canLogScores}
             />
           </>

@@ -6,7 +6,6 @@ import {
   type ScoringMode,
 } from "./odds";
 import {
-  captainForTeam,
   partitionTeams,
   parseScrambleConfig,
   teamHandicap,
@@ -42,22 +41,46 @@ export async function loadMatchWithOdds(matchId: string) {
 
   // Scramble matches feed the odds engine a synthetic per-team player
   // list instead of the raw per-player list -- the engine doesn't need
-  // to know about scramble, it just sees N=2 entities competing. The
-  // captain (lowest-seat teammate) carries the team's score entries +
-  // wagers; team handicap is computed per the scramble config.
+  // to know about scramble, it just sees N=2 entities competing.
+  //
+  // Each teammate logs their own per-hole score; the team's per-hole
+  // score is derived from those individual entries via the team rule
+  // (Best ball / Worst ball / High + low / Sum / Aggregate net). The
+  // rule is stored on the auto-enabled TEAM_VS_TEAM side game's
+  // config; falls back to BEST_BALL when unset.
   const isScramble = match.format === "SCRAMBLE";
   const scrambleConfig = isScramble
     ? parseScrambleConfig(match.scrambleConfig)
     : null;
+  // Pull the team-vs-team rule (if any) off the auto-enabled side
+  // game so the derive helper knows which aggregation to apply.
+  const tvtRuleForScramble: string | undefined = (() => {
+    if (!isScramble) return undefined;
+    const tvtSg = match.sideGames.find((sg) => sg.kind === "TEAM_VS_TEAM");
+    if (!tvtSg?.config) return undefined;
+    try {
+      const parsed = JSON.parse(tvtSg.config);
+      return typeof parsed?.rule === "string" ? parsed.rule : undefined;
+    } catch {
+      return undefined;
+    }
+  })();
 
   let playerInputs: PlayerInput[];
   if (isScramble && scrambleConfig) {
     const teams = partitionTeams(match.players);
+    const { deriveTeamScoresByHole } = await import("./scramble");
     playerInputs = ([0, 1] as const)
       .map((t) => {
         const team = teams[t];
         if (team.length === 0) return null;
-        const captain = captainForTeam(team)!;
+        const teamScores = deriveTeamScoresByHole(
+          team,
+          tvtRuleForScramble,
+          pars,
+          match.holes,
+          match.startingHole ?? 1,
+        );
         return {
           id: `team-${t}`,
           handicap: teamHandicap(
@@ -70,9 +93,7 @@ export async function loadMatchWithOdds(matchId: string) {
             (sum, p) => sum + p._count.wagers,
             0,
           ),
-          scoresByHole: Object.fromEntries(
-            captain.scores.map((s) => [s.hole, s.strokes]),
-          ),
+          scoresByHole: teamScores,
         };
       })
       .filter((x): x is PlayerInput => x != null);
