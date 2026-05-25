@@ -408,9 +408,35 @@ export default function NewMatchForm({
     if (step > 0) setStep(step - 1);
   };
 
+  // Wraps the server action so an unexpected throw surfaces as a
+  // visible toast instead of a silent dead-click. Next's redirect()
+  // also throws an internal "NEXT_REDIRECT" error to navigate -- we
+  // detect that via the `digest` shape and re-throw so navigation
+  // still happens. Anything else gets toasted with the error message.
+  const submitMatch = async (formData: FormData) => {
+    try {
+      await action(formData);
+    } catch (err) {
+      if (
+        err &&
+        typeof err === "object" &&
+        "digest" in err &&
+        typeof (err as { digest?: string }).digest === "string" &&
+        (err as { digest: string }).digest.startsWith("NEXT_")
+      ) {
+        // Redirect / not-found signals -- let Next handle them.
+        throw err;
+      }
+      const msg = err instanceof Error ? err.message : "Couldn't open the market";
+      toast.error(msg);
+      // Log the full error for Vercel + browser console diagnostics.
+      console.error("createMatchAction failed:", err);
+    }
+  };
+
   return (
     <form
-      action={action}
+      action={submitMatch}
       className="space-y-4"
       onSubmit={(e) => {
         // Belt-and-suspenders: even if a stray Enter / replay-click on
