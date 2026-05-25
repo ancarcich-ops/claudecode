@@ -17,7 +17,8 @@ export type SideGameKind =
   | "BBB"
   | "SNAKE"
   | "WOLF"
-  | "TEAM_VS_TEAM";
+  | "TEAM_VS_TEAM"
+  | "MATCH";
 
 // Per-hole event kinds. Stored in SideGameEvent.kind for BBB rows.
 export const BBB_EVENT_KINDS = ["BINGO", "BANGO", "BONGO"] as const;
@@ -257,17 +258,17 @@ export const ALL_SIDE_GAMES: {
     blurb:
       "Split into 2 teams; per-hole team score from best ball, high-low, sum, or net.",
   },
+  {
+    kind: "MATCH",
+    label: "Match",
+    blurb:
+      "Match play: lowest net score on a hole wins a dot; ties wash. Round-robin with 3+ players.",
+  },
 ];
 
 // Future kinds: surfaced in the UI as 'coming soon' so users can see the
 // roadmap without us implementing them yet.
 export const COMING_SOON_SIDE_GAMES: { kind: string; label: string; blurb: string }[] = [
-  {
-    kind: "MATCH",
-    label: "Match",
-    blurb:
-      "Match play: lowest score on a hole wins a dot. Press to multiply hole value; strokes by handicap.",
-  },
   {
     kind: "VEGAS",
     label: "Vegas",
@@ -459,6 +460,98 @@ export function computeSkins(
     key: "SKINS",
     kind: "SKINS",
     title: "Skins",
+    subtitle,
+    rows: rankRows(rows, true),
+  };
+}
+
+// --- Match play ---------------------------------------------------------
+// Per-hole net-score comparison across every unordered pair of players.
+// Each fully-scored hole settles every pair: low net = +1 vs opponent,
+// tied = wash. Per-player numeric = sum across all pairs and holes.
+// For 2 players this is classic head-to-head match play; for 3+ players
+// it's a round-robin total ("how many net-pair-points are you up?").
+function matchPairTallies(
+  players: LiveScorePlayer[],
+  pars: number[],
+  holes: number,
+  scoringMode: ScoringMode,
+  startingHole: number,
+  // Stop after this hole index (0-based, exclusive). Used by runningMatch
+  // to plot the cumulative series; computeMatch passes `holes`.
+  upToHoleIdx: number,
+): { totals: Map<string, number>; thruHole: number } {
+  const totals = new Map<string, number>();
+  for (const p of players) totals.set(p.id, 0);
+  let thruHole = 0;
+  for (let i = 0; i < upToHoleIdx; i++) {
+    const h = startingHole + i;
+    if (players.some((p) => typeof p.scoresByHole[h] !== "number")) break;
+    const nets = players.map((p) => ({
+      id: p.id,
+      net: netStrokesForHole(
+        p.scoresByHole[h] as number,
+        p.handicap,
+        i,
+        holes,
+        scoringMode,
+      ),
+    }));
+    for (let a = 0; a < nets.length; a++) {
+      for (let b = a + 1; b < nets.length; b++) {
+        if (nets[a].net < nets[b].net) {
+          totals.set(nets[a].id, (totals.get(nets[a].id) ?? 0) + 1);
+          totals.set(nets[b].id, (totals.get(nets[b].id) ?? 0) - 1);
+        } else if (nets[b].net < nets[a].net) {
+          totals.set(nets[b].id, (totals.get(nets[b].id) ?? 0) + 1);
+          totals.set(nets[a].id, (totals.get(nets[a].id) ?? 0) - 1);
+        }
+      }
+    }
+    thruHole = h;
+  }
+  return { totals, thruHole };
+}
+
+function formatMatchPoints(n: number): string {
+  if (n === 0) return "AS";
+  return n > 0 ? `+${n}` : `${n}`;
+}
+
+export function computeMatch(
+  players: LiveScorePlayer[],
+  pars: number[],
+  holes: number,
+  scoringMode: ScoringMode,
+  startingHole: number = 1,
+): Leaderboard {
+  const { totals, thruHole } = matchPairTallies(
+    players,
+    pars,
+    holes,
+    scoringMode,
+    startingHole,
+    holes,
+  );
+  const rows = players.map((p) => {
+    const n = totals.get(p.id) ?? 0;
+    return {
+      playerId: p.id,
+      player: p.displayName,
+      numeric: n,
+      value: formatMatchPoints(n),
+    };
+  });
+  const subtitle =
+    thruHole === 0
+      ? "No holes scored yet"
+      : players.length === 2
+        ? `Match play · thru ${thruHole}`
+        : `Round-robin · thru ${thruHole}`;
+  return {
+    key: "MATCH",
+    kind: "MATCH",
+    title: "Match",
     subtitle,
     rows: rankRows(rows, true),
   };
@@ -1255,6 +1348,13 @@ export function computeAllSideGames(input: {
         startingHole,
       );
       if (lb) out.push({ kind, leaderboards: [lb] });
+    } else if (kind === "MATCH") {
+      out.push({
+        kind,
+        leaderboards: [
+          computeMatch(players, pars, holes, scoringMode, startingHole),
+        ],
+      });
     }
   }
   return out;
@@ -1268,7 +1368,8 @@ export function isSideGameKind(s: string): s is SideGameKind {
     s === "BBB" ||
     s === "SNAKE" ||
     s === "WOLF" ||
-    s === "TEAM_VS_TEAM"
+    s === "TEAM_VS_TEAM" ||
+    s === "MATCH"
   );
 }
 
@@ -1409,4 +1510,49 @@ export function runningNassauSegment(
     current: { ...running },
     throughHole: lastHole === 0 ? 0 : lastHole - start1 + 1,
   };
+}
+
+// Match-play running series: cumulative pair-tally after each fully-scored
+// hole. Series stops at the first hole missing any player's stroke so the
+// chart doesn't draw forward through gaps.
+export function runningMatch(
+  players: LiveScorePlayer[],
+  pars: number[],
+  holes: number,
+  scoringMode: ScoringMode,
+  startingHole: number = 1,
+): RunningSeries {
+  const rows: ({ hole: number } & Record<string, number>)[] = [];
+  const running: Record<string, number> = Object.fromEntries(
+    players.map((p) => [p.id, 0]),
+  );
+  let through = 0;
+  for (let i = 0; i < holes; i++) {
+    const h = startingHole + i;
+    if (players.some((p) => typeof p.scoresByHole[h] !== "number")) break;
+    const nets = players.map((p) => ({
+      id: p.id,
+      net: netStrokesForHole(
+        p.scoresByHole[h] as number,
+        p.handicap,
+        i,
+        holes,
+        scoringMode,
+      ),
+    }));
+    for (let a = 0; a < nets.length; a++) {
+      for (let b = a + 1; b < nets.length; b++) {
+        if (nets[a].net < nets[b].net) {
+          running[nets[a].id] = (running[nets[a].id] ?? 0) + 1;
+          running[nets[b].id] = (running[nets[b].id] ?? 0) - 1;
+        } else if (nets[b].net < nets[a].net) {
+          running[nets[b].id] = (running[nets[b].id] ?? 0) + 1;
+          running[nets[a].id] = (running[nets[a].id] ?? 0) - 1;
+        }
+      }
+    }
+    rows.push({ hole: h, ...running });
+    through = h;
+  }
+  return { rows, current: { ...running }, throughHole: through };
 }
