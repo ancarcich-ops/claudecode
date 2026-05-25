@@ -24,6 +24,7 @@ import {
   isBbbEventKind,
   isSideGameKind,
   isSnakeEventKind,
+  isMatchEventKind,
   isWolfEventKind,
   parseWolfConfig,
   stringifyWolfConfig,
@@ -739,7 +740,9 @@ export async function recordSideGameEventAction(formData: FormData) {
   const bbb = isBbbEventKind(kind);
   const snake = isSnakeEventKind(kind);
   const wolf = isWolfEventKind(kind);
-  if (!bbb && !snake && !wolf) throw new Error("Unsupported event kind");
+  const matchEvt = isMatchEventKind(kind);
+  if (!bbb && !snake && !wolf && !matchEvt)
+    throw new Error("Unsupported event kind");
 
   // Confirm the side game belongs to a match we can find AND that the
   // signed-in user is allowed to write (creator or a linked player).
@@ -821,6 +824,20 @@ export async function recordSideGameEventAction(formData: FormData) {
           data: { sideGameId, hole, kind },
         });
       }
+    }
+  } else if (matchEvt) {
+    // Match PRESS: pair-wide toggle, one event per hole. matchPlayerId
+    // is unused for press semantics; the press affects the entire pair.
+    const existing = await prisma.sideGameEvent.findFirst({
+      where: { sideGameId, hole, kind },
+      select: { id: true },
+    });
+    if (existing) {
+      await prisma.sideGameEvent.delete({ where: { id: existing.id } });
+    } else {
+      await prisma.sideGameEvent.create({
+        data: { sideGameId, hole, kind },
+      });
     }
   }
 
