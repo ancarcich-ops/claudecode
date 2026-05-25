@@ -178,6 +178,8 @@ export default function NewMatchForm({
     "PAR_OR_BETTER" | "BIRDIE_OR_BETTER"
   >("PAR_OR_BETTER");
   const [targetsTarget, setTargetsTarget] = useState("10");
+  // Optional pot ante per player. Blank/zero = no pot, just the count.
+  const [targetsAnte, setTargetsAnte] = useState("");
   // Match-play stroke-giving. AUTO = use the match scoringMode + each
   // player's handicap (default). MANUAL = use per-player strokes typed
   // below, regardless of the scoringMode.
@@ -770,6 +772,7 @@ export default function NewMatchForm({
                 ? JSON.stringify({
                     stat: targetsStat,
                     target: Number(targetsTarget) || 0,
+                    ante: Number(targetsAnte) || 0,
                   })
                 : ""
             }
@@ -1508,6 +1511,25 @@ export default function NewMatchForm({
                         />
                         <span className="text-[11px] text-mute">
                           of {holes}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <label className="text-[11px] text-mute whitespace-nowrap">
+                          Ante (per player)
+                        </label>
+                        <span className="text-[12px] text-mute">$</span>
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          min={0}
+                          step={1}
+                          value={targetsAnte}
+                          placeholder="0"
+                          onChange={(e) => setTargetsAnte(e.target.value)}
+                          className="input w-20 text-center text-sm py-1"
+                        />
+                        <span className="text-[10.5px] text-mute leading-snug">
+                          Winners split losers&apos; antes; all-hit or no-hit refunds.
                         </span>
                       </div>
                     </div>
