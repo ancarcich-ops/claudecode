@@ -389,6 +389,14 @@ export default async function MatchPage({
         targetsSideGame.config,
       )
     : null;
+  // Match config: AUTO when not configured, MANUAL when the operator
+  // entered per-player strokes on the new-match form.
+  const matchSideGame = (match.sideGames ?? []).find(
+    (sg) => sg.kind === "MATCH",
+  );
+  const matchConfig = matchSideGame
+    ? (await import("@/lib/sideGames")).parseMatchConfig(matchSideGame.config)
+    : null;
 
   const sideGameSections = computeAllSideGames({
     enabled: enabledKinds,
@@ -411,6 +419,7 @@ export default async function MatchPage({
     wolfConfig,
     teamVsTeamConfig,
     targetsConfig,
+    matchConfig,
   });
   const sideGameLabel: Record<SideGameKind, string> = Object.fromEntries(
     ALL_SIDE_GAMES.map((g) => [g.kind, g.label]),
@@ -498,6 +507,7 @@ export default async function MatchPage({
       match.holes,
       scoringMode,
       matchStart,
+      matchConfig,
     );
   }
   if (

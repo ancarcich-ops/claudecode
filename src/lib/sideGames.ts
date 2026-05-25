@@ -206,6 +206,47 @@ export function stringifyTeamVsTeamConfig(c: TeamVsTeamConfig): string {
   return JSON.stringify(c);
 }
 
+// ---- Match config ------------------------------------------------------
+// Match-play stroke-giving. AUTO uses the match-level scoringMode +
+// per-player handicaps (the default). MANUAL lets the user override
+// the effective strokes per player for Match specifically -- handy
+// when the group wants to play scratch elsewhere but level Match.
+
+export type MatchStrokesMode = "AUTO" | "MANUAL";
+export type MatchConfig = {
+  strokesMode: MatchStrokesMode;
+  // matchPlayerId -> total strokes used as the effective handicap for
+  // the Match leaderboard. Honored only when strokesMode === "MANUAL".
+  manualStrokes?: Record<string, number>;
+};
+
+export function parseMatchConfig(
+  raw: string | null | undefined,
+): MatchConfig | null {
+  if (!raw) return null;
+  try {
+    const obj = JSON.parse(raw);
+    if (!obj || typeof obj !== "object") return null;
+    const strokesMode: MatchStrokesMode =
+      obj.strokesMode === "MANUAL" ? "MANUAL" : "AUTO";
+    const manualStrokes: Record<string, number> = {};
+    if (obj.manualStrokes && typeof obj.manualStrokes === "object") {
+      for (const [k, v] of Object.entries(obj.manualStrokes)) {
+        if (typeof v === "number" && Number.isFinite(v)) {
+          manualStrokes[k] = Math.max(0, Math.floor(v));
+        }
+      }
+    }
+    return { strokesMode, manualStrokes };
+  } catch {
+    return null;
+  }
+}
+
+export function stringifyMatchConfig(c: MatchConfig): string {
+  return JSON.stringify(c);
+}
+
 // ---- Targets -----------------------------------------------------------
 // Per-round goal counting: each player aims for a target count of a
 // specific qualifying event. v1 supports stats derivable from existing
@@ -548,6 +589,25 @@ export function computeSkins(
 // tied = wash. Per-player numeric = sum across all pairs and holes.
 // For 2 players this is classic head-to-head match play; for 3+ players
 // it's a round-robin total ("how many net-pair-points are you up?").
+// Resolve the effective per-player handicap for Match scoring. AUTO
+// (default) honors the match-level scoringMode + each player's handicap;
+// MANUAL applies the operator-entered strokes directly and forces net
+// scoring regardless of the match's scoringMode.
+function matchEffective(
+  config: MatchConfig | null | undefined,
+  scoringMode: ScoringMode,
+  playerId: string,
+  handicap: number,
+): { hcp: number; mode: ScoringMode } {
+  if (config?.strokesMode === "MANUAL") {
+    return {
+      hcp: config.manualStrokes?.[playerId] ?? 0,
+      mode: "NET",
+    };
+  }
+  return { hcp: handicap, mode: scoringMode };
+}
+
 function matchPairTallies(
   players: LiveScorePlayer[],
   pars: number[],
@@ -557,6 +617,7 @@ function matchPairTallies(
   // Stop after this hole index (0-based, exclusive). Used by runningMatch
   // to plot the cumulative series; computeMatch passes `holes`.
   upToHoleIdx: number,
+  config?: MatchConfig | null,
 ): { totals: Map<string, number>; thruHole: number } {
   const totals = new Map<string, number>();
   for (const p of players) totals.set(p.id, 0);
@@ -564,16 +625,19 @@ function matchPairTallies(
   for (let i = 0; i < upToHoleIdx; i++) {
     const h = startingHole + i;
     if (players.some((p) => typeof p.scoresByHole[h] !== "number")) break;
-    const nets = players.map((p) => ({
-      id: p.id,
-      net: netStrokesForHole(
-        p.scoresByHole[h] as number,
-        p.handicap,
-        i,
-        holes,
-        scoringMode,
-      ),
-    }));
+    const nets = players.map((p) => {
+      const eff = matchEffective(config, scoringMode, p.id, p.handicap);
+      return {
+        id: p.id,
+        net: netStrokesForHole(
+          p.scoresByHole[h] as number,
+          eff.hcp,
+          i,
+          holes,
+          eff.mode,
+        ),
+      };
+    });
     for (let a = 0; a < nets.length; a++) {
       for (let b = a + 1; b < nets.length; b++) {
         if (nets[a].net < nets[b].net) {
@@ -601,6 +665,7 @@ export function computeMatch(
   holes: number,
   scoringMode: ScoringMode,
   startingHole: number = 1,
+  config?: MatchConfig | null,
 ): Leaderboard {
   const { totals, thruHole } = matchPairTallies(
     players,
@@ -609,6 +674,7 @@ export function computeMatch(
     scoringMode,
     startingHole,
     holes,
+    config,
   );
   const rows = players.map((p) => {
     const n = totals.get(p.id) ?? 0;
@@ -619,12 +685,14 @@ export function computeMatch(
       value: formatMatchPoints(n),
     };
   });
+  const strokesNote =
+    config?.strokesMode === "MANUAL" ? " · manual strokes" : "";
   const subtitle =
     thruHole === 0
       ? "No holes scored yet"
       : players.length === 2
-        ? `Match play · thru ${thruHole}`
-        : `Round-robin · thru ${thruHole}`;
+        ? `Match play · thru ${thruHole}${strokesNote}`
+        : `Round-robin · thru ${thruHole}${strokesNote}`;
   return {
     key: "MATCH",
     kind: "MATCH",
@@ -1642,6 +1710,9 @@ export function computeAllSideGames(input: {
   // Targets needs a stat + target number. Null = enabled but not yet
   // configured -- leaderboard omitted, UI prompts for config.
   targetsConfig?: TargetsConfig | null;
+  // Match strokes mode + manual stroke overrides. Null = AUTO (current
+  // default behavior using the match-level scoringMode + handicaps).
+  matchConfig?: MatchConfig | null;
 }): { kind: SideGameKind; leaderboards: Leaderboard[] }[] {
   const {
     enabled,
@@ -1657,6 +1728,7 @@ export function computeAllSideGames(input: {
     wolfConfig = {},
     teamVsTeamConfig = null,
     targetsConfig = null,
+    matchConfig = null,
   } = input;
   const out: { kind: SideGameKind; leaderboards: Leaderboard[] }[] = [];
   for (const kind of enabled) {
@@ -1710,7 +1782,14 @@ export function computeAllSideGames(input: {
       out.push({
         kind,
         leaderboards: [
-          computeMatch(players, pars, holes, scoringMode, startingHole),
+          computeMatch(
+            players,
+            pars,
+            holes,
+            scoringMode,
+            startingHole,
+            matchConfig,
+          ),
         ],
       });
     } else if (kind === "SIXES") {
@@ -1892,6 +1971,7 @@ export function runningMatch(
   holes: number,
   scoringMode: ScoringMode,
   startingHole: number = 1,
+  config?: MatchConfig | null,
 ): RunningSeries {
   const rows: ({ hole: number } & Record<string, number>)[] = [];
   const running: Record<string, number> = Object.fromEntries(
@@ -1901,16 +1981,19 @@ export function runningMatch(
   for (let i = 0; i < holes; i++) {
     const h = startingHole + i;
     if (players.some((p) => typeof p.scoresByHole[h] !== "number")) break;
-    const nets = players.map((p) => ({
-      id: p.id,
-      net: netStrokesForHole(
-        p.scoresByHole[h] as number,
-        p.handicap,
-        i,
-        holes,
-        scoringMode,
-      ),
-    }));
+    const nets = players.map((p) => {
+      const eff = matchEffective(config, scoringMode, p.id, p.handicap);
+      return {
+        id: p.id,
+        net: netStrokesForHole(
+          p.scoresByHole[h] as number,
+          eff.hcp,
+          i,
+          holes,
+          eff.mode,
+        ),
+      };
+    });
     for (let a = 0; a < nets.length; a++) {
       for (let b = a + 1; b < nets.length; b++) {
         if (nets[a].net < nets[b].net) {

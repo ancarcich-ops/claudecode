@@ -407,6 +407,46 @@ export async function createMatchAction(formData: FormData) {
     }
   }
 
+  // Match: read inline form config and persist on SideGame.config.
+  // The form sends manualStrokesByIndex aligned to the player draft
+  // order; map it onto the matchPlayerIds created above.
+  if (sideGameKinds.includes("MATCH")) {
+    const raw = String(formData.get("matchConfig") ?? "");
+    if (raw) {
+      const { stringifyMatchConfig } = await import("./sideGames");
+      try {
+        const obj = JSON.parse(raw);
+        const strokesMode: "AUTO" | "MANUAL" =
+          obj?.strokesMode === "MANUAL" ? "MANUAL" : "AUTO";
+        const manualStrokes: Record<string, number> = {};
+        if (
+          strokesMode === "MANUAL" &&
+          Array.isArray(obj?.manualStrokesByIndex)
+        ) {
+          for (
+            let i = 0;
+            i < match.players.length && i < obj.manualStrokesByIndex.length;
+            i++
+          ) {
+            const v = obj.manualStrokesByIndex[i];
+            if (typeof v === "number" && Number.isFinite(v) && v >= 0) {
+              manualStrokes[match.players[i].id] = Math.floor(v);
+            }
+          }
+        }
+        await prisma.sideGame.update({
+          where: { matchId_kind: { matchId: match.id, kind: "MATCH" } },
+          data: {
+            config: stringifyMatchConfig({ strokesMode, manualStrokes }),
+          },
+        });
+      } catch {
+        // Malformed -- leave SideGame.config null; compute falls back
+        // to AUTO with the match-level scoringMode.
+      }
+    }
+  }
+
   // Targets: read inline form config and persist on SideGame.config.
   if (sideGameKinds.includes("TARGETS")) {
     const raw = String(formData.get("targetsConfig") ?? "");
