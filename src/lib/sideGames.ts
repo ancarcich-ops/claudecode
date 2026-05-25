@@ -122,6 +122,18 @@ export const TEAM_VS_TEAM_RULES: TeamVsTeamRule[] = [
   "VEGAS",
 ];
 
+export type VegasDoubleHoles = "OFF" | "INCREMENTAL" | "EXPONENTIAL";
+export type VegasOptions = {
+  // Birdie flip: when a team birdies the hole, the OTHER team's
+  // 2-digit Vegas score flips (high digit becomes the tens place).
+  birdieFlip?: boolean;
+  // Tied-hole multiplier carry. OFF (default) = ties contribute 0 and
+  // play continues at 1x. INCREMENTAL = next hole 2x, then 3x, 4x...
+  // EXPONENTIAL = 2x, 4x, 8x... Multiplier resets to 1x on any non-tied
+  // hole.
+  doubleHoles?: VegasDoubleHoles;
+};
+
 export type TeamVsTeamConfig = {
   // matchPlayerId arrays per team. Stored as { "0": [...], "1": [...] }
   // in JSON; parsed back into a typed object here.
@@ -129,6 +141,8 @@ export type TeamVsTeamConfig = {
   rule: TeamVsTeamRule;
   // Optional display names; falls back to "Team A" / "Team B".
   teamNames?: { 0?: string; 1?: string };
+  // Vegas-specific options; honored only when rule === "VEGAS".
+  vegas?: VegasOptions;
 };
 
 function isTeamVsTeamRule(s: unknown): s is TeamVsTeamRule {
@@ -171,7 +185,18 @@ export function parseTeamVsTeamConfig(
                 : undefined,
           }
         : undefined;
-    return { teams: { 0: teams[0], 1: teams[1] }, rule, teamNames };
+    const vegas: VegasOptions | undefined =
+      obj.vegas && typeof obj.vegas === "object"
+        ? {
+            birdieFlip: obj.vegas.birdieFlip === true,
+            doubleHoles:
+              obj.vegas.doubleHoles === "INCREMENTAL" ||
+              obj.vegas.doubleHoles === "EXPONENTIAL"
+                ? obj.vegas.doubleHoles
+                : "OFF",
+          }
+        : undefined;
+    return { teams: { 0: teams[0], 1: teams[1] }, rule, teamNames, vegas };
   } catch {
     return null;
   }
@@ -913,20 +938,22 @@ export function computeTeamVsTeam(
   // first); per-hole points = difference, awarded to the lower team.
   // 2v2 only -- with team sizes != 2, return null so the UI can hint to
   // pick a different rule.
+  //
+  // Options:
+  //   birdieFlip: when a team makes a birdie on the hole, the OTHER
+  //     team's score gets flipped (high digit becomes tens place).
+  //     Both teams birdie -> both flip (still hurts the loser the most).
+  //   doubleHoles: tied holes carry a multiplier into the NEXT hole.
+  //     INCREMENTAL grows 1,2,3,4... EXPONENTIAL grows 1,2,4,8... Reset
+  //     to 1 on any non-tied hole.
   if (config.rule === "VEGAS") {
     if (teamA.length !== 2 || teamB.length !== 2) return null;
-    const vegasFor = (strokes: number[]) => {
-      const lo = Math.min(...strokes);
-      const hi = Math.max(...strokes);
-      // For canonical 2v2 with single-digit strokes this is just
-      // "low-high" read as a 2-digit number. Scores >= 10 fall through
-      // arithmetically (e.g. 4 and 11 -> 51); rare enough that we keep
-      // the formula simple rather than special-casing.
-      return lo * 10 + hi;
-    };
+    const opt = config.vegas ?? {};
+    const vegasFor = (lo: number, hi: number) => lo * 10 + hi;
     let aPts = 0;
     let bPts = 0;
     let counted = 0;
+    let multiplier = 1;
     for (let i = 0; i < holes; i++) {
       const hole = startingHole + i;
       const aScores = teamA.map((p) => p.scoresByHole[hole]);
@@ -937,11 +964,34 @@ export function computeTeamVsTeam(
       )
         continue;
       counted++;
-      const aVal = vegasFor(aScores as number[]);
-      const bVal = vegasFor(bScores as number[]);
+      const a = aScores as number[];
+      const b = bScores as number[];
+      const par = pars[i] ?? 4;
+      const aBirdie = a.some((s) => s < par);
+      const bBirdie = b.some((s) => s < par);
+      const aLo = Math.min(...a);
+      const aHi = Math.max(...a);
+      const bLo = Math.min(...b);
+      const bHi = Math.max(...b);
+      // If the OPPOSING team birdied and birdieFlip is on, your score
+      // flips (the high digit goes to the tens place).
+      const aFlipped = !!opt.birdieFlip && bBirdie;
+      const bFlipped = !!opt.birdieFlip && aBirdie;
+      const aVal = aFlipped ? vegasFor(aHi, aLo) : vegasFor(aLo, aHi);
+      const bVal = bFlipped ? vegasFor(bHi, bLo) : vegasFor(bLo, bHi);
       const diff = Math.abs(aVal - bVal);
-      if (aVal < bVal) aPts += diff;
-      else if (bVal < aVal) bPts += diff;
+      if (aVal < bVal) {
+        aPts += diff * multiplier;
+        multiplier = 1;
+      } else if (bVal < aVal) {
+        bPts += diff * multiplier;
+        multiplier = 1;
+      } else {
+        // Tied hole -- carry the multiplier per doubleHoles mode.
+        if (opt.doubleHoles === "INCREMENTAL") multiplier += 1;
+        else if (opt.doubleHoles === "EXPONENTIAL") multiplier *= 2;
+        // OFF: multiplier stays at 1, tied hole contributes nothing.
+      }
     }
     const fmtPts = (pts: number) =>
       counted === 0 ? "—" : `${pts} pt${pts === 1 ? "" : "s"} (${counted}h)`;
