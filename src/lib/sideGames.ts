@@ -260,9 +260,33 @@ export const ALL_SIDE_GAMES: {
 ];
 
 // Future kinds: surfaced in the UI as 'coming soon' so users can see the
-// roadmap without us implementing them yet. (Empty now -- all six games
-// are wired in.)
-export const COMING_SOON_SIDE_GAMES: { kind: string; label: string; blurb: string }[] = [];
+// roadmap without us implementing them yet.
+export const COMING_SOON_SIDE_GAMES: { kind: string; label: string; blurb: string }[] = [
+  {
+    kind: "MATCH",
+    label: "Match",
+    blurb:
+      "Match play: lowest score on a hole wins a dot. Press to multiply hole value; strokes by handicap.",
+  },
+  {
+    kind: "VEGAS",
+    label: "Vegas",
+    blurb:
+      "2-on-2: each team's two scores form a 2-digit number (low first). Lower team wins the difference. Birdie flip + double holes optional.",
+  },
+  {
+    kind: "SIXES",
+    label: "Sixes",
+    blurb:
+      "Foursome with rotating partners every 6 holes: 1+2 vs 3+4, then 1+3 vs 2+4, then 1+4 vs 2+3.",
+  },
+  {
+    kind: "TARGETS",
+    label: "Targets",
+    blurb:
+      "Pick a stat (fairways, GIR, pars, birdies); each player hits a number to win their share of the pot.",
+  },
+];
 
 export type LiveScorePlayer = {
   id: string;
