@@ -372,6 +372,26 @@ export async function createMatchAction(formData: FormData) {
     // stays opt-in: SideGame.config remains null, computeAllSideGames
     // skips it, UI shows a "configure now" CTA later.
     if (teamPlayers[0].length > 0 && teamPlayers[1].length > 0) {
+      // Vegas-specific options only honored when rule === "VEGAS".
+      let vegas: { birdieFlip: boolean; doubleHoles: "OFF" | "INCREMENTAL" | "EXPONENTIAL" } | undefined;
+      if (rule === "VEGAS") {
+        const rawVegas = String(formData.get("vegasConfig") ?? "");
+        if (rawVegas) {
+          try {
+            const obj = JSON.parse(rawVegas);
+            vegas = {
+              birdieFlip: obj?.birdieFlip === true,
+              doubleHoles:
+                obj?.doubleHoles === "INCREMENTAL" ||
+                obj?.doubleHoles === "EXPONENTIAL"
+                  ? obj.doubleHoles
+                  : "OFF",
+            };
+          } catch {
+            // Malformed -- fall through with no vegas options.
+          }
+        }
+      }
       await prisma.sideGame.update({
         where: {
           matchId_kind: { matchId: match.id, kind: "TEAM_VS_TEAM" },
@@ -380,6 +400,7 @@ export async function createMatchAction(formData: FormData) {
           config: stringifyTeamVsTeamConfig({
             teams: teamPlayers,
             rule,
+            ...(vegas ? { vegas } : {}),
           }),
         },
       });

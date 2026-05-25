@@ -167,6 +167,11 @@ export default function NewMatchForm({
   // whenever EITHER scramble is the format OR the TEAM_VS_TEAM
   // side game is enabled.
   const [tvtRule, setTvtRule] = useState<TeamVsTeamRule>("BEST_BALL");
+  // Vegas-specific options. Only sent when the active rule is VEGAS.
+  const [vegasBirdieFlip, setVegasBirdieFlip] = useState(false);
+  const [vegasDoubleHoles, setVegasDoubleHoles] = useState<
+    "OFF" | "INCREMENTAL" | "EXPONENTIAL"
+  >("OFF");
   // Targets config -- only sent when TARGETS is selected. Defaults
   // chosen to be sensible for an 18-hole round.
   const [targetsStat, setTargetsStat] = useState<
@@ -734,6 +739,18 @@ export default function NewMatchForm({
           <input type="hidden" name="tvtRule" value={tvtRule} />
           <input
             type="hidden"
+            name="vegasConfig"
+            value={
+              tvtRule === "VEGAS"
+                ? JSON.stringify({
+                    birdieFlip: vegasBirdieFlip,
+                    doubleHoles: vegasDoubleHoles,
+                  })
+                : ""
+            }
+          />
+          <input
+            type="hidden"
             name="targetsConfig"
             value={
               sideGames.has("TARGETS")
@@ -938,6 +955,59 @@ export default function NewMatchForm({
             individual strokes. Assign players to Team A or B on the
             Players step.
           </p>
+          {tvtRule === "VEGAS" && (
+            <div className="mt-2 rounded-md border border-border bg-panel2/40 p-2.5 space-y-2.5">
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={vegasBirdieFlip}
+                  onChange={(e) => setVegasBirdieFlip(e.target.checked)}
+                  className="mt-0.5 shrink-0 accent-accent"
+                />
+                <span className="min-w-0">
+                  <span className="block text-[12px] font-medium">
+                    Birdie flip
+                  </span>
+                  <span className="block text-[10.5px] text-mute leading-snug">
+                    When a team birdies, the other team&apos;s score flips
+                    (high digit goes first).
+                  </span>
+                </span>
+              </label>
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-mute mb-1">
+                  Double holes (tied-hole multiplier)
+                </div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {(
+                    [
+                      ["OFF", "Off"],
+                      ["INCREMENTAL", "2× 3× 4×"],
+                      ["EXPONENTIAL", "2× 4× 8×"],
+                    ] as const
+                  ).map(([val, label]) => {
+                    const isActive = vegasDoubleHoles === val;
+                    return (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => setVegasDoubleHoles(val)}
+                        className={
+                          "rounded-md border px-2 py-1.5 text-[12px] " +
+                          (isActive
+                            ? "border-accent bg-accent/10 text-ink"
+                            : "border-border text-mute hover:text-ink")
+                        }
+                        aria-pressed={isActive}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
           <p className="text-[12px] text-mute mt-3 leading-snug">
             Players split into 2 teams; live odds price team-vs-team.
           </p>
