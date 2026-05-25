@@ -373,12 +373,19 @@ export async function createMatchAction(formData: FormData) {
     // skips it, UI shows a "configure now" CTA later.
     if (teamPlayers[0].length > 0 && teamPlayers[1].length > 0) {
       // Vegas-specific options only honored when rule === "VEGAS".
-      let vegas: { birdieFlip: boolean; doubleHoles: "OFF" | "INCREMENTAL" | "EXPONENTIAL" } | undefined;
+      let vegas:
+        | {
+            birdieFlip: boolean;
+            doubleHoles: "OFF" | "INCREMENTAL" | "EXPONENTIAL";
+            stake?: number;
+          }
+        | undefined;
       if (rule === "VEGAS") {
         const rawVegas = String(formData.get("vegasConfig") ?? "");
         if (rawVegas) {
           try {
             const obj = JSON.parse(rawVegas);
+            const stakeNum = Number(obj?.stake);
             vegas = {
               birdieFlip: obj?.birdieFlip === true,
               doubleHoles:
@@ -386,6 +393,9 @@ export async function createMatchAction(formData: FormData) {
                 obj?.doubleHoles === "EXPONENTIAL"
                   ? obj.doubleHoles
                   : "OFF",
+              ...(Number.isFinite(stakeNum) && stakeNum > 0
+                ? { stake: stakeNum }
+                : {}),
             };
           } catch {
             // Malformed -- fall through with no vegas options.
@@ -440,6 +450,9 @@ export async function createMatchAction(formData: FormData) {
           autoPress && Number.isFinite(rawThreshold) && rawThreshold >= 1
             ? Math.floor(rawThreshold)
             : undefined;
+        const stakeNum = Number(obj?.stake);
+        const stake =
+          Number.isFinite(stakeNum) && stakeNum > 0 ? stakeNum : undefined;
         await prisma.sideGame.update({
           where: { matchId_kind: { matchId: match.id, kind: "MATCH" } },
           data: {
@@ -448,12 +461,35 @@ export async function createMatchAction(formData: FormData) {
               manualStrokes,
               autoPress,
               ...(autoPressThreshold ? { autoPressThreshold } : {}),
+              ...(stake ? { stake } : {}),
             }),
           },
         });
       } catch {
         // Malformed -- leave SideGame.config null; compute falls back
         // to AUTO with the match-level scoringMode.
+      }
+    }
+  }
+
+  // Sixes: stake-only config for v1.
+  if (sideGameKinds.includes("SIXES")) {
+    const raw = String(formData.get("sixesConfig") ?? "");
+    if (raw) {
+      const { stringifySixesConfig } = await import("./sideGames");
+      try {
+        const obj = JSON.parse(raw);
+        const stakeNum = Number(obj?.stake);
+        const stake =
+          Number.isFinite(stakeNum) && stakeNum > 0 ? stakeNum : undefined;
+        if (stake) {
+          await prisma.sideGame.update({
+            where: { matchId_kind: { matchId: match.id, kind: "SIXES" } },
+            data: { config: stringifySixesConfig({ stake }) },
+          });
+        }
+      } catch {
+        // Malformed -- leave config null.
       }
     }
   }

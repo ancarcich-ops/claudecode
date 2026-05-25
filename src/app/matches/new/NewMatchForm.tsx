@@ -193,6 +193,12 @@ export default function NewMatchForm({
   // server compute ignores it otherwise.
   const [matchAutoPress, setMatchAutoPress] = useState(false);
   const [matchAutoPressThreshold, setMatchAutoPressThreshold] = useState("2");
+  // Match dollar wager per dot. Blank/zero = no $ math.
+  const [matchStake, setMatchStake] = useState("");
+  // Sixes dollar wager per dot.
+  const [sixesStake, setSixesStake] = useState("");
+  // Vegas dollar wager per Vegas point.
+  const [vegasStake, setVegasStake] = useState("");
 
   // Keep sideGames in sync with the format picker. Both Teams
   // (SCRAMBLE) and Both auto-enable TEAM_VS_TEAM so the rule picker
@@ -760,6 +766,7 @@ export default function NewMatchForm({
                 ? JSON.stringify({
                     birdieFlip: vegasBirdieFlip,
                     doubleHoles: vegasDoubleHoles,
+                    stake: Number(vegasStake) || 0,
                   })
                 : ""
             }
@@ -774,6 +781,16 @@ export default function NewMatchForm({
                     target: Number(targetsTarget) || 0,
                     ante: Number(targetsAnte) || 0,
                   })
+                : ""
+            }
+          />
+          {/* Sixes config: just a per-dot wager for v1. */}
+          <input
+            type="hidden"
+            name="sixesConfig"
+            value={
+              sideGames.has("SIXES")
+                ? JSON.stringify({ stake: Number(sixesStake) || 0 })
                 : ""
             }
           />
@@ -792,6 +809,7 @@ export default function NewMatchForm({
                     autoPress: matchAutoPress,
                     autoPressThreshold:
                       Number(matchAutoPressThreshold) || 2,
+                    stake: Number(matchStake) || 0,
                   })
                 : ""
             }
@@ -1040,6 +1058,23 @@ export default function NewMatchForm({
                     );
                   })}
                 </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-[11px] text-mute whitespace-nowrap">
+                  Wager
+                </label>
+                <span className="text-[12px] text-mute">$</span>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  step={1}
+                  value={vegasStake}
+                  placeholder="0"
+                  onChange={(e) => setVegasStake(e.target.value)}
+                  className="input w-20 text-center text-sm py-1"
+                />
+                <span className="text-[10.5px] text-mute">per point</span>
               </div>
             </div>
           )}
@@ -1458,11 +1493,49 @@ export default function NewMatchForm({
                           />
                         </div>
                       )}
+                      <div className="flex items-center gap-2">
+                        <label className="text-[11px] text-mute whitespace-nowrap">
+                          Wager
+                        </label>
+                        <span className="text-[12px] text-mute">$</span>
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          min={0}
+                          step={1}
+                          value={matchStake}
+                          placeholder="0"
+                          onChange={(e) => setMatchStake(e.target.value)}
+                          className="input w-20 text-center text-sm py-1"
+                        />
+                        <span className="text-[10.5px] text-mute">per dot</span>
+                      </div>
                     </div>
                   )}
                   {/* Targets inline config: stat picker + per-player
                       target number. Only shown when the game is
                       actually selected. */}
+                  {g.kind === "SIXES" && active && !disabled && (
+                    <div className="mt-2 ml-7 mr-1 rounded-md border border-border bg-panel2/40 p-2">
+                      <div className="flex items-center gap-2">
+                        <label className="text-[11px] text-mute whitespace-nowrap">
+                          Wager
+                        </label>
+                        <span className="text-[12px] text-mute">$</span>
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          min={0}
+                          step={1}
+                          value={sixesStake}
+                          placeholder="0"
+                          onChange={(e) => setSixesStake(e.target.value)}
+                          className="input w-20 text-center text-sm py-1"
+                        />
+                        <span className="text-[10.5px] text-mute">per dot</span>
+                      </div>
+                    </div>
+                  )}
                   {g.kind === "TARGETS" && active && !disabled && (
                     <div className="mt-2 ml-7 mr-1 rounded-md border border-border bg-panel2/40 p-2 space-y-2">
                       <div>
