@@ -37,6 +37,21 @@ export function isSnakeEventKind(s: string): s is SnakeEventKind {
   return (SNAKE_EVENT_KINDS as readonly string[]).includes(s);
 }
 
+// Match-play press events. Each event marks a manual press called at
+// a specific hole; the press takes effect from hole+1 onwards. 2-player
+// matches only -- compute ignores press events on 3+ player matches.
+export const MATCH_EVENT_KINDS = ["PRESS"] as const;
+export type MatchEventKind = (typeof MATCH_EVENT_KINDS)[number];
+
+export function isMatchEventKind(s: string): s is MatchEventKind {
+  return (MATCH_EVENT_KINDS as readonly string[]).includes(s);
+}
+
+export type MatchEvent = {
+  hole: number;
+  kind: MatchEventKind;
+};
+
 export const WOLF_EVENT_KINDS = [
   "PARTNER",
   "LONE_WOLF",
@@ -683,14 +698,26 @@ function matchPairTallies(
   // to plot the cumulative series; computeMatch passes `holes`.
   upToHoleIdx: number,
   config?: MatchConfig | null,
-): { totals: Map<string, number>; thruHole: number; presses: number } {
+  events?: MatchEvent[] | null,
+): {
+  totals: Map<string, number>;
+  thruHole: number;
+  presses: number;
+  manualPresses: number;
+} {
   const totals = new Map<string, number>();
   for (const p of players) totals.set(p.id, 0);
   let thruHole = 0;
-  // Auto-press only applies to a 2-player match. For round-robin (3+)
-  // we ignore the autoPress flag -- press semantics are pair-only.
-  const pressEnabled =
-    !!config?.autoPress && players.length === 2 && config.autoPress;
+  // Press semantics (auto OR manual) only apply to a 2-player match.
+  const isTwoPlayer = players.length === 2;
+  const manualPressHoles = new Set<number>();
+  if (isTwoPlayer && events) {
+    for (const e of events) {
+      if (e.kind === "PRESS") manualPressHoles.add(e.hole);
+    }
+  }
+  const pressActive =
+    isTwoPlayer && (!!config?.autoPress || manualPressHoles.size > 0);
   const pressThreshold = Math.max(
     1,
     Math.floor(config?.autoPressThreshold ?? 2),
@@ -701,6 +728,7 @@ function matchPairTallies(
   const lines: { startHole: number; diff: number; pressed: boolean }[] = [
     { startHole: 0, diff: 0, pressed: false },
   ];
+  let manualPresses = 0;
   for (let i = 0; i < upToHoleIdx; i++) {
     const h = startingHole + i;
     if (players.some((p) => typeof p.scoresByHole[h] !== "number")) break;
@@ -717,7 +745,7 @@ function matchPairTallies(
         ),
       };
     });
-    if (pressEnabled) {
+    if (pressActive) {
       // Update every active line (line.startHole <= i).
       let delta = 0;
       if (nets[0].net < nets[1].net) delta = 1;
@@ -726,16 +754,25 @@ function matchPairTallies(
         if (line.startHole > i) continue;
         line.diff += delta;
       }
-      // After updating, spawn a new line if any existing un-pressed
-      // line crossed the threshold this hole. Only the most-recent
-      // un-pressed line triggers a new press (so we don't fan out
-      // exponentially on a single blow-out hole).
-      const trigger = lines
-        .filter((l) => !l.pressed && Math.abs(l.diff) >= pressThreshold)
-        .pop();
-      if (trigger && i + 1 < holes) {
-        trigger.pressed = true;
+      // Auto-press: spawn a new line when the most-recent un-pressed
+      // line has crossed the configured threshold this hole.
+      if (config?.autoPress) {
+        const trigger = lines
+          .filter((l) => !l.pressed && Math.abs(l.diff) >= pressThreshold)
+          .pop();
+        if (trigger && i + 1 < holes) {
+          trigger.pressed = true;
+          lines.push({ startHole: i + 1, diff: 0, pressed: false });
+        }
+      }
+      // Manual press: a recorded event at hole h spawns a line starting
+      // at hole+1. Marks the most-recent un-pressed line as pressed too
+      // so the press count is consistent.
+      if (manualPressHoles.has(h) && i + 1 < holes) {
+        const target = [...lines].reverse().find((l) => !l.pressed);
+        if (target) target.pressed = true;
         lines.push({ startHole: i + 1, diff: 0, pressed: false });
+        manualPresses++;
       }
     } else {
       // Standard round-robin pair tally for 2+ players, no press.
@@ -753,12 +790,17 @@ function matchPairTallies(
     }
     thruHole = h;
   }
-  if (pressEnabled) {
+  if (pressActive) {
     const sum = lines.reduce((a, l) => a + l.diff, 0);
     totals.set(players[0].id, sum);
     totals.set(players[1].id, -sum);
   }
-  return { totals, thruHole, presses: pressEnabled ? lines.length - 1 : 0 };
+  return {
+    totals,
+    thruHole,
+    presses: pressActive ? lines.length - 1 : 0,
+    manualPresses,
+  };
 }
 
 function formatMatchPoints(n: number): string {
@@ -783,6 +825,7 @@ export function computeMatch(
   scoringMode: ScoringMode,
   startingHole: number = 1,
   config?: MatchConfig | null,
+  events?: MatchEvent[] | null,
 ): Leaderboard {
   const { totals, thruHole, presses } = matchPairTallies(
     players,
@@ -792,6 +835,7 @@ export function computeMatch(
     startingHole,
     holes,
     config,
+    events,
   );
   const stake = config?.stake ?? 0;
   const rows = players.map((p) => {
@@ -1877,6 +1921,9 @@ export function computeAllSideGames(input: {
   // Match strokes mode + manual stroke overrides. Null = AUTO (current
   // default behavior using the match-level scoringMode + handicaps).
   matchConfig?: MatchConfig | null;
+  // Manual press events recorded against the Match side game. Each
+  // event spawns a fresh press line on its hole+1.
+  matchEvents?: MatchEvent[];
   // Sixes stake (per dot). Null = no $ values shown.
   sixesConfig?: SixesConfig | null;
 }): { kind: SideGameKind; leaderboards: Leaderboard[] }[] {
@@ -1895,6 +1942,7 @@ export function computeAllSideGames(input: {
     teamVsTeamConfig = null,
     targetsConfig = null,
     matchConfig = null,
+    matchEvents = [],
     sixesConfig = null,
   } = input;
   const out: { kind: SideGameKind; leaderboards: Leaderboard[] }[] = [];
@@ -1956,6 +2004,7 @@ export function computeAllSideGames(input: {
             scoringMode,
             startingHole,
             matchConfig,
+            matchEvents,
           ),
         ],
       });
@@ -2146,12 +2195,21 @@ export function runningMatch(
   scoringMode: ScoringMode,
   startingHole: number = 1,
   config?: MatchConfig | null,
+  events?: MatchEvent[] | null,
 ): RunningSeries {
   const rows: ({ hole: number } & Record<string, number>)[] = [];
   const running: Record<string, number> = Object.fromEntries(
     players.map((p) => [p.id, 0]),
   );
-  const pressEnabled = !!config?.autoPress && players.length === 2;
+  const isTwoPlayer = players.length === 2;
+  const manualPressHoles = new Set<number>();
+  if (isTwoPlayer && events) {
+    for (const e of events) {
+      if (e.kind === "PRESS") manualPressHoles.add(e.hole);
+    }
+  }
+  const pressActive =
+    isTwoPlayer && (!!config?.autoPress || manualPressHoles.size > 0);
   const pressThreshold = Math.max(
     1,
     Math.floor(config?.autoPressThreshold ?? 2),
@@ -2176,7 +2234,7 @@ export function runningMatch(
         ),
       };
     });
-    if (pressEnabled) {
+    if (pressActive) {
       let delta = 0;
       if (nets[0].net < nets[1].net) delta = 1;
       else if (nets[1].net < nets[0].net) delta = -1;
@@ -2184,11 +2242,18 @@ export function runningMatch(
         if (line.startHole > i) continue;
         line.diff += delta;
       }
-      const trigger = lines
-        .filter((l) => !l.pressed && Math.abs(l.diff) >= pressThreshold)
-        .pop();
-      if (trigger && i + 1 < holes) {
-        trigger.pressed = true;
+      if (config?.autoPress) {
+        const trigger = lines
+          .filter((l) => !l.pressed && Math.abs(l.diff) >= pressThreshold)
+          .pop();
+        if (trigger && i + 1 < holes) {
+          trigger.pressed = true;
+          lines.push({ startHole: i + 1, diff: 0, pressed: false });
+        }
+      }
+      if (manualPressHoles.has(h) && i + 1 < holes) {
+        const target = [...lines].reverse().find((l) => !l.pressed);
+        if (target) target.pressed = true;
         lines.push({ startHole: i + 1, diff: 0, pressed: false });
       }
       const sum = lines.reduce((a, l) => a + l.diff, 0);

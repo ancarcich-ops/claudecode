@@ -46,6 +46,7 @@ import ShareButton from "@/components/ShareButton";
 import BBBEditor from "./BBBEditor";
 import SnakeEditor from "./SnakeEditor";
 import WolfEditor from "./WolfEditor";
+import PressEditor from "./PressEditor";
 import WolfSettings from "./WolfSettings";
 import WinCelebration from "@/components/WinCelebration";
 import OnCourseMode from "./OnCourseMode";
@@ -357,6 +358,15 @@ export default async function MatchPage({
       kind: e.kind as WolfEvent["kind"],
       matchPlayerId: e.matchPlayerId ?? null,
     }));
+  // Match press events: one row per pressed hole; matchPlayerId is unused.
+  const matchEventGame = (match.sideGames ?? []).find(
+    (sg) => sg.kind === "MATCH",
+  );
+  const matchEvents: { hole: number; kind: "PRESS" }[] = (
+    matchEventGame?.events ?? []
+  )
+    .filter((e) => e.kind === "PRESS")
+    .map((e) => ({ hole: e.hole, kind: "PRESS" as const }));
   const wolfConfig = parseWolfConfig(wolfGame?.config ?? null);
   const seatedWolfPlayers = match.players.map((p) => ({
     id: p.id,
@@ -427,6 +437,7 @@ export default async function MatchPage({
     teamVsTeamConfig,
     targetsConfig,
     matchConfig,
+    matchEvents,
     sixesConfig,
   });
   const sideGameLabel: Record<SideGameKind, string> = Object.fromEntries(
@@ -516,6 +527,7 @@ export default async function MatchPage({
       scoringMode,
       matchStart,
       matchConfig,
+      matchEvents,
     );
   }
   if (
@@ -692,6 +704,8 @@ export default async function MatchPage({
           wolfEvents,
           wolfConfig,
           seatedWolfPlayers,
+          matchEventGame,
+          matchEvents,
           placeWagerAction,
           updateHandicapAction,
           updateParsAction,
@@ -836,6 +850,8 @@ type BuildMatchTabsArgs = {
   wolfGame: { id: string } | null | undefined;
   wolfEvents: WolfEvent[];
   wolfConfig: { rotation?: string[]; pushRule?: "NO_POINTS" | "ROLLOVER" };
+  matchEventGame: { id: string } | null | undefined;
+  matchEvents: { hole: number; kind: "PRESS" }[];
   seatedWolfPlayers: Array<{
     id: string;
     seat: number;
@@ -879,6 +895,8 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
     wolfEvents,
     wolfConfig,
     seatedWolfPlayers,
+    matchEventGame,
+    matchEvents,
     placeWagerAction,
     updateHandicapAction,
     updateParsAction,
@@ -1153,6 +1171,26 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
               }
               return out;
             })()}
+            locked={!canLogScores}
+          />
+        </section>
+      )}
+
+      {matchEventGame && user && match.players.length === 2 && (
+        <section className="card p-4">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <h2 className="font-display text-base font-semibold text-ink">
+              Match · presses
+            </h2>
+            <span className="text-[11px] text-mute">
+              Tap a hole to press from the next hole onward
+            </span>
+          </div>
+          <PressEditor
+            sideGameId={matchEventGame.id}
+            holes={match.holes}
+            startingHole={matchStart}
+            pressedHoles={new Set(matchEvents.map((e) => e.hole))}
             locked={!canLogScores}
           />
         </section>
