@@ -795,10 +795,10 @@ export default function NewMatchForm({
                 m === "GROSS" ? "Gross" : m === "AVG" ? "Avg" : "Custom";
               const sub =
                 m === "GROSS"
-                  ? "no allowance"
+                  ? "No allowance"
                   : m === "AVG"
-                    ? "mean of HCPs"
-                    : "group decides";
+                    ? "Mean of HCPs"
+                    : "Group decides";
               return (
                 <button
                   key={m}
@@ -815,7 +815,7 @@ export default function NewMatchForm({
                   <span className="text-sm font-medium leading-none">
                     {label}
                   </span>
-                  <span className="text-[10px] uppercase tracking-wider text-mute font-mono">
+                  <span className="text-[10px] leading-none opacity-70">
                     {sub}
                   </span>
                 </button>
