@@ -171,6 +171,7 @@ export function buildMatchCardData(
             displayName: r.displayName,
           })),
           config.handicapMode,
+          config.customAllowance?.[t],
         );
         const name =
           (t === 0

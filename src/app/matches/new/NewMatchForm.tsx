@@ -140,8 +140,14 @@ export default function NewMatchForm({
     "INDIVIDUAL",
   );
   const [scrambleHcpMode, setScrambleHcpMode] = useState<
-    "GROSS" | "AVG" | "USGA_4P"
+    "GROSS" | "AVG" | "CUSTOM"
   >("GROSS");
+  // Custom per-team allowances, only used when scrambleHcpMode is
+  // CUSTOM. Strings instead of numbers so the input is comfortable
+  // to type in (leading 0s, partial entries during edit, etc.); the
+  // submitted scrambleConfig coerces to numbers.
+  const [scrambleCustomA, setScrambleCustomA] = useState("");
+  const [scrambleCustomB, setScrambleCustomB] = useState("");
   // Team-vs-Team side game configuration. The team picker (chips
   // per player row) shares state with the SCRAMBLE format's chips
   // -- PlayerRow.team is the single source of truth and surfaces
@@ -679,7 +685,17 @@ export default function NewMatchForm({
             name="scrambleConfig"
             value={
               format === "SCRAMBLE"
-                ? JSON.stringify({ handicapMode: scrambleHcpMode })
+                ? JSON.stringify({
+                    handicapMode: scrambleHcpMode,
+                    ...(scrambleHcpMode === "CUSTOM"
+                      ? {
+                          customAllowance: {
+                            0: Number(scrambleCustomA) || 0,
+                            1: Number(scrambleCustomB) || 0,
+                          },
+                        }
+                      : {}),
+                  })
                 : ""
             }
           />
@@ -805,16 +821,16 @@ export default function NewMatchForm({
         <div hidden={format !== "SCRAMBLE"}>
           <label className="label">Team handicap</label>
           <div className="grid grid-cols-3 gap-2">
-            {(["GROSS", "AVG", "USGA_4P"] as const).map((m) => {
+            {(["GROSS", "AVG", "CUSTOM"] as const).map((m) => {
               const active = scrambleHcpMode === m;
               const label =
-                m === "GROSS" ? "Gross" : m === "AVG" ? "Avg" : "USGA";
+                m === "GROSS" ? "Gross" : m === "AVG" ? "Avg" : "Custom";
               const sub =
                 m === "GROSS"
                   ? "no allowance"
                   : m === "AVG"
                     ? "mean of HCPs"
-                    : "25/20/15/10";
+                    : "group decides";
               return (
                 <button
                   key={m}
@@ -838,12 +854,46 @@ export default function NewMatchForm({
               );
             })}
           </div>
+          {scrambleHcpMode === "CUSTOM" && (
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <label className="block">
+                <span className="text-[10px] uppercase tracking-wider text-mute font-mono">
+                  Team A strokes
+                </span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  step={1}
+                  value={scrambleCustomA}
+                  onChange={(e) => setScrambleCustomA(e.target.value)}
+                  placeholder="0"
+                  className="input mt-1 text-center"
+                />
+              </label>
+              <label className="block">
+                <span className="text-[10px] uppercase tracking-wider text-mute font-mono">
+                  Team B strokes
+                </span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  step={1}
+                  value={scrambleCustomB}
+                  onChange={(e) => setScrambleCustomB(e.target.value)}
+                  placeholder="0"
+                  className="input mt-1 text-center"
+                />
+              </label>
+            </div>
+          )}
           <p className="text-[11px] text-mute mt-1.5">
             {scrambleHcpMode === "GROSS"
               ? "Pure team score with no handicap adjustment -- most casual scrambles."
               : scrambleHcpMode === "AVG"
                 ? "Each team's allowance = average of teammate handicaps. Simple, fair on lopsided teams."
-                : "USGA percentages weighted to the low ball (25/20/15/10 for 4-person). Best for mixed-HCP teams."}
+                : "Group decides each team's allowance manually -- type the strokes per team above."}
           </p>
         </div>
 
