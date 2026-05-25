@@ -179,17 +179,17 @@ export function stringifyTeamVsTeamConfig(c: TeamVsTeamConfig): string {
 export function teamVsTeamRuleLabel(rule: TeamVsTeamRule): string {
   switch (rule) {
     case "BEST_BALL":
-      return "Best ball";
+      return "Best Ball";
     case "WORST_BALL":
-      return "Worst ball";
+      return "Worst Ball";
     case "HIGH_LOW":
-      return "High + low";
+      return "High + Low";
     case "HIGH_LOW_BALL":
       return "High / Low";
     case "SUM":
-      return "Sum of strokes";
+      return "Sum of Strokes";
     case "AGGREGATE_NET":
-      return "Aggregate net";
+      return "Aggregate Net";
   }
 }
 
