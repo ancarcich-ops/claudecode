@@ -19,7 +19,8 @@ export type ChartTabId =
   | "BBB"
   | "SNAKE"
   | "WOLF"
-  | "MATCH";
+  | "MATCH"
+  | "SIXES";
 
 export type SideGameSeries = {
   stableford?: { rows: SgRow[] };
@@ -31,6 +32,7 @@ export type SideGameSeries = {
   snake?: { rows: SgRow[] };
   wolf?: { rows: SgRow[] };
   match?: { rows: SgRow[] };
+  sixes?: { rows: SgRow[] };
 };
 
 type OddsHoleRow = { hole: number } & Record<string, number>;
@@ -64,6 +66,7 @@ export default function MatchChartTabs({
   if (sideGames.snake) tabs.push({ id: "SNAKE", label: "Snake" });
   if (sideGames.wolf) tabs.push({ id: "WOLF", label: "Wolf" });
   if (sideGames.match) tabs.push({ id: "MATCH", label: "Match" });
+  if (sideGames.sixes) tabs.push({ id: "SIXES", label: "Sixes" });
 
   const [active, setActive] = useState<ChartTabId>("ODDS");
 
@@ -193,6 +196,16 @@ export default function MatchChartTabs({
       {active === "MATCH" && sideGames.match && (
         <SideGameChart
           rows={sideGames.match.rows}
+          players={players}
+          yLabel="dots (cumulative)"
+          valueFormatter={(n) =>
+            n === 0 ? "AS" : n > 0 ? `+${n}` : `${n}`
+          }
+        />
+      )}
+      {active === "SIXES" && sideGames.sixes && (
+        <SideGameChart
+          rows={sideGames.sixes.rows}
           players={players}
           yLabel="dots (cumulative)"
           valueFormatter={(n) =>

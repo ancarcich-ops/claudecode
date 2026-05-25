@@ -18,7 +18,8 @@ export type SideGameKind =
   | "SNAKE"
   | "WOLF"
   | "TEAM_VS_TEAM"
-  | "MATCH";
+  | "MATCH"
+  | "SIXES";
 
 // Per-hole event kinds. Stored in SideGameEvent.kind for BBB rows.
 export const BBB_EVENT_KINDS = ["BINGO", "BANGO", "BONGO"] as const;
@@ -217,6 +218,10 @@ export const ALL_SIDE_GAMES: {
   blurb: string;
   // For 9-hole matches we hide Nassau (it's defined by front/back 9).
   requires18?: boolean;
+  // Sixes (rotating 2-on-2 partnerships every 6 holes) needs exactly 4
+  // players. The new-match form disables the checkbox with a helpful
+  // hint when the constraint isn't met.
+  requires4Players?: boolean;
 }[] = [
   {
     kind: "STABLEFORD",
@@ -264,6 +269,14 @@ export const ALL_SIDE_GAMES: {
     blurb:
       "Match play: lowest net score on a hole wins a dot; ties wash. Round-robin with 3+ players.",
   },
+  {
+    kind: "SIXES",
+    label: "Sixes",
+    blurb:
+      "4-player rotating partnerships every 6 holes (1+2 vs 3+4, then 1+3 vs 2+4, then 1+4 vs 2+3). Best-ball match play.",
+    requires18: true,
+    requires4Players: true,
+  },
 ];
 
 // Future kinds: surfaced in the UI as 'coming soon' so users can see the
@@ -274,12 +287,6 @@ export const COMING_SOON_SIDE_GAMES: { kind: string; label: string; blurb: strin
     label: "Vegas",
     blurb:
       "2-on-2: each team's two scores form a 2-digit number (low first). Lower team wins the difference. Birdie flip + double holes optional.",
-  },
-  {
-    kind: "SIXES",
-    label: "Sixes",
-    blurb:
-      "Foursome with rotating partners every 6 holes: 1+2 vs 3+4, then 1+3 vs 2+4, then 1+4 vs 2+3.",
   },
   {
     kind: "TARGETS",
@@ -552,6 +559,138 @@ export function computeMatch(
     key: "MATCH",
     kind: "MATCH",
     title: "Match",
+    subtitle,
+    rows: rankRows(rows, true),
+  };
+}
+
+// --- Sixes (18-hole, exactly 4 players) ----------------------------------
+// Rotating 2-on-2 partnerships across three 6-hole segments. Players are
+// taken in the order passed in (the caller passes seat-sorted players).
+// Per-hole compare uses each team's BEST BALL (lower of two teammate net
+// scores). Lower team net wins the hole = both teammates +1 dot, losers
+// -1, ties wash. Total dots over 18 = leaderboard numeric.
+//
+// Pairing pattern by segment (0-based):
+//   seg 0 (holes 1-6):   [p0,p1] vs [p2,p3]
+//   seg 1 (holes 7-12):  [p0,p2] vs [p1,p3]
+//   seg 2 (holes 13-18): [p0,p3] vs [p1,p2]
+function sixesPartners(
+  segmentIdx: number,
+  players: LiveScorePlayer[],
+): { teamA: [LiveScorePlayer, LiveScorePlayer]; teamB: [LiveScorePlayer, LiveScorePlayer] } | null {
+  if (players.length !== 4) return null;
+  const [p0, p1, p2, p3] = players;
+  if (segmentIdx === 0) return { teamA: [p0, p1], teamB: [p2, p3] };
+  if (segmentIdx === 1) return { teamA: [p0, p2], teamB: [p1, p3] };
+  if (segmentIdx === 2) return { teamA: [p0, p3], teamB: [p1, p2] };
+  return null;
+}
+
+function sixesPairTallies(
+  players: LiveScorePlayer[],
+  pars: number[],
+  holes: number,
+  scoringMode: ScoringMode,
+  startingHole: number,
+  upToHoleIdx: number,
+): {
+  totals: Map<string, number>;
+  thruHole: number;
+  segmentWins: Map<string, number>;
+} {
+  const totals = new Map<string, number>();
+  const segmentWins = new Map<string, number>();
+  for (const p of players) {
+    totals.set(p.id, 0);
+    segmentWins.set(p.id, 0);
+  }
+  let thruHole = 0;
+  if (players.length !== 4 || holes !== 18) {
+    return { totals, thruHole, segmentWins };
+  }
+  // Per-segment running net difference (teamA - teamB) so we can credit
+  // segment wins after the segment closes.
+  const segDiff: number[] = [0, 0, 0];
+  const segCompleted: boolean[] = [false, false, false];
+  for (let i = 0; i < upToHoleIdx; i++) {
+    const h = startingHole + i;
+    if (players.some((p) => typeof p.scoresByHole[h] !== "number")) break;
+    const segmentIdx = Math.floor(i / 6);
+    const pair = sixesPartners(segmentIdx, players);
+    if (!pair) break;
+    const netFor = (p: LiveScorePlayer) =>
+      netStrokesForHole(
+        p.scoresByHole[h] as number,
+        p.handicap,
+        i,
+        holes,
+        scoringMode,
+      );
+    const aBest = Math.min(netFor(pair.teamA[0]), netFor(pair.teamA[1]));
+    const bBest = Math.min(netFor(pair.teamB[0]), netFor(pair.teamB[1]));
+    if (aBest < bBest) {
+      for (const p of pair.teamA) totals.set(p.id, (totals.get(p.id) ?? 0) + 1);
+      for (const p of pair.teamB) totals.set(p.id, (totals.get(p.id) ?? 0) - 1);
+      segDiff[segmentIdx] -= 1; // teamA up
+    } else if (bBest < aBest) {
+      for (const p of pair.teamB) totals.set(p.id, (totals.get(p.id) ?? 0) + 1);
+      for (const p of pair.teamA) totals.set(p.id, (totals.get(p.id) ?? 0) - 1);
+      segDiff[segmentIdx] += 1; // teamB up
+    }
+    thruHole = h;
+    // Credit segment win once the 6th hole of the segment is in.
+    const isSegmentLast = (i + 1) % 6 === 0;
+    if (isSegmentLast && !segCompleted[segmentIdx]) {
+      segCompleted[segmentIdx] = true;
+      if (segDiff[segmentIdx] < 0) {
+        for (const p of pair.teamA)
+          segmentWins.set(p.id, (segmentWins.get(p.id) ?? 0) + 1);
+      } else if (segDiff[segmentIdx] > 0) {
+        for (const p of pair.teamB)
+          segmentWins.set(p.id, (segmentWins.get(p.id) ?? 0) + 1);
+      }
+    }
+  }
+  return { totals, thruHole, segmentWins };
+}
+
+export function computeSixes(
+  players: LiveScorePlayer[],
+  pars: number[],
+  holes: number,
+  scoringMode: ScoringMode,
+  startingHole: number = 1,
+): Leaderboard | null {
+  // Hard gate: Sixes is 4-player 18-hole only. Caller should already have
+  // filtered via the requires* flags, but guard here too.
+  if (players.length !== 4 || holes !== 18) return null;
+  const { totals, thruHole, segmentWins } = sixesPairTallies(
+    players,
+    pars,
+    holes,
+    scoringMode,
+    startingHole,
+    holes,
+  );
+  const rows = players.map((p) => {
+    const n = totals.get(p.id) ?? 0;
+    const segs = segmentWins.get(p.id) ?? 0;
+    return {
+      playerId: p.id,
+      player: p.displayName,
+      numeric: n,
+      value: `${segs}/3 · ${formatMatchPoints(n)}`,
+    };
+  });
+  const subtitle =
+    thruHole === 0
+      ? "No holes scored yet"
+      : `Rotating partners · thru ${thruHole}`;
+  return {
+    key: "SIXES",
+    kind: "SIXES",
+    title: "Sixes",
     subtitle,
     rows: rankRows(rows, true),
   };
@@ -1355,6 +1494,9 @@ export function computeAllSideGames(input: {
           computeMatch(players, pars, holes, scoringMode, startingHole),
         ],
       });
+    } else if (kind === "SIXES") {
+      const lb = computeSixes(players, pars, holes, scoringMode, startingHole);
+      if (lb) out.push({ kind, leaderboards: [lb] });
     }
   }
   return out;
@@ -1369,7 +1511,8 @@ export function isSideGameKind(s: string): s is SideGameKind {
     s === "SNAKE" ||
     s === "WOLF" ||
     s === "TEAM_VS_TEAM" ||
-    s === "MATCH"
+    s === "MATCH" ||
+    s === "SIXES"
   );
 }
 
@@ -1550,6 +1693,57 @@ export function runningMatch(
           running[nets[a].id] = (running[nets[a].id] ?? 0) - 1;
         }
       }
+    }
+    rows.push({ hole: h, ...running });
+    through = h;
+  }
+  return { rows, current: { ...running }, throughHole: through };
+}
+
+// Sixes running series: cumulative pair-tally over the 3 partnership
+// segments. Returns an empty series when the match isn't a 4-player
+// 18-hole setup.
+export function runningSixes(
+  players: LiveScorePlayer[],
+  pars: number[],
+  holes: number,
+  scoringMode: ScoringMode,
+  startingHole: number = 1,
+): RunningSeries {
+  const rows: ({ hole: number } & Record<string, number>)[] = [];
+  const running: Record<string, number> = Object.fromEntries(
+    players.map((p) => [p.id, 0]),
+  );
+  if (players.length !== 4 || holes !== 18) {
+    return { rows, current: { ...running }, throughHole: 0 };
+  }
+  let through = 0;
+  for (let i = 0; i < holes; i++) {
+    const h = startingHole + i;
+    if (players.some((p) => typeof p.scoresByHole[h] !== "number")) break;
+    const segmentIdx = Math.floor(i / 6);
+    const pair = sixesPartners(segmentIdx, players);
+    if (!pair) break;
+    const netFor = (p: LiveScorePlayer) =>
+      netStrokesForHole(
+        p.scoresByHole[h] as number,
+        p.handicap,
+        i,
+        holes,
+        scoringMode,
+      );
+    const aBest = Math.min(netFor(pair.teamA[0]), netFor(pair.teamA[1]));
+    const bBest = Math.min(netFor(pair.teamB[0]), netFor(pair.teamB[1]));
+    if (aBest < bBest) {
+      for (const p of pair.teamA)
+        running[p.id] = (running[p.id] ?? 0) + 1;
+      for (const p of pair.teamB)
+        running[p.id] = (running[p.id] ?? 0) - 1;
+    } else if (bBest < aBest) {
+      for (const p of pair.teamB)
+        running[p.id] = (running[p.id] ?? 0) + 1;
+      for (const p of pair.teamA)
+        running[p.id] = (running[p.id] ?? 0) - 1;
     }
     rows.push({ hole: h, ...running });
     through = h;

@@ -1188,13 +1188,21 @@ export default function NewMatchForm({
               return true;
             }).map((g) => {
               const disabledByHoles = g.requires18 && holes !== 18;
+              const disabledByPlayers =
+                g.requires4Players && players.length !== 4;
+              const disabled = disabledByHoles || disabledByPlayers;
               const active = sideGames.has(g.kind);
+              const disabledReason = disabledByHoles
+                ? "Needs 18 holes"
+                : disabledByPlayers
+                  ? "Needs exactly 4 players"
+                  : null;
               return (
                 <label
                   key={g.kind}
                   className={
                     "flex items-start gap-3 rounded-md border px-3 py-2 cursor-pointer transition-colors " +
-                    (disabledByHoles
+                    (disabled
                       ? "border-border opacity-50 cursor-not-allowed"
                       : active
                         ? "border-accent/50 bg-accent/5"
@@ -1205,17 +1213,15 @@ export default function NewMatchForm({
                     type="checkbox"
                     name="sideGame"
                     value={g.kind}
-                    checked={active && !disabledByHoles}
-                    onChange={() =>
-                      !disabledByHoles && toggleSideGame(g.kind)
-                    }
-                    disabled={disabledByHoles}
+                    checked={active && !disabled}
+                    onChange={() => !disabled && toggleSideGame(g.kind)}
+                    disabled={disabled}
                     className="mt-0.5 shrink-0 accent-accent"
                   />
                   <div className="min-w-0">
                     <div className="text-sm font-medium">{g.label}</div>
                     <div className="text-[11px] text-mute">
-                      {disabledByHoles ? "Needs 18 holes" : g.blurb}
+                      {disabledReason ?? g.blurb}
                     </div>
                   </div>
                 </label>

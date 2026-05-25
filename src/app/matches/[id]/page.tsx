@@ -29,6 +29,7 @@ import {
   runningSnake,
   runningWolf,
   runningMatch,
+  runningSixes,
   shapeWolfHoles,
   parseWolfConfig,
   type SideGameKind,
@@ -482,6 +483,19 @@ export default async function MatchPage({
   }
   if (enabledKinds.includes("MATCH")) {
     sgSeries.match = runningMatch(
+      sgPlayers,
+      pars,
+      match.holes,
+      scoringMode,
+      matchStart,
+    );
+  }
+  if (
+    enabledKinds.includes("SIXES") &&
+    match.holes === 18 &&
+    sgPlayers.length === 4
+  ) {
+    sgSeries.sixes = runningSixes(
       sgPlayers,
       pars,
       match.holes,
