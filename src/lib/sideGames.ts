@@ -19,7 +19,8 @@ export type SideGameKind =
   | "WOLF"
   | "TEAM_VS_TEAM"
   | "MATCH"
-  | "SIXES";
+  | "SIXES"
+  | "TARGETS";
 
 // Per-hole event kinds. Stored in SideGameEvent.kind for BBB rows.
 export const BBB_EVENT_KINDS = ["BINGO", "BANGO", "BONGO"] as const;
@@ -180,6 +181,49 @@ export function stringifyTeamVsTeamConfig(c: TeamVsTeamConfig): string {
   return JSON.stringify(c);
 }
 
+// ---- Targets -----------------------------------------------------------
+// Per-round goal counting: each player aims for a target count of a
+// specific qualifying event. v1 supports stats derivable from existing
+// score data; FIR/GIR will land once we add a per-hole event recorder.
+
+export type TargetsStat = "PAR_OR_BETTER" | "BIRDIE_OR_BETTER";
+const TARGETS_STATS: TargetsStat[] = ["PAR_OR_BETTER", "BIRDIE_OR_BETTER"];
+
+export type TargetsConfig = {
+  stat: TargetsStat;
+  // Shared target number every player aims for. Single number for v1;
+  // per-player targets can layer on later if asked.
+  target: number;
+};
+
+export function targetsStatLabel(stat: TargetsStat): string {
+  return stat === "PAR_OR_BETTER" ? "Pars or better" : "Birdies or better";
+}
+
+export function parseTargetsConfig(
+  raw: string | null | undefined,
+): TargetsConfig | null {
+  if (!raw) return null;
+  try {
+    const obj = JSON.parse(raw);
+    if (!obj || typeof obj !== "object") return null;
+    const stat: TargetsStat = TARGETS_STATS.includes(obj.stat as TargetsStat)
+      ? (obj.stat as TargetsStat)
+      : "PAR_OR_BETTER";
+    const target =
+      typeof obj.target === "number" && Number.isFinite(obj.target)
+        ? Math.max(0, Math.floor(obj.target))
+        : 0;
+    return { stat, target };
+  } catch {
+    return null;
+  }
+}
+
+export function stringifyTargetsConfig(c: TargetsConfig): string {
+  return JSON.stringify(c);
+}
+
 // Compact rule descriptions used in the side-game picker + leaderboard
 // subtitle so the player understands what's being summed per hole.
 export function teamVsTeamRuleLabel(rule: TeamVsTeamRule): string {
@@ -285,18 +329,17 @@ export const ALL_SIDE_GAMES: {
     requires18: true,
     requires4Players: true,
   },
-];
-
-// Future kinds: surfaced in the UI as 'coming soon' so users can see the
-// roadmap without us implementing them yet.
-export const COMING_SOON_SIDE_GAMES: { kind: string; label: string; blurb: string }[] = [
   {
     kind: "TARGETS",
     label: "Targets",
     blurb:
-      "Pick a stat (fairways, GIR, pars, birdies); each player hits a number to win their share of the pot.",
+      "Each player chases a target count of pars-or-better (or birdies). Hit the number to win.",
   },
 ];
+
+// Future kinds: surfaced in the UI as 'coming soon' so users can see the
+// roadmap without us implementing them yet.
+export const COMING_SOON_SIDE_GAMES: { kind: string; label: string; blurb: string }[] = [];
 
 export type LiveScorePlayer = {
   id: string;
@@ -693,6 +736,65 @@ export function computeSixes(
     key: "SIXES",
     kind: "SIXES",
     title: "Sixes",
+    subtitle,
+    rows: rankRows(rows, true),
+  };
+}
+
+// --- Targets ------------------------------------------------------------
+// Count qualifying holes per player against a shared target number.
+// v1 stats derive from gross strokes vs par; FIR/GIR will plug in
+// once per-hole stat capture exists.
+function qualifiesForTarget(
+  stat: TargetsStat,
+  gross: number,
+  par: number,
+): boolean {
+  if (stat === "PAR_OR_BETTER") return gross <= par;
+  // BIRDIE_OR_BETTER
+  return gross <= par - 1;
+}
+
+export function computeTargets(
+  players: LiveScorePlayer[],
+  pars: number[],
+  holes: number,
+  config: TargetsConfig,
+  startingHole: number = 1,
+): Leaderboard {
+  let maxScoredHole = 0;
+  const rows = players.map((p) => {
+    let hits = 0;
+    let played = 0;
+    for (let i = 0; i < holes; i++) {
+      const h = startingHole + i;
+      const gross = p.scoresByHole[h];
+      if (typeof gross !== "number") continue;
+      played++;
+      if (h > maxScoredHole) maxScoredHole = h;
+      const par = pars[i] ?? 4;
+      if (qualifiesForTarget(config.stat, gross, par)) hits++;
+    }
+    const hit = hits >= config.target;
+    return {
+      playerId: p.id,
+      player: p.displayName,
+      // Sort by progress: hits desc, then "% of target" desc. We pack
+      // both into one numeric so the existing rankRows helper keeps
+      // working -- big multiplier on hits ensures it dominates.
+      numeric: hits,
+      value: `${hits}/${config.target}${hit ? " ✓" : played > 0 ? "" : " —"}`,
+    };
+  });
+  const targetLabel = targetsStatLabel(config.stat);
+  const subtitle =
+    maxScoredHole === 0
+      ? `${targetLabel} · target ${config.target}`
+      : `${targetLabel} · target ${config.target} · thru ${maxScoredHole}`;
+  return {
+    key: "TARGETS",
+    kind: "TARGETS",
+    title: "Targets",
     subtitle,
     rows: rankRows(rows, true),
   };
@@ -1487,6 +1589,9 @@ export function computeAllSideGames(input: {
   // the side game is enabled but not yet configured -- the leaderboard
   // is omitted in that case so the UI can show a "configure now" CTA.
   teamVsTeamConfig?: TeamVsTeamConfig | null;
+  // Targets needs a stat + target number. Null = enabled but not yet
+  // configured -- leaderboard omitted, UI prompts for config.
+  targetsConfig?: TargetsConfig | null;
 }): { kind: SideGameKind; leaderboards: Leaderboard[] }[] {
   const {
     enabled,
@@ -1501,6 +1606,7 @@ export function computeAllSideGames(input: {
     wolfEvents = [],
     wolfConfig = {},
     teamVsTeamConfig = null,
+    targetsConfig = null,
   } = input;
   const out: { kind: SideGameKind; leaderboards: Leaderboard[] }[] = [];
   for (const kind of enabled) {
@@ -1560,6 +1666,14 @@ export function computeAllSideGames(input: {
     } else if (kind === "SIXES") {
       const lb = computeSixes(players, pars, holes, scoringMode, startingHole);
       if (lb) out.push({ kind, leaderboards: [lb] });
+    } else if (kind === "TARGETS") {
+      if (!targetsConfig) continue;
+      out.push({
+        kind,
+        leaderboards: [
+          computeTargets(players, pars, holes, targetsConfig, startingHole),
+        ],
+      });
     }
   }
   return out;
@@ -1575,7 +1689,8 @@ export function isSideGameKind(s: string): s is SideGameKind {
     s === "WOLF" ||
     s === "TEAM_VS_TEAM" ||
     s === "MATCH" ||
-    s === "SIXES"
+    s === "SIXES" ||
+    s === "TARGETS"
   );
 }
 

@@ -380,6 +380,15 @@ export default async function MatchPage({
         tvtSideGame.config,
       )
     : null;
+  // Targets config: same lazy-parse pattern as TVT.
+  const targetsSideGame = (match.sideGames ?? []).find(
+    (sg) => sg.kind === "TARGETS",
+  );
+  const targetsConfig = targetsSideGame
+    ? (await import("@/lib/sideGames")).parseTargetsConfig(
+        targetsSideGame.config,
+      )
+    : null;
 
   const sideGameSections = computeAllSideGames({
     enabled: enabledKinds,
@@ -401,6 +410,7 @@ export default async function MatchPage({
     wolfEvents,
     wolfConfig,
     teamVsTeamConfig,
+    targetsConfig,
   });
   const sideGameLabel: Record<SideGameKind, string> = Object.fromEntries(
     ALL_SIDE_GAMES.map((g) => [g.kind, g.label]),
