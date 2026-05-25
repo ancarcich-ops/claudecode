@@ -755,7 +755,7 @@ export default function NewMatchForm({
             {format === "INDIVIDUAL"
               ? "Every player keeps their own score; live odds price each player to win the match."
               : format === "SCRAMBLE"
-                ? "Players split into 2 teams. Each team logs one score per hole; live odds price team-vs-team."
+                ? "Players split into 2 teams; live odds price team-vs-team."
                 : "Each player keeps their own score AND teams are scored from those individual scores. Live odds still price players individually; a team-vs-team side game tracks the team competition."}
           </p>
         </div>
@@ -919,8 +919,7 @@ export default function NewMatchForm({
             Players step.
           </p>
           <p className="text-[12px] text-mute mt-3 leading-snug">
-            Players split into 2 teams. Each team logs one score per
-            hole; live odds price team-vs-team.
+            Players split into 2 teams; live odds price team-vs-team.
           </p>
         </div>
 
