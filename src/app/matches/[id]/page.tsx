@@ -28,6 +28,7 @@ import {
   runningBbb,
   runningSnake,
   runningWolf,
+  runningMatch,
   shapeWolfHoles,
   parseWolfConfig,
   type SideGameKind,
@@ -476,6 +477,15 @@ export default async function MatchPage({
       match.holes,
       wolfEvents,
       wolfConfig,
+      matchStart,
+    );
+  }
+  if (enabledKinds.includes("MATCH")) {
+    sgSeries.match = runningMatch(
+      sgPlayers,
+      pars,
+      match.holes,
+      scoringMode,
       matchStart,
     );
   }
