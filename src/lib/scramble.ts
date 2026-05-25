@@ -153,7 +153,8 @@ type RuleId =
   | "HIGH_LOW"
   | "HIGH_LOW_BALL"
   | "SUM"
-  | "AGGREGATE_NET";
+  | "AGGREGATE_NET"
+  | "VEGAS";
 
 export function deriveTeamScoresByHole<
   P extends Player & {
@@ -175,6 +176,7 @@ export function deriveTeamScoresByHole<
       "HIGH_LOW_BALL",
       "SUM",
       "AGGREGATE_NET",
+      "VEGAS",
     ] as const
   ).includes(rule as RuleId)
     ? (rule as RuleId)
@@ -223,12 +225,13 @@ export function deriveTeamScoresByHole<
         break;
       case "HIGH_LOW":
       case "HIGH_LOW_BALL":
-        // Both rules are points games (see computeTeamVsTeam in
-        // sideGames.ts) -- the odds engine can't price points
-        // directly. Fall back to team gross sum so live odds still
-        // track who's outscoring whom; tends to correlate with the
-        // points leaderboard since the team with more low-strokes
-        // wins more head-to-heads. Leaderboard remains points-accurate.
+      case "VEGAS":
+        // Points-based rules (see computeTeamVsTeam in sideGames.ts) --
+        // the odds engine can't price points directly. Fall back to
+        // team gross sum so live odds still track who's outscoring
+        // whom; tends to correlate with the points leaderboard since
+        // the team with lower strokes wins more head-to-heads.
+        // Leaderboards remain points-accurate.
         teamScore = vals.reduce((a, b) => a + b, 0);
         break;
       case "SUM":
