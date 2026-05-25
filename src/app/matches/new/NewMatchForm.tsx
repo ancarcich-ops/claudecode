@@ -178,6 +178,15 @@ export default function NewMatchForm({
     "PAR_OR_BETTER" | "BIRDIE_OR_BETTER"
   >("PAR_OR_BETTER");
   const [targetsTarget, setTargetsTarget] = useState("10");
+  // Match-play stroke-giving. AUTO = use the match scoringMode + each
+  // player's handicap (default). MANUAL = use per-player strokes typed
+  // below, regardless of the scoringMode.
+  const [matchStrokesMode, setMatchStrokesMode] = useState<"AUTO" | "MANUAL">(
+    "AUTO",
+  );
+  const [matchManualStrokes, setMatchManualStrokes] = useState<
+    Record<number, string>
+  >({});
 
   // Keep sideGames in sync with the format picker. Both Teams
   // (SCRAMBLE) and Both auto-enable TEAM_VS_TEAM so the rule picker
@@ -761,6 +770,22 @@ export default function NewMatchForm({
                 : ""
             }
           />
+          {/* Match config -- keyed by player row index so the server
+              action can map to the matchPlayerIds it just created. */}
+          <input
+            type="hidden"
+            name="matchConfig"
+            value={
+              sideGames.has("MATCH")
+                ? JSON.stringify({
+                    strokesMode: matchStrokesMode,
+                    manualStrokesByIndex: players.map(
+                      (_, i) => Number(matchManualStrokes[i] ?? "0") || 0,
+                    ),
+                  })
+                : ""
+            }
+          />
           <div className="grid grid-cols-3 gap-2">
             {(["INDIVIDUAL", "SCRAMBLE", "BOTH"] as const).map((f) => {
               const active = format === f;
@@ -1313,6 +1338,75 @@ export default function NewMatchForm({
                       </div>
                     </div>
                   </label>
+                  {/* Match inline config: stroke-giving mode + per-
+                      player manual strokes when MANUAL is picked. */}
+                  {g.kind === "MATCH" && active && !disabled && (
+                    <div className="mt-2 ml-7 mr-1 rounded-md border border-border bg-panel2/40 p-2 space-y-2">
+                      <div>
+                        <div className="text-[10px] uppercase tracking-wider text-mute mb-1">
+                          Stroke-giving
+                        </div>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {(
+                            [
+                              ["AUTO", "By handicap"],
+                              ["MANUAL", "Manual"],
+                            ] as const
+                          ).map(([val, label]) => {
+                            const isActive = matchStrokesMode === val;
+                            return (
+                              <button
+                                key={val}
+                                type="button"
+                                onClick={() => setMatchStrokesMode(val)}
+                                className={
+                                  "rounded-md border px-2 py-1.5 text-[12px] " +
+                                  (isActive
+                                    ? "border-accent bg-accent/10 text-ink"
+                                    : "border-border text-mute hover:text-ink")
+                                }
+                                aria-pressed={isActive}
+                              >
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      {matchStrokesMode === "MANUAL" && (
+                        <div className="space-y-1.5">
+                          <div className="text-[10px] uppercase tracking-wider text-mute">
+                            Strokes (for Match only)
+                          </div>
+                          {players.map((p, i) => (
+                            <div
+                              key={i}
+                              className="flex items-center justify-between gap-2 text-[12px]"
+                            >
+                              <span className="truncate text-mute">
+                                {p.name || `Player ${i + 1}`}
+                              </span>
+                              <input
+                                type="number"
+                                inputMode="numeric"
+                                min={0}
+                                max={holes * 2}
+                                value={matchManualStrokes[i] ?? ""}
+                                placeholder="0"
+                                onChange={(e) =>
+                                  setMatchManualStrokes((s) => ({
+                                    ...s,
+                                    [i]: e.target.value,
+                                  }))
+                                }
+                                className="input w-16 text-center text-sm py-1"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                   {/* Targets inline config: stat picker + per-player
                       target number. Only shown when the game is
                       actually selected. */}
