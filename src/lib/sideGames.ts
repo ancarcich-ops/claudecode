@@ -106,7 +106,10 @@ export type TeamVsTeamRule =
   // Sum of all team players' gross strokes.
   | "SUM"
   // Sum of all team players' net (handicap-adjusted) strokes.
-  | "AGGREGATE_NET";
+  | "AGGREGATE_NET"
+  // Vegas: each team's two scores form a 2-digit number (low digit
+  // first). Lower team wins the difference in points. 2v2 only.
+  | "VEGAS";
 
 export const TEAM_VS_TEAM_RULES: TeamVsTeamRule[] = [
   "BEST_BALL",
@@ -115,6 +118,7 @@ export const TEAM_VS_TEAM_RULES: TeamVsTeamRule[] = [
   "HIGH_LOW_BALL",
   "SUM",
   "AGGREGATE_NET",
+  "VEGAS",
 ];
 
 export type TeamVsTeamConfig = {
@@ -192,6 +196,8 @@ export function teamVsTeamRuleLabel(rule: TeamVsTeamRule): string {
       return "Sum of Strokes";
     case "AGGREGATE_NET":
       return "Aggregate Net";
+    case "VEGAS":
+      return "Vegas";
   }
 }
 
@@ -209,6 +215,8 @@ export function teamVsTeamRuleBlurb(rule: TeamVsTeamRule): string {
       return "Each team's score = sum of all teammates' gross strokes";
     case "AGGREGATE_NET":
       return "Each team's score = sum of all teammates' net strokes";
+    case "VEGAS":
+      return "Each team's two scores form a 2-digit number (low first); lower team wins the difference in points.";
   }
 }
 
@@ -282,12 +290,6 @@ export const ALL_SIDE_GAMES: {
 // Future kinds: surfaced in the UI as 'coming soon' so users can see the
 // roadmap without us implementing them yet.
 export const COMING_SOON_SIDE_GAMES: { kind: string; label: string; blurb: string }[] = [
-  {
-    kind: "VEGAS",
-    label: "Vegas",
-    blurb:
-      "2-on-2: each team's two scores form a 2-digit number (low first). Lower team wins the difference. Birdie flip + double holes optional.",
-  },
   {
     kind: "TARGETS",
     label: "Targets",
@@ -804,6 +806,67 @@ export function computeTeamVsTeam(
   const teamNameB = config.teamNames?.[1] ?? "Team B";
   const rosterA = `${teamNameA} — ${teamA.map((p) => p.displayName).join(" & ")}`;
   const rosterB = `${teamNameB} — ${teamB.map((p) => p.displayName).join(" & ")}`;
+
+  // VEGAS: each team's two gross scores form a 2-digit number (low digit
+  // first); per-hole points = difference, awarded to the lower team.
+  // 2v2 only -- with team sizes != 2, return null so the UI can hint to
+  // pick a different rule.
+  if (config.rule === "VEGAS") {
+    if (teamA.length !== 2 || teamB.length !== 2) return null;
+    const vegasFor = (strokes: number[]) => {
+      const lo = Math.min(...strokes);
+      const hi = Math.max(...strokes);
+      // For canonical 2v2 with single-digit strokes this is just
+      // "low-high" read as a 2-digit number. Scores >= 10 fall through
+      // arithmetically (e.g. 4 and 11 -> 51); rare enough that we keep
+      // the formula simple rather than special-casing.
+      return lo * 10 + hi;
+    };
+    let aPts = 0;
+    let bPts = 0;
+    let counted = 0;
+    for (let i = 0; i < holes; i++) {
+      const hole = startingHole + i;
+      const aScores = teamA.map((p) => p.scoresByHole[hole]);
+      const bScores = teamB.map((p) => p.scoresByHole[hole]);
+      if (
+        aScores.some((s) => typeof s !== "number") ||
+        bScores.some((s) => typeof s !== "number")
+      )
+        continue;
+      counted++;
+      const aVal = vegasFor(aScores as number[]);
+      const bVal = vegasFor(bScores as number[]);
+      const diff = Math.abs(aVal - bVal);
+      if (aVal < bVal) aPts += diff;
+      else if (bVal < aVal) bPts += diff;
+    }
+    const fmtPts = (pts: number) =>
+      counted === 0 ? "—" : `${pts} pt${pts === 1 ? "" : "s"} (${counted}h)`;
+    return {
+      key: "TEAM_VS_TEAM",
+      kind: "TEAM_VS_TEAM",
+      title: "Team vs team",
+      subtitle: teamVsTeamRuleBlurb(config.rule),
+      rows: rankRows(
+        [
+          {
+            playerId: teamA[0].id,
+            player: rosterA,
+            numeric: counted === 0 ? -Infinity : aPts,
+            value: fmtPts(aPts),
+          },
+          {
+            playerId: teamB[0].id,
+            player: rosterB,
+            numeric: counted === 0 ? -Infinity : bPts,
+            value: fmtPts(bPts),
+          },
+        ],
+        true, // higher Vegas points wins
+      ),
+    };
+  }
 
   // HIGH_LOW and HIGH_LOW_BALL are points-based cross-team comparisons
   // rather than per-team stroke aggregations. Each fully-scored hole
