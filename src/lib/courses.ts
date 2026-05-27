@@ -1291,7 +1291,7 @@ export const COURSE_PRESET_COORDS: Record<string, { lat: number; lng: number }> 
   "santa-ana-cc": { lat: 33.6694, lng: -117.8533 },
   "yorba-linda-cc": { lat: 33.8911, lng: -117.7747 },
   "oak-quarry-gc": { lat: 33.9831, lng: -117.4625 },
-  "goose-creek-gc": { lat: 33.9853, lng: -117.5142 },
+  "goose-creek": { lat: 33.9853, lng: -117.5142 },
   "hidden-valley-gc": { lat: 33.9275, lng: -117.5814 },
   // Bighorn - Canyons + Mountains share the clubhouse.
   "bighorn-gc-canyons": { lat: 33.7019, lng: -116.4097 },
