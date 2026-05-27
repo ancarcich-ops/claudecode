@@ -463,7 +463,10 @@ export default function NewMatchForm({
   // step has unfilled / invalid data. The final step always validates
   // (the side-game step is optional input only).
   const canAdvance = (() => {
-    if (step === 0) return courseName.trim().length > 0;
+    // Course must match an entry in our catalog -- free-text course
+    // names are no longer allowed; users pick from the 500+ pre-mapped
+    // list, or contact support to request a missing course.
+    if (step === 0) return !!matchedPreset;
     if (step === 1) {
       return players.every(
         (p) => p.name.trim().length > 0 && !Number.isNaN(parseFloat(p.handicap)),
@@ -553,7 +556,7 @@ export default function NewMatchForm({
             id="courseName"
             name="courseName"
             className="input"
-            placeholder="Search 500+ courses or type any name…"
+            placeholder="Search 500+ courses…"
             value={courseName}
             onChange={(e) => onCourseChange(e.target.value)}
             onFocus={() => setCourseFocused(true)}
@@ -675,10 +678,28 @@ export default function NewMatchForm({
                 pars autofilled
               </span>
             </div>
+          ) : courseName.trim().length > 0 ? (
+            <p className="text-[11px] text-mute mt-1">
+              <span className="text-danger">Course not in our catalog.</span>{" "}
+              Pick from the list above, or{" "}
+              <a
+                href="mailto:support@sticks.app?subject=Add%20a%20course"
+                className="underline hover:text-ink"
+              >
+                reach out to support
+              </a>{" "}
+              if you don&apos;t see your favorite course yet.
+            </p>
           ) : (
             <p className="text-[11px] text-mute mt-1">
-              Pick from our pre-mapped courses or type any course name to
-              add new courses to the list.
+              Pick from our 500+ pre-mapped courses.{" "}
+              <a
+                href="mailto:support@sticks.app?subject=Add%20a%20course"
+                className="underline hover:text-ink"
+              >
+                Reach out to support
+              </a>{" "}
+              if you don&apos;t see your favorite course on the list yet.
             </p>
           )}
         </div>
@@ -1728,7 +1749,7 @@ export default function NewMatchForm({
             className="btn btn-primary w-full disabled:opacity-50"
           >
             {step === 0 && !canAdvance
-              ? "Add a course to continue"
+              ? "Pick a course from the list to continue"
               : step === 1 && !canAdvance
                 ? "Fill in every player to continue"
                 : "Next →"}

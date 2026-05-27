@@ -180,6 +180,21 @@ export async function createMatchAction(formData: FormData) {
   if (!courseName) throw new Error("Course name required");
   if (!scheduledAtRaw) throw new Error("Tee time required");
 
+  // Course must match an entry in our pre-mapped catalog. Free-text
+  // course names are no longer accepted -- users pick from the list
+  // or contact support to request a missing course.
+  {
+    const { COURSE_PRESETS } = await import("./courses");
+    const matched = COURSE_PRESETS.some(
+      (p) => p.name.toLowerCase() === courseName.toLowerCase(),
+    );
+    if (!matched) {
+      throw new Error(
+        "Course not in catalog. Pick from the list, or reach out to support to add it.",
+      );
+    }
+  }
+
   const names = formData.getAll("playerName").map((v) => String(v).trim());
   const hcps = formData.getAll("playerHandicap").map((v) => Number(v));
   // playerUserId comes in as a parallel hidden input from PlayerNameInput.
