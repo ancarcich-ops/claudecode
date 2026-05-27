@@ -122,10 +122,11 @@ export default function ScoreSheet({
     { kind: "skip" },
   ];
 
-  // When more players remain in the cycle, the save button advances to
-  // the next player instead of the next hole.
+  // Mid-cycle the save button stays plain "Save" -- the next player's
+  // name lives on the badge above. Only when there's no next player do
+  // we hint at the next hole (or end of round).
   const saveLabel = nextPlayer
-    ? `Save · ${nextPlayer.displayName}`
+    ? "Save"
     : isLastHole
       ? "Save · finish round"
       : nextHole != null
@@ -161,6 +162,19 @@ export default function ScoreSheet({
         {currentPlayer && (
           <div className="flex items-center justify-between gap-2 mb-2">
             <div className="flex items-center gap-2 min-w-0">
+              {previousPlayer && onBack && (
+                <button
+                  type="button"
+                  onClick={onBack}
+                  className="shrink-0 inline-flex items-center gap-1 rounded-full border border-border bg-panel2/60 px-2 py-1 text-[11px] text-mute hover:text-ink"
+                  aria-label={`Edit ${previousPlayer.displayName}'s score`}
+                >
+                  <span aria-hidden>←</span>
+                  <span className="truncate max-w-[8rem]">
+                    {previousPlayer.displayName}
+                  </span>
+                </button>
+              )}
               <span
                 className="inline-block w-3 h-3 rounded-full shrink-0"
                 style={{

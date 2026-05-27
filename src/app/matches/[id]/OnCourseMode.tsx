@@ -94,6 +94,24 @@ export default function OnCourseMode({
   );
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetSelection, setSheetSelection] = useState<SheetSelection>(null);
+  // Cycle-through-group preference. "unset" = never been asked; show
+  // the prompt after the first save. "enabled" = cycle through every
+  // player after each save. "disabled" = log only the signed-in
+  // player's score, advance to next hole. Persisted in localStorage.
+  const [cyclePref, setCyclePref] = useState<
+    "unset" | "enabled" | "disabled"
+  >("unset");
+  // True for one render after the user just saved their own score and
+  // we need to ask the cycling question.
+  const [showCyclePrompt, setShowCyclePrompt] = useState(false);
+  useEffect(() => {
+    try {
+      const v = localStorage.getItem("sticks-cycle-pref");
+      if (v === "enabled" || v === "disabled") setCyclePref(v);
+    } catch {
+      // private mode / storage blocked -- fall through, behave as unset.
+    }
+  }, []);
   // Score-entry cycle: signed-in player first, then teammates in match
   // order. Index references positions in cycleOrder below.
   const [cyclePos, setCyclePos] = useState(0);
@@ -318,6 +336,46 @@ export default function OnCourseMode({
   const isLastHole = hole >= lastHole;
   const nextHole = isLastHole ? null : hole + 1;
 
+  // Find the next un-scored player in the cycle after a given index.
+  // Skips players who already have a score on the current hole.
+  const findNextCycleIdx = (fromIdx: number): number => {
+    for (let i = fromIdx + 1; i < cycleOrder.length; i++) {
+      const p = cycleOrder[i];
+      if (p?.scoresByHole?.[hole] == null) return i;
+    }
+    return -1;
+  };
+
+  // Persist the user's cycling preference + advance accordingly. Called
+  // by the "Yes / Just me" prompt buttons after the first save.
+  const resolveCyclePref = (pref: "enabled" | "disabled") => {
+    setCyclePref(pref);
+    try {
+      localStorage.setItem("sticks-cycle-pref", pref);
+    } catch {}
+    setShowCyclePrompt(false);
+    if (pref === "enabled") {
+      const next = findNextCycleIdx(cyclePos);
+      if (next >= 0) {
+        setCyclePos(next);
+        setSheetSelection(null);
+      } else {
+        // Nobody left to score (rare -- single-player or everyone
+        // already logged). Close + advance hole.
+        setSheetOpen(false);
+        setSheetSelection(null);
+        setCyclePos(0);
+        if (!isLastHole) setHole(hole + 1);
+      }
+    } else {
+      // "Just me" -- close sheet and advance to the next hole.
+      setSheetOpen(false);
+      setSheetSelection(null);
+      setCyclePos(0);
+      if (!isLastHole) setHole(hole + 1);
+    }
+  };
+
   const commitScore = () => {
     if (!currentEntryPlayer || !sheetSelection) return;
     const targetId = currentEntryPlayer.id;
@@ -327,47 +385,73 @@ export default function OnCourseMode({
     fd.set("matchPlayerId", targetId);
     fd.set("hole", String(hole));
     fd.set("strokes", String(strokes));
-    // Decide what happens AFTER the save: cycle to the next player who
-    // hasn't already logged this hole, or close the sheet + advance to
-    // the next hole when everyone is done.
-    const nextIdx = (() => {
-      for (let i = cyclePos + 1; i < cycleOrder.length; i++) {
-        const p = cycleOrder[i];
-        if (p?.scoresByHole?.[hole] == null) return i;
-      }
-      return -1;
-    })();
+    // Decide what happens AFTER the save based on the cycling
+    // preference. "unset" + multi-player match triggers the
+    // first-time prompt; otherwise advance the cycle or the hole per
+    // pref.
+    const nextIdx = findNextCycleIdx(cyclePos);
+    const askPrompt =
+      cyclePref === "unset" && nextIdx >= 0 && cyclePos === 0;
     startTransition(async () => {
       await logScoreAction(fd);
       try {
         window.dispatchEvent(new CustomEvent("sticks:sound:score"));
       } catch {}
-      if (nextIdx >= 0) {
+      router.refresh();
+      if (askPrompt) {
+        // Hold the sheet open with the saved selection visible so the
+        // user has context while they answer the prompt.
+        setShowCyclePrompt(true);
+        return;
+      }
+      const cycleOn = cyclePref === "enabled";
+      if (cycleOn && nextIdx >= 0) {
         // More players to score this hole -- swap badge, clear the
         // chosen tile, keep the sheet open.
         setCyclePos(nextIdx);
         setSheetSelection(null);
       } else {
-        // Whole group is done on this hole. Close the sheet, reset the
-        // cycle to "self first" for the next hole, advance.
+        // "Disabled" pref OR cycle exhausted -- close sheet, advance
+        // hole.
         setSheetOpen(false);
         setSheetSelection(null);
         setCyclePos(0);
         if (!isLastHole) setHole(hole + 1);
       }
-      router.refresh();
     });
   };
 
-  // What's the next player after the current one (for the save button
-  // label)? Mirrors the lookup inside commitScore.
-  const nextPlayerInCycle = (() => {
-    for (let i = cyclePos + 1; i < cycleOrder.length; i++) {
-      const p = cycleOrder[i];
-      if (p?.scoresByHole?.[hole] == null) return p;
-    }
-    return null;
-  })();
+  // Back-arrow handler: jump to the previous cycle position so the
+  // scorekeeper can re-edit an earlier player's hole. Pre-populates
+  // the sheet selection with that player's existing score (if any) so
+  // tapping Save again updates rather than re-enters from scratch.
+  const goBackInCycle = () => {
+    if (cyclePos <= 0) return;
+    const prev = cycleOrder[cyclePos - 1];
+    const prevScore = prev?.scoresByHole?.[hole];
+    const par = pars[hole - firstHole] ?? 4;
+    setCyclePos(cyclePos - 1);
+    setSheetSelection(
+      typeof prevScore === "number"
+        ? { strokes: prevScore, relative: prevScore - par }
+        : null,
+    );
+  };
+
+  // Only surface the "next player" hint to ScoreSheet when the user
+  // has opted into cycling. Otherwise mid-cycle ambiguity creeps into
+  // the save button label.
+  const nextPlayerInCycle =
+    cyclePref === "enabled"
+      ? (() => {
+          const idx = findNextCycleIdx(cyclePos);
+          return idx >= 0 ? cycleOrder[idx] : null;
+        })()
+      : null;
+  const previousPlayerInCycle =
+    cyclePref === "enabled" && cyclePos > 0
+      ? cycleOrder[cyclePos - 1] ?? null
+      : null;
 
   const markGreen = (position: "center" | "front" | "back" = "center") => {
     if (!pos) return;
@@ -603,9 +687,53 @@ export default function OnCourseMode({
             ? { displayName: nextPlayerInCycle.displayName }
             : null
         }
-        playerIndex={cyclePos + 1}
-        playerCount={cycleOrder.length}
+        previousPlayer={
+          previousPlayerInCycle
+            ? { displayName: previousPlayerInCycle.displayName }
+            : null
+        }
+        onBack={previousPlayerInCycle ? goBackInCycle : undefined}
+        playerIndex={cyclePref === "enabled" ? cyclePos + 1 : undefined}
+        playerCount={cyclePref === "enabled" ? cycleOrder.length : undefined}
       />
+
+      {/* First-time prompt: "log scores for the rest of your group?".
+          Fires once after the user saves their own score. Choice is
+          persisted to localStorage so we never ask again. */}
+      {showCyclePrompt && (
+        <div
+          className="absolute inset-0 z-[50] flex items-end justify-center bg-black/70 backdrop-blur-sm px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))]"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Keep score for the group?"
+        >
+          <div className="w-full max-w-sm rounded-3xl border border-border bg-bg p-5 space-y-3 shadow-[0_-20px_50px_-10px_rgba(0,0,0,0.7)]">
+            <h3 className="font-display text-lg font-semibold tracking-tight">
+              Keep score for the group?
+            </h3>
+            <p className="text-[12px] text-mute leading-snug">
+              After saving your own score, do you want to log the
+              other players too? You can change this later in settings.
+            </p>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => resolveCyclePref("disabled")}
+                className="rounded-full border border-border bg-transparent text-mute font-mono text-[11px] tracking-[0.1em] uppercase py-3"
+              >
+                Just me
+              </button>
+              <button
+                type="button"
+                onClick={() => resolveCyclePref("enabled")}
+                className="rounded-full bg-accent text-ink-on-accent font-display font-bold text-[12px] tracking-[0.08em] uppercase py-3"
+              >
+                Keep going
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* When the sheet is open, dim the underlying chrome a notch
           (handled via the sheet's own scrim — nothing extra here). */}
