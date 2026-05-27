@@ -50,6 +50,7 @@ import PressEditor from "./PressEditor";
 import WolfSettings from "./WolfSettings";
 import WinCelebration from "@/components/WinCelebration";
 import OnCourseMode from "./OnCourseMode";
+import DebugErrorBoundary from "@/components/DebugErrorBoundary";
 import HoleStudyMode from "./HoleStudyMode";
 import { getCourseHazardsByName, getCourseHolesByName } from "@/lib/course";
 import { getWindForCoord } from "@/lib/weather";
@@ -645,6 +646,7 @@ export default async function MatchPage({
               }
             />
             {match.status !== "UPCOMING" && (
+              <DebugErrorBoundary>
               <OnCourseMode
                 matchId={match.id}
                 courseName={match.courseName}
@@ -676,6 +678,7 @@ export default async function MatchPage({
                     : null
                 }
               />
+              </DebugErrorBoundary>
             )}
           </div>
         </section>
