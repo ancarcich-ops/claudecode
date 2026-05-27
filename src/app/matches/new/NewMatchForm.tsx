@@ -419,10 +419,11 @@ export default function NewMatchForm({
   // text isn't the OS's wordy default that overflows the half-width
   // box on phones.
   const [scheduledAt, setScheduledAt] = useState<string>(() => {
+    // Default to 15 minutes from now: most users open the form right
+    // before teeing off, and a short lead-time keeps the line "open"
+    // briefly so the group can lock wagers in before the round starts.
     const d = new Date();
-    d.setDate(d.getDate() + 1);
-    d.setMinutes(d.getMinutes() < 30 ? 30 : 0);
-    if (d.getMinutes() === 0) d.setHours(d.getHours() + 1);
+    d.setMinutes(d.getMinutes() + 15);
     d.setSeconds(0, 0);
     const pad = (n: number) => String(n).padStart(2, "0");
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
