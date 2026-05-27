@@ -46,6 +46,7 @@ export default function OnCourseMode({
   holeGeoByHole,
   hazardsByHole,
   myMatchPlayerId,
+  players,
   wind,
 }: {
   matchId: string;
@@ -61,6 +62,16 @@ export default function OnCourseMode({
   holeGeoByHole: Record<number, HoleGeo>;
   hazardsByHole: Record<number, HazardGeo[]>;
   myMatchPlayerId: string | null;
+  // All match players plus their already-logged scores. Drives the
+  // multi-player score-entry cycle: after the signed-in player logs
+  // their score, the sheet cycles to teammates so one person can keep
+  // score for the whole group.
+  players: Array<{
+    id: string;
+    displayName: string;
+    color: string;
+    scoresByHole: Record<number, number>;
+  }>;
   wind: { speedMph: number; fromDeg: number } | null;
 }) {
   const router = useRouter();
@@ -79,6 +90,25 @@ export default function OnCourseMode({
   );
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetSelection, setSheetSelection] = useState<SheetSelection>(null);
+  // Score-entry cycle: signed-in player first, then teammates in match
+  // order. Index references positions in cycleOrder below.
+  const [cyclePos, setCyclePos] = useState(0);
+
+  // Build the cycle order on every render -- it depends on the players
+  // prop (stable) and myMatchPlayerId (stable). Signed-in player goes
+  // first; everyone else follows in original match order.
+  const cycleOrder = (() => {
+    const ordered: typeof players = [];
+    if (myMatchPlayerId) {
+      const me = players.find((p) => p.id === myMatchPlayerId);
+      if (me) ordered.push(me);
+    }
+    for (const p of players) {
+      if (p.id !== myMatchPlayerId) ordered.push(p);
+    }
+    return ordered;
+  })();
+  const currentEntryPlayer = cycleOrder[cyclePos];
 
   useEffect(() => {
     setAimPoint(null);
@@ -258,26 +288,74 @@ export default function OnCourseMode({
   const nextHole = isLastHole ? null : hole + 1;
 
   const commitScore = () => {
-    if (!myMatchPlayerId || !sheetSelection) return;
+    if (!currentEntryPlayer || !sheetSelection) return;
+    const targetId = currentEntryPlayer.id;
+    const strokes = sheetSelection.strokes;
     const fd = new FormData();
     fd.set("matchId", matchId);
-    fd.set("matchPlayerId", myMatchPlayerId);
+    fd.set("matchPlayerId", targetId);
     fd.set("hole", String(hole));
-    fd.set("strokes", String(sheetSelection.strokes));
+    fd.set("strokes", String(strokes));
+    // Decide what happens AFTER the save: cycle to the next player who
+    // hasn't already logged this hole, or close the sheet + advance to
+    // the next hole when everyone is done.
+    const nextIdx = (() => {
+      for (let i = cyclePos + 1; i < cycleOrder.length; i++) {
+        const p = cycleOrder[i];
+        if (p.scoresByHole[hole] == null) return i;
+      }
+      return -1;
+    })();
     startTransition(async () => {
       await logScoreAction(fd);
-      setSheetOpen(false);
-      setSheetSelection(null);
-      // Auto-advance unless on last hole.
-      if (!isLastHole) {
-        setHole(hole + 1);
-      }
-      router.refresh();
       try {
         window.dispatchEvent(new CustomEvent("sticks:sound:score"));
       } catch {}
+      if (nextIdx >= 0) {
+        // More players to score this hole -- swap badge, clear the
+        // chosen tile, keep the sheet open.
+        setCyclePos(nextIdx);
+        setSheetSelection(null);
+      } else {
+        // Whole group is done on this hole. Close the sheet, reset the
+        // cycle to "self first" for the next hole, advance.
+        setSheetOpen(false);
+        setSheetSelection(null);
+        setCyclePos(0);
+        if (!isLastHole) setHole(hole + 1);
+      }
+      router.refresh();
     });
   };
+
+  // Reset the cycle to the signed-in player whenever the sheet opens
+  // or the hole changes, so we never strand the user on a teammate's
+  // badge from a previous hole.
+  useEffect(() => {
+    if (!sheetOpen) return;
+    // Skip players already scored on this hole when re-opening.
+    let pos = 0;
+    for (let i = 0; i < cycleOrder.length; i++) {
+      const p = cycleOrder[i];
+      if (p.scoresByHole[hole] == null) {
+        pos = i;
+        break;
+      }
+      if (i === cycleOrder.length - 1) pos = 0;
+    }
+    setCyclePos(pos);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sheetOpen, hole]);
+
+  // What's the next player after the current one (for the save button
+  // label)? Mirrors the lookup inside commitScore.
+  const nextPlayerInCycle = (() => {
+    for (let i = cyclePos + 1; i < cycleOrder.length; i++) {
+      const p = cycleOrder[i];
+      if (p.scoresByHole[hole] == null) return p;
+    }
+    return null;
+  })();
 
   const markGreen = (position: "center" | "front" | "back" = "center") => {
     if (!pos) return;
@@ -498,7 +576,23 @@ export default function OnCourseMode({
         onCancel={() => {
           setSheetOpen(false);
           setSheetSelection(null);
+          setCyclePos(0);
         }}
+        currentPlayer={
+          currentEntryPlayer
+            ? {
+                displayName: currentEntryPlayer.displayName,
+                color: currentEntryPlayer.color,
+              }
+            : undefined
+        }
+        nextPlayer={
+          nextPlayerInCycle
+            ? { displayName: nextPlayerInCycle.displayName }
+            : null
+        }
+        playerIndex={cyclePos + 1}
+        playerCount={cycleOrder.length}
       />
 
       {/* When the sheet is open, dim the underlying chrome a notch

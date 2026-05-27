@@ -60,6 +60,10 @@ export default function ScoreSheet({
   onSelect,
   onSave,
   onCancel,
+  currentPlayer,
+  nextPlayer,
+  playerIndex,
+  playerCount,
 }: {
   open: boolean;
   hole: number;
@@ -73,6 +77,15 @@ export default function ScoreSheet({
   onSelect: (s: SheetSelection) => void;
   onSave: () => void;
   onCancel: () => void;
+  // Player badge at the top + cycle info. Defaults preserve the
+  // pre-cycle behavior (single self-entry) when callers don't pass
+  // these.
+  currentPlayer?: { displayName: string; color: string };
+  nextPlayer?: { displayName: string } | null;
+  // 1-based position in the entry cycle ("1 of 4"). Both optional;
+  // when omitted the sheet hides the position indicator.
+  playerIndex?: number;
+  playerCount?: number;
 }) {
   // Close on Escape so desktop / dev-tools navigation still works.
   useEffect(() => {
@@ -103,11 +116,15 @@ export default function ScoreSheet({
     { kind: "skip" },
   ];
 
-  const saveLabel = isLastHole
-    ? "Save · finish round"
-    : nextHole != null
-      ? `Save · go to ${nextHole}`
-      : "Save";
+  // When more players remain in the cycle, the save button advances to
+  // the next player instead of the next hole.
+  const saveLabel = nextPlayer
+    ? `Save · ${nextPlayer.displayName}`
+    : isLastHole
+      ? "Save · finish round"
+      : nextHole != null
+        ? `Save · go to ${nextHole}`
+        : "Save";
 
   return (
     <>
@@ -132,6 +149,27 @@ export default function ScoreSheet({
           aria-label="Close"
           className="block mx-auto mb-3 h-1 w-10 rounded-full bg-white/20"
         />
+        {/* Player badge: who we're entering this score for. Defaults to
+            the signed-in player and cycles through the group after each
+            save. */}
+        {currentPlayer && (
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <span
+                className="inline-block w-3 h-3 rounded-full shrink-0"
+                style={{ background: currentPlayer.color }}
+              />
+              <span className="font-display text-[15px] font-semibold tracking-tight truncate">
+                {currentPlayer.displayName}
+              </span>
+            </div>
+            {playerCount != null && playerCount > 1 && playerIndex != null && (
+              <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-mute shrink-0">
+                {playerIndex} of {playerCount}
+              </span>
+            )}
+          </div>
+        )}
         {/* Header */}
         <div className="flex items-baseline justify-between gap-3 mb-1">
           <h3 className="font-display text-[22px] font-semibold tracking-[-0.015em] leading-none">
