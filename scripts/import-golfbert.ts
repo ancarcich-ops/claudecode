@@ -128,9 +128,15 @@ function parseCli() {
       // lines + lines starting with # are ignored). Useful for
       // pinning a "do these first" list on day 1 without a 40-line
       // --id chain on the command line.
+      //
+      // Splits on /\r?\n/ so Windows CRLF files don't leave a trailing
+      // \r that defeats the `#.*$` comment strip (the . class in JS
+      // regex doesn't match \r, so the regex would fail without this
+      // and the entire line incl. trailing comment would end up in
+      // flags.ids).
       const path = a.slice("--ids-from=".length);
       const lines = readFileSync(path, "utf8")
-        .split("\n")
+        .split(/\r?\n/)
         // Strip inline "# comment" tails so each line can carry a
         // trailing annotation (distance, city, etc.) -- handy for
         // hand-curated priority lists.
