@@ -62,6 +62,8 @@ export default function ScoreSheet({
   onCancel,
   currentPlayer,
   nextPlayer,
+  previousPlayer,
+  onBack,
   playerIndex,
   playerCount,
 }: {
@@ -82,6 +84,10 @@ export default function ScoreSheet({
   // these.
   currentPlayer?: { displayName: string; color: string };
   nextPlayer?: { displayName: string } | null;
+  // Previous player in the cycle (if any) -- enables the "back" arrow
+  // so the scorekeeper can re-edit an earlier player's hole.
+  previousPlayer?: { displayName: string } | null;
+  onBack?: () => void;
   // 1-based position in the entry cycle ("1 of 4"). Both optional;
   // when omitted the sheet hides the position indicator.
   playerIndex?: number;
