@@ -65,8 +65,9 @@ export default function OnCourseMode({
   // All match players plus their already-logged scores. Drives the
   // multi-player score-entry cycle: after the signed-in player logs
   // their score, the sheet cycles to teammates so one person can keep
-  // score for the whole group.
-  players: Array<{
+  // score for the whole group. Optional + defaults to [] -- a missing
+  // prop must not crash the on-course mount.
+  players?: Array<{
     id: string;
     displayName: string;
     color: string;
@@ -74,6 +75,9 @@ export default function OnCourseMode({
   }>;
   wind: { speedMph: number; fromDeg: number } | null;
 }) {
+  // Normalize the optional prop once so every downstream consumer can
+  // treat it as a guaranteed array without re-checking.
+  const playerList = players ?? [];
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [active, setActive] = useState(false);
@@ -94,16 +98,18 @@ export default function OnCourseMode({
   // order. Index references positions in cycleOrder below.
   const [cyclePos, setCyclePos] = useState(0);
 
-  // Build the cycle order on every render -- it depends on the players
-  // prop (stable) and myMatchPlayerId (stable). Signed-in player goes
-  // first; everyone else follows in original match order.
+  // Build the cycle order on every render -- it depends on the player
+  // list (stable) and myMatchPlayerId (stable). Signed-in player goes
+  // first; everyone else follows in original match order. Empty list
+  // returns an empty cycle so downstream `currentEntryPlayer` lookups
+  // are safely undefined rather than a crash.
   const cycleOrder = (() => {
-    const ordered: typeof players = [];
+    const ordered: typeof playerList = [];
     if (myMatchPlayerId) {
-      const me = players.find((p) => p.id === myMatchPlayerId);
+      const me = playerList.find((p) => p.id === myMatchPlayerId);
       if (me) ordered.push(me);
     }
-    for (const p of players) {
+    for (const p of playerList) {
       if (p.id !== myMatchPlayerId) ordered.push(p);
     }
     return ordered;
@@ -302,7 +308,7 @@ export default function OnCourseMode({
     const nextIdx = (() => {
       for (let i = cyclePos + 1; i < cycleOrder.length; i++) {
         const p = cycleOrder[i];
-        if (p.scoresByHole[hole] == null) return i;
+        if (p?.scoresByHole?.[hole] == null) return i;
       }
       return -1;
     })();
@@ -333,11 +339,15 @@ export default function OnCourseMode({
   // badge from a previous hole.
   useEffect(() => {
     if (!sheetOpen) return;
+    if (cycleOrder.length === 0) {
+      setCyclePos(0);
+      return;
+    }
     // Skip players already scored on this hole when re-opening.
     let pos = 0;
     for (let i = 0; i < cycleOrder.length; i++) {
       const p = cycleOrder[i];
-      if (p.scoresByHole[hole] == null) {
+      if (p?.scoresByHole?.[hole] == null) {
         pos = i;
         break;
       }
@@ -352,7 +362,7 @@ export default function OnCourseMode({
   const nextPlayerInCycle = (() => {
     for (let i = cyclePos + 1; i < cycleOrder.length; i++) {
       const p = cycleOrder[i];
-      if (p.scoresByHole[hole] == null) return p;
+      if (p?.scoresByHole?.[hole] == null) return p;
     }
     return null;
   })();

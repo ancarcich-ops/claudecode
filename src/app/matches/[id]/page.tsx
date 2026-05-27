@@ -662,12 +662,12 @@ export default async function MatchPage({
                 holeGeoByHole={holeGeoByHole}
                 hazardsByHole={hazardsByHole}
                 myMatchPlayerId={myMatchPlayer?.id ?? null}
-                players={match.players.map((p) => ({
+                players={(match.players ?? []).map((p) => ({
                   id: p.id,
                   displayName: p.displayName,
-                  color: colorForSeat(p.seat),
+                  color: colorForSeat(p.seat ?? 0),
                   scoresByHole: Object.fromEntries(
-                    p.scores.map((s) => [s.hole, s.strokes]),
+                    (p.scores ?? []).map((s) => [s.hole, s.strokes]),
                   ),
                 }))}
                 wind={
