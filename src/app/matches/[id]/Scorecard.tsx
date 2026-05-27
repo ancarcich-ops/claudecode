@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useTransition } from "react";
+import { useEffect, useMemo, useRef, useTransition } from "react";
 import { logScoreAction } from "@/lib/actions";
 
 type Player = {
@@ -85,6 +85,63 @@ export default function Scorecard({
     });
   };
 
+  // Refs for every score cell in column-major order so we can advance
+  // focus to the NEXT player on the SAME hole (then jump to the first
+  // player of the next hole when the column is full). Keyed by
+  // `${playerIdx}:${holeIdx}` for cheap lookup.
+  const inputRefs = useRef<Map<string, HTMLInputElement | null>>(new Map());
+  const focusNext = (playerIdx: number, holeIdx: number) => {
+    let nextPlayer = playerIdx + 1;
+    let nextHole = holeIdx;
+    if (nextPlayer >= players.length) {
+      nextPlayer = 0;
+      nextHole = holeIdx + 1;
+    }
+    if (nextHole >= holes) return;
+    const el = inputRefs.current.get(`${nextPlayer}:${nextHole}`);
+    el?.focus();
+    el?.select();
+  };
+
+  // Debounce timers per cell. We commit + advance ~400ms after the
+  // user's last keystroke so double-digit scores (10, 11, etc.) still
+  // work without each digit firing its own server round-trip.
+  const commitTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(
+    new Map(),
+  );
+  const scheduleCommit = (
+    key: string,
+    matchPlayerId: string,
+    hole: number,
+    playerIdx: number,
+    holeIdx: number,
+    rawValue: string,
+    priorValue: number | undefined,
+  ) => {
+    const existing = commitTimers.current.get(key);
+    if (existing) clearTimeout(existing);
+    const t = setTimeout(() => {
+      commitTimers.current.delete(key);
+      const trimmed = rawValue.trim();
+      const prev = priorValue === undefined ? "" : String(priorValue);
+      // Only fire the server action when the value actually changed.
+      // Submitting "" clears the score (logScoreAction handles that).
+      if (trimmed !== prev) submit(matchPlayerId, hole, trimmed);
+      // Always advance focus once the user has paused -- even if they
+      // re-typed the same number, the assumption is "I'm done here,
+      // next person."
+      focusNext(playerIdx, holeIdx);
+    }, 400);
+    commitTimers.current.set(key, t);
+  };
+
+  // Memoize player index lookup so it doesn't change identity each render.
+  const playerIndexById = useMemo(() => {
+    const m = new Map<string, number>();
+    players.forEach((p, i) => m.set(p.id, i));
+    return m;
+  }, [players]);
+
   return (
     <div ref={scrollRef} className="overflow-x-auto -mx-4 px-4">
       <table className="w-full text-sm border-separate border-spacing-0">
@@ -154,7 +211,7 @@ export default function Scorecard({
                     </span>
                   </div>
                 </td>
-                {holeNumbers.map((h) => {
+                {holeNumbers.map((h, holeIdx) => {
                   const val = byHole.get(h);
                   const parH = pars[h - startingHole] ?? 4;
                   const cls =
@@ -165,23 +222,63 @@ export default function Scorecard({
                         : val > parH
                           ? "text-danger"
                           : "text-ink";
+                  const playerIdx = playerIndexById.get(p.id) ?? 0;
+                  const refKey = `${playerIdx}:${holeIdx}`;
                   return (
                     <td key={h} className="p-0.5 text-center">
                       <input
+                        ref={(el) => {
+                          inputRefs.current.set(refKey, el);
+                        }}
                         type="number"
                         inputMode="numeric"
                         min={1}
                         max={20}
                         defaultValue={val ?? ""}
                         disabled={locked || pending}
+                        onFocus={(e) => {
+                          // Select existing text so a fresh tap overwrites
+                          // cleanly without needing to clear first.
+                          (e.target as HTMLInputElement).select();
+                        }}
+                        onChange={(e) => {
+                          scheduleCommit(
+                            refKey,
+                            p.id,
+                            h,
+                            playerIdx,
+                            holeIdx,
+                            e.target.value,
+                            val,
+                          );
+                        }}
                         onBlur={(e) => {
-                          const next = e.target.value;
+                          // Commit on blur without advancing (the user
+                          // tapped away rather than completing the cell).
+                          const existing = commitTimers.current.get(refKey);
+                          if (existing) {
+                            clearTimeout(existing);
+                            commitTimers.current.delete(refKey);
+                          }
+                          const next = e.target.value.trim();
                           const prev = val === undefined ? "" : String(val);
                           if (next !== prev) submit(p.id, h, next);
                         }}
                         onKeyDown={(e) => {
-                          if (e.key === "Enter")
-                            (e.target as HTMLInputElement).blur();
+                          if (e.key === "Enter") {
+                            const existing = commitTimers.current.get(refKey);
+                            if (existing) {
+                              clearTimeout(existing);
+                              commitTimers.current.delete(refKey);
+                            }
+                            const next = (e.target as HTMLInputElement)
+                              .value.trim();
+                            const prev =
+                              val === undefined ? "" : String(val);
+                            if (next !== prev) submit(p.id, h, next);
+                            focusNext(playerIdx, holeIdx);
+                            e.preventDefault();
+                          }
                         }}
                         className={`w-10 h-10 sm:w-9 sm:h-9 rounded-md bg-panel2 border border-border text-center font-mono text-sm focus:outline-none focus:ring-1 focus:ring-accent ${cls}`}
                       />
@@ -200,9 +297,10 @@ export default function Scorecard({
         </tbody>
       </table>
       <p className="text-xs text-mute mt-3 px-1">
-        Tap a cell to log strokes. Green = under par, red = over.{" "}
-        The market reprices after each entry — friends watching see the chart
-        move in seconds.
+        Tap a cell to log strokes — entry auto-advances to the next player
+        on the same hole. Green = under par, red = over. The market
+        reprices after each entry, so friends watching see the chart move
+        in seconds.
       </p>
     </div>
   );
