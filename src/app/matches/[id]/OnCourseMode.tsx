@@ -250,7 +250,7 @@ export default function OnCourseMode({
         onClick={() => setActive(true)}
         className="btn btn-primary w-full sm:w-auto"
       >
-        Start on-course →
+        Start on-course GPS and scorecard →
       </button>
     );
   }

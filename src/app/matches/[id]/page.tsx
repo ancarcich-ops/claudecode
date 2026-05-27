@@ -42,7 +42,6 @@ import MatchChartTabs, {
 } from "./MatchChartTabs";
 import MatchActionsMenu, { type MatchAction } from "./MatchActionsMenu";
 import MatchTabs, { type MatchTab } from "./MatchTabs";
-import ShareButton from "@/components/ShareButton";
 import BBBEditor from "./BBBEditor";
 import SnakeEditor from "./SnakeEditor";
 import WolfEditor from "./WolfEditor";
@@ -50,7 +49,6 @@ import PressEditor from "./PressEditor";
 import WolfSettings from "./WolfSettings";
 import WinCelebration from "@/components/WinCelebration";
 import OnCourseMode from "./OnCourseMode";
-import DebugErrorBoundary from "@/components/DebugErrorBoundary";
 import HoleStudyMode from "./HoleStudyMode";
 import { getCourseHazardsByName, getCourseHolesByName } from "@/lib/course";
 import { getWindForCoord } from "@/lib/weather";
@@ -556,11 +554,6 @@ export default async function MatchPage({
             {match.courseName}
           </h1>
           <StatusBadge status={match.status} />
-          <ShareButton
-            url={`/matches/${match.id}`}
-            title={`${match.courseName} on Sticks`}
-            label="Share"
-          />
           {isCreator && (
             <MatchActionsMenu
               matchId={match.id}
@@ -610,7 +603,7 @@ export default async function MatchPage({
               <p className="text-[11px] text-mute mt-0.5">
                 {match.status === "UPCOMING"
                   ? "Walk the course before the round. Distances from each tee."
-                  : "GPS distances to the green + one-tap score entry. Mobile-first."}
+                  : "GPS distances to the green + one-tap score entry."}
               </p>
             </div>
             {(() => {
@@ -646,7 +639,6 @@ export default async function MatchPage({
               }
             />
             {match.status !== "UPCOMING" && (
-              <DebugErrorBoundary>
               <OnCourseMode
                 matchId={match.id}
                 courseName={match.courseName}
@@ -678,7 +670,6 @@ export default async function MatchPage({
                     : null
                 }
               />
-              </DebugErrorBoundary>
             )}
           </div>
         </section>
@@ -742,7 +733,7 @@ function creatorActions(status: string, fns: CreatorActionFns): MatchAction[] {
   if (status === "IN_PROGRESS") {
     out.push({ label: "Mark final", action: fns.completeMatchAction });
   }
-  if (status !== "UPCOMING") {
+  if (status === "COMPLETED") {
     out.push({ label: "Reopen", action: fns.reopenMatchAction });
   }
   out.push({
