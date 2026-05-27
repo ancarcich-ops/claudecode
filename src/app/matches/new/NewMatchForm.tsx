@@ -540,7 +540,12 @@ export default function NewMatchForm({
             onBlur={() => setCourseFocused(false)}
             autoComplete="off"
           />
-          {nearby && nearby.filter((c) => c.name !== courseName).length > 0 && (
+          {/* Nearby list only renders when the input is empty -- once
+              the user starts typing we step aside so the focused
+              search dropdown can show real matches. */}
+          {!courseName.trim() &&
+            nearby &&
+            nearby.filter((c) => c.name !== courseName).length > 0 && (
             <div className="mt-1.5 border border-border rounded-md divide-y divide-border bg-panel/40 overflow-hidden">
               <div className="px-2.5 py-1 text-[9.5px] uppercase tracking-wider text-mute bg-panel2/40">
                 Nearby — tap to pick, or search above
@@ -573,8 +578,12 @@ export default function NewMatchForm({
               Recent picks float above the catalog matches. onMouseDown
               + preventDefault keeps the input from blurring before the
               click registers, so taps select cleanly. */}
+          {/* Show search dropdown when focused AND either the user is
+              typing (so the nearby list has stepped aside) or there
+              isn't a nearby list at all. */}
           {courseFocused &&
-            !(nearby && nearby.length > 0) &&
+            (courseName.trim().length > 0 ||
+              !(nearby && nearby.length > 0)) &&
             courseResults.length > 0 && (
               <div className="mt-1.5 border border-border rounded-md bg-panel/95 backdrop-blur overflow-hidden max-h-72 overflow-y-auto">
                 {recentCourses.length > 0 && !courseName.trim() && (
