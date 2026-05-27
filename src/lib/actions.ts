@@ -353,56 +353,30 @@ export async function createMatchAction(formData: FormData) {
   // (single source of truth), so we read those off the drafts
   // we already validated.
   if (sideGameKinds.includes("TEAM_VS_TEAM")) {
-    const tvtRuleRaw = String(formData.get("tvtRule") ?? "BEST_BALL");
-    const { TEAM_VS_TEAM_RULES, stringifyTeamVsTeamConfig } = await import(
-      "./sideGames"
-    );
+    const {
+      TEAM_VS_TEAM_RULES,
+      stringifyTeamVsTeamConfig,
+      parseTeamVsTeamConfig,
+    } = await import("./sideGames");
     type TvtRule = (typeof TEAM_VS_TEAM_RULES)[number];
-    const rule: TvtRule = (TEAM_VS_TEAM_RULES as readonly string[]).includes(
-      tvtRuleRaw,
-    )
-      ? (tvtRuleRaw as TvtRule)
-      : "BEST_BALL";
     const teamPlayers: Record<0 | 1, string[]> = { 0: [], 1: [] };
     for (let i = 0; i < match.players.length && i < drafts.length; i++) {
       const t = drafts[i].team;
       teamPlayers[t].push(match.players[i].id);
     }
-    // Only persist a usable config -- if either team is empty (e.g.
-    // INDIVIDUAL match where nobody touched the chips) the side game
-    // stays opt-in: SideGame.config remains null, computeAllSideGames
-    // skips it, UI shows a "configure now" CTA later.
     if (teamPlayers[0].length > 0 && teamPlayers[1].length > 0) {
-      // Vegas-specific options only honored when rule === "VEGAS".
-      let vegas:
-        | {
-            birdieFlip: boolean;
-            doubleHoles: "OFF" | "INCREMENTAL" | "EXPONENTIAL";
-            stake?: number;
-          }
-        | undefined;
-      if (rule === "VEGAS") {
-        const rawVegas = String(formData.get("vegasConfig") ?? "");
-        if (rawVegas) {
-          try {
-            const obj = JSON.parse(rawVegas);
-            const stakeNum = Number(obj?.stake);
-            vegas = {
-              birdieFlip: obj?.birdieFlip === true,
-              doubleHoles:
-                obj?.doubleHoles === "INCREMENTAL" ||
-                obj?.doubleHoles === "EXPONENTIAL"
-                  ? obj.doubleHoles
-                  : "OFF",
-              ...(Number.isFinite(stakeNum) && stakeNum > 0
-                ? { stake: stakeNum }
-                : {}),
-            };
-          } catch {
-            // Malformed -- fall through with no vegas options.
-          }
-        }
+      // New form posts a single JSON tvtConfig with rules[]; the parser
+      // also handles a legacy single-rule shape for safety. Default to
+      // a single BEST_BALL rule if anything is malformed.
+      const rawTvt = String(formData.get("tvtConfig") ?? "");
+      let parsedRules: { rule: TvtRule; stake?: number; vegas?: unknown }[] = [];
+      if (rawTvt) {
+        const parsed = parseTeamVsTeamConfig(
+          JSON.stringify({ teams: teamPlayers, ...JSON.parse(rawTvt) }),
+        );
+        if (parsed && parsed.rules.length > 0) parsedRules = parsed.rules;
       }
+      if (parsedRules.length === 0) parsedRules = [{ rule: "BEST_BALL" }];
       await prisma.sideGame.update({
         where: {
           matchId_kind: { matchId: match.id, kind: "TEAM_VS_TEAM" },
@@ -410,8 +384,7 @@ export async function createMatchAction(formData: FormData) {
         data: {
           config: stringifyTeamVsTeamConfig({
             teams: teamPlayers,
-            rule,
-            ...(vegas ? { vegas } : {}),
+            rules: parsedRules as never,
           }),
         },
       });
