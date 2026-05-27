@@ -89,7 +89,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
     region: "LA",
     access: "private",
     holes: 18,
-    pars: p(18, 70),
+    pars: [5, 4, 3, 4, 3, 4, 4, 5, 4, 3, 4, 4, 3, 5, 4, 3, 4, 4],
   },
   {
     id: "lacc-north",
@@ -107,7 +107,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
     region: "LA",
     access: "private",
     holes: 18,
-    pars: p(18, 71),
+    pars: [4, 5, 4, 3, 4, 4, 3, 4, 4, 3, 4, 4, 3, 5, 4, 5, 4, 4],
   },
   {
     id: "brentwood-cc",
@@ -125,7 +125,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
     region: "LA",
     access: "private",
     holes: 18,
-    pars: p(18, 71),
+    pars: [4, 5, 3, 5, 4, 3, 4, 4, 3, 4, 4, 4, 4, 4, 3, 4, 4, 4],
   },
   {
     id: "rancho-park",
@@ -134,7 +134,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
     region: "LA",
     access: "municipal",
     holes: 18,
-    pars: p(18, 71),
+    pars: [4, 4, 3, 5, 4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 5, 5],
   },
   {
     id: "griffith-wilson",
@@ -143,7 +143,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
     region: "LA",
     access: "municipal",
     holes: 18,
-    pars: p(18, 72),
+    pars: [4, 4, 3, 4, 4, 4, 3, 4, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4],
   },
   {
     id: "griffith-harding",
@@ -260,7 +260,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
     region: "LA",
     access: "municipal",
     holes: 18,
-    pars: p(18, 72),
+    pars: [4, 4, 4, 4, 4, 5, 4, 3, 4, 4, 5, 4, 3, 4, 5, 4, 3, 4],
   },
   {
     id: "brookside-2",
@@ -269,7 +269,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
     region: "LA",
     access: "municipal",
     holes: 18,
-    pars: p(18, 70),
+    pars: [4, 4, 4, 4, 3, 4, 4, 4, 4, 3, 5, 3, 4, 4, 3, 4, 4, 4],
   },
   {
     id: "trump-la",
@@ -278,7 +278,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
     region: "LA",
     access: "resort",
     holes: 18,
-    pars: p(18, 71),
+    pars: [4, 5, 4, 3, 4, 4, 5, 3, 4, 4, 3, 5, 4, 5, 3, 4, 3, 4],
   },
   {
     id: "industry-hills-eisenhower",
@@ -287,7 +287,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
     region: "LA",
     access: "public",
     holes: 18,
-    pars: p(18, 72),
+    pars: [5, 4, 4, 4, 3, 4, 4, 5, 3, 5, 4, 4, 3, 4, 3, 4, 4, 5],
   },
   {
     id: "industry-hills-zaharias",
@@ -296,7 +296,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
     region: "LA",
     access: "public",
     holes: 18,
-    pars: p(18, 71),
+    pars: [4, 4, 4, 4, 4, 5, 3, 4, 4, 4, 5, 4, 3, 3, 4, 4, 3, 5],
   },
   {
     id: "rustic-canyon",
@@ -487,7 +487,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
     region: "OC",
     access: "municipal",
     holes: 18,
-    pars: p(18, 72),
+    pars: [4, 4, 4, 5, 3, 4, 4, 3, 5, 5, 4, 4, 3, 4, 3, 4, 4, 5],
   },
   {
     id: "mile-square-players",
@@ -496,7 +496,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
     region: "OC",
     access: "municipal",
     holes: 18,
-    pars: p(18, 72),
+    pars: [4, 4, 4, 3, 5, 3, 4, 4, 5, 4, 4, 3, 4, 5, 4, 3, 5, 4],
   },
   {
     id: "costa-mesa-mesa-linda",
@@ -505,7 +505,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
     region: "OC",
     access: "municipal",
     holes: 18,
-    pars: p(18, 70),
+    pars: [4, 3, 4, 4, 5, 3, 5, 3, 4, 3, 5, 3, 4, 5, 4, 4, 3, 4],
   },
   {
     id: "costa-mesa-los-lagos",
@@ -692,17 +692,17 @@ export const COURSE_PRESETS: CoursePreset[] = [
   // GC, Welk Fountains/Oaks, Cimarron Pebble, Lake Sherwood CC.
   { id: "sherwood-cc", name: "Sherwood Country Club", city: "Thousand Oaks, CA", region: "LA", access: "private", holes: 18, pars: p(18, 72) },
   { id: "marshall-canyon-gc", name: "Marshall Canyon Golf Course", city: "La Verne, CA", region: "LA", access: "municipal", holes: 18, pars: p(18, 71) },
-  { id: "skylinks-long-beach", name: "Skylinks at Long Beach", city: "Long Beach, CA", region: "LA", access: "municipal", holes: 18, pars: p(18, 72) },
-  { id: "recreation-park-18", name: "Recreation Park Golf Course 18", city: "Long Beach, CA", region: "LA", access: "municipal", holes: 18, pars: p(18, 72) },
+  { id: "skylinks-long-beach", name: "Skylinks at Long Beach", city: "Long Beach, CA", region: "LA", access: "municipal", holes: 18, pars: [4, 5, 5, 4, 4, 3, 4, 3, 4, 4, 5, 4, 3, 4, 5, 3, 4, 4] },
+  { id: "recreation-park-18", name: "Recreation Park Golf Course 18", city: "Long Beach, CA", region: "LA", access: "municipal", holes: 18, pars: [4, 4, 4, 4, 3, 4, 4, 4, 5, 4, 4, 3, 4, 5, 4, 3, 5, 4] },
   { id: "mountain-meadows-gc", name: "Mountain Meadows Golf Course", city: "Pomona, CA", region: "LA", access: "municipal", holes: 18, pars: p(18, 72) },
   { id: "diamond-bar-gc", name: "Diamond Bar Golf Course", city: "Diamond Bar, CA", region: "LA", access: "public", holes: 18, pars: p(18, 72) },
   { id: "whittier-narrows-gc", name: "Whittier Narrows Golf Course", city: "Rosemead, CA", region: "LA", access: "public", holes: 18, pars: [5, 3, 4, 4, 3, 4, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4] },
   { id: "knollwood-gc", name: "Knollwood Golf Course", city: "Granada Hills, CA", region: "LA", access: "public", holes: 18, pars: p(18, 72) },
   { id: "calabasas-cc", name: "Calabasas Country Club", city: "Calabasas, CA", region: "LA", access: "private", holes: 18, pars: [4, 4, 3, 5, 4, 5, 3, 4, 4, 4, 4, 3, 4, 3, 5, 4, 4, 4] },
   { id: "el-caballero-cc", name: "El Caballero Country Club", city: "Tarzana, CA", region: "LA", access: "private", holes: 18, pars: [5, 4, 4, 4, 4, 3, 5, 3, 4, 3, 4, 5, 4, 4, 4, 3, 4, 4] },
-  { id: "hacienda-gc", name: "Hacienda Golf Club", city: "La Habra Heights, CA", region: "LA", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "hacienda-gc", name: "Hacienda Golf Club", city: "La Habra Heights, CA", region: "LA", access: "private", holes: 18, pars: [4, 4, 4, 3, 4, 3, 5, 4, 4, 5, 4, 3, 4, 4, 4, 3, 5, 4] },
   { id: "annandale-gc", name: "Annandale Golf Club", city: "Pasadena, CA", region: "LA", access: "private", holes: 18, pars: [4, 4, 4, 4, 3, 5, 4, 4, 3, 4, 4, 3, 5, 4, 3, 4, 3, 5] },
-  { id: "mountaingate-cc", name: "Mountaingate Country Club", city: "Los Angeles, CA", region: "LA", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "mountaingate-cc", name: "Mountaingate Country Club", city: "Los Angeles, CA", region: "LA", access: "private", holes: 18, pars: [5, 4, 3, 4, 5, 3, 4, 3, 4, 4, 3, 4, 4, 5, 4, 3, 4, 4] },
   // Braemar has 27 holes (Trails/Vista/Tigertail nines); seeded as a
   // single par-72 18 from the Trails/Vista combo.
   { id: "braemar-cc", name: "Braemar Country Club", city: "Tarzana, CA", region: "LA", access: "private", holes: 18, pars: p(18, 72) },
@@ -710,7 +710,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
   { id: "friendly-hills-cc", name: "Friendly Hills Country Club", city: "Whittier, CA", region: "LA", access: "private", holes: 18, pars: [5, 3, 4, 4, 4, 4, 4, 3, 4, 4, 4, 4, 3, 4, 5, 3, 4, 4] },
 
   { id: "san-juan-hills-gc", name: "San Juan Hills Golf Club", city: "San Juan Capistrano, CA", region: "OC", access: "public", holes: 18, pars: p(18, 71) },
-  { id: "dad-miller-gc", name: "Dad Miller Golf Course", city: "Anaheim, CA", region: "OC", access: "municipal", holes: 18, pars: p(18, 71) },
+  { id: "dad-miller-gc", name: "Dad Miller Golf Course", city: "Anaheim, CA", region: "OC", access: "municipal", holes: 18, pars: [4, 4, 4, 4, 4, 4, 3, 5, 3, 5, 3, 4, 3, 4, 5, 3, 4, 5] },
   { id: "meadowlark-gc", name: "Meadowlark Golf Course", city: "Huntington Beach, CA", region: "OC", access: "public", holes: 18, pars: [4, 4, 4, 3, 4, 5, 3, 4, 4, 4, 4, 4, 3, 4, 4, 3, 4, 5] },
   { id: "lakewood-cc", name: "Lakewood Country Club", city: "Lakewood, CA", region: "OC", access: "private", holes: 18, pars: [4, 4, 3, 4, 3, 4, 5, 4, 5, 4, 4, 3, 4, 5, 4, 4, 3, 5] },
   // Per-hole pars transcribed from the club's official scorecard
@@ -719,14 +719,14 @@ export const COURSE_PRESETS: CoursePreset[] = [
   { id: "westridge-gc", name: "Westridge Golf Club", city: "La Habra, CA", region: "OC", access: "public", holes: 18, pars: [4, 5, 3, 5, 4, 4, 3, 4, 4, 4, 3, 4, 4, 5, 3, 4, 4, 5] },
   // On Naval Weapons Station Seal Beach but the championship 18
   // (Destroyer) is open to civilians at daily-fee rates.
-  { id: "navy-seal-beach-destroyer", name: "Navy Golf Course Seal Beach - Destroyer Course", city: "Cypress, CA", region: "OC", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "navy-seal-beach-destroyer", name: "Navy Golf Course Seal Beach - Destroyer Course", city: "Cypress, CA", region: "OC", access: "public", holes: 18, pars: [4, 3, 3, 3, 4, 4, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4] },
 
   // LA + OC deep-infill batch -- public/muni gaps + private clubs
   // the catalog was missing. Skipped from research: Vista Valencia
   // (par-61 exec), Cypress GC Los Alamitos (closed 2004), Whittier
   // Hills (doesn't exist), Coto Valley Club (no golf), Santiago GC
   // Orange (couldn't verify as regulation).
-  { id: "debell-gc", name: "DeBell Golf Club", city: "Burbank, CA", region: "LA", access: "municipal", holes: 18, pars: p(18, 71) },
+  { id: "debell-gc", name: "DeBell Golf Club", city: "Burbank, CA", region: "LA", access: "municipal", holes: 18, pars: [5, 4, 4, 4, 4, 3, 3, 5, 4, 4, 4, 3, 4, 3, 4, 4, 3, 4] },
   { id: "montebello-gc", name: "Montebello Golf Course", city: "Montebello, CA", region: "LA", access: "municipal", holes: 18, pars: p(18, 71) },
   { id: "los-amigos-gc", name: "Los Amigos Golf Course", city: "Downey, CA", region: "LA", access: "municipal", holes: 18, pars: [5, 4, 3, 4, 4, 4, 3, 5, 3, 4, 4, 3, 4, 4, 5, 4, 3, 4] },
   { id: "santa-anita-gc", name: "Santa Anita Golf Course", city: "Arcadia, CA", region: "LA", access: "municipal", holes: 18, pars: [4, 4, 5, 3, 4, 4, 4, 3, 4, 4, 4, 3, 5, 4, 3, 4, 4, 4] },
@@ -1030,7 +1030,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
   { id: "juniper", name: "Juniper Golf Club", city: "Redmond, OR", region: "PNW", access: "public", holes: 18, pars: p(18, 72) },
   { id: "reserve-north", name: "The Reserve Vineyards & Golf Club - North Course", city: "Aloha, OR", region: "PNW", access: "private", holes: 18, pars: p(18, 72) },
   { id: "reserve-south", name: "The Reserve Vineyards & Golf Club - South Course", city: "Aloha, OR", region: "PNW", access: "private", holes: 18, pars: p(18, 72) },
-  { id: "oregon-golf-club", name: "The Oregon Golf Club", city: "West Linn, OR", region: "PNW", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "oregon-golf-club", name: "The Oregon Golf Club", city: "West Linn, OR", region: "PNW", access: "public", holes: 18, pars: [5, 4, 4, 3, 5, 4, 4, 3, 4, 4, 4, 3, 5, 4, 5, 4, 3, 4] },
   { id: "langdon-farms", name: "Langdon Farms Golf Club", city: "Aurora, OR", region: "PNW", access: "public", holes: 18, pars: p(18, 71) },
   { id: "heron-lakes-great-blue", name: "Heron Lakes - Great Blue Course", city: "Portland, OR", region: "PNW", access: "public", holes: 18, pars: p(18, 72) },
   { id: "heron-lakes-greenback", name: "Heron Lakes - Greenback Course", city: "Portland, OR", region: "PNW", access: "public", holes: 18, pars: p(18, 72) },

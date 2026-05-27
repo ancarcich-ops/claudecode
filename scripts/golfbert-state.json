@@ -56,14 +56,58 @@
     "dbImported": true
   },
   {
-    "kind": "no-match",
+    "kind": "matched",
     "presetId": "bel-air-cc",
-    "query": "Bel-Air Country Club | Bel-Air"
+    "gbId": 1725,
+    "gbName": "Bel-Air Country Club",
+    "pars": [
+      5,
+      4,
+      3,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "no-match",
+    "kind": "matched",
     "presetId": "wilshire-cc",
-    "query": "Wilshire Country Club | Hancock Park"
+    "gbId": 1715,
+    "gbName": "Wilshire Country Club",
+    "pars": [
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      4,
+      5,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "multi-match",
@@ -98,19 +142,85 @@
     ]
   },
   {
-    "kind": "no-match",
+    "kind": "matched",
     "presetId": "lakeside-gc",
-    "query": "Lakeside Golf Club | Toluca Lake"
+    "gbId": 1418,
+    "gbName": "Lakeside Golf Club",
+    "pars": [
+      4,
+      5,
+      3,
+      5,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "no-match",
+    "kind": "matched",
     "presetId": "rancho-park",
-    "query": "Rancho Park Golf Course | West Los Angeles"
+    "gbId": 18117,
+    "gbName": "Rancho Park Golf Course",
+    "pars": [
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      5,
+      5
+    ],
+    "dbImported": true
   },
   {
-    "kind": "no-match",
+    "kind": "matched",
     "presetId": "griffith-wilson",
-    "query": "Griffith Park - Wilson Course | Los Angeles"
+    "gbId": 1717,
+    "gbName": "Griffith Park - Wilson Course",
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "no-match",
@@ -258,34 +368,166 @@
     "dbImported": true
   },
   {
-    "kind": "no-match",
+    "kind": "matched",
     "presetId": "westchester-gc",
-    "query": "Westchester Golf Course | Westchester"
+    "gbId": 1724,
+    "gbName": "Westchester Golf Course",
+    "pars": [
+      3,
+      4,
+      3,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      3,
+      3,
+      3,
+      5,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "no-match",
+    "kind": "matched",
     "presetId": "brookside-1",
-    "query": "Brookside Golf Club - Course #1 | Pasadena"
+    "gbId": 1875,
+    "gbName": "Brookside Golf Club - Course #1",
+    "pars": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "no-match",
+    "kind": "matched",
     "presetId": "brookside-2",
-    "query": "Brookside Golf Club - Course #2 | Pasadena"
+    "gbId": 17360,
+    "gbName": "Brookside Golf Club - Course #2",
+    "pars": [
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "no-match",
+    "kind": "matched",
     "presetId": "trump-la",
-    "query": "Trump National Golf Club Los Angeles | Rancho Palos Verdes"
+    "gbId": 1932,
+    "gbName": "Trump National Golf Club Los Angeles",
+    "pars": [
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      3,
+      5,
+      4,
+      5,
+      3,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "no-match",
+    "kind": "matched",
     "presetId": "industry-hills-eisenhower",
-    "query": "Industry Hills - Eisenhower | City of Industry"
+    "gbId": 17361,
+    "gbName": "Industry Hills - Eisenhower",
+    "pars": [
+      5,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      5,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      3,
+      4,
+      4,
+      5
+    ],
+    "dbImported": true
   },
   {
-    "kind": "no-match",
+    "kind": "matched",
     "presetId": "industry-hills-zaharias",
-    "query": "Industry Hills - Babe Zaharias | City of Industry"
+    "gbId": 1470,
+    "gbName": "Industry Hills - Babe Zaharias",
+    "pars": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      5,
+      4,
+      3,
+      3,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -344,29 +586,139 @@
     "dbImported": true
   },
   {
-    "kind": "no-match",
+    "kind": "matched",
     "presetId": "mile-square-classic",
-    "query": "Mile Square - Classic Course | Fountain Valley"
+    "gbId": 18110,
+    "gbName": "Mile Square - Classic Course",
+    "pars": [
+      4,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      3,
+      5,
+      5,
+      4,
+      4,
+      3,
+      4,
+      3,
+      4,
+      4,
+      5
+    ],
+    "dbImported": true
   },
   {
-    "kind": "no-match",
+    "kind": "matched",
     "presetId": "mile-square-players",
-    "query": "Mile Square - Player's Course | Fountain Valley"
+    "gbId": 1563,
+    "gbName": "Mile Square - Player's Course",
+    "pars": [
+      4,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "no-match",
+    "kind": "matched",
     "presetId": "costa-mesa-mesa-linda",
-    "query": "Costa Mesa CC - Mesa Linda | Costa Mesa"
+    "gbId": 1493,
+    "gbName": "Costa Mesa CC - Mesa Linda",
+    "pars": [
+      4,
+      3,
+      4,
+      4,
+      5,
+      3,
+      5,
+      3,
+      4,
+      3,
+      5,
+      3,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "no-match",
+    "kind": "matched",
     "presetId": "skylinks-long-beach",
-    "query": "Skylinks at Long Beach | Long Beach, CA"
+    "gbId": 1708,
+    "gbName": "Skylinks at Long Beach",
+    "pars": [
+      4,
+      5,
+      5,
+      4,
+      4,
+      3,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "no-match",
+    "kind": "matched",
     "presetId": "recreation-park-18",
-    "query": "Recreation Park Golf Course 18 | Long Beach, CA"
+    "gbId": 1706,
+    "gbName": "Recreation Park Golf Course 18",
+    "pars": [
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -453,9 +805,31 @@
     "dbImported": true
   },
   {
-    "kind": "no-match",
+    "kind": "matched",
     "presetId": "hacienda-gc",
-    "query": "Hacienda Golf Club | La Habra Heights, CA"
+    "gbId": 1654,
+    "gbName": "Hacienda Golf Club",
+    "pars": [
+      4,
+      4,
+      4,
+      3,
+      4,
+      3,
+      5,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -486,9 +860,31 @@
     "dbImported": true
   },
   {
-    "kind": "no-match",
+    "kind": "matched",
     "presetId": "mountaingate-cc",
-    "query": "Mountaingate Country Club | Los Angeles, CA"
+    "gbId": 1726,
+    "gbName": "Mountaingate Country Club",
+    "pars": [
+      5,
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "multi-match",
@@ -564,9 +960,31 @@
     "dbImported": true
   },
   {
-    "kind": "no-match",
+    "kind": "matched",
     "presetId": "dad-miller-gc",
-    "query": "Dad Miller Golf Course | Anaheim, CA"
+    "gbId": 17806,
+    "gbName": "Dad Miller Golf Course",
+    "pars": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      3,
+      5,
+      3,
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -653,14 +1071,58 @@
     "dbImported": true
   },
   {
-    "kind": "no-match",
+    "kind": "matched",
     "presetId": "navy-seal-beach-destroyer",
-    "query": "Navy Golf Course Seal Beach - Destroyer Course | Cypress, CA"
+    "gbId": 1502,
+    "gbName": "Navy Golf Course Seal Beach - Destroyer Course",
+    "pars": [
+      4,
+      3,
+      3,
+      3,
+      4,
+      4,
+      3,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "no-match",
+    "kind": "matched",
     "presetId": "debell-gc",
-    "query": "DeBell Golf Club | Burbank, CA"
+    "gbId": 1419,
+    "gbName": "DeBell Golf Club",
+    "pars": [
+      5,
+      4,
+      4,
+      4,
+      4,
+      3,
+      3,
+      5,
+      4,
+      4,
+      4,
+      3,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "multi-match",
@@ -837,8 +1299,57 @@
     ]
   },
   {
-    "kind": "no-match",
+    "kind": "matched",
     "presetId": "oregon-golf-club",
-    "query": "The Oregon Golf Club | West Linn, OR"
+    "gbId": 5166,
+    "gbName": "The Oregon Golf Club",
+    "pars": [
+      5,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      5,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "goose-creek",
+    "gbId": 1754,
+    "gbName": "Goose Creek Golf Club",
+    "pars": [
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4
+    ],
+    "dbImported": true
   }
 ]
