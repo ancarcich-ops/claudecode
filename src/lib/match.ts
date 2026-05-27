@@ -60,6 +60,13 @@ export async function loadMatchWithOdds(matchId: string) {
     if (!tvtSg?.config) return undefined;
     try {
       const parsed = JSON.parse(tvtSg.config);
+      // New shape: rules[]. Use the first rule as the odds engine
+      // driver (it can only price one team aggregation at a time).
+      if (Array.isArray(parsed?.rules) && parsed.rules.length > 0) {
+        const first = parsed.rules[0];
+        return typeof first?.rule === "string" ? first.rule : undefined;
+      }
+      // Legacy single-rule shape.
       return typeof parsed?.rule === "string" ? parsed.rule : undefined;
     } catch {
       return undefined;

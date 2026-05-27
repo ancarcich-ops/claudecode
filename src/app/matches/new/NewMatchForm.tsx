@@ -167,12 +167,31 @@ export default function NewMatchForm({
   // -- PlayerRow.team is the single source of truth and surfaces
   // whenever EITHER scramble is the format OR the TEAM_VS_TEAM
   // side game is enabled.
-  const [tvtRule, setTvtRule] = useState<TeamVsTeamRule>("BEST_BALL");
-  // Vegas-specific options. Only sent when the active rule is VEGAS.
+  // Team rules are now multi-select. The set holds every active rule;
+  // per-rule stake lives in tvtStakes (keyed by rule).
+  const [tvtRules, setTvtRules] = useState<Set<TeamVsTeamRule>>(
+    () => new Set(["BEST_BALL"]),
+  );
+  const [tvtStakes, setTvtStakes] = useState<
+    Partial<Record<TeamVsTeamRule, string>>
+  >({});
+  // Vegas-specific options. Only honored when VEGAS is among tvtRules.
   const [vegasBirdieFlip, setVegasBirdieFlip] = useState(false);
   const [vegasDoubleHoles, setVegasDoubleHoles] = useState<
     "OFF" | "INCREMENTAL" | "EXPONENTIAL"
   >("OFF");
+  const toggleTvtRule = (r: TeamVsTeamRule) => {
+    setTvtRules((prev) => {
+      const next = new Set(prev);
+      if (next.has(r)) {
+        // Don't allow zero rules -- at least one must remain checked.
+        if (next.size > 1) next.delete(r);
+      } else {
+        next.add(r);
+      }
+      return next;
+    });
+  };
   // Targets config -- only sent when TARGETS is selected. Defaults
   // chosen to be sensible for an 18-hole round.
   const [targetsStat, setTargetsStat] = useState<
@@ -764,22 +783,29 @@ export default function NewMatchForm({
                 : ""
             }
           />
-          {/* Always submitted; server reads it only when
-              TEAM_VS_TEAM is in the side-games list (which auto-
-              happens when format=BOTH via the useEffect invariant). */}
-          <input type="hidden" name="tvtRule" value={tvtRule} />
+          {/* Multi-rule team config. Each checked rule becomes one
+              entry; per-rule stake comes from tvtStakes; Vegas-only
+              options ride along when VEGAS is checked. Server reads
+              this only when TEAM_VS_TEAM is in the side-games list
+              (auto-added by the useEffect when format = SCRAMBLE or
+              BOTH). */}
           <input
             type="hidden"
-            name="vegasConfig"
-            value={
-              tvtRule === "VEGAS"
-                ? JSON.stringify({
-                    birdieFlip: vegasBirdieFlip,
-                    doubleHoles: vegasDoubleHoles,
-                    stake: Number(vegasStake) || 0,
-                  })
-                : ""
-            }
+            name="tvtConfig"
+            value={JSON.stringify({
+              rules: Array.from(tvtRules).map((r) => ({
+                rule: r,
+                stake: Number(tvtStakes[r] ?? "") || 0,
+                ...(r === "VEGAS"
+                  ? {
+                      vegas: {
+                        birdieFlip: vegasBirdieFlip,
+                        doubleHoles: vegasDoubleHoles,
+                      },
+                    }
+                  : {}),
+              })),
+            })}
           />
           <input
             type="hidden"
@@ -986,40 +1012,85 @@ export default function NewMatchForm({
             mirrors how "what's the allowance" lives above the scoring
             details on the Individual flow. */}
         <div hidden={format !== "BOTH" && format !== "SCRAMBLE"}>
-          <label className="label">Team rule</label>
-          <div className="grid grid-cols-2 gap-1.5">
+          <label className="label">Team rules</label>
+          <p className="text-[10.5px] text-mute mb-2 leading-snug">
+            Pick one or more — each runs simultaneously with its own
+            leaderboard and optional wager.
+          </p>
+          <div className="space-y-1.5">
             {TEAM_VS_TEAM_RULES.map((r) => {
-              const active = tvtRule === r;
+              const active = tvtRules.has(r);
+              const stakeUnit = r === "VEGAS"
+                ? "per point"
+                : r === "HIGH_LOW" || r === "HIGH_LOW_BALL"
+                  ? "per point"
+                  : "per stroke";
               return (
-                <button
+                <div
                   key={r}
-                  type="button"
-                  onClick={() => setTvtRule(r)}
                   className={
-                    "rounded-md border px-2.5 py-1.5 text-left transition-colors " +
+                    "rounded-md border transition-colors " +
                     (active
-                      ? "border-accent bg-accent/10 text-ink"
-                      : "border-border text-mute hover:text-ink")
+                      ? "border-accent/60 bg-accent/5"
+                      : "border-border hover:border-accent/30")
                   }
-                  aria-pressed={active}
                 >
-                  <div className="text-[12px] font-medium">
-                    {teamVsTeamRuleLabel(r)}
-                  </div>
-                  <div className="text-[10px] text-mute leading-tight mt-0.5">
-                    {teamVsTeamRuleBlurb(r)}
-                  </div>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => toggleTvtRule(r)}
+                    aria-pressed={active}
+                    className="w-full flex items-start gap-2.5 px-2.5 py-1.5 text-left"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={active}
+                      readOnly
+                      className="mt-0.5 shrink-0 accent-accent pointer-events-none"
+                    />
+                    <span className="min-w-0">
+                      <span className="block text-[12px] font-medium">
+                        {teamVsTeamRuleLabel(r)}
+                      </span>
+                      <span className="block text-[10px] text-mute leading-tight mt-0.5">
+                        {teamVsTeamRuleBlurb(r)}
+                      </span>
+                    </span>
+                  </button>
+                  {active && (
+                    <div className="px-2.5 pb-2 pl-9 flex items-center gap-2">
+                      <label className="text-[10.5px] text-mute whitespace-nowrap">
+                        Wager
+                      </label>
+                      <span className="text-[11px] text-mute">$</span>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        min={0}
+                        step={1}
+                        value={tvtStakes[r] ?? ""}
+                        placeholder="0"
+                        onChange={(e) =>
+                          setTvtStakes((s) => ({ ...s, [r]: e.target.value }))
+                        }
+                        className="input w-20 text-center text-sm py-1"
+                      />
+                      <span className="text-[10px] text-mute">{stakeUnit}</span>
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
-          <p className="text-[11px] text-mute mt-1.5">
+          <p className="text-[11px] text-mute mt-2">
             How each hole's team score is computed from the players'
             individual strokes. Assign players to Team A or B on the
             Players step.
           </p>
-          {tvtRule === "VEGAS" && (
+          {tvtRules.has("VEGAS") && (
             <div className="mt-2 rounded-md border border-border bg-panel2/40 p-2.5 space-y-2.5">
+              <div className="text-[10px] uppercase tracking-wider text-mute">
+                Vegas options
+              </div>
               <label className="flex items-start gap-2.5 cursor-pointer">
                 <input
                   type="checkbox"
@@ -1068,23 +1139,6 @@ export default function NewMatchForm({
                     );
                   })}
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="text-[11px] text-mute whitespace-nowrap">
-                  Wager
-                </label>
-                <span className="text-[12px] text-mute">$</span>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  min={0}
-                  step={1}
-                  value={vegasStake}
-                  placeholder="0"
-                  onChange={(e) => setVegasStake(e.target.value)}
-                  className="input w-20 text-center text-sm py-1"
-                />
-                <span className="text-[10.5px] text-mute">per point</span>
               </div>
             </div>
           )}

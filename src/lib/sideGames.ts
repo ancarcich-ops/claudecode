@@ -152,15 +152,24 @@ export type VegasOptions = {
   stake?: number;
 };
 
+export type TeamVsTeamRuleConfig = {
+  rule: TeamVsTeamRule;
+  // Optional dollar wager. Per-rule so a group can run Best Ball at
+  // $5/dot and Vegas at $0.25/point on the same round.
+  stake?: number;
+  // Vegas-only options. Ignored when rule !== "VEGAS".
+  vegas?: VegasOptions;
+};
+
 export type TeamVsTeamConfig = {
   // matchPlayerId arrays per team. Stored as { "0": [...], "1": [...] }
   // in JSON; parsed back into a typed object here.
   teams: { 0: string[]; 1: string[] };
-  rule: TeamVsTeamRule;
+  // One or more team rules running simultaneously. Each rule generates
+  // its own leaderboard panel.
+  rules: TeamVsTeamRuleConfig[];
   // Optional display names; falls back to "Team A" / "Team B".
   teamNames?: { 0?: string; 1?: string };
-  // Vegas-specific options; honored only when rule === "VEGAS".
-  vegas?: VegasOptions;
 };
 
 function isTeamVsTeamRule(s: unknown): s is TeamVsTeamRule {
@@ -187,9 +196,6 @@ export function parseTeamVsTeamConfig(
     ) {
       return null;
     }
-    const rule: TeamVsTeamRule = isTeamVsTeamRule(obj.rule)
-      ? obj.rule
-      : "BEST_BALL";
     const teamNames =
       obj.teamNames && typeof obj.teamNames === "object"
         ? {
@@ -203,24 +209,56 @@ export function parseTeamVsTeamConfig(
                 : undefined,
           }
         : undefined;
-    const vegas: VegasOptions | undefined =
-      obj.vegas && typeof obj.vegas === "object"
-        ? {
-            birdieFlip: obj.vegas.birdieFlip === true,
-            doubleHoles:
-              obj.vegas.doubleHoles === "INCREMENTAL" ||
-              obj.vegas.doubleHoles === "EXPONENTIAL"
-                ? obj.vegas.doubleHoles
-                : "OFF",
-            stake:
-              typeof obj.vegas.stake === "number" &&
-              Number.isFinite(obj.vegas.stake) &&
-              obj.vegas.stake > 0
-                ? obj.vegas.stake
-                : undefined,
-          }
-        : undefined;
-    return { teams: { 0: teams[0], 1: teams[1] }, rule, teamNames, vegas };
+    const parseVegas = (v: unknown): VegasOptions | undefined => {
+      if (!v || typeof v !== "object") return undefined;
+      const obj = v as Record<string, unknown>;
+      return {
+        birdieFlip: obj.birdieFlip === true,
+        doubleHoles:
+          obj.doubleHoles === "INCREMENTAL" || obj.doubleHoles === "EXPONENTIAL"
+            ? (obj.doubleHoles as VegasDoubleHoles)
+            : "OFF",
+      };
+    };
+    const parseStake = (v: unknown): number | undefined =>
+      typeof v === "number" && Number.isFinite(v) && v > 0 ? v : undefined;
+
+    // New shape: { rules: [{ rule, stake?, vegas? }, ...] }.
+    // Legacy shape (pre-multi-rule): { rule, vegas?, vegas.stake? } -- the
+    // old single-rule config tucked the per-Vegas stake inside the vegas
+    // sub-object. Both shapes parse here so existing matches keep working.
+    let rules: TeamVsTeamRuleConfig[] = [];
+    if (Array.isArray(obj.rules)) {
+      for (const r of obj.rules as unknown[]) {
+        if (!r || typeof r !== "object") continue;
+        const rec = r as Record<string, unknown>;
+        if (!isTeamVsTeamRule(rec.rule)) continue;
+        rules.push({
+          rule: rec.rule,
+          stake: parseStake(rec.stake),
+          vegas: rec.rule === "VEGAS" ? parseVegas(rec.vegas) : undefined,
+        });
+      }
+    } else if (isTeamVsTeamRule(obj.rule)) {
+      // Legacy single-rule shape. Vegas stake was nested under
+      // vegas.stake in that shape; migrate it up.
+      const legacyVegas =
+        obj.vegas && typeof obj.vegas === "object"
+          ? (obj.vegas as Record<string, unknown>)
+          : null;
+      rules = [
+        {
+          rule: obj.rule as TeamVsTeamRule,
+          stake:
+            obj.rule === "VEGAS" && legacyVegas
+              ? parseStake(legacyVegas.stake)
+              : undefined,
+          vegas: obj.rule === "VEGAS" ? parseVegas(obj.vegas) : undefined,
+        },
+      ];
+    }
+    if (rules.length === 0) rules.push({ rule: "BEST_BALL" });
+    return { teams: { 0: teams[0], 1: teams[1] }, rules, teamNames };
   } catch {
     return null;
   }
@@ -1186,7 +1224,7 @@ export function computeTeamVsTeam(
   scoringMode: ScoringMode,
   config: TeamVsTeamConfig,
   startingHole: number = 1,
-): Leaderboard | null {
+): Leaderboard[] {
   const byId = new Map(players.map((p) => [p.id, p]));
   const teamA = config.teams[0]
     .map((id) => byId.get(id))
@@ -1194,12 +1232,48 @@ export function computeTeamVsTeam(
   const teamB = config.teams[1]
     .map((id) => byId.get(id))
     .filter((p): p is LiveScorePlayer => p != null);
-  if (teamA.length === 0 || teamB.length === 0) return null;
+  if (teamA.length === 0 || teamB.length === 0) return [];
 
   const teamNameA = config.teamNames?.[0] ?? "Team A";
   const teamNameB = config.teamNames?.[1] ?? "Team B";
   const rosterA = `${teamNameA} — ${teamA.map((p) => p.displayName).join(" & ")}`;
   const rosterB = `${teamNameB} — ${teamB.map((p) => p.displayName).join(" & ")}`;
+
+  // Loop over every enabled rule. Each produces its own leaderboard
+  // with a unique `key` (TEAM_<RULE>) so the renderer can show multiple
+  // panels side-by-side without collisions.
+  const out: Leaderboard[] = [];
+  for (const ruleConfig of config.rules) {
+    const lb = computeTeamVsTeamRule(
+      ruleConfig,
+      teamA,
+      teamB,
+      rosterA,
+      rosterB,
+      pars,
+      holes,
+      scoringMode,
+      startingHole,
+    );
+    if (lb) out.push(lb);
+  }
+  return out;
+}
+
+function computeTeamVsTeamRule(
+  ruleConfig: TeamVsTeamRuleConfig,
+  teamA: LiveScorePlayer[],
+  teamB: LiveScorePlayer[],
+  rosterA: string,
+  rosterB: string,
+  pars: number[],
+  holes: number,
+  scoringMode: ScoringMode,
+  startingHole: number,
+): Leaderboard | null {
+  const config = ruleConfig;
+  const ruleKey = `TEAM_${config.rule}`;
+  const ruleTitle = teamVsTeamRuleLabel(config.rule);
 
   // VEGAS: each team's two gross scores form a 2-digit number (low digit
   // first); per-hole points = difference, awarded to the lower team.
@@ -1260,7 +1334,7 @@ export function computeTeamVsTeam(
         // OFF: multiplier stays at 1, tied hole contributes nothing.
       }
     }
-    const vStake = opt.stake ?? 0;
+    const vStake = config.stake ?? 0;
     const teamSwing = aPts - bPts; // positive => A ahead; signed payout per team.
     const fmtPts = (pts: number, swingFromHere: number) => {
       if (counted === 0) return "—";
@@ -1272,9 +1346,9 @@ export function computeTeamVsTeam(
         ? `${teamVsTeamRuleBlurb(config.rule)} · ${fmtMoney(vStake)}/pt`
         : teamVsTeamRuleBlurb(config.rule);
     return {
-      key: "TEAM_VS_TEAM",
+      key: ruleKey,
       kind: "TEAM_VS_TEAM",
-      title: "Team vs team",
+      title: ruleTitle,
       subtitle: stakeNote,
       rows: rankRows(
         [
@@ -1342,26 +1416,37 @@ export function computeTeamVsTeam(
         else if (bMax < aMax) bPts++;
       }
     }
-    const fmtPts = (pts: number) =>
-      counted === 0 ? "—" : `${pts} pt${pts === 1 ? "" : "s"} (${counted}h)`;
+    const ptsStake = config.stake ?? 0;
+    const teamSwing = aPts - bPts;
+    const fmtPts = (pts: number, swingFromHere: number) => {
+      if (counted === 0) return "—";
+      const base = `${pts} pt${pts === 1 ? "" : "s"} (${counted}h)`;
+      return ptsStake > 0
+        ? `${base} · ${fmtMoney(swingFromHere * ptsStake)}`
+        : base;
+    };
+    const subtitle =
+      ptsStake > 0
+        ? `${teamVsTeamRuleBlurb(config.rule)} · ${fmtMoney(ptsStake)}/pt`
+        : teamVsTeamRuleBlurb(config.rule);
     return {
-      key: "TEAM_VS_TEAM",
+      key: ruleKey,
       kind: "TEAM_VS_TEAM",
-      title: "Team vs team",
-      subtitle: teamVsTeamRuleBlurb(config.rule),
+      title: ruleTitle,
+      subtitle,
       rows: rankRows(
         [
           {
             playerId: teamA[0].id,
             player: rosterA,
             numeric: counted === 0 ? -Infinity : aPts,
-            value: fmtPts(aPts),
+            value: fmtPts(aPts, teamSwing),
           },
           {
             playerId: teamB[0].id,
             player: rosterB,
             numeric: counted === 0 ? -Infinity : bPts,
-            value: fmtPts(bPts),
+            value: fmtPts(bPts, -teamSwing),
           },
         ],
         true, // higher points wins
@@ -1417,32 +1502,47 @@ export function computeTeamVsTeam(
   const a = totalFor(teamA);
   const b = totalFor(teamB);
 
-  const fmt = (n: { total: number; counted: number }) =>
-    n.counted === 0
-      ? "—"
-      : `${n.total} (${n.counted}h)`;
+  // For stroke-based rules the wager is $/stroke-of-difference: the
+  // losing team's stroke surplus times stake goes to the winner.
+  const strokeStake = config.stake ?? 0;
+  const both = Math.min(a.counted, b.counted);
+  const aWinsBy = both > 0 ? b.total - a.total : 0; // positive => A ahead.
+  const fmt = (
+    n: { total: number; counted: number },
+    moneyFromHere: number,
+  ) => {
+    if (n.counted === 0) return "—";
+    const base = `${n.total} (${n.counted}h)`;
+    return strokeStake > 0
+      ? `${base} · ${fmtMoney(moneyFromHere * strokeStake)}`
+      : base;
+  };
+  const strokeNote =
+    strokeStake > 0
+      ? `${teamVsTeamRuleBlurb(config.rule)} · ${fmtMoney(strokeStake)}/stroke`
+      : teamVsTeamRuleBlurb(config.rule);
 
   // Use the captain's matchPlayerId as the row's playerId so the
   // existing leaderboard renderer's keyed lookups don't blow up if
   // they expect a real player id; captain = first member of the team.
   return {
-    key: "TEAM_VS_TEAM",
+    key: ruleKey,
     kind: "TEAM_VS_TEAM",
-    title: "Team vs team",
-    subtitle: teamVsTeamRuleBlurb(config.rule),
+    title: ruleTitle,
+    subtitle: strokeNote,
     rows: rankRows(
       [
         {
           playerId: teamA[0].id,
           player: rosterA,
           numeric: a.counted === 0 ? Infinity : a.total,
-          value: fmt(a),
+          value: fmt(a, aWinsBy),
         },
         {
           playerId: teamB[0].id,
           player: rosterB,
           numeric: b.counted === 0 ? Infinity : b.total,
-          value: fmt(b),
+          value: fmt(b, -aWinsBy),
         },
       ],
       false, // lower total wins
@@ -1984,7 +2084,7 @@ export function computeAllSideGames(input: {
     } else if (kind === "TEAM_VS_TEAM") {
       // Skip when not yet configured -- UI shows the configure CTA.
       if (!teamVsTeamConfig) continue;
-      const lb = computeTeamVsTeam(
+      const lbs = computeTeamVsTeam(
         players,
         pars,
         holes,
@@ -1992,7 +2092,7 @@ export function computeAllSideGames(input: {
         teamVsTeamConfig,
         startingHole,
       );
-      if (lb) out.push({ kind, leaderboards: [lb] });
+      if (lbs.length > 0) out.push({ kind, leaderboards: lbs });
     } else if (kind === "MATCH") {
       out.push({
         kind,
