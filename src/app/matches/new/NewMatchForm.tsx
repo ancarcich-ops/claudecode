@@ -167,14 +167,12 @@ export default function NewMatchForm({
   // -- PlayerRow.team is the single source of truth and surfaces
   // whenever EITHER scramble is the format OR the TEAM_VS_TEAM
   // side game is enabled.
-  // Team rules are now multi-select. The set holds every active rule;
-  // per-rule stake lives in tvtStakes (keyed by rule).
+  // Team rules are now multi-select; each selected rule produces its
+  // own leaderboard. Wagers were removed from this surface to declutter
+  // the picker -- money games happen at the group level, not here.
   const [tvtRules, setTvtRules] = useState<Set<TeamVsTeamRule>>(
     () => new Set(["BEST_BALL"]),
   );
-  const [tvtStakes, setTvtStakes] = useState<
-    Partial<Record<TeamVsTeamRule, string>>
-  >({});
   // Vegas-specific options. Only honored when VEGAS is among tvtRules.
   const [vegasBirdieFlip, setVegasBirdieFlip] = useState(false);
   const [vegasDoubleHoles, setVegasDoubleHoles] = useState<
@@ -805,18 +803,16 @@ export default function NewMatchForm({
             }
           />
           {/* Multi-rule team config. Each checked rule becomes one
-              entry; per-rule stake comes from tvtStakes; Vegas-only
-              options ride along when VEGAS is checked. Server reads
-              this only when TEAM_VS_TEAM is in the side-games list
-              (auto-added by the useEffect when format = SCRAMBLE or
-              BOTH). */}
+              entry; Vegas-only options ride along when VEGAS is
+              checked. Server reads this only when TEAM_VS_TEAM is in
+              the side-games list (auto-added by the useEffect when
+              format = SCRAMBLE or BOTH). */}
           <input
             type="hidden"
             name="tvtConfig"
             value={JSON.stringify({
               rules: Array.from(tvtRules).map((r) => ({
                 rule: r,
-                stake: Number(tvtStakes[r] ?? "") || 0,
                 ...(r === "VEGAS"
                   ? {
                       vegas: {
@@ -1036,16 +1032,11 @@ export default function NewMatchForm({
           <label className="label">Team rules</label>
           <p className="text-[10.5px] text-mute mb-2 leading-snug">
             Pick one or more — each runs simultaneously with its own
-            leaderboard and optional wager.
+            leaderboard.
           </p>
           <div className="space-y-1.5">
             {TEAM_VS_TEAM_RULES.map((r) => {
               const active = tvtRules.has(r);
-              const stakeUnit = r === "VEGAS"
-                ? "per point"
-                : r === "HIGH_LOW" || r === "HIGH_LOW_BALL"
-                  ? "per point"
-                  : "per stroke";
               return (
                 <div
                   key={r}
@@ -1077,27 +1068,6 @@ export default function NewMatchForm({
                       </span>
                     </span>
                   </button>
-                  {active && (
-                    <div className="px-2.5 pb-2 pl-9 flex items-center gap-2">
-                      <label className="text-[10.5px] text-mute whitespace-nowrap">
-                        Wager
-                      </label>
-                      <span className="text-[11px] text-mute">$</span>
-                      <input
-                        type="number"
-                        inputMode="decimal"
-                        min={0}
-                        step={1}
-                        value={tvtStakes[r] ?? ""}
-                        placeholder="0"
-                        onChange={(e) =>
-                          setTvtStakes((s) => ({ ...s, [r]: e.target.value }))
-                        }
-                        className="input w-20 text-center text-sm py-1"
-                      />
-                      <span className="text-[10px] text-mute">{stakeUnit}</span>
-                    </div>
-                  )}
                 </div>
               );
             })}
