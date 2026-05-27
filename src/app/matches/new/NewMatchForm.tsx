@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useFormStatus } from "react-dom";
 import { toast } from "sonner";
 import type { CoursePreset } from "@/lib/courses";
 import { findClosestCoursesAction } from "@/lib/actions";
@@ -1679,16 +1680,28 @@ export default function NewMatchForm({
                 : "Next →"}
           </button>
         ) : (
-          <button
-            key="submit"
-            type="submit"
-            className="btn btn-primary w-full"
-          >
-            Open market
-          </button>
+          <OpenMarketButton />
         )}
       </div>
     </form>
+  );
+}
+
+// Submit button that disables itself once the server action is in
+// flight. Without this, a double-tap (or a slow network nudging the
+// user to retry) creates duplicate matches.
+function OpenMarketButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      key="submit"
+      type="submit"
+      disabled={pending}
+      aria-busy={pending}
+      className="btn btn-primary w-full disabled:opacity-60 disabled:cursor-not-allowed"
+    >
+      {pending ? "Opening market…" : "Open market"}
+    </button>
   );
 }
 
