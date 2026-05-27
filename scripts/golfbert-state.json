@@ -1,0 +1,844 @@
+[
+  {
+    "kind": "matched",
+    "presetId": "alondra-park",
+    "gbId": 1688,
+    "gbName": "Alondra Park Golf Course",
+    "gbCity": "Lawndale",
+    "pars": [
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      3,
+      5,
+      4,
+      4,
+      5
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "riviera-cc",
+    "gbId": 1831,
+    "gbName": "Riviera Country Club, The",
+    "gbCity": "Pacific Palisades",
+    "pars": [
+      5,
+      4,
+      4,
+      3,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      3,
+      5,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "no-match",
+    "presetId": "bel-air-cc",
+    "query": "Bel-Air Country Club | Bel-Air"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "wilshire-cc",
+    "query": "Wilshire Country Club | Hancock Park"
+  },
+  {
+    "kind": "multi-match",
+    "presetId": "brentwood-cc",
+    "query": "Brentwood Country Club | Brentwood",
+    "candidates": [
+      {
+        "id": 8817,
+        "name": "Brentwood Country Club",
+        "city": "Brentwood"
+      },
+      {
+        "id": 13055,
+        "name": "Brentwood Country Club",
+        "city": "Brentwood"
+      },
+      {
+        "id": 13902,
+        "name": "Brentwood Country Club",
+        "city": "Brentwood"
+      },
+      {
+        "id": 16492,
+        "name": "Brentwood Country Club",
+        "city": "Brentwood"
+      },
+      {
+        "id": 16493,
+        "name": "Brentwood Country Club",
+        "city": "Brentwood"
+      }
+    ]
+  },
+  {
+    "kind": "no-match",
+    "presetId": "lakeside-gc",
+    "query": "Lakeside Golf Club | Toluca Lake"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "rancho-park",
+    "query": "Rancho Park Golf Course | West Los Angeles"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "griffith-wilson",
+    "query": "Griffith Park - Wilson Course | Los Angeles"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "griffith-harding",
+    "query": "Griffith Park - Harding Course | Los Angeles"
+  },
+  {
+    "kind": "matched",
+    "presetId": "hansen-dam",
+    "gbId": 1833,
+    "gbName": "Hansen Dam Golf Course",
+    "gbCity": "Pacoima",
+    "pars": [
+      4,
+      5,
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      4,
+      5,
+      4,
+      5,
+      3,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "woodley-lakes",
+    "gbId": 2198,
+    "gbName": "Woodley Lakes Golf Course",
+    "gbCity": "Van Nuys",
+    "pars": [
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      4,
+      5
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "los-verdes",
+    "gbId": 1930,
+    "gbName": "Los Verdes Golf Course",
+    "gbCity": "Rancho Palos Verdes",
+    "pars": [
+      5,
+      4,
+      3,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "el-dorado-park",
+    "gbId": 1710,
+    "gbName": "El Dorado Park Golf Club",
+    "gbCity": "Long Beach",
+    "pars": [
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      5,
+      4,
+      3,
+      0,
+      0,
+      0,
+      0,
+      367,
+      0,
+      0,
+      0,
+      0
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "rio-hondo",
+    "gbId": 1519,
+    "gbName": "Rio Hondo Golf Club",
+    "gbCity": "Downey",
+    "pars": [
+      4,
+      4,
+      5,
+      5,
+      4,
+      4,
+      3,
+      3,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "no-match",
+    "presetId": "westchester-gc",
+    "query": "Westchester Golf Course | Westchester"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "brookside-1",
+    "query": "Brookside Golf Club - Course #1 | Pasadena"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "brookside-2",
+    "query": "Brookside Golf Club - Course #2 | Pasadena"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "trump-la",
+    "query": "Trump National Golf Club Los Angeles | Rancho Palos Verdes"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "industry-hills-eisenhower",
+    "query": "Industry Hills - Eisenhower | City of Industry"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "industry-hills-zaharias",
+    "query": "Industry Hills - Babe Zaharias | City of Industry"
+  },
+  {
+    "kind": "matched",
+    "presetId": "angeles-national",
+    "gbId": 2137,
+    "gbName": "Angeles National Golf Club",
+    "gbCity": "Sunland",
+    "pars": [
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      5,
+      4,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "coyote-hills",
+    "gbId": 1578,
+    "gbName": "Coyote Hills Golf Course",
+    "gbCity": "Fullerton",
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "no-match",
+    "presetId": "mile-square-classic",
+    "query": "Mile Square - Classic Course | Fountain Valley"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "mile-square-players",
+    "query": "Mile Square - Player's Course | Fountain Valley"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "costa-mesa-mesa-linda",
+    "query": "Costa Mesa CC - Mesa Linda | Costa Mesa"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "skylinks-long-beach",
+    "query": "Skylinks at Long Beach | Long Beach, CA"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "recreation-park-18",
+    "query": "Recreation Park Golf Course 18 | Long Beach, CA"
+  },
+  {
+    "kind": "matched",
+    "presetId": "whittier-narrows-gc",
+    "gbId": 1975,
+    "gbName": "Whittier Narrows Golf Course",
+    "gbCity": "Rosemead",
+    "pars": [
+      5,
+      3,
+      4,
+      4,
+      3,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "calabasas-cc",
+    "gbId": 1422,
+    "gbName": "Calabasas Golf & Country Club",
+    "gbCity": "Calabasas",
+    "pars": [
+      4,
+      4,
+      3,
+      5,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "el-caballero-cc",
+    "gbId": 2149,
+    "gbName": "El Caballero Country Club",
+    "gbCity": "Tarzana",
+    "pars": [
+      5,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "no-match",
+    "presetId": "hacienda-gc",
+    "query": "Hacienda Golf Club | La Habra Heights, CA"
+  },
+  {
+    "kind": "matched",
+    "presetId": "annandale-gc",
+    "gbId": 1874,
+    "gbName": "Annandale Golf Course",
+    "gbCity": "Pasadena",
+    "pars": [
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "no-match",
+    "presetId": "mountaingate-cc",
+    "query": "Mountaingate Country Club | Los Angeles, CA"
+  },
+  {
+    "kind": "multi-match",
+    "presetId": "braemar-cc",
+    "query": "Braemar Country Club | Tarzana, CA",
+    "candidates": [
+      {
+        "id": 2148,
+        "name": "Braemar Country Club (East)",
+        "city": "Tarzana"
+      },
+      {
+        "id": 18140,
+        "name": "Braemar Country Club (West)",
+        "city": "Tarzana"
+      }
+    ]
+  },
+  {
+    "kind": "matched",
+    "presetId": "hillcrest-cc-la",
+    "gbId": 1720,
+    "gbName": "Hillcrest Country Club",
+    "gbCity": "Los Angeles",
+    "pars": [
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "friendly-hills-cc",
+    "gbId": 2229,
+    "gbName": "Friendly Hills Country Club",
+    "gbCity": "Whittier",
+    "pars": [
+      5,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "no-match",
+    "presetId": "dad-miller-gc",
+    "query": "Dad Miller Golf Course | Anaheim, CA"
+  },
+  {
+    "kind": "matched",
+    "presetId": "meadowlark-gc",
+    "gbId": 1623,
+    "gbName": "Meadowlark Golf Course",
+    "gbCity": "Huntington Beach",
+    "pars": [
+      4,
+      4,
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      5
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "lakewood-cc",
+    "gbId": 1685,
+    "gbName": "Lakewood Country Club",
+    "gbCity": "Lakewood",
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      3,
+      4,
+      5,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "westridge-gc",
+    "gbId": 1653,
+    "gbName": "Westridge Golf Club",
+    "gbCity": "La Habra",
+    "pars": [
+      4,
+      5,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      5
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "no-match",
+    "presetId": "navy-seal-beach-destroyer",
+    "query": "Navy Golf Course Seal Beach - Destroyer Course | Cypress, CA"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "debell-gc",
+    "query": "DeBell Golf Club | Burbank, CA"
+  },
+  {
+    "kind": "multi-match",
+    "presetId": "montebello-gc",
+    "query": "Montebello Golf Course | Montebello, CA",
+    "candidates": [
+      {
+        "id": 1766,
+        "name": "Montebello Country Club",
+        "city": "Montebello"
+      },
+      {
+        "id": 16234,
+        "name": "Montebello Country Club",
+        "city": "Montebello"
+      }
+    ]
+  },
+  {
+    "kind": "matched",
+    "presetId": "los-amigos-gc",
+    "gbId": 1520,
+    "gbName": "Los Amigos Country Club",
+    "gbCity": "Downey",
+    "pars": [
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "santa-anita-gc",
+    "gbId": 1353,
+    "gbName": "Santa Anita Golf Course",
+    "gbCity": "Arcadia",
+    "pars": [
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "california-cc",
+    "gbId": 2231,
+    "gbName": "California Country Club",
+    "gbCity": "Whittier",
+    "pars": [
+      5,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      5,
+      3,
+      5,
+      4,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "old-ranch-cc",
+    "gbId": 2098,
+    "gbName": "Old Ranch Country Club",
+    "gbCity": "Seal Beach",
+    "pars": [
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      5,
+      3,
+      5,
+      4,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "mesa-verde-cc",
+    "gbId": 1494,
+    "gbName": "Mesa Verde Country Club",
+    "gbCity": "Costa Mesa",
+    "pars": [
+      5,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      5,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      3
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "multi-match",
+    "presetId": "los-coyotes-cc",
+    "query": "Los Coyotes Country Club | Buena Park, CA",
+    "candidates": [
+      {
+        "id": 1417,
+        "name": "Los Coyotes Country Club (Valley)",
+        "city": "Buena Park"
+      },
+      {
+        "id": 18102,
+        "name": "Los Coyotes Country Club (Vista)",
+        "city": "Buena Park"
+      }
+    ]
+  },
+  {
+    "kind": "no-match",
+    "presetId": "oregon-golf-club",
+    "query": "The Oregon Golf Club | West Linn, OR"
+  }
+]

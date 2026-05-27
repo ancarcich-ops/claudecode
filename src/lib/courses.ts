@@ -80,7 +80,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
     region: "LA",
     access: "private",
     holes: 18,
-    pars: p(18, 71),
+    pars: [5, 4, 4, 3, 4, 3, 4, 4, 4, 4, 5, 4, 4, 3, 4, 3, 5, 4],
   },
   {
     id: "bel-air-cc",
@@ -161,7 +161,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
     region: "LA",
     access: "municipal",
     holes: 18,
-    pars: p(18, 72),
+    pars: [4, 5, 4, 3, 4, 5, 3, 4, 4, 4, 4, 5, 4, 5, 3, 4, 3, 4],
   },
   {
     id: "woodley-lakes",
@@ -170,7 +170,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
     region: "LA",
     access: "municipal",
     holes: 18,
-    pars: p(18, 72),
+    pars: [4, 4, 3, 5, 4, 4, 3, 5, 4, 4, 4, 3, 5, 4, 3, 4, 4, 5],
   },
   {
     id: "alondra-park",
@@ -188,7 +188,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
     region: "LA",
     access: "municipal",
     holes: 18,
-    pars: p(18, 71),
+    pars: [5, 4, 3, 4, 3, 5, 4, 4, 4, 4, 4, 3, 4, 4, 4, 5, 3, 4],
   },
   {
     id: "balboa-gc",
@@ -233,7 +233,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
     region: "LA",
     access: "municipal",
     holes: 18,
-    pars: p(18, 71),
+    pars: [4, 4, 5, 5, 4, 4, 3, 3, 4, 3, 5, 4, 4, 3, 5, 4, 3, 4],
   },
   {
     id: "westchester-gc",
@@ -415,7 +415,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
     region: "OC",
     access: "public",
     holes: 18,
-    pars: p(18, 71),
+    pars: [4, 4, 3, 4, 4, 4, 4, 3, 4, 4, 4, 4, 4, 3, 5, 4, 3, 4],
   },
   {
     id: "birch-hills",
@@ -696,23 +696,23 @@ export const COURSE_PRESETS: CoursePreset[] = [
   { id: "recreation-park-18", name: "Recreation Park Golf Course 18", city: "Long Beach, CA", region: "LA", access: "municipal", holes: 18, pars: p(18, 72) },
   { id: "mountain-meadows-gc", name: "Mountain Meadows Golf Course", city: "Pomona, CA", region: "LA", access: "municipal", holes: 18, pars: p(18, 72) },
   { id: "diamond-bar-gc", name: "Diamond Bar Golf Course", city: "Diamond Bar, CA", region: "LA", access: "public", holes: 18, pars: p(18, 72) },
-  { id: "whittier-narrows-gc", name: "Whittier Narrows Golf Course", city: "Rosemead, CA", region: "LA", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "whittier-narrows-gc", name: "Whittier Narrows Golf Course", city: "Rosemead, CA", region: "LA", access: "public", holes: 18, pars: [5, 3, 4, 4, 3, 4, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4] },
   { id: "knollwood-gc", name: "Knollwood Golf Course", city: "Granada Hills, CA", region: "LA", access: "public", holes: 18, pars: p(18, 72) },
-  { id: "calabasas-cc", name: "Calabasas Country Club", city: "Calabasas, CA", region: "LA", access: "private", holes: 18, pars: p(18, 72) },
-  { id: "el-caballero-cc", name: "El Caballero Country Club", city: "Tarzana, CA", region: "LA", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "calabasas-cc", name: "Calabasas Country Club", city: "Calabasas, CA", region: "LA", access: "private", holes: 18, pars: [4, 4, 3, 5, 4, 5, 3, 4, 4, 4, 4, 3, 4, 3, 5, 4, 4, 4] },
+  { id: "el-caballero-cc", name: "El Caballero Country Club", city: "Tarzana, CA", region: "LA", access: "private", holes: 18, pars: [5, 4, 4, 4, 4, 3, 5, 3, 4, 3, 4, 5, 4, 4, 4, 3, 4, 4] },
   { id: "hacienda-gc", name: "Hacienda Golf Club", city: "La Habra Heights, CA", region: "LA", access: "private", holes: 18, pars: p(18, 71) },
-  { id: "annandale-gc", name: "Annandale Golf Club", city: "Pasadena, CA", region: "LA", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "annandale-gc", name: "Annandale Golf Club", city: "Pasadena, CA", region: "LA", access: "private", holes: 18, pars: [4, 4, 4, 4, 3, 5, 4, 4, 3, 4, 4, 3, 5, 4, 3, 4, 3, 5] },
   { id: "mountaingate-cc", name: "Mountaingate Country Club", city: "Los Angeles, CA", region: "LA", access: "private", holes: 18, pars: p(18, 71) },
   // Braemar has 27 holes (Trails/Vista/Tigertail nines); seeded as a
   // single par-72 18 from the Trails/Vista combo.
   { id: "braemar-cc", name: "Braemar Country Club", city: "Tarzana, CA", region: "LA", access: "private", holes: 18, pars: p(18, 72) },
-  { id: "hillcrest-cc-la", name: "Hillcrest Country Club", city: "Los Angeles, CA", region: "LA", access: "private", holes: 18, pars: p(18, 71) },
-  { id: "friendly-hills-cc", name: "Friendly Hills Country Club", city: "Whittier, CA", region: "LA", access: "private", holes: 18, pars: p(18, 70) },
+  { id: "hillcrest-cc-la", name: "Hillcrest Country Club", city: "Los Angeles, CA", region: "LA", access: "private", holes: 18, pars: [4, 3, 4, 5, 4, 3, 4, 5, 4, 4, 4, 3, 4, 5, 4, 3, 4, 4] },
+  { id: "friendly-hills-cc", name: "Friendly Hills Country Club", city: "Whittier, CA", region: "LA", access: "private", holes: 18, pars: [5, 3, 4, 4, 4, 4, 4, 3, 4, 4, 4, 4, 3, 4, 5, 3, 4, 4] },
 
   { id: "san-juan-hills-gc", name: "San Juan Hills Golf Club", city: "San Juan Capistrano, CA", region: "OC", access: "public", holes: 18, pars: p(18, 71) },
   { id: "dad-miller-gc", name: "Dad Miller Golf Course", city: "Anaheim, CA", region: "OC", access: "municipal", holes: 18, pars: p(18, 71) },
-  { id: "meadowlark-gc", name: "Meadowlark Golf Course", city: "Huntington Beach, CA", region: "OC", access: "public", holes: 18, pars: p(18, 70) },
-  { id: "lakewood-cc", name: "Lakewood Country Club", city: "Lakewood, CA", region: "OC", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "meadowlark-gc", name: "Meadowlark Golf Course", city: "Huntington Beach, CA", region: "OC", access: "public", holes: 18, pars: [4, 4, 4, 3, 4, 5, 3, 4, 4, 4, 4, 4, 3, 4, 4, 3, 4, 5] },
+  { id: "lakewood-cc", name: "Lakewood Country Club", city: "Lakewood, CA", region: "OC", access: "private", holes: 18, pars: [4, 4, 3, 4, 3, 4, 5, 4, 5, 4, 4, 3, 4, 5, 4, 4, 3, 5] },
   // Per-hole pars transcribed from the club's official scorecard
   // (westridgegolfclub.com). Out: 4,5,3,5,4,4,3,4,4 = 36. In:
   // 4,3,4,4,5,3,4,4,5 = 36. Total par 72.
@@ -728,19 +728,19 @@ export const COURSE_PRESETS: CoursePreset[] = [
   // Orange (couldn't verify as regulation).
   { id: "debell-gc", name: "DeBell Golf Club", city: "Burbank, CA", region: "LA", access: "municipal", holes: 18, pars: p(18, 71) },
   { id: "montebello-gc", name: "Montebello Golf Course", city: "Montebello, CA", region: "LA", access: "municipal", holes: 18, pars: p(18, 71) },
-  { id: "los-amigos-gc", name: "Los Amigos Golf Course", city: "Downey, CA", region: "LA", access: "municipal", holes: 18, pars: p(18, 71) },
-  { id: "santa-anita-gc", name: "Santa Anita Golf Course", city: "Arcadia, CA", region: "LA", access: "municipal", holes: 18, pars: p(18, 71) },
+  { id: "los-amigos-gc", name: "Los Amigos Golf Course", city: "Downey, CA", region: "LA", access: "municipal", holes: 18, pars: [5, 4, 3, 4, 4, 4, 3, 5, 3, 4, 4, 3, 4, 4, 5, 4, 3, 4] },
+  { id: "santa-anita-gc", name: "Santa Anita Golf Course", city: "Arcadia, CA", region: "LA", access: "municipal", holes: 18, pars: [4, 4, 5, 3, 4, 4, 4, 3, 4, 4, 4, 3, 5, 4, 3, 4, 4, 4] },
   // Royal Vista is 27 holes; seeded as a single par-72 18 combo.
   { id: "royal-vista-gc", name: "Royal Vista Golf Club", city: "Walnut, CA", region: "LA", access: "public", holes: 18, pars: p(18, 72) },
   { id: "crystalaire-cc", name: "Crystalaire Country Club", city: "Llano, CA", region: "LA", access: "public", holes: 18, pars: p(18, 72) },
   { id: "antelope-valley-cc", name: "Antelope Valley Country Club", city: "Palmdale, CA", region: "LA", access: "private", holes: 18, pars: p(18, 72) },
   { id: "glendora-cc", name: "Glendora Country Club", city: "Glendora, CA", region: "LA", access: "private", holes: 18, pars: p(18, 72) },
-  { id: "california-cc", name: "California Country Club", city: "Whittier, CA", region: "LA", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "california-cc", name: "California Country Club", city: "Whittier, CA", region: "LA", access: "private", holes: 18, pars: [5, 3, 4, 4, 3, 4, 4, 4, 5, 3, 5, 4, 4, 4, 4, 5, 3, 4] },
   { id: "valencia-cc", name: "Valencia Country Club", city: "Valencia, CA", region: "LA", access: "private", holes: 18, pars: p(18, 72) },
   { id: "south-hills-cc", name: "South Hills Country Club", city: "West Covina, CA", region: "LA", access: "private", holes: 18, pars: p(18, 72) },
   { id: "rancho-vista-gc", name: "Rancho Vista Golf Club", city: "Palmdale, CA", region: "LA", access: "public", holes: 18, pars: p(18, 72) },
-  { id: "old-ranch-cc", name: "Old Ranch Country Club", city: "Seal Beach, CA", region: "OC", access: "private", holes: 18, pars: p(18, 72) },
-  { id: "mesa-verde-cc", name: "Mesa Verde Country Club", city: "Costa Mesa, CA", region: "OC", access: "private", holes: 18, pars: p(18, 71) },
+  { id: "old-ranch-cc", name: "Old Ranch Country Club", city: "Seal Beach, CA", region: "OC", access: "private", holes: 18, pars: [4, 4, 4, 4, 3, 5, 3, 4, 5, 4, 3, 4, 4, 5, 3, 5, 4, 4] },
+  { id: "mesa-verde-cc", name: "Mesa Verde Country Club", city: "Costa Mesa, CA", region: "OC", access: "private", holes: 18, pars: [5, 4, 3, 5, 4, 4, 3, 4, 4, 4, 5, 3, 5, 4, 4, 3, 4, 3] },
   // Los Coyotes is 27 holes; seeded as a single par-72 18 combo.
   { id: "los-coyotes-cc", name: "Los Coyotes Country Club", city: "Buena Park, CA", region: "OC", access: "private", holes: 18, pars: p(18, 72) },
   { id: "marbella-cc", name: "Marbella Country Club", city: "San Juan Capistrano, CA", region: "OC", access: "private", holes: 18, pars: p(18, 70) },
