@@ -200,6 +200,31 @@ export default function OnCourseMode({
     };
   }, [active]);
 
+  // Reset the cycle to the signed-in player whenever the sheet opens
+  // or the hole changes, so we never strand the user on a teammate's
+  // badge from a previous hole. MUST live above the `if (!active)`
+  // early return below -- React requires the same number of hooks on
+  // every render, and the early-return path skips all code that
+  // follows.
+  useEffect(() => {
+    if (!sheetOpen) return;
+    if (cycleOrder.length === 0) {
+      setCyclePos(0);
+      return;
+    }
+    let pos = 0;
+    for (let i = 0; i < cycleOrder.length; i++) {
+      const p = cycleOrder[i];
+      if (p?.scoresByHole?.[hole] == null) {
+        pos = i;
+        break;
+      }
+      if (i === cycleOrder.length - 1) pos = 0;
+    }
+    setCyclePos(pos);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sheetOpen, hole]);
+
   if (!active) {
     return (
       <button
@@ -333,29 +358,6 @@ export default function OnCourseMode({
       router.refresh();
     });
   };
-
-  // Reset the cycle to the signed-in player whenever the sheet opens
-  // or the hole changes, so we never strand the user on a teammate's
-  // badge from a previous hole.
-  useEffect(() => {
-    if (!sheetOpen) return;
-    if (cycleOrder.length === 0) {
-      setCyclePos(0);
-      return;
-    }
-    // Skip players already scored on this hole when re-opening.
-    let pos = 0;
-    for (let i = 0; i < cycleOrder.length; i++) {
-      const p = cycleOrder[i];
-      if (p?.scoresByHole?.[hole] == null) {
-        pos = i;
-        break;
-      }
-      if (i === cycleOrder.length - 1) pos = 0;
-    }
-    setCyclePos(pos);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sheetOpen, hole]);
 
   // What's the next player after the current one (for the save button
   // label)? Mirrors the lookup inside commitScore.
