@@ -157,10 +157,16 @@ export default function ScoreSheet({
             <div className="flex items-center gap-2 min-w-0">
               <span
                 className="inline-block w-3 h-3 rounded-full shrink-0"
-                style={{ background: currentPlayer.color }}
+                style={{
+                  // Fall back to the accent color when the color
+                  // lookup didn't produce a string (e.g. a player
+                  // without a seat value).
+                  background:
+                    currentPlayer.color || "rgb(var(--color-accent))",
+                }}
               />
               <span className="font-display text-[15px] font-semibold tracking-tight truncate">
-                {currentPlayer.displayName}
+                {currentPlayer.displayName || "Player"}
               </span>
             </div>
             {playerCount != null && playerCount > 1 && playerIndex != null && (
