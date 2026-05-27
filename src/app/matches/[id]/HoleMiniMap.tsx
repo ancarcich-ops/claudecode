@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import PinchZoom from "@/components/PinchZoom";
 
 // Top-down hole map. When NEXT_PUBLIC_MAPBOX_TOKEN is set, the base
 // layer is a Mapbox satellite image of the bounding box of all known
@@ -246,6 +247,10 @@ export default function HoleMiniMap({
 
   return (
     <div ref={wrapRef} className="absolute inset-0 w-full h-full">
+      {/* PinchZoom wraps the SVG + HTML overlays so they scale and pan
+          together. Outer measurement container above stays unscaled
+          (it's what feeds Vw/Vh for the SVG viewBox). */}
+      <PinchZoom>
       <svg
         viewBox={`0 0 ${Vw} ${Vh}`}
         className={"absolute inset-0 w-full h-full block " + (onAim ? "cursor-crosshair" : "")}
@@ -703,6 +708,7 @@ export default function HoleMiniMap({
           />
         </>
       )}
+      </PinchZoom>
     </div>
   );
 }
