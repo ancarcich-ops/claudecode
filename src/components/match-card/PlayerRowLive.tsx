@@ -93,12 +93,6 @@ export default function PlayerRowLive({
             </span>
           </span>
           {player.momentum && <MomentumChip m={player.momentum} />}
-          <span className="ml-auto flex flex-col items-end -mr-1 gap-0.5">
-            <span className="font-mono text-[8px] uppercase tracking-wider text-mute leading-none">
-              Net trend
-            </span>
-            <Sparkline values={player.cumulativeNet} />
-          </span>
         </div>
       )}
     </div>
