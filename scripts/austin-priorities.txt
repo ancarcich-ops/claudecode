@@ -1,0 +1,20 @@
+# Austin, TX priority list -- pulled first on a given import day so the
+# Austin metro is guaranteed coverage regardless of where it falls in
+# the catalog-order sweep. ~12 courses x ~40 calls = ~480 calls.
+#
+# Run (Austin first, then the general sweep):
+#   npx tsx scripts/import-golfbert.ts --ids-from=scripts/austin-priorities.txt
+#   npx tsx scripts/import-golfbert.ts --daily-budget=3400
+
+austin-cc                        # Austin Country Club
+barton-creek-fazio-foothills     # Barton Creek - Fazio Foothills
+barton-creek-fazio-canyons       # Barton Creek - Fazio Canyons
+barton-creek-crenshaw-cliffside  # Barton Creek - Crenshaw Cliffside
+lions-muni                       # Lions Municipal
+lost-creek-cc                    # Lost Creek CC
+hills-cc-hills-course            # The Hills CC - Hills Course
+spanish-oaks                     # Spanish Oaks GC (Bee Cave)
+ut-golf-club                     # University of Texas GC
+falconhead                       # Falconhead GC
+roy-kizer                        # Roy Kizer GC
+avery-ranch                      # Avery Ranch GC
