@@ -459,13 +459,24 @@ async function main() {
       );
       saveState(state);
     } catch (err) {
+      const msg = (err as Error).message;
       state.set(preset.id, {
         kind: "failed",
         presetId: preset.id,
-        error: (err as Error).message,
+        error: msg,
       });
-      console.log(`${tag} FAILED ${preset.id}: ${(err as Error).message}`);
+      console.log(`${tag} FAILED ${preset.id}: ${msg}`);
       saveState(state);
+      // GolfBert daily quota exhausted -- every subsequent call will
+      // 429 too, so stop now instead of burning the rest of the budget
+      // on guaranteed failures. The failed presets stay "failed" in the
+      // state file and retry automatically on the next run.
+      if (msg.includes("429") || msg.includes("Limit Exceeded")) {
+        console.log(
+          `\nGolfBert rate limit hit (429). Stopping cleanly -- resume tomorrow once the quota resets; failed presets retry automatically.`,
+        );
+        break;
+      }
     }
 
     // Polite delay between courses.
