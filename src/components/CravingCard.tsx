@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import type { Craving } from "@prisma/client";
 import { toast } from "sonner";
@@ -118,7 +119,13 @@ export default function CravingCard({
         </div>
 
         {open && (
-          <div className="mt-3 flex gap-2 border-t border-borderSoft pt-3">
+          <div className="mt-3 flex flex-wrap gap-2 border-t border-borderSoft pt-3">
+            <Link
+              href={`/cravings/${craving.id}/edit`}
+              className="btn btn-ghost px-3 py-1.5 text-xs"
+            >
+              ✏️ Edit
+            </Link>
             <button onClick={toggleWild} disabled={pending} className="btn btn-ghost px-3 py-1.5 text-xs">
               {craving.isWild ? "Remove from wild" : "✨ Mark as wild"}
             </button>

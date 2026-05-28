@@ -73,6 +73,39 @@ export async function addCraving(form: FormData) {
   revalidatePath("/", "layout");
 }
 
+// Edit an existing craving. Only touches the descriptive fields the edit form
+// exposes — satisfied/loggedBy stay as they were (those are managed on the
+// card). A new photo replaces the old one; leaving the file blank keeps it.
+// Changing the date re-stamps the pregnancy week/trimester.
+export async function updateCraving(id: string, form: FormData) {
+  const food = str(form, "food");
+  if (!food) return;
+
+  const settings = await getSettings();
+  const photoUrl = await maybeUploadPhoto(form);
+
+  const data: Record<string, unknown> = {
+    food,
+    category: str(form, "category") || "other",
+    intensity: intIn(form, "intensity", 1, 5, 3),
+    isWild: str(form, "isWild") === "on" || str(form, "isWild") === "true",
+    notes: str(form, "notes") || null,
+  };
+  if (photoUrl) data.photoUrl = photoUrl;
+
+  const cravedAtRaw = str(form, "cravedAt");
+  if (cravedAtRaw) {
+    const cravedAt = new Date(cravedAtRaw);
+    const prog = pregnancyProgress(settings.dueDate, cravedAt);
+    data.cravedAt = cravedAt;
+    data.week = prog.hasDueDate ? prog.week : null;
+    data.trimester = prog.hasDueDate ? prog.trimester : null;
+  }
+
+  await prisma.craving.update({ where: { id }, data });
+  revalidatePath("/", "layout");
+}
+
 export async function addAversion(form: FormData) {
   const food = str(form, "food");
   if (!food) return;

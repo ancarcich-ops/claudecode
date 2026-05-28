@@ -1,33 +1,48 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import type { Craving } from "@prisma/client";
 import { toast } from "sonner";
 import CategoryPicker from "./CategoryPicker";
 import IntensityHearts from "./IntensityHearts";
-import { addCraving } from "@/lib/actions";
+import { addCraving, updateCraving } from "@/lib/actions";
 import { celebrate } from "@/lib/confetti";
 import type { Who } from "@/lib/identity";
+import type { CategoryKey } from "@/lib/categories";
 
-// The full "log a craving" form. Posts to the addCraving server action, then
-// fires confetti + a toast and bounces to the cravings list. `photoEnabled`
-// hides the file input when no blob store is configured (so we never promise
-// uploads that would silently no-op).
+// Format a Date into the value a <input type="datetime-local"> expects,
+// in the browser's local time.
+function toLocalInput(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
+    d.getHours(),
+  )}:${pad(d.getMinutes())}`;
+}
+
+// Shared craving form. In "create" mode it posts to addCraving (confetti +
+// bounce to the list); in "edit" mode it pre-fills from `craving`, posts to
+// updateCraving, and returns to where you came from. The "already satisfied"
+// toggle only shows on create — fulfillment is managed on the card itself.
 export default function CravingForm({
   who,
   momName,
   partnerName,
   photoEnabled,
+  mode = "create",
+  craving,
 }: {
   who: Who;
   momName: string;
   partnerName: string;
   photoEnabled: boolean;
+  mode?: "create" | "edit";
+  craving?: Craving;
 }) {
   const router = useRouter();
-  const formRef = useRef<HTMLFormElement>(null);
+  const isEdit = mode === "edit";
   const [pending, startTransition] = useTransition();
-  const [wild, setWild] = useState(false);
+  const [wild, setWild] = useState(craving?.isWild ?? false);
   const [satisfied, setSatisfied] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
 
@@ -40,6 +55,12 @@ export default function CravingForm({
       return;
     }
     startTransition(async () => {
+      if (isEdit && craving) {
+        await updateCraving(craving.id, fd);
+        toast.success("Updated 🌸");
+        router.back();
+        return;
+      }
       await addCraving(fd);
       await celebrate(wild ? 1.4 : 1);
       toast.success(wild ? "Logged a wild one! ✨" : "Craving logged 🌸");
@@ -52,7 +73,7 @@ export default function CravingForm({
   }
 
   return (
-    <form ref={formRef} onSubmit={onSubmit} className="space-y-5">
+    <form onSubmit={onSubmit} className="space-y-5">
       <input type="hidden" name="loggedBy" value={who} />
 
       <div>
@@ -62,7 +83,8 @@ export default function CravingForm({
         <input
           id="food"
           name="food"
-          autoFocus
+          autoFocus={!isEdit}
+          defaultValue={craving?.food ?? ""}
           placeholder="Dill pickles, mango with chili, gas station nachos…"
           className="input text-lg"
         />
@@ -70,30 +92,34 @@ export default function CravingForm({
 
       <div>
         <span className="label">Category</span>
-        <CategoryPicker />
+        <CategoryPicker defaultValue={(craving?.category as CategoryKey) ?? "other"} />
       </div>
 
       <div className="flex items-center justify-between gap-3">
         <span className="label mb-0">How strong?</span>
-        <IntensityHearts />
+        <IntensityHearts defaultValue={craving?.intensity ?? 3} />
       </div>
 
       <div className="flex flex-wrap gap-2">
         <ToggleChip active={wild} onClick={() => setWild((w) => !w)} emoji="✨">
           Wild combo
         </ToggleChip>
-        <ToggleChip
-          active={satisfied}
-          onClick={() => setSatisfied((s) => !s)}
-          emoji="✅"
-        >
-          Already satisfied
-        </ToggleChip>
+        {!isEdit && (
+          <ToggleChip
+            active={satisfied}
+            onClick={() => setSatisfied((s) => !s)}
+            emoji="✅"
+          >
+            Already satisfied
+          </ToggleChip>
+        )}
         <input type="hidden" name="isWild" value={wild ? "true" : "false"} />
-        <input type="hidden" name="satisfied" value={satisfied ? "true" : "false"} />
+        {!isEdit && (
+          <input type="hidden" name="satisfied" value={satisfied ? "true" : "false"} />
+        )}
       </div>
 
-      {satisfied && (
+      {!isEdit && satisfied && (
         <div className="rise">
           <label className="label" htmlFor="satisfiedBy">
             Who came through?
@@ -108,16 +134,32 @@ export default function CravingForm({
 
       <div>
         <label className="label" htmlFor="cravedAt">
-          When? <span className="text-faint normal-case">(leave blank for now)</span>
+          When?{" "}
+          {!isEdit && <span className="text-faint normal-case">(leave blank for now)</span>}
         </label>
-        <input id="cravedAt" name="cravedAt" type="datetime-local" className="input" />
+        <input
+          id="cravedAt"
+          name="cravedAt"
+          type="datetime-local"
+          defaultValue={craving ? toLocalInput(new Date(craving.cravedAt)) : undefined}
+          className="input"
+        />
       </div>
 
       {photoEnabled && (
         <div>
           <label className="label" htmlFor="photo">
-            Snap a pic <span className="text-faint normal-case">(optional)</span>
+            {isEdit ? "Replace photo" : "Snap a pic"}{" "}
+            <span className="text-faint normal-case">(optional)</span>
           </label>
+          {isEdit && craving?.photoUrl && !preview && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={craving.photoUrl}
+              alt={craving.food}
+              className="mb-2 h-32 w-full rounded-2xl object-cover"
+            />
+          )}
           <input
             id="photo"
             name="photo"
@@ -148,14 +190,30 @@ export default function CravingForm({
           id="notes"
           name="notes"
           rows={2}
+          defaultValue={craving?.notes ?? ""}
           placeholder="2am. Cried a little. Worth it."
           className="input"
         />
       </div>
 
-      <button type="submit" disabled={pending} className="btn btn-primary w-full py-3 text-base">
-        {pending ? "Saving…" : "Log this craving 🌸"}
-      </button>
+      <div className="flex gap-2">
+        {isEdit && (
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="btn btn-ghost flex-1 py-3 text-base"
+          >
+            Cancel
+          </button>
+        )}
+        <button
+          type="submit"
+          disabled={pending}
+          className="btn btn-primary flex-1 py-3 text-base"
+        >
+          {pending ? "Saving…" : isEdit ? "Save changes" : "Log this craving 🌸"}
+        </button>
+      </div>
     </form>
   );
 }
