@@ -41,21 +41,27 @@ npm run dev              # http://localhost:3000
 
 ## Deploy (Vercel + Supabase)
 
-1. **Create a Supabase project** (free tier is plenty).
-2. In Supabase → **Project Settings → Database → Connection string → URI**,
-   copy the **Connection pooling** (port `6543`) string. Append
-   `?pgbouncer=true&connection_limit=1` for serverless.
-3. **Import this repo into Vercel.** It auto-detects Next.js; the build is
-   already wired (`vercel.json` → `npm run build:vercel`, which swaps Prisma
-   to the Postgres schema and runs `prisma db push` to create the tables).
-4. In Vercel → **Settings → Environment Variables**, add:
-   - `DATABASE_URL` = the Supabase pooling URL from step 2.
-5. **(Optional) Photos:** Vercel → **Storage → Blob** → create a store. This
-   injects `BLOB_READ_WRITE_TOKEN` automatically and the photo upload field
-   appears. Without it, everything else works fine.
-6. Deploy. Open the URL on both phones → **Share → Add to Home Screen**.
-7. Open **Settings** in the app and set Geena's **due date** (and names /
-   baby nickname). That powers the week, trimester, and fruit-size tracker.
+1. **Create a Supabase project** (free tier is plenty). Wait for it to finish
+   provisioning.
+2. In Supabase, click **Connect** (top bar) → **ORMs → Prisma**. It shows a
+   `DATABASE_URL` (pooler, port `6543`) and a `DIRECT_URL` (direct, port
+   `5432`). Copy both; swap `[YOUR-PASSWORD]` for your project's DB password.
+3. **Import this repo into Vercel** (New Project → pick `claudecode`). It
+   auto-detects Next.js; the build is wired via `vercel.json` →
+   `npm run build:vercel`, which swaps Prisma to Postgres and runs
+   `prisma db push` to create the tables.
+4. Since the app lives on a feature branch, set Vercel → **Settings → Git →
+   Production Branch** to `claude/pregnancy-craving-tracker-Gvv63` (this keeps
+   the unrelated `main` app out of it).
+5. In Vercel → **Settings → Environment Variables**, add both:
+   - `DATABASE_URL` = the pooler URL from step 2
+   - `DIRECT_URL` = the direct URL from step 2
+6. **(Optional) Photos:** Vercel → **Storage → Blob** → create a store. The
+   `BLOB_READ_WRITE_TOKEN` is injected automatically and the photo upload
+   field appears. Without it, everything else works fine.
+7. **Deploy.** Open the URL on both phones → **Share → Add to Home Screen**.
+8. The due date is pre-set to Jan 29, 2027; adjust it (and names / baby
+   nickname) any time in the app's **Settings**.
 
 ## Project layout
 
