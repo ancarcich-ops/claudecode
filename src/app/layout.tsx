@@ -1,48 +1,42 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
-import Link from "next/link";
-import { Bricolage_Grotesque } from "next/font/google";
-import { GeistSans } from "geist/font/sans";
-import { GeistMono } from "geist/font/mono";
-import { getCurrentUser } from "@/lib/auth";
-import { getActiveGroupId, listUserGroups } from "@/lib/groups";
-import GroupSwitcher from "@/components/GroupSwitcher";
-import MobileTabBar from "@/components/MobileTabBar";
-import Onboarding from "@/components/Onboarding";
-import Sounds from "@/components/Sounds";
-import SticksSplash from "@/components/SticksSplash";
+import { Fraunces, Nunito } from "next/font/google";
 import { Toaster } from "sonner";
+import BottomTabBar from "@/components/BottomTabBar";
+import HeaderBar from "@/components/HeaderBar";
+import { getSettings } from "@/lib/settings";
+import { getWhoOrDefault } from "@/lib/identity";
 
-// Per the brand kit: Bricolage = display + wordmark, Geist = body,
-// Geist Mono = tabular numerics. Bricolage via next/font/google;
-// Geist via the official `geist` npm package (Vercel's house sans,
-// already preconfigured with --font-geist-sans / --font-geist-mono
-// CSS variables, which we re-alias to --font-sans / --font-mono below).
-const display = Bricolage_Grotesque({
+const display = Fraunces({
   subsets: ["latin"],
   variable: "--font-display",
+  display: "swap",
+  axes: ["SOFT", "opsz"],
+});
+
+const body = Nunito({
+  subsets: ["latin"],
+  variable: "--font-body",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Sticks",
-  description: "All your games. One round.",
-  icons: {
-    icon: "/icon.svg",
-    apple: "/apple-icon.svg",
-  },
+  title: "Bloom — Geena's Cravings",
+  description: "A sweet little tracker for Geena's pregnancy cravings 🌸",
+  icons: { icon: "/icon.svg", apple: "/apple-icon.svg" },
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    title: "Sticks",
-    statusBarStyle: "black-translucent",
+    title: "Bloom",
+    statusBarStyle: "default",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0b0f0c",
+  themeColor: "#ec7ba4",
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
 };
 
 export default async function RootLayout({
@@ -50,106 +44,39 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await getCurrentUser();
-  const groups = user ? await listUserGroups(user.id) : [];
-  const activeGroupId = getActiveGroupId();
+  const [settings, who] = await Promise.all([
+    getSettings(),
+    Promise.resolve(getWhoOrDefault()),
+  ]);
+
   return (
-    <html
-      lang="en"
-      className={`${display.variable} ${GeistSans.variable} ${GeistMono.variable}`}
-    >
+    <html lang="en" className={`${display.variable} ${body.variable}`}>
       <head>
-        {/* Apply the saved theme before paint so users on light mode don't
-            flash dark first. The script is intentionally tiny and runs
-            synchronously in <head>. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{var t=localStorage.getItem("sticks-theme");if(t==="light")document.documentElement.dataset.theme="light";}catch(e){}`,
+            __html: `try{var t=localStorage.getItem("bloom-theme");if(t==="dark")document.documentElement.dataset.theme="dark";}catch(e){}`,
           }}
         />
       </head>
       <body>
-        <header className="border-b border-border bg-panel/70 backdrop-blur sticky top-0 z-30">
-          <div className="mx-auto max-w-6xl px-3 sm:px-4 h-14 flex items-center justify-between gap-2">
-            <Link
-              href="/"
-              className="flex items-center gap-2 min-w-0 shrink"
-            >
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 64 64"
-                fill="currentColor"
-                aria-hidden
-                className="shrink-0 text-accent"
-              >
-                <rect x="13" y="14" width="8" height="40" rx="2.5" />
-                <rect x="28" y="6" width="8" height="50" rx="2.5" />
-                <rect x="43" y="22" width="8" height="28" rx="2.5" />
-              </svg>
-              <span className="font-display font-semibold tracking-tight whitespace-nowrap text-base">
-                Sticks<span className="text-accent">.</span>
-              </span>
-            </Link>
-            <nav className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-              {user ? (
-                <>
-                  <Link
-                    href="/"
-                    className="btn btn-ghost px-3 whitespace-nowrap"
-                  >
-                    Home
-                  </Link>
-                  <Link
-                    href="/matches/new"
-                    className="btn btn-primary px-3 whitespace-nowrap"
-                    aria-label="Post a new match"
-                  >
-                    <span aria-hidden>+</span>
-                    <span>New match</span>
-                  </Link>
-                  <GroupSwitcher
-                    groups={groups.map((g) => ({
-                      id: g.id,
-                      name: g.name,
-                      slug: g.slug,
-                    }))}
-                    active={activeGroupId}
-                    username={user.username}
-                  />
-                </>
-              ) : (
-                <Link href="/login" className="btn btn-primary whitespace-nowrap">
-                  Sign in
-                </Link>
-              )}
-            </nav>
-          </div>
-        </header>
-        <main className="mx-auto max-w-6xl px-3 sm:px-4 py-5 sm:py-6 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:pb-6">
+        <HeaderBar
+          who={who}
+          momName={settings.momName}
+          partnerName={settings.partnerName}
+        />
+        <main className="mx-auto max-w-2xl px-4 py-5 pb-[calc(6rem+env(safe-area-inset-bottom))]">
           {children}
         </main>
-        {user && <MobileTabBar />}
-        {/* First-cold-load splash. Renders nothing on subsequent
-            navigations within the session -- guarded by
-            sessionStorage inside the component. */}
-        <SticksSplash />
-        <Onboarding
-          enabled={!!user}
-          username={user?.username}
-          hasGroup={groups.length > 0}
-          photoUploadEnabled={!!process.env.BLOB_READ_WRITE_TOKEN}
-        />
-        <Sounds />
+        <BottomTabBar />
         <Toaster
-          position="bottom-right"
-          richColors
-          closeButton
+          position="top-center"
+          theme="system"
           toastOptions={{
             style: {
-              background: "rgb(var(--color-panel2))",
+              background: "rgb(var(--color-panel))",
               border: "1px solid rgb(var(--color-border))",
               color: "rgb(var(--color-ink))",
+              borderRadius: "16px",
             },
           }}
         />

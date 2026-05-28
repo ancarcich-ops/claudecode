@@ -1,137 +1,81 @@
+// Demo data for local development only. Run with `npm run db:seed`.
+// Do NOT run this against the production database — it's just so the app
+// looks alive while building/previewing.
 import { PrismaClient } from "@prisma/client";
+import { pregnancyProgress } from "../src/lib/pregnancy";
 
 const prisma = new PrismaClient();
 
-const PARS_18 = [4, 4, 3, 5, 4, 4, 3, 4, 5, 4, 4, 3, 5, 4, 4, 3, 4, 5];
+function daysAgo(n: number): Date {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d;
+}
 
 async function main() {
-  const seed: { username: string; displayName: string }[] = [
-    { username: "bryson", displayName: "Bryson" },
-    { username: "rory", displayName: "Rory" },
-    { username: "jt", displayName: "JT" },
-    { username: "morikawa", displayName: "Morikawa" },
+  // A due date ~30 weeks out puts Geena around week 10 (first trimester).
+  const dueDate = new Date();
+  dueDate.setDate(dueDate.getDate() + 30 * 7);
+
+  await prisma.settings.upsert({
+    where: { id: "singleton" },
+    update: { dueDate, momName: "Geena", partnerName: "Daddy", babyName: "Baby girl" },
+    create: {
+      id: "singleton",
+      dueDate,
+      momName: "Geena",
+      partnerName: "Daddy",
+      babyName: "Baby girl",
+    },
+  });
+
+  await prisma.craving.deleteMany();
+  await prisma.aversion.deleteMany();
+
+  const seed = [
+    { food: "Dill pickles", category: "sour", intensity: 5, loggedBy: "geena", satisfied: true, satisfiedBy: "daddy", days: 0 },
+    { food: "Mango with chili & lime", category: "fruit", intensity: 4, loggedBy: "geena", isWild: true, stars: 4, days: 1 },
+    { food: "Mac & cheese", category: "carbs", intensity: 4, loggedBy: "daddy", satisfied: true, satisfiedBy: "takeout", days: 2 },
+    { food: "Pickles dipped in peanut butter", category: "other", intensity: 5, loggedBy: "geena", isWild: true, stars: 5, days: 3 },
+    { food: "Ice-cold watermelon", category: "fruit", intensity: 3, loggedBy: "geena", satisfied: true, satisfiedBy: "daddy", days: 4 },
+    { food: "Spicy ramen at 1am", category: "spicy", intensity: 5, loggedBy: "daddy", isWild: true, stars: 3, days: 5 },
+    { food: "Lemon bars", category: "sweet", intensity: 4, loggedBy: "geena", days: 6 },
+    { food: "Salt & vinegar chips", category: "salty", intensity: 4, loggedBy: "geena", satisfied: true, satisfiedBy: "daddy", days: 8 },
+    { food: "Chocolate milkshake", category: "dairy", intensity: 3, loggedBy: "daddy", days: 11 },
   ];
-  const users = await Promise.all(
-    seed.map((s) =>
-      prisma.user.upsert({
-        where: { username: s.username },
-        update: { displayName: s.displayName },
-        create: { username: s.username, displayName: s.displayName },
-      }),
-    ),
-  );
 
-  // Upcoming match — pure model + a couple early wagers
-  const upcoming = await prisma.match.create({
-    data: {
-      courseName: "Pebble Beach Golf Links",
-      scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      holes: 18,
-      status: "UPCOMING",
-      parData: JSON.stringify(PARS_18),
-      createdById: users[0].id,
-      notes: "Front-9 skins, $5 closeouts (just talk).",
-      players: {
-        create: [
-          { displayName: "Bryson", handicap: 4, seat: 0, userId: users[0].id },
-          { displayName: "Rory", handicap: 6, seat: 1, userId: users[1].id },
-          { displayName: "JT", handicap: 11, seat: 2, userId: users[2].id },
-        ],
-      },
-    },
-    include: { players: true },
-  });
-
-  await prisma.wager.create({
-    data: {
-      matchId: upcoming.id,
-      userId: users[3].id,
-      pickedPlayerId: upcoming.players[1].id,
-    },
-  });
-  await prisma.wager.create({
-    data: {
-      matchId: upcoming.id,
-      userId: users[2].id,
-      pickedPlayerId: upcoming.players[0].id,
-    },
-  });
-
-  // Live match — partially played
-  const live = await prisma.match.create({
-    data: {
-      courseName: "Bethpage Black",
-      scheduledAt: new Date(Date.now() - 60 * 60 * 1000),
-      startedAt: new Date(Date.now() - 60 * 60 * 1000),
-      holes: 18,
-      status: "IN_PROGRESS",
-      parData: JSON.stringify(PARS_18),
-      createdById: users[1].id,
-      players: {
-        create: [
-          { displayName: "Rory", handicap: 6, seat: 0, userId: users[1].id },
-          { displayName: "Morikawa", handicap: 7, seat: 1, userId: users[3].id },
-        ],
-      },
-    },
-    include: { players: true },
-  });
-
-  // Fake first 6 holes — Rory leading
-  const roryScores = [4, 5, 3, 4, 4, 5];
-  const collinScores = [5, 4, 4, 5, 4, 6];
-  for (let i = 0; i < 6; i++) {
-    await prisma.scoreEntry.create({
+  for (const s of seed) {
+    const cravedAt = daysAgo(s.days);
+    const prog = pregnancyProgress(dueDate, cravedAt);
+    await prisma.craving.create({
       data: {
-        matchPlayerId: live.players[0].id,
-        hole: i + 1,
-        strokes: roryScores[i],
-      },
-    });
-    await prisma.scoreEntry.create({
-      data: {
-        matchPlayerId: live.players[1].id,
-        hole: i + 1,
-        strokes: collinScores[i],
+        food: s.food,
+        category: s.category,
+        intensity: s.intensity,
+        loggedBy: s.loggedBy,
+        satisfied: s.satisfied ?? false,
+        satisfiedBy: s.satisfiedBy ?? null,
+        isWild: s.isWild ?? false,
+        stars: s.stars ?? 0,
+        week: prog.week,
+        trimester: prog.trimester,
+        cravedAt,
       },
     });
   }
 
-  // A few wagers on the live one
-  for (const u of [users[0], users[2]]) {
-    await prisma.wager.create({
-      data: {
-        matchId: live.id,
-        userId: u.id,
-        pickedPlayerId: live.players[0].id,
-      },
+  for (const a of [
+    { food: "Coffee", severity: 5, loggedBy: "geena" },
+    { food: "Scrambled eggs", severity: 4, loggedBy: "geena" },
+    { food: "The smell of raw chicken", severity: 5, loggedBy: "daddy" },
+  ]) {
+    const prog = pregnancyProgress(dueDate, new Date());
+    await prisma.aversion.create({
+      data: { ...a, week: prog.week, trimester: prog.trimester },
     });
   }
 
-  // Take some snapshots so the chart is populated.
-  const liveSnapshots: { matchPlayerId: string; probability: number; t: number }[] =
-    [
-      { matchPlayerId: live.players[0].id, probability: 0.5, t: -90 },
-      { matchPlayerId: live.players[1].id, probability: 0.5, t: -90 },
-      { matchPlayerId: live.players[0].id, probability: 0.58, t: -75 },
-      { matchPlayerId: live.players[1].id, probability: 0.42, t: -75 },
-      { matchPlayerId: live.players[0].id, probability: 0.62, t: -55 },
-      { matchPlayerId: live.players[1].id, probability: 0.38, t: -55 },
-      { matchPlayerId: live.players[0].id, probability: 0.7, t: -30 },
-      { matchPlayerId: live.players[1].id, probability: 0.3, t: -30 },
-    ];
-  for (const s of liveSnapshots) {
-    await prisma.oddsSnapshot.create({
-      data: {
-        matchId: live.id,
-        matchPlayerId: s.matchPlayerId,
-        probability: s.probability,
-        createdAt: new Date(Date.now() + s.t * 60 * 1000),
-      },
-    });
-  }
-
-  console.log("Seed complete.");
+  console.log("Seeded Bloom demo data 🌸");
 }
 
 main()
@@ -139,6 +83,4 @@ main()
     console.error(e);
     process.exit(1);
   })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .finally(() => prisma.$disconnect());

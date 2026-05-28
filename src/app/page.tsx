@@ -1,347 +1,119 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { computeOdds, formatPct, parseParData } from "@/lib/odds";
-import { getCurrentUser } from "@/lib/auth";
-import { getActiveGroupId, visibleMatchWhere } from "@/lib/groups";
-import AutoRefresh from "@/components/AutoRefresh";
-import LiveCardStats from "@/components/LiveCardStats";
-import MatchCard from "@/components/match-card/MatchCard";
-import { buildMatchCardData } from "@/lib/matchCard";
-import {
-  parseScrambleConfig,
-  teamHandicap as scrambleTeamHandicap,
-} from "@/lib/scramble";
-import { StaggerGroup, StaggerItem } from "@/components/Stagger";
-import EmptyIllustration from "@/components/EmptyIllustration";
-import PlayerAvatar from "@/components/Avatar";
-import {
-  computeStableford,
-  computeSkins,
-  isSideGameKind,
-  type SideGameKind,
-} from "@/lib/sideGames";
+import { getSettings } from "@/lib/settings";
+import { getWhoOrDefault } from "@/lib/identity";
+import { categoryMeta } from "@/lib/categories";
+import PregnancyHero from "@/components/PregnancyHero";
+import CravingCard from "@/components/CravingCard";
+import Scoreboard from "@/components/Scoreboard";
+import EmptyState from "@/components/EmptyState";
 
 export const dynamic = "force-dynamic";
 
-type GridMatch = Awaited<ReturnType<typeof loadMatches>>[number];
-
-async function loadMatches(where: any, orderBy: any, take?: number) {
-  return prisma.match.findMany({
-    where,
-    orderBy,
-    take,
-    include: {
-      players: {
-        orderBy: { seat: "asc" },
-        include: {
-          scores: true,
-          _count: { select: { wagers: true } },
-          // Pull the player-user's avatar customization so cards can
-          // render the real photo / picked variant, not just the default
-          // seeded boring-avatar.
-          user: {
-            select: {
-              id: true,
-              username: true,
-              avatarSeed: true,
-              avatarVariant: true,
-              avatarUrl: true,
-            },
-          },
-        },
-      },
-      _count: { select: { wagers: true } },
-      sideGames: true,
-    },
-  });
-}
-
 export default async function HomePage() {
-  const user = await getCurrentUser();
-  const activeGroupId = getActiveGroupId();
-  const groupWhere = await visibleMatchWhere(user?.id ?? null, activeGroupId);
+  const settings = await getSettings();
+  const who = getWhoOrDefault();
 
-  const open = await loadMatches(
-    { ...groupWhere, status: { in: ["UPCOMING", "IN_PROGRESS"] } },
-    [{ status: "asc" }, { scheduledAt: "asc" }],
-  );
-  const live = open.filter((m) => m.status === "IN_PROGRESS");
-  const upcoming = open.filter((m) => m.status === "UPCOMING");
+  const since = new Date();
+  since.setDate(since.getDate() - 7);
 
-  const completed = await loadMatches(
-    { ...groupWhere, status: "COMPLETED" },
-    { completedAt: "desc" },
-    6,
-  );
+  const [recent, total, weekCount, satisfiedRows, unmet, byCategory] =
+    await Promise.all([
+      prisma.craving.findMany({ orderBy: { cravedAt: "desc" }, take: 3 }),
+      prisma.craving.count(),
+      prisma.craving.count({ where: { cravedAt: { gte: since } } }),
+      prisma.craving.groupBy({
+        by: ["satisfiedBy"],
+        where: { satisfied: true },
+        _count: true,
+      }),
+      prisma.craving.count({ where: { satisfied: false } }),
+      prisma.craving.groupBy({ by: ["category"], _count: true }),
+    ]);
 
-  // Pull the current viewer's existing wagers across every match in view
-  // in a single query so the QuickWagerButton can highlight the player
-  // they've already called as "Picked".
-  const allVisibleIds = [...live, ...upcoming, ...completed].map((m) => m.id);
-  const myPicks = user && allVisibleIds.length > 0
-    ? await prisma.wager.findMany({
-        where: { userId: user.id, matchId: { in: allVisibleIds } },
-        select: { matchId: true, pickedPlayerId: true },
-      })
-    : [];
-  const myPickByMatch = new Map(
-    myPicks.map((w) => [w.matchId, w.pickedPlayerId]),
-  );
+  const satCount = (key: string) =>
+    satisfiedRows.find((r) => r.satisfiedBy === key)?._count ?? 0;
+
+  const topCat = byCategory.sort((a, b) => b._count - a._count)[0];
+  const topCatMeta = topCat ? categoryMeta(topCat.category) : null;
 
   return (
-    <div className="space-y-10">
-      <AutoRefresh endpoint="/api/markets/state" />
-      {!user && (
-        <div className="card p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight leading-tight">
-              All your games.{" "}
-              <span className="text-accent">One round.</span>
-            </h2>
-            <p className="text-sm text-mute mt-2">
-              Wolf, Skins, Bingo Bango Bongo — same scorecard.
-            </p>
-          </div>
-          <Link
-            href="/login"
-            className="btn btn-primary shrink-0 self-start sm:self-auto"
-          >
-            Open the line →
+    <div className="space-y-5">
+      <PregnancyHero settings={settings} />
+
+      <div className="grid grid-cols-3 gap-3">
+        <Stat label="Total" value={total} emoji="🍴" />
+        <Stat label="This week" value={weekCount} emoji="📅" />
+        <Stat
+          label="Top craving"
+          value={topCatMeta ? topCatMeta.label : "—"}
+          emoji={topCatMeta ? topCatMeta.emoji : "✨"}
+        />
+      </div>
+
+      <Link href="/log" className="btn btn-primary w-full py-3.5 text-base">
+        + Log a craving
+      </Link>
+
+      {total > 0 && (
+        <Scoreboard
+          daddy={satCount("daddy")}
+          geena={satCount("geena")}
+          takeout={satCount("takeout")}
+          unmet={unmet}
+          momName={settings.momName}
+          partnerName={settings.partnerName}
+        />
+      )}
+
+      <div className="flex items-center justify-between">
+        <h2 className="font-display text-xl font-semibold text-ink">Latest cravings</h2>
+        {total > 3 && (
+          <Link href="/cravings" className="text-sm font-semibold text-accent">
+            See all →
           </Link>
+        )}
+      </div>
+
+      {recent.length === 0 ? (
+        <EmptyState
+          emoji="🍓"
+          title="No cravings yet"
+          subtitle="Tap the + to log the first one. Geena, that means you too!"
+          ctaHref="/log"
+          ctaLabel="Log a craving"
+        />
+      ) : (
+        <div className="space-y-3">
+          {recent.map((c) => (
+            <CravingCard
+              key={c.id}
+              craving={c}
+              who={who}
+              momName={settings.momName}
+              partnerName={settings.partnerName}
+            />
+          ))}
         </div>
       )}
 
-      {live.length > 0 && (
-        <section>
-          <SectionHeader
-            title="Live now"
-            accent
-            count={live.length}
-          />
-          <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {live.map((m) => (
-              <StaggerItem key={m.id}>
-                <RenderedMatchCard
-                  match={m}
-                  myPickPlayerId={myPickByMatch.get(m.id) ?? null}
-                />
-              </StaggerItem>
-            ))}
-          </StaggerGroup>
-        </section>
-      )}
-
-      <section>
-        <SectionHeader title="Upcoming" />
-        {upcoming.length === 0 && live.length === 0 ? (
-          <EmptyIllustration
-            kind="noMatches"
-            title="Quiet Saturday."
-            body="No rounds on the board yet. Post a tee time so the market opens."
-            action={
-              user ? (
-                <Link className="btn btn-primary text-sm" href="/matches/new">
-                  Post a round →
-                </Link>
-              ) : (
-                <Link className="btn btn-primary text-sm" href="/login">
-                  Sign in to post →
-                </Link>
-              )
-            }
-          />
-        ) : upcoming.length === 0 ? (
-          <EmptyCard>Nothing on the tee. Open the next line.</EmptyCard>
-        ) : (
-          <MatchGridNew matches={upcoming} myPickByMatch={myPickByMatch} />
-        )}
-      </section>
-
-      <section>
-        <SectionHeader title="Settled" />
-        {completed.length === 0 ? (
-          <EmptyCard>No closed lines yet.</EmptyCard>
-        ) : (
-          <MatchGridNew matches={completed} myPickByMatch={myPickByMatch} />
-        )}
-      </section>
-    </div>
-  );
-}
-
-function SectionHeader({
-  title,
-  accent,
-  count,
-}: {
-  title: string;
-  accent?: boolean;
-  count?: number;
-}) {
-  return (
-    <div className="flex items-center gap-2 mb-3">
-      {accent && (
-        <span
-          className="inline-block w-2 h-2 rounded-full bg-accent animate-pulse"
-          aria-hidden
-        />
-      )}
-      <h2
-        className={
-          "text-sm uppercase tracking-wider " +
-          (accent ? "text-accent font-medium" : "text-mute")
-        }
+      <Link
+        href="/recap"
+        className="card flex items-center justify-between p-4 text-sm font-semibold text-ink"
       >
-        {title}
-      </h2>
-      {typeof count === "number" && (
-        <span className="text-xs text-mute">{count}</span>
-      )}
+        <span>📸 This week&apos;s recap card</span>
+        <span className="text-accent">→</span>
+      </Link>
     </div>
   );
 }
 
-function EmptyCard({ children }: { children: React.ReactNode }) {
-  return <div className="card p-6 text-sm text-mute">{children}</div>;
-}
-
-
-
-// Shared bridge between the prisma row and the redesigned MatchCard.
-// Computes odds once and feeds the normalized data through.
-function buildCardData(m: GridMatch, myPickPlayerId: string | null) {
-  const pars = parseParData(m.parData, m.holes);
-  const scoringMode = m.scoringMode as "NET" | "GROSS" | "CUSTOM";
-  const startingHole = m.startingHole ?? 1;
-
-  // SCRAMBLE matches feed the odds engine 2 synthetic team inputs
-  // instead of N per-player inputs -- mirrors what loadMatchWithOdds
-  // does on the detail page so the home card line matches the detail
-  // page's market. The probabilities engine emits keys "team-0" /
-  // "team-1"; we remap to captain matchPlayerIds since buildMatchCardData's
-  // synthetic cardPlayers carry the captain's id.
-  const isScramble = m.format === "SCRAMBLE";
-  let oddsInputs;
-  let captainIdByTeam: Record<0 | 1, string | null> = { 0: null, 1: null };
-  if (isScramble) {
-    const config = parseScrambleConfig(m.scrambleConfig);
-    const teams: Record<0 | 1, typeof m.players> = { 0: [], 1: [] };
-    for (const p of m.players) {
-      if (p.team === 0) teams[0].push(p);
-      else if (p.team === 1) teams[1].push(p);
-    }
-    teams[0].sort((a, b) => a.seat - b.seat);
-    teams[1].sort((a, b) => a.seat - b.seat);
-    oddsInputs = ([0, 1] as const)
-      .map((t) => {
-        const roster = teams[t];
-        if (roster.length === 0) return null;
-        const captain = roster[0];
-        captainIdByTeam[t] = captain.id;
-        return {
-          id: `team-${t}`,
-          handicap: scrambleTeamHandicap(
-            roster.map((r) => ({
-              handicap: r.handicap,
-              seat: r.seat,
-              team: t,
-              id: r.id,
-              displayName: r.displayName,
-            })),
-            config.handicapMode,
-            config.customAllowance?.[t],
-          ),
-          wagerCount: roster.reduce(
-            (sum, r) => sum + r._count.wagers,
-            0,
-          ),
-          scoresByHole: Object.fromEntries(
-            captain.scores.map((s) => [s.hole, s.strokes]),
-          ),
-        };
-      })
-      .filter((x): x is NonNullable<typeof x> => x != null);
-  } else {
-    oddsInputs = m.players.map((p) => ({
-      id: p.id,
-      handicap: p.handicap,
-      wagerCount: p._count.wagers,
-      scoresByHole: Object.fromEntries(
-        p.scores.map((s) => [s.hole, s.strokes]),
-      ),
-    }));
-  }
-
-  const odds = computeOdds({
-    status: m.status as "UPCOMING" | "IN_PROGRESS" | "COMPLETED",
-    holes: m.holes,
-    startingHole,
-    pars,
-    scoringMode,
-    players: oddsInputs,
-  });
-
-  // For scramble, remap team-0/team-1 -> captain matchPlayerId so the
-  // card's per-player probability lookup hits.
-  let probabilities = odds.probabilities;
-  if (isScramble) {
-    const remapped: Record<string, number> = {};
-    for (const t of [0, 1] as const) {
-      const captainId = captainIdByTeam[t];
-      if (captainId) {
-        remapped[captainId] = odds.probabilities[`team-${t}`] ?? 0;
-      }
-    }
-    probabilities = remapped;
-  }
-
-  return buildMatchCardData(
-    {
-      ...m,
-      players: m.players.map((p) => ({
-        ...p,
-        user: p.user
-          ? {
-              username: p.user.username,
-              avatarSeed: p.user.avatarSeed,
-              avatarVariant: p.user.avatarVariant,
-              avatarUrl: p.user.avatarUrl,
-            }
-          : null,
-      })),
-    },
-    probabilities,
-    myPickPlayerId,
-  );
-}
-
-function RenderedMatchCard({
-  match,
-  myPickPlayerId,
-}: {
-  match: GridMatch;
-  myPickPlayerId: string | null;
-}) {
-  return <MatchCard data={buildCardData(match, myPickPlayerId)} />;
-}
-
-function MatchGridNew({
-  matches,
-  myPickByMatch,
-}: {
-  matches: GridMatch[];
-  myPickByMatch: Map<string, string>;
-}) {
+function Stat({ label, value, emoji }: { label: string; value: string | number; emoji: string }) {
   return (
-    <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 gap-3">
-      {matches.map((m) => (
-        <StaggerItem key={m.id}>
-          <RenderedMatchCard
-            match={m}
-            myPickPlayerId={myPickByMatch.get(m.id) ?? null}
-          />
-        </StaggerItem>
-      ))}
-    </StaggerGroup>
+    <div className="card flex flex-col items-center gap-0.5 p-3 text-center">
+      <span className="text-xl">{emoji}</span>
+      <span className="truncate font-display text-lg font-bold text-ink">{value}</span>
+      <span className="text-[11px] uppercase tracking-wide text-mute">{label}</span>
+    </div>
   );
 }

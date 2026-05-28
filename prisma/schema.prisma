@@ -1,4 +1,6 @@
-// Sticks - golf prediction market schema
+// Bloom — Geena's pregnancy craving tracker (local SQLite dev schema).
+// Production uses prisma/schema.postgres.prisma (Supabase Postgres) — the
+// Vercel build runs `npm run use:postgres` to swap this file before build.
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,307 +10,46 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// status is stored as a plain string ("UPCOMING" | "IN_PROGRESS" | "COMPLETED")
-// because SQLite doesn't support enums.
-
-model User {
+model Craving {
   id          String   @id @default(cuid())
-  username    String   @unique
-  displayName String?
-  // Avatar customization. avatarUrl wins when set (real uploaded photo).
-  // Otherwise the boring-avatars generator uses avatarSeed (defaults to id)
-  // and avatarVariant (defaults to 'beam').
-  avatarSeed    String?
-  avatarVariant String?
-  avatarUrl     String?
-  // Optional USGA/GHIN handicap number. Displayed as a "verified" badge
-  // next to the user's auto-computed Sticks index; we don't have GHIN API
-  // access so the number itself is just stored as the user provides it.
-  ghinNumber  String?
+  food        String
+  // sweet | salty | sour | savory | spicy | carbs | fruit | dairy | drink | other
+  category    String   @default("other")
+  intensity   Int      @default(3) // 1-5 hearts
+  loggedBy    String   @default("geena") // geena | daddy
+  satisfied   Boolean  @default(false)
+  satisfiedBy String? // geena | daddy | takeout
+  isWild      Boolean  @default(false)
+  stars       Int      @default(0) // hall-of-fame rating for wild combos (0-5)
+  notes       String?
+  photoUrl    String?
+  week        Int? // pregnancy week when the craving struck
+  trimester   Int? // 1 | 2 | 3
+  cravedAt    DateTime @default(now())
   createdAt   DateTime @default(now())
 
-  createdMatches   Match[]       @relation("MatchCreator")
-  playerSeats      MatchPlayer[]
-  wagers           Wager[]
-  createdGroups    Group[]       @relation("GroupCreator")
-  groupMemberships GroupMember[]
-  sessions         Session[]
+  @@index([cravedAt])
+  @@index([isWild])
 }
 
-// Server-side session tokens. Replaces the legacy 'cookie carries the
-// User.id' model so a leaked / guessed user id can't be replayed as the
-// owner. Each sign-in mints a fresh random token; sign-out deletes its row.
-model Session {
+model Aversion {
   id        String   @id @default(cuid())
-  // Random, opaque, unique. Stored in the fm_session cookie.
-  token     String   @unique
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  expiresAt DateTime
-
-  @@index([userId])
-  @@index([expiresAt])
-}
-
-model Group {
-  id          String        @id @default(cuid())
-  name        String
-  // Human-readable URL slug. Nullable so existing rows aren't broken on
-  // migration; lazy-backfilled on first read.
-  slug        String?       @unique
-  inviteCode  String        @unique
-  createdById String
-  createdBy   User          @relation("GroupCreator", fields: [createdById], references: [id])
-  createdAt   DateTime      @default(now())
-
-  members     GroupMember[]
-  matches     Match[]
-}
-
-model GroupMember {
-  id       String   @id @default(cuid())
-  groupId  String
-  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  userId   String
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role     String   @default("member")
-  joinedAt DateTime @default(now())
-
-  @@unique([groupId, userId])
-}
-
-model Match {
-  id           String      @id @default(cuid())
-  courseName   String
-  scheduledAt  DateTime
-  holes        Int         @default(18)
-  // First hole played. 1 for full rounds and front-9 rounds; 10 for back-9
-  // rounds. ScoreEntry.hole stores the absolute hole number, so a back-9
-  // match has scores on holes 10-18 (not 1-9). pars is still length=holes,
-  // indexed from this starting point.
-  startingHole Int         @default(1)
-  status       String      @default("UPCOMING")
-  // "NET" (handicap applied), "GROSS" (raw scores), or "CUSTOM" (group-decided strokes per player).
-  // Stored on the player's `handicap` field regardless of mode; this flag decides whether the
-  // scoring math subtracts it and whether the UI labels it Handicap or Strokes.
-  scoringMode  String      @default("NET")
-  // "INDIVIDUAL" (every player against every player) or "SCRAMBLE" (2
-  // teams; one score per team per hole). Default INDIVIDUAL to keep
-  // existing matches unchanged.
-  format       String      @default("INDIVIDUAL")
-  // Scramble-only settings JSON: {"handicapMode":"GROSS"|"AVG"|"USGA_4P","teamNames":{"0":"Team A","1":"Team B"}}.
-  // Null for INDIVIDUAL matches. Read by the odds engine + scorecard
-  // render to apply the right team-handicap formula and labelling.
-  scrambleConfig String?
-  // JSON-encoded array of pars (length == holes). Null means "treat every hole as par 4".
-  parData      String?
-  createdById  String
-  createdBy    User        @relation("MatchCreator", fields: [createdById], references: [id])
-  groupId      String?
-  group        Group?      @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @default(now()) @updatedAt
-  startedAt    DateTime?
-  completedAt  DateTime?
-  notes        String?
-  // JSON: per-game-kind list of winner userIds, persisted on completion.
-  // null for in-progress / not-yet-completed matches. Leaderboard fast path.
-  winnerSummary String?
-
-  players      MatchPlayer[]
-  wagers       Wager[]
-  oddsSnapshots OddsSnapshot[]
-  sideGames    SideGame[]
-}
-
-model SideGame {
-  id        String   @id @default(cuid())
-  matchId   String
-  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  // STABLEFORD | SKINS | NASSAU | BBB | SNAKE | WOLF
-  kind      String
-  // JSON for per-game config (e.g. Stableford variant, skin stake).
-  config    String?
+  food      String
+  severity  Int      @default(3) // 1-5 how repulsive
+  loggedBy  String   @default("geena")
+  notes     String?
+  week      Int?
+  trimester Int?
   createdAt DateTime @default(now())
 
-  events    SideGameEvent[]
-
-  @@unique([matchId, kind])
-  @@index([matchId])
+  @@index([createdAt])
 }
 
-// Per-hole events for games that need data beyond the stroke count -- BBB
-// (bingo/bango/bongo awards), Snake (3-putts and snake holder), Wolf
-// (partner choice, hole winner). One row per (game, hole, kind, player)
-// so e.g. multiple players can 3-putt on the same hole.
-model SideGameEvent {
-  id            String       @id @default(cuid())
-  sideGameId    String
-  sideGame      SideGame     @relation(fields: [sideGameId], references: [id], onDelete: Cascade)
-  hole          Int
-  // BBB: BINGO | BANGO | BONGO
-  // Snake: THREE_PUTT | SNAKE_HOLDER
-  // Wolf: PARTNER | LONE_WOLF | HOLE_WINNER
-  kind          String
-  matchPlayerId String?
-  matchPlayer   MatchPlayer? @relation(fields: [matchPlayerId], references: [id], onDelete: SetNull)
-  createdAt     DateTime     @default(now())
-
-  @@unique([sideGameId, hole, kind, matchPlayerId])
-  @@index([sideGameId, hole])
-}
-
-model MatchPlayer {
-  id          String   @id @default(cuid())
-  matchId     String
-  match       Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  userId      String?
-  user        User?    @relation(fields: [userId], references: [id])
-  displayName String
-  handicap    Float
-  seat        Int
-  // Team assignment for scramble matches: 0 = Team A, 1 = Team B.
-  // Null for INDIVIDUAL matches. Score entries in scramble are written
-  // against the "captain" (lowest-seat member of each team); the other
-  // teammates have no ScoreEntry rows but render alongside the captain
-  // in the team-row scorecard.
-  team        Int?
-
-  scores      ScoreEntry[]
-  wagers      Wager[]
-  oddsSnapshots OddsSnapshot[]
-  sideGameEvents SideGameEvent[]
-
-  @@unique([matchId, seat])
-}
-
-model ScoreEntry {
-  id            String      @id @default(cuid())
-  matchPlayerId String
-  matchPlayer   MatchPlayer @relation(fields: [matchPlayerId], references: [id], onDelete: Cascade)
-  hole          Int
-  strokes       Int
-  createdAt     DateTime    @default(now())
-
-  @@unique([matchPlayerId, hole])
-}
-
-model Wager {
-  id              String      @id @default(cuid())
-  matchId         String
-  match           Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  userId          String
-  user            User        @relation(fields: [userId], references: [id])
-  pickedPlayerId  String
-  pickedPlayer    MatchPlayer @relation(fields: [pickedPlayerId], references: [id], onDelete: Cascade)
-  createdAt       DateTime    @default(now())
-
-  @@unique([matchId, userId])
-}
-
-model OddsSnapshot {
-  id            String      @id @default(cuid())
-  matchId       String
-  match         Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  matchPlayerId String
-  matchPlayer   MatchPlayer @relation(fields: [matchPlayerId], references: [id], onDelete: Cascade)
-  probability   Float
-  createdAt     DateTime    @default(now())
-
-  @@index([matchId, createdAt])
-}
-
-// Shared per-course data, keyed by the same `courseName` strings already
-// used on Match. Looked-up-or-created lazily the first time a user marks
-// a green coord for that course. Decoupled from the `COURSE_PRESETS`
-// catalog so user-created free-text courses (e.g. local munis we don't
-// have presets for) can collect geo data too.
-model Course {
-  id        String       @id @default(cuid())
-  name      String       @unique
-  // Geocoded center of the course (via Nominatim on first lookup). Used
-  // as the anchor for Overpass queries -- we fetch golf features within
-  // ~700m of this point.
-  centerLat Float?
-  centerLng Float?
-  // Timestamp of the last successful OpenStreetMap import. Null when we
-  // haven't attempted yet; set even when OSM had no data (to avoid
-  // retrying every visit). Re-run by clearing this column.
-  osmFetchedAt DateTime?
-  // JSON-encoded master pars array (length 9 or 18) saved by users via
-  // the per-match ParsEditor's "Save as course default" button. When a
-  // new match is created for this course with no per-match override,
-  // createMatchAction falls back to these before the generic defaults.
-  parData   String?
-  createdAt DateTime     @default(now())
-
-  holes     CourseHole[]
-  hazards   CourseHazard[]
-}
-
-// On-course hazard. v1 stores a single 'representative point' per hazard:
-// the center of a water carry, the front edge of a fairway bunker, etc.
-// Distance-to-hazard is then point-to-point. Polygonal hazards come later
-// when we need to compute carry over a shaped pond.
-model CourseHazard {
-  id        String   @id @default(cuid())
-  courseId  String
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  // Which hole the hazard belongs to (1..36). Hazards visible in the
-  // on-course view for that hole. A hazard that spans two holes gets
-  // two rows.
-  hole      Int
-  // WATER | SAND | OOB (out of bounds) | OTHER. UI swaps the icon/color
-  // by kind but treats them identically for distance.
-  kind      String
-  // Free-text label so users can disambiguate ("front bunker", "lake left").
-  label     String?
-  lat       Float
-  lng       Float
-  contributedById String?
-  createdAt DateTime @default(now())
-
-  @@index([courseId, hole])
-}
-
-model CourseHole {
-  id        String  @id @default(cuid())
-  courseId  String
-  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  hole      Int
-  // Green center coordinates. Nullable until a user marks them via GPS
-  // while standing on the green. WGS84 lat/lng.
-  greenLat  Float?
-  greenLng  Float?
-  // Front and back of green -- optional refinements. UI displays three
-  // distances (F/C/B) when at least the center is mapped; falls back to
-  // computing front/back from center +/- 8y along the player->green line
-  // when not yet user-marked.
-  greenFrontLat  Float?
-  greenFrontLng  Float?
-  greenBackLat   Float?
-  greenBackLng   Float?
-  // Tee box anchor. Lets the renderer draw a schematic hole shape
-  // (tee -> green line) without needing a full fairway polygon.
-  teeLat    Float?
-  teeLng    Float?
-  // Optional richer polygons (when OSM has them). JSON-encoded arrays of
-  // [lat, lng] pairs forming a closed loop. Renderer prefers these over
-  // the schematic when set.
-  greenPolygonJson   String?
-  fairwayPolygonJson String?
-  // Optional published yardage (back tee) -- not used for GPS distance
-  // but handy as a sanity-check / fallback display.
-  distanceYds Int?
-  // Audit: who first mapped this hole (so we can credit / re-prompt).
-  contributedById String?
-  // Tagged 'osm' when the hole was pre-seeded from OpenStreetMap so we
-  // know when to trust the data more vs less.
-  source    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-
-  @@unique([courseId, hole])
-  @@index([courseId])
+model Settings {
+  id          String    @id @default("singleton")
+  dueDate     DateTime?
+  momName     String    @default("Geena")
+  partnerName String    @default("Daddy")
+  babyName    String?
+  updatedAt   DateTime  @default(now()) @updatedAt
 }

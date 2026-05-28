@@ -2,111 +2,115 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Theme tokens. Values are RGB triples so Tailwind's <alpha-value>
-   substitution still works (bg-panel/70 etc.). */
+/* Theme tokens as RGB triples so Tailwind's <alpha-value> (bg-panel/70 …)
+   keeps working. Default :root is the soft blush "day" palette. A cozy
+   plum "dusk" palette kicks in under [data-theme="dark"] for late-night
+   logging. */
 :root {
-  color-scheme: dark;
-  --color-bg: 11 15 12;
-  --color-panel: 17 24 21;
-  --color-panel2: 22 31 27;
-  --color-border: 31 42 37;
-  --color-borderSoft: 24 35 32;
-  --color-ink: 232 240 234;
-  --color-mute: 138 160 148;
-  --color-faint: 93 107 100;
-  --color-accent: 52 211 153;
-  --color-accentDim: 16 185 129;
-  --color-danger: 248 113 113;
-  --color-gold: 251 191 36;
-  --skeleton-base: 255 255 255;
-  --recharts-axis: 138 160 148;
-}
-
-[data-theme="light"] {
   color-scheme: light;
-  --color-bg: 247 250 248;
+  --color-bg: 255 246 242;
   --color-panel: 255 255 255;
-  --color-panel2: 240 244 241;
-  --color-border: 216 225 218;
-  --color-borderSoft: 226 233 228;
-  --color-ink: 11 31 21;
-  --color-mute: 94 110 99;
-  --color-faint: 130 146 134;
-  --color-accent: 5 150 105;
-  --color-accentDim: 4 120 87;
-  --color-danger: 220 38 38;
-  --color-gold: 180 83 9;
+  --color-panel2: 255 237 243;
+  --color-border: 246 213 224;
+  --color-borderSoft: 251 231 238;
+  --color-ink: 74 44 58;
+  --color-mute: 155 117 133;
+  --color-faint: 194 164 176;
+  --color-accent: 236 123 164;
+  --color-accentDim: 216 92 146;
+  --color-danger: 229 115 107;
+  --color-gold: 224 169 59;
+  --ink-on-accent: 255 255 255;
   --skeleton-base: 0 0 0;
-  --recharts-axis: 94 110 99;
+  --recharts-axis: 155 117 133;
 }
 
-html, body {
+[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: 30 17 24;
+  --color-panel: 42 24 34;
+  --color-panel2: 52 32 44;
+  --color-border: 69 48 60;
+  --color-borderSoft: 58 40 50;
+  --color-ink: 245 230 236;
+  --color-mute: 194 155 172;
+  --color-faint: 138 104 120;
+  --color-accent: 244 143 177;
+  --color-accentDim: 229 115 156;
+  --color-danger: 242 145 138;
+  --color-gold: 233 192 106;
+  --ink-on-accent: 38 18 28;
+  --skeleton-base: 255 255 255;
+  --recharts-axis: 194 155 172;
+}
+
+html,
+body {
   background: rgb(var(--color-bg));
   color: rgb(var(--color-ink));
 }
 
 body {
-  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
-    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  font-feature-settings: "cv02", "cv11";
+  font-family: var(--font-body), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, sans-serif;
+}
+
+/* A barely-there blush gradient + petal speckle behind everything. */
+body {
+  background-image:
+    radial-gradient(1200px 600px at 50% -10%, rgb(var(--color-accent) / 0.10), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgb(var(--color-gold) / 0.06), transparent 55%);
+  background-attachment: fixed;
 }
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors;
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all active:scale-95;
   }
-  .btn-primary { @apply bg-accent text-black hover:bg-accentDim; }
-  .btn-ghost { @apply bg-panel2 text-ink border border-border hover:bg-panel; }
-  .btn-danger { @apply bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20; }
+  .btn-primary {
+    @apply bg-accent text-ink-on-accent shadow-sm hover:bg-accentDim;
+  }
+  .btn-ghost {
+    @apply bg-panel2 text-ink border border-border hover:bg-panel;
+  }
+  .btn-danger {
+    @apply bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20;
+  }
 
   .input {
-    /* text-base (16px) on mobile prevents iOS Safari from auto-zooming the
-       viewport when a date/select input is focused. text-sm on >=sm keeps
-       the desktop look compact. */
-    @apply w-full rounded-md bg-panel2 border border-border px-3 py-2 text-base sm:text-sm text-ink placeholder:text-mute focus:outline-none focus:ring-1 focus:ring-accent;
+    @apply w-full rounded-2xl bg-panel2 border border-border px-3.5 py-2.5 text-base sm:text-sm text-ink placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent/50;
   }
-  /* Native select with our chevron. Applied automatically to all <select>
-     elements that use the .input class (which most of ours do). */
   select.input {
     appearance: none;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%238aa094'><path d='M4 6l4 4 4-4z'/></svg>");
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%239b7585'><path d='M4 6l4 4 4-4z'/></svg>");
     background-repeat: no-repeat;
-    background-position: right 0.5rem center;
+    background-position: right 0.65rem center;
     background-size: 16px 16px;
     padding-right: 2rem;
   }
-  .label { @apply block text-xs uppercase tracking-wider text-mute mb-1; }
-  .card { @apply rounded-lg border border-border bg-panel; }
-  .chip { @apply inline-flex items-center rounded-full border border-border bg-panel2 px-2 py-0.5 text-xs text-mute; }
-  .tag-up { @apply text-accent; }
-  .tag-down { @apply text-danger; }
-
-  /* Hide scrollbars on the on-course hole-picker row (and any other
-     horizontal swipe carousel where the bar would otherwise nibble the
-     scrim). */
-  .no-scrollbar { scrollbar-width: none; }
-  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .label {
+    @apply block text-xs font-semibold uppercase tracking-wider text-mute mb-1.5;
+  }
+  .card {
+    @apply rounded-3xl border border-border bg-panel shadow-sm;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full border border-border bg-panel2 px-2.5 py-1 text-xs font-medium text-mute;
+  }
+  .text-ink-on-accent {
+    color: rgb(var(--ink-on-accent));
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-/* View Transitions API: enables a single cross-document transition. The
-   matched element on the source and destination pages share a
-   view-transition-name and morph between them. We give match cards
-   identity by id; the destination page's header uses the same name so
-   the card visually 'opens into' the match detail. Browsers that don't
-   support this (Firefox, older iOS) simply navigate normally. */
-@view-transition {
-  navigation: auto;
-}
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 280ms;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* Skeleton shimmer for first-load placeholders. Base RGB flips per theme
-   so the shimmer reads on both dark and light. */
+/* Skeleton shimmer for first-load placeholders. */
 @keyframes skeleton-shimmer {
-  0%   { background-position: 200% 0; }
+  0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
 .skeleton {
@@ -118,93 +122,44 @@ body {
   );
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.6s ease-in-out infinite;
-  border-radius: 4px;
+  border-radius: 8px;
 }
+
+/* Gentle entrance for cards/lists. */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.rise { animation: rise 360ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Heart pop on the intensity picker. */
+@keyframes pop {
+  0% { transform: scale(0.8); }
+  50% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+.pop { animation: pop 240ms ease-out; }
+
+/* Drifting petals in the dashboard hero. */
+@keyframes drift {
+  0% { transform: translateY(-10%) translateX(0) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.9; }
+  90% { opacity: 0.9; }
+  100% { transform: translateY(120%) translateX(20px) rotate(220deg); opacity: 0; }
+}
+.petal { animation: drift linear infinite; }
+
 @media (prefers-reduced-motion: reduce) {
-  .skeleton { animation: none; }
+  .skeleton, .rise, .pop, .petal { animation: none; }
 }
 
-/* Live match card glow. Timing matches the match-card design spec. */
-@keyframes live-glow {
-  0%, 100% { box-shadow: 0 0 0 1px rgb(var(--color-accent) / 0.10), 0 0 24px -8px rgb(var(--color-accent) / 0.25); }
-  50%      { box-shadow: 0 0 0 1px rgb(var(--color-accent) / 0.22), 0 0 36px -6px rgb(var(--color-accent) / 0.45); }
-}
-.live-card {
-  animation: live-glow 3.4s ease-in-out infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .live-card { animation: none; box-shadow: 0 0 0 1px rgb(var(--color-accent) / 0.18), 0 0 28px -6px rgb(var(--color-accent) / 0.32); }
-}
-
-/* Pulsing dot used in the LIVE pill. */
-@keyframes pulse-dot {
-  0%   { box-shadow: 0 0 0 0 rgb(var(--color-accent) / 0.55); }
-  70%  { box-shadow: 0 0 0 8px rgb(var(--color-accent) / 0); }
-  100% { box-shadow: 0 0 0 0 rgb(var(--color-accent) / 0); }
-}
-.pulse-dot { animation: pulse-dot 2.4s ease-out infinite; }
-@media (prefers-reduced-motion: reduce) { .pulse-dot { animation: none; } }
-
-/* On-course GPS dot. Larger halo than the LIVE pill dot since the on-
-   course map is the player's primary focus -- it needs to read at a
-   glance while the player is moving. */
-@keyframes pulse-strong {
-  0%   { box-shadow: 0 0 0 0 rgb(var(--color-accent) / 0.65); }
-  70%  { box-shadow: 0 0 0 14px rgb(var(--color-accent) / 0); }
-  100% { box-shadow: 0 0 0 0 rgb(var(--color-accent) / 0); }
-}
-.pulse-strong { animation: pulse-strong 2.2s ease-out infinite; }
-@media (prefers-reduced-motion: reduce) { .pulse-strong { animation: none; } }
-
-/* Score-entry sheet slide-up. */
-@keyframes sheet-up {
-  0%   { transform: translateY(100%); }
-  100% { transform: translateY(0); }
-}
-.sheet-up { animation: sheet-up 220ms cubic-bezier(.2,.7,.2,1); }
-@media (prefers-reduced-motion: reduce) { .sheet-up { animation: none; } }
-
-/* Bottom-aligned ink colour used on top of the saturated accent fill
-   (Enter Score CTA, AIM pill, score sheet Save button). Sits a notch
-   darker than text-ink against accent green so it doesn't vibrate. */
-:root { --ink-on-accent: 6 33 24; }
-.text-ink-on-accent { color: rgb(var(--ink-on-accent)); }
-
-/* Probability tick number flash (up/down) + row background pulse. */
-@keyframes tick-up {
-  0%   { color: rgb(var(--color-ink)); transform: translateY(0); }
-  20%  { color: rgb(var(--color-accent)); transform: translateY(-2px); }
-  100% { color: rgb(var(--color-ink)); transform: translateY(0); }
-}
-@keyframes tick-down {
-  0%   { color: rgb(var(--color-ink)); transform: translateY(0); }
-  20%  { color: rgb(var(--color-danger)); transform: translateY(2px); }
-  100% { color: rgb(var(--color-ink)); transform: translateY(0); }
-}
-.tick-up   { animation: tick-up 600ms ease-out; }
-.tick-down { animation: tick-down 600ms ease-out; }
-
-@keyframes row-flash-up   { 0%,100% { background: transparent; } 20% { background: rgb(var(--color-accent) / 0.18); } }
-@keyframes row-flash-down { 0%,100% { background: transparent; } 20% { background: rgb(var(--color-danger) / 0.18); } }
-.row-flash-up   { animation: row-flash-up 600ms ease-out; }
-.row-flash-down { animation: row-flash-down 600ms ease-out; }
-
-/* Hot-streak flame gentle flicker. */
-@keyframes flicker { 0%,100% { opacity: 1; } 50% { opacity: 0.7; } }
-.flicker { animation: flicker 1.6s ease-in-out infinite; }
-
-/* Ticker tape marquee. Content is duplicated for seamless loop. */
-@keyframes scroll-l { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-.scroll-l { animation: scroll-l 28s linear infinite; }
-@media (prefers-reduced-motion: reduce) { .scroll-l { animation: none; } }
-
-/* Recharts label colors picked from the active theme. */
+/* Recharts theming. */
 .recharts-cartesian-axis-tick-value tspan {
   fill: rgb(var(--recharts-axis)) !important;
 }
 .recharts-tooltip-wrapper .recharts-default-tooltip {
-  background-color: rgb(var(--color-panel2)) !important;
+  background-color: rgb(var(--color-panel)) !important;
   border: 1px solid rgb(var(--color-border)) !important;
-  border-radius: 8px;
+  border-radius: 14px !important;
   color: rgb(var(--color-ink)) !important;
 }

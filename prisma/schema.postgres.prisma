@@ -1,6 +1,6 @@
-// Sticks - Postgres variant of the schema.
-// Used for production deploys (Vercel + Neon/Supabase/Vercel Postgres).
-// `npm run use:postgres` copies this over prisma/schema.prisma before build.
+// Bloom — Postgres variant of the schema (Supabase / Vercel Postgres / Neon).
+// `npm run use:postgres` copies this over prisma/schema.prisma before the
+// Vercel build so production always uses the postgresql provider.
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,228 +10,45 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
+model Craving {
   id          String   @id @default(cuid())
-  username    String   @unique
-  displayName String?
-  avatarSeed    String?
-  avatarVariant String?
-  avatarUrl     String?
-  ghinNumber  String?
+  food        String
+  category    String   @default("other")
+  intensity   Int      @default(3)
+  loggedBy    String   @default("geena")
+  satisfied   Boolean  @default(false)
+  satisfiedBy String?
+  isWild      Boolean  @default(false)
+  stars       Int      @default(0)
+  notes       String?
+  photoUrl    String?
+  week        Int?
+  trimester   Int?
+  cravedAt    DateTime @default(now())
   createdAt   DateTime @default(now())
 
-  createdMatches   Match[]       @relation("MatchCreator")
-  playerSeats      MatchPlayer[]
-  wagers           Wager[]
-  createdGroups    Group[]       @relation("GroupCreator")
-  groupMemberships GroupMember[]
-  sessions         Session[]
+  @@index([cravedAt])
+  @@index([isWild])
 }
 
-model Session {
+model Aversion {
   id        String   @id @default(cuid())
-  token     String   @unique
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  expiresAt DateTime
-
-  @@index([userId])
-  @@index([expiresAt])
-}
-
-model Group {
-  id          String        @id @default(cuid())
-  name        String
-  slug        String?       @unique
-  inviteCode  String        @unique
-  createdById String
-  createdBy   User          @relation("GroupCreator", fields: [createdById], references: [id])
-  createdAt   DateTime      @default(now())
-
-  members     GroupMember[]
-  matches     Match[]
-}
-
-model GroupMember {
-  id       String   @id @default(cuid())
-  groupId  String
-  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  userId   String
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role     String   @default("member")
-  joinedAt DateTime @default(now())
-
-  @@unique([groupId, userId])
-}
-
-model Match {
-  id           String      @id @default(cuid())
-  courseName   String
-  scheduledAt  DateTime
-  holes        Int         @default(18)
-  startingHole Int         @default(1)
-  status       String      @default("UPCOMING")
-  scoringMode  String      @default("NET")
-  // "INDIVIDUAL" (every player against every player) or "SCRAMBLE"
-  // (2 teams; one score per team per hole). Default INDIVIDUAL to
-  // keep existing matches unchanged.
-  format       String      @default("INDIVIDUAL")
-  // Scramble-only settings JSON: handicapMode + optional teamNames.
-  // Null for INDIVIDUAL matches.
-  scrambleConfig String?
-  parData      String?
-  createdById  String
-  createdBy    User        @relation("MatchCreator", fields: [createdById], references: [id])
-  groupId      String?
-  group        Group?      @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @default(now()) @updatedAt
-  startedAt    DateTime?
-  completedAt  DateTime?
-  notes        String?
-  winnerSummary String?
-
-  players      MatchPlayer[]
-  wagers       Wager[]
-  oddsSnapshots OddsSnapshot[]
-  sideGames    SideGame[]
-}
-
-model SideGame {
-  id        String   @id @default(cuid())
-  matchId   String
-  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  kind      String
-  config    String?
+  food      String
+  severity  Int      @default(3)
+  loggedBy  String   @default("geena")
+  notes     String?
+  week      Int?
+  trimester Int?
   createdAt DateTime @default(now())
 
-  events    SideGameEvent[]
-
-  @@unique([matchId, kind])
-  @@index([matchId])
+  @@index([createdAt])
 }
 
-model SideGameEvent {
-  id            String       @id @default(cuid())
-  sideGameId    String
-  sideGame      SideGame     @relation(fields: [sideGameId], references: [id], onDelete: Cascade)
-  hole          Int
-  kind          String
-  matchPlayerId String?
-  matchPlayer   MatchPlayer? @relation(fields: [matchPlayerId], references: [id], onDelete: SetNull)
-  createdAt     DateTime     @default(now())
-
-  @@unique([sideGameId, hole, kind, matchPlayerId])
-  @@index([sideGameId, hole])
-}
-
-model MatchPlayer {
-  id          String   @id @default(cuid())
-  matchId     String
-  match       Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  userId      String?
-  user        User?    @relation(fields: [userId], references: [id])
-  displayName String
-  handicap    Float
-  seat        Int
-  // Team assignment for scramble matches: 0 = Team A, 1 = Team B.
-  // Null for INDIVIDUAL matches.
-  team        Int?
-
-  scores      ScoreEntry[]
-  wagers      Wager[]
-  oddsSnapshots OddsSnapshot[]
-  sideGameEvents SideGameEvent[]
-
-  @@unique([matchId, seat])
-}
-
-model ScoreEntry {
-  id            String      @id @default(cuid())
-  matchPlayerId String
-  matchPlayer   MatchPlayer @relation(fields: [matchPlayerId], references: [id], onDelete: Cascade)
-  hole          Int
-  strokes       Int
-  createdAt     DateTime    @default(now())
-
-  @@unique([matchPlayerId, hole])
-}
-
-model Wager {
-  id              String      @id @default(cuid())
-  matchId         String
-  match           Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  userId          String
-  user            User        @relation(fields: [userId], references: [id])
-  pickedPlayerId  String
-  pickedPlayer    MatchPlayer @relation(fields: [pickedPlayerId], references: [id], onDelete: Cascade)
-  createdAt       DateTime    @default(now())
-
-  @@unique([matchId, userId])
-}
-
-model OddsSnapshot {
-  id            String      @id @default(cuid())
-  matchId       String
-  match         Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  matchPlayerId String
-  matchPlayer   MatchPlayer @relation(fields: [matchPlayerId], references: [id], onDelete: Cascade)
-  probability   Float
-  createdAt     DateTime    @default(now())
-
-  @@index([matchId, createdAt])
-}
-
-model Course {
-  id        String         @id @default(cuid())
-  name      String         @unique
-  centerLat Float?
-  centerLng Float?
-  osmFetchedAt DateTime?
-  parData   String?
-  createdAt DateTime       @default(now())
-
-  holes     CourseHole[]
-  hazards   CourseHazard[]
-}
-
-model CourseHazard {
-  id        String   @id @default(cuid())
-  courseId  String
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  hole      Int
-  kind      String
-  label     String?
-  lat       Float
-  lng       Float
-  contributedById String?
-  createdAt DateTime @default(now())
-
-  @@index([courseId, hole])
-}
-
-model CourseHole {
-  id        String  @id @default(cuid())
-  courseId  String
-  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  hole      Int
-  greenLat  Float?
-  greenLng  Float?
-  greenFrontLat  Float?
-  greenFrontLng  Float?
-  greenBackLat   Float?
-  greenBackLng   Float?
-  teeLat    Float?
-  teeLng    Float?
-  greenPolygonJson   String?
-  fairwayPolygonJson String?
-  distanceYds Int?
-  contributedById String?
-  source    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-
-  @@unique([courseId, hole])
-  @@index([courseId])
+model Settings {
+  id          String    @id @default("singleton")
+  dueDate     DateTime?
+  momName     String    @default("Geena")
+  partnerName String    @default("Daddy")
+  babyName    String?
+  updatedAt   DateTime  @default(now()) @updatedAt
 }

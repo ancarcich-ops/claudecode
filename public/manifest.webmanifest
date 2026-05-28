@@ -1,11 +1,11 @@
 {
-  "name": "Sticks",
-  "short_name": "Sticks",
-  "description": "All your games. One round.",
+  "name": "Bloom — Geena's Cravings",
+  "short_name": "Bloom",
+  "description": "A sweet little tracker for Geena's pregnancy cravings.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0b0f0c",
-  "theme_color": "#0b0f0c",
+  "background_color": "#fff6f2",
+  "theme_color": "#ec7ba4",
   "icons": [
     {
       "src": "/icon.svg",

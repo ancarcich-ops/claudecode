@@ -1,76 +1,86 @@
-# Sticks
+# Bloom 🌸
 
-A Polymarket-style prediction market for golf rounds. Players post upcoming
-rounds (course, tee time, handicaps), friends "call" who wins, and odds move
-like a market — driven by a hybrid of the handicap prior, the crowd's calls,
-and (once play starts) live scoring.
+A sweet, playful tracker for Geena's pregnancy cravings — built so **both**
+of you can log from your phones. Track what she's craving, how intense it is,
+the foods she now can't stand, the gloriously weird combos, who came through
+to satisfy each craving, and how it all trends by week and trimester.
+
+Themed soft blush-pink-and-cream for a baby girl 💕 (with a cozy "Dusk" dark
+mode for those 3 a.m. cravings).
+
+## Features
+
+- **Quick craving log** — food, category, 1–5 ❤️ intensity, optional photo &
+  notes, stamped with the pregnancy week/trimester automatically.
+- **Foods Hated** — a running no-fly list of aversions with a 🤢 severity.
+- **Wild Combos hall of fame** — flag the bizarre ones and rate them ⭐.
+- **Trends** — category breakdown, most-craved foods, cravings over time, and
+  a by-trimester chart.
+- **"Did Daddy deliver?" scoreboard** — tracks who satisfied each craving.
+- **Weekly recap card** — a pretty, shareable summary to text to family.
+- **Baby fruit size** — "this week baby is the size of a 🍓" per week.
+- **Two-person, no passwords** — tap your name up top to log as Geena or
+  Daddy. Whoever has the link can add. Installable to your home screen (PWA).
 
 ## Stack
 
-- **Next.js 14** (App Router) + **TypeScript**
-- **Tailwind CSS** for styling
-- **Prisma** + **SQLite** for persistence (one file, `prisma/dev.db`)
-- **Recharts** for the odds chart
-- Cookie-based username sessions (no passwords)
+- **Next.js 14** (App Router) + **TypeScript** + **Tailwind**
+- **Prisma** ORM — SQLite locally, **Supabase Postgres** in production
+- **Recharts** (trends), **framer-motion** + **canvas-confetti** (the fun)
+- **Vercel Blob** for optional craving photos
 
-## Getting started
+## Run it locally
 
 ```bash
-cp .env.example .env
+cp .env.example .env     # DATABASE_URL defaults to local SQLite
 npm install
-npm run db:push   # create the SQLite schema
-npm run db:seed   # demo users + a live and upcoming match
-npm run dev
+npm run db:push          # create the SQLite schema (prisma/dev.db)
+npm run db:seed          # optional: fun demo cravings to look at
+npm run dev              # http://localhost:3000
 ```
 
-Then open <http://localhost:3000>.
+## Deploy (Vercel + Supabase)
 
-## How the odds work
-
-For each match we produce a probability over the players, blending three
-signals:
-
-1. **Model prior** — softmax over negative handicap (lower hcp = favored).
-2. **Crowd** — Laplace-smoothed share of friend wagers.
-3. **Live** — projects each player's final net score from their current pace
-   and softmaxes over `-net`, getting more confident as more holes are played.
-
-Blend weights shift with information:
-
-| Status        | Model           | Crowd                              | Live                |
-| ------------- | --------------- | ---------------------------------- | ------------------- |
-| Upcoming      | 1 − crowd       | `w / (w + 5)`, capped at 0.7       | 0                   |
-| In progress   | remainder       | remainder × `w / (w + 4)`, ≤ 0.7   | `holesPlayed/holes` |
-| Completed     | 0               | 0                                  | 1 (winner = lowest net) |
-
-Every wager and every score entry writes an `OddsSnapshot` row, so the chart
-on the match page is a real history, not synthetic.
+1. **Create a Supabase project** (free tier is plenty).
+2. In Supabase → **Project Settings → Database → Connection string → URI**,
+   copy the **Connection pooling** (port `6543`) string. Append
+   `?pgbouncer=true&connection_limit=1` for serverless.
+3. **Import this repo into Vercel.** It auto-detects Next.js; the build is
+   already wired (`vercel.json` → `npm run build:vercel`, which swaps Prisma
+   to the Postgres schema and runs `prisma db push` to create the tables).
+4. In Vercel → **Settings → Environment Variables**, add:
+   - `DATABASE_URL` = the Supabase pooling URL from step 2.
+5. **(Optional) Photos:** Vercel → **Storage → Blob** → create a store. This
+   injects `BLOB_READ_WRITE_TOKEN` automatically and the photo upload field
+   appears. Without it, everything else works fine.
+6. Deploy. Open the URL on both phones → **Share → Add to Home Screen**.
+7. Open **Settings** in the app and set Geena's **due date** (and names /
+   baby nickname). That powers the week, trimester, and fruit-size tracker.
 
 ## Project layout
 
 ```
 prisma/
-  schema.prisma          # User, Match, MatchPlayer, Wager, ScoreEntry, OddsSnapshot
-  seed.ts                # demo data
+  schema.prisma           # SQLite (local dev)
+  schema.postgres.prisma  # Postgres (Supabase / prod) — swapped in at build
+  seed.ts                 # demo data (local only)
 src/
   lib/
-    db.ts                # singleton PrismaClient
-    auth.ts              # cookie session helpers
-    odds.ts              # the hybrid odds engine
-    match.ts             # loadMatchWithOdds + snapshot recorder
-    actions.ts           # server actions (create/wager/start/log/complete)
-    colors.ts            # per-seat palette
+    db.ts            # PrismaClient singleton
+    actions.ts       # server actions (add/satisfy/star/delete/settings)
+    pregnancy.ts     # due date → week / trimester / progress
+    fruit.ts         # week → "size of a ___" produce chart
+    categories.ts    # craving categories (emoji + chart colors)
+    identity.ts      # cookie-based "who's logging" (no passwords)
+    settings.ts      # the single Settings row
+  components/        # cards, forms, charts, tab bar, hero, etc.
   app/
-    layout.tsx           # header + footer shell
-    page.tsx             # market grid (upcoming + live, then settled)
-    login/               # username-only sign-in
-    matches/new/         # match creation form (client)
-    matches/[id]/        # match detail: OddsChart, WagerForm, ScoreSheet
+    page.tsx         # dashboard
+    log/             # log a craving
+    cravings/        # full list + filters
+    hated/           # Foods Hated
+    wild/            # Wild Combos hall of fame
+    trends/          # charts
+    recap/           # shareable weekly card
+    settings/        # due date, names, theme
 ```
-
-## What's intentionally out of scope (yet)
-
-- Real auth — anyone can claim any username.
-- Websockets / SSE — the page revalidates on action, no auto-refresh.
-- Course database — course is just a free-text field.
-- Mobile-tuned scoring UI — works on phones, but not yet optimized.

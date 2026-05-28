@@ -22,31 +22,18 @@ const config: Config = {
         gold: "rgb(var(--color-gold) / <alpha-value>)",
       },
       fontFamily: {
-        // Bricolage Grotesque -- wordmark + headlines
-        display: [
-          "var(--font-display)",
-          "ui-sans-serif",
-          "system-ui",
-          "sans-serif",
-        ],
-        // Geist -- body / UI default. globals.css applies font-sans on body
-        // so the whole app picks it up. Variables come from `geist` npm pkg.
+        // Fraunces -- soft display serif for the wordmark + headlines.
+        display: ["var(--font-display)", "ui-serif", "Georgia", "serif"],
+        // Nunito -- rounded, friendly body/UI default. globals.css applies
+        // it to <body> so the whole app inherits it.
         sans: [
-          "var(--font-geist-sans)",
+          "var(--font-body)",
           "ui-sans-serif",
           "system-ui",
           "-apple-system",
           "Segoe UI",
           "Roboto",
           "sans-serif",
-        ],
-        // Geist Mono -- tabular numerics across charts, scorecards, chips
-        mono: [
-          "var(--font-geist-mono)",
-          "ui-monospace",
-          "SFMono-Regular",
-          "Menlo",
-          "monospace",
         ],
       },
     },
