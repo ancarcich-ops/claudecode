@@ -3,6 +3,7 @@
 // looks alive while building/previewing.
 import { PrismaClient } from "@prisma/client";
 import { pregnancyProgress } from "../src/lib/pregnancy";
+import { DEFAULT_DUE_DATE } from "../src/lib/settings";
 
 const prisma = new PrismaClient();
 
@@ -13,9 +14,7 @@ function daysAgo(n: number): Date {
 }
 
 async function main() {
-  // A due date ~30 weeks out puts Geena around week 10 (first trimester).
-  const dueDate = new Date();
-  dueDate.setDate(dueDate.getDate() + 30 * 7);
+  const dueDate = DEFAULT_DUE_DATE;
 
   await prisma.settings.upsert({
     where: { id: "singleton" },
