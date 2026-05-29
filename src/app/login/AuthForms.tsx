@@ -319,12 +319,6 @@ export function SignUpForm({ next }: { next: string }) {
         helper="Letters, numbers, dots, underscores, hyphens."
       />
       <TextField
-        label="Display name"
-        name="displayName"
-        placeholder="Bryson"
-        maxLength={40}
-      />
-      <TextField
         label="Email"
         name="email"
         type="email"
