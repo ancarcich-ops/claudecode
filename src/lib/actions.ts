@@ -629,6 +629,376 @@ export async function createMatchAction(formData: FormData) {
   redirect(`/matches/${match.id}`);
 }
 
+// Edit an UPCOMING match in place. Reuses the new-match wizard (pre-filled)
+// and the exact same field serialization as createMatchAction. Players are
+// reconciled by seat so surviving seats keep their MatchPlayer.id -- which
+// means any wagers / odds history / side-game config that reference those
+// ids stay valid. Only the match creator may edit, and only before the
+// match starts (status === "UPCOMING", no scores logged).
+export async function editMatchAction(formData: FormData) {
+  const user = await requireUser();
+  const matchId = String(formData.get("matchId") ?? "").trim();
+  if (!matchId) throw new Error("Match id required");
+
+  const existing = await prisma.match.findUnique({
+    where: { id: matchId },
+    include: {
+      players: { orderBy: { seat: "asc" }, include: { scores: true } },
+      sideGames: true,
+    },
+  });
+  if (!existing) throw new Error("Match not found");
+  if (existing.createdById !== user.id) throw new Error("Not your match");
+  if (existing.status !== "UPCOMING") {
+    throw new Error("Only matches that haven't started can be edited");
+  }
+  if (existing.players.some((p) => p.scores.length > 0)) {
+    throw new Error("Scores have been logged -- this match can no longer be edited");
+  }
+
+  // ---- Parse form (identical shape to createMatchAction) ----
+  const courseName = String(formData.get("courseName") ?? "").trim();
+  const scheduledAtRaw = String(formData.get("scheduledAt") ?? "");
+  const holesRaw = Number(formData.get("holes") ?? 18);
+  const holes: 9 | 18 = holesRaw === 9 ? 9 : 18;
+  const startingHoleRaw = Number(formData.get("startingHole") ?? 1);
+  const startingHole = holes === 9 && startingHoleRaw === 10 ? 10 : 1;
+  const notes = String(formData.get("notes") ?? "").trim() || null;
+  const parDataRaw = String(formData.get("parData") ?? "").trim();
+  const scoringModeRaw = String(formData.get("scoringMode") ?? "NET");
+  let scoringMode: "NET" | "GROSS" | "CUSTOM" =
+    scoringModeRaw === "GROSS" || scoringModeRaw === "CUSTOM"
+      ? scoringModeRaw
+      : "NET";
+
+  const formatRaw = String(formData.get("format") ?? "INDIVIDUAL");
+  const format: "INDIVIDUAL" | "SCRAMBLE" =
+    formatRaw === "SCRAMBLE" ? "SCRAMBLE" : "INDIVIDUAL";
+  let scrambleConfigJson: string | null = null;
+  if (format === "SCRAMBLE") {
+    const scrambleRaw = String(formData.get("scrambleConfig") ?? "");
+    const { parseScrambleConfig } = await import("./scramble");
+    scrambleConfigJson = JSON.stringify(parseScrambleConfig(scrambleRaw));
+    scoringMode = "GROSS";
+  }
+
+  if (!courseName) throw new Error("Course name required");
+  if (!scheduledAtRaw) throw new Error("Tee time required");
+
+  {
+    const { COURSE_PRESETS } = await import("./courses");
+    const matched = COURSE_PRESETS.some(
+      (p) => p.name.toLowerCase() === courseName.toLowerCase(),
+    );
+    if (!matched) {
+      throw new Error(
+        "Course not in catalog. Pick from the list, or reach out to support to add it.",
+      );
+    }
+  }
+
+  const names = formData.getAll("playerName").map((v) => String(v).trim());
+  const hcps = formData.getAll("playerHandicap").map((v) => Number(v));
+  const explicitUserIds = formData
+    .getAll("playerUserId")
+    .map((v) => String(v).trim());
+  const teamsRaw = formData.getAll("playerTeam").map((v) => Number(v));
+
+  const drafts: (PlayerDraft & { team: 0 | 1 })[] = names
+    .map((name, i) => ({
+      displayName: name,
+      handicap: hcps[i],
+      explicitUserId: explicitUserIds[i] || null,
+      team: (teamsRaw[i] === 1 ? 1 : 0) as 0 | 1,
+    }))
+    .filter((p) => p.displayName.length > 0);
+
+  if (drafts.length < 1) throw new Error("Need at least one player");
+  if (drafts.some((p) => Number.isNaN(p.handicap)))
+    throw new Error("Handicaps must be numbers");
+
+  if (format === "SCRAMBLE") {
+    if (drafts.length < 2) throw new Error("Teams format needs at least 2 players");
+    const aCount = drafts.filter((d) => d.team === 0).length;
+    const bCount = drafts.filter((d) => d.team === 1).length;
+    if (aCount === 0 || bCount === 0) {
+      throw new Error("Each team needs at least one player");
+    }
+  }
+
+  let parData: string | null = null;
+  if (parDataRaw) {
+    try {
+      const parsed = JSON.parse(parDataRaw);
+      if (
+        Array.isArray(parsed) &&
+        parsed.length === holes &&
+        parsed.every((p) => Number.isFinite(p) && p >= 3 && p <= 6)
+      ) {
+        parData = JSON.stringify(parsed.map((p) => Math.round(p)));
+      }
+    } catch {
+      parData = null;
+    }
+  }
+  if (!parData) {
+    const masterCourse = await prisma.course.findUnique({
+      where: { name: courseName },
+      select: { parData: true },
+    });
+    if (masterCourse?.parData) {
+      try {
+        const parsed = JSON.parse(masterCourse.parData);
+        if (
+          Array.isArray(parsed) &&
+          parsed.length === holes &&
+          parsed.every((p) => Number.isFinite(p) && p >= 3 && p <= 6)
+        ) {
+          parData = JSON.stringify(parsed.map((p) => Math.round(p)));
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }
+  if (!parData) parData = JSON.stringify(defaultPars(holes));
+
+  const sideGameRaw = formData.getAll("sideGame").map((v) => String(v));
+  const sideGameKinds = Array.from(
+    new Set(
+      sideGameRaw
+        .filter(isSideGameKind)
+        .filter((k) => !(k === "NASSAU" && holes !== 18)),
+    ),
+  );
+
+  const groupIdRaw = String(formData.get("groupId") ?? "").trim();
+  let groupId: string | null = null;
+  if (groupIdRaw && groupIdRaw !== "public") {
+    const membership = await prisma.groupMember.findUnique({
+      where: { groupId_userId: { groupId: groupIdRaw, userId: user.id } },
+    });
+    if (membership) groupId = groupIdRaw;
+  }
+
+  // Resolve userIds per seat (same priority as create: explicit pick wins,
+  // else username == displayName).
+  const explicitIds = drafts
+    .map((d) => d.explicitUserId)
+    .filter((v): v is string => !!v);
+  const lookup = await prisma.user.findMany({
+    where: {
+      OR: [
+        { id: { in: explicitIds } },
+        { username: { in: drafts.map((d) => d.displayName.toLowerCase()) } },
+      ],
+    },
+  });
+  const userById = new Map(lookup.map((u) => [u.id, u]));
+  const userByName = new Map(lookup.map((u) => [u.username.toLowerCase(), u]));
+  const resolveUserId = (d: (typeof drafts)[number]): string | null => {
+    const explicit = d.explicitUserId ? userById.get(d.explicitUserId) : undefined;
+    const byName = userByName.get(d.displayName.toLowerCase());
+    return (explicit ?? byName)?.id ?? null;
+  };
+
+  // ---- Update match scalars ----
+  await prisma.match.update({
+    where: { id: matchId },
+    data: {
+      courseName,
+      scheduledAt: new Date(scheduledAtRaw),
+      holes,
+      startingHole,
+      notes,
+      parData,
+      scoringMode,
+      format,
+      scrambleConfig: scrambleConfigJson,
+      groupId,
+    },
+  });
+
+  // ---- Reconcile players by seat ----
+  // Surviving seats are updated in place (id preserved); new seats are
+  // created; trailing removed seats are deleted (cascades their wagers,
+  // odds snapshots, and any side-game events).
+  const bySeat = new Map(existing.players.map((p) => [p.seat, p]));
+  for (let i = 0; i < drafts.length; i++) {
+    const d = drafts[i];
+    const team = format === "SCRAMBLE" ? d.team : null;
+    const userId = resolveUserId(d);
+    const current = bySeat.get(i);
+    if (current) {
+      await prisma.matchPlayer.update({
+        where: { id: current.id },
+        data: { displayName: d.displayName, handicap: d.handicap, userId, team },
+      });
+    } else {
+      await prisma.matchPlayer.create({
+        data: {
+          matchId,
+          seat: i,
+          displayName: d.displayName,
+          handicap: d.handicap,
+          userId,
+          team,
+        },
+      });
+    }
+  }
+  for (const p of existing.players) {
+    if (p.seat >= drafts.length) {
+      await prisma.matchPlayer.delete({ where: { id: p.id } });
+    }
+  }
+
+  // Fresh seat -> id map for side-game configs.
+  const players = await prisma.matchPlayer.findMany({
+    where: { matchId },
+    orderBy: { seat: "asc" },
+  });
+
+  // ---- Reconcile side games ----
+  // Drop de-selected games (cascades their events), ensure selected ones
+  // exist. Configs for the special games are rebuilt from the form below.
+  for (const sg of existing.sideGames) {
+    if (!sideGameKinds.includes(sg.kind as never)) {
+      await prisma.sideGame.delete({ where: { id: sg.id } });
+    }
+  }
+  for (const kind of sideGameKinds) {
+    await prisma.sideGame.upsert({
+      where: { matchId_kind: { matchId, kind } },
+      update: {},
+      create: { matchId, kind },
+    });
+  }
+
+  if (sideGameKinds.includes("TEAM_VS_TEAM")) {
+    const {
+      TEAM_VS_TEAM_RULES,
+      stringifyTeamVsTeamConfig,
+      parseTeamVsTeamConfig,
+    } = await import("./sideGames");
+    type TvtRule = (typeof TEAM_VS_TEAM_RULES)[number];
+    const teamPlayers: Record<0 | 1, string[]> = { 0: [], 1: [] };
+    for (let i = 0; i < players.length && i < drafts.length; i++) {
+      teamPlayers[drafts[i].team].push(players[i].id);
+    }
+    if (teamPlayers[0].length > 0 && teamPlayers[1].length > 0) {
+      const rawTvt = String(formData.get("tvtConfig") ?? "");
+      let parsedRules: { rule: TvtRule; stake?: number; vegas?: unknown }[] = [];
+      if (rawTvt) {
+        const parsed = parseTeamVsTeamConfig(
+          JSON.stringify({ teams: teamPlayers, ...JSON.parse(rawTvt) }),
+        );
+        if (parsed && parsed.rules.length > 0) parsedRules = parsed.rules;
+      }
+      if (parsedRules.length === 0) parsedRules = [{ rule: "BEST_BALL" }];
+      await prisma.sideGame.update({
+        where: { matchId_kind: { matchId, kind: "TEAM_VS_TEAM" } },
+        data: {
+          config: stringifyTeamVsTeamConfig({
+            teams: teamPlayers,
+            rules: parsedRules as never,
+          }),
+        },
+      });
+    }
+  }
+
+  if (sideGameKinds.includes("MATCH")) {
+    const raw = String(formData.get("matchConfig") ?? "");
+    const { stringifyMatchConfig } = await import("./sideGames");
+    let config: string | null = null;
+    if (raw) {
+      try {
+        const obj = JSON.parse(raw);
+        const strokesMode: "AUTO" | "MANUAL" =
+          obj?.strokesMode === "MANUAL" ? "MANUAL" : "AUTO";
+        const manualStrokes: Record<string, number> = {};
+        if (strokesMode === "MANUAL" && Array.isArray(obj?.manualStrokesByIndex)) {
+          for (
+            let i = 0;
+            i < players.length && i < obj.manualStrokesByIndex.length;
+            i++
+          ) {
+            const v = obj.manualStrokesByIndex[i];
+            if (typeof v === "number" && Number.isFinite(v) && v >= 0) {
+              manualStrokes[players[i].id] = Math.floor(v);
+            }
+          }
+        }
+        const autoPress = obj?.autoPress === true;
+        const rawThreshold = Number(obj?.autoPressThreshold);
+        const autoPressThreshold =
+          autoPress && Number.isFinite(rawThreshold) && rawThreshold >= 1
+            ? Math.floor(rawThreshold)
+            : undefined;
+        const stakeNum = Number(obj?.stake);
+        const stake =
+          Number.isFinite(stakeNum) && stakeNum > 0 ? stakeNum : undefined;
+        config = stringifyMatchConfig({
+          strokesMode,
+          manualStrokes,
+          autoPress,
+          ...(autoPressThreshold ? { autoPressThreshold } : {}),
+          ...(stake ? { stake } : {}),
+        });
+      } catch {
+        config = null;
+      }
+    }
+    await prisma.sideGame.update({
+      where: { matchId_kind: { matchId, kind: "MATCH" } },
+      data: { config },
+    });
+  }
+
+  if (sideGameKinds.includes("SIXES")) {
+    const raw = String(formData.get("sixesConfig") ?? "");
+    const { stringifySixesConfig } = await import("./sideGames");
+    let config: string | null = null;
+    if (raw) {
+      try {
+        const obj = JSON.parse(raw);
+        const stakeNum = Number(obj?.stake);
+        const stake =
+          Number.isFinite(stakeNum) && stakeNum > 0 ? stakeNum : undefined;
+        if (stake) config = stringifySixesConfig({ stake });
+      } catch {
+        config = null;
+      }
+    }
+    await prisma.sideGame.update({
+      where: { matchId_kind: { matchId, kind: "SIXES" } },
+      data: { config },
+    });
+  }
+
+  if (sideGameKinds.includes("TARGETS")) {
+    const raw = String(formData.get("targetsConfig") ?? "");
+    const { parseTargetsConfig, stringifyTargetsConfig } = await import(
+      "./sideGames"
+    );
+    let config: string | null = null;
+    if (raw) {
+      const parsed = parseTargetsConfig(raw);
+      if (parsed && parsed.target > 0) config = stringifyTargetsConfig(parsed);
+    }
+    await prisma.sideGame.update({
+      where: { matchId_kind: { matchId, kind: "TARGETS" } },
+      data: { config },
+    });
+  }
+
+  await recordOddsSnapshot(matchId);
+  revalidatePath(`/matches/${matchId}`);
+  revalidatePath("/");
+  redirect(`/matches/${matchId}`);
+}
+
 export async function placeWagerAction(formData: FormData) {
   const user = await requireUser();
   const matchId = String(formData.get("matchId"));
