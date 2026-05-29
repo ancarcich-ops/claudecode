@@ -557,7 +557,7 @@ export default async function MatchPage({
           {isCreator && (
             <MatchActionsMenu
               matchId={match.id}
-              actions={creatorActions(match.status, {
+              actions={creatorActions(match.status, match.id, {
                 startMatchAction,
                 completeMatchAction,
                 reopenMatchAction,
@@ -725,9 +725,14 @@ type CreatorActionFns = {
   deleteMatchAction: (fd: FormData) => Promise<void>;
 };
 
-function creatorActions(status: string, fns: CreatorActionFns): MatchAction[] {
+function creatorActions(
+  status: string,
+  matchId: string,
+  fns: CreatorActionFns,
+): MatchAction[] {
   const out: MatchAction[] = [];
   if (status === "UPCOMING") {
+    out.push({ label: "Edit details", href: `/matches/${matchId}/edit` });
     out.push({ label: "Start match", action: fns.startMatchAction });
   }
   if (status === "IN_PROGRESS") {

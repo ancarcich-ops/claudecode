@@ -4,7 +4,10 @@ import { useEffect, useRef, useState, useTransition } from "react";
 
 export type MatchAction = {
   label: string;
-  action: (formData: FormData) => Promise<void>;
+  // A menu item is either a server action (form submit) or a navigation
+  // (href). Exactly one is provided.
+  action?: (formData: FormData) => Promise<void>;
+  href?: string;
   tone?: "default" | "danger";
 };
 
@@ -57,7 +60,23 @@ export default function MatchActionsMenu({
           className="absolute right-0 top-full mt-1 z-30 min-w-[10rem] rounded-md border border-border bg-panel shadow-lg overflow-hidden"
           role="menu"
         >
-          {actions.map((a, i) => (
+          {actions.map((a, i) =>
+            a.href ? (
+              <a
+                key={`${a.label}-${i}`}
+                href={a.href}
+                className={
+                  "block w-full text-left px-3 py-2 text-sm " +
+                  (a.tone === "danger"
+                    ? "text-danger hover:bg-danger/10"
+                    : "text-ink hover:bg-panel2")
+                }
+                role="menuitem"
+                onClick={() => setOpen(false)}
+              >
+                {a.label}
+              </a>
+            ) : (
             <form
               key={`${a.label}-${i}`}
               action={(fd) => {
@@ -66,7 +85,7 @@ export default function MatchActionsMenu({
                 // menu eagerly in onClick was unmounting the form before
                 // the submission completed, silently cancelling the action.
                 startTransition(async () => {
-                  await a.action(fd);
+                  await a.action?.(fd);
                   setOpen(false);
                 });
               }}
@@ -86,7 +105,8 @@ export default function MatchActionsMenu({
                 {a.label}
               </button>
             </form>
-          ))}
+            ),
+          )}
         </div>
       )}
     </div>
