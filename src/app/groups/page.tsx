@@ -146,6 +146,7 @@ export default async function GroupsPage({
             placeholder="ABC123"
             maxLength={12}
             required
+            defaultValue={(searchParams.code ?? "").toUpperCase()}
           />
           <button type="submit" className="btn btn-primary shrink-0">
             Join
