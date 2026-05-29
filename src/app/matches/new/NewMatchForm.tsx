@@ -825,10 +825,14 @@ export default function NewMatchForm({
             onEdit={() => setRoundStep(1)}
           />
         )}
+        {/* `hidden` class (not attribute) because the `grid` display
+            utility would otherwise override the [hidden] attribute and
+            leak the tee/holes row onto the Course step. */}
         <div
-          hidden={roundStep !== 1}
           className={
-            "grid grid-cols-2 gap-3" + (roundStep === 1 ? " field-active" : "")
+            roundStep === 1
+              ? "grid grid-cols-2 gap-3 field-active"
+              : "hidden"
           }
         >
           <div>
