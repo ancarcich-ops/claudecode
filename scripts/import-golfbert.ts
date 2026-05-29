@@ -32,6 +32,13 @@
 //                            ignored). Merges with --id flags.
 //   --force                  Re-process even if the state file marks
 //                            this preset as already done.
+//   --reuse-id               Reuse each preset's already-matched
+//                            Golfbert id from the state file instead of
+//                            re-searching by name. Pair with --force to
+//                            re-import a known batch (e.g. courses whose
+//                            coords are in a since-replaced database)
+//                            cheaply and without multi-match risk:
+//                              --ids-from=scripts/day1-ids.txt --force --reuse-id
 //   --daily-budget=N         Stop after ~N API calls (default 3400,
 //                            buffer below Golfbert's 3,572 daily cap).
 //                            On stop, writes state and exits cleanly so
@@ -113,6 +120,11 @@ function parseCli() {
     dryRun: args.includes("--dry-run"),
     force: args.includes("--force"),
     noDb: args.includes("--no-db"),
+    // Reuse each preset's already-matched Golfbert id from the state file
+    // instead of re-searching by name. Used with --force to re-import a
+    // known batch (e.g. courses written to a since-replaced database)
+    // cheaply and without multi-match risk.
+    reuseId: args.includes("--reuse-id"),
     limit: null as number | null,
     dailyBudget: 3400,
     ids: [] as string[],
@@ -381,10 +393,19 @@ async function main() {
       //   --id=preset-id --gb-id=12345
       // The fake "choice" record carries forward the same shape the
       // search path produces, so the rest of the loop is unchanged.
-      const choice: gb.GBCourse | "multi" | null = flags.gbId != null
+      // Pin priority: explicit --gb-id > stored matched id (when
+      // --reuse-id) > name search. Reusing the stored id skips the
+      // search call and guarantees the same course as the prior import.
+      const known = state.get(preset.id);
+      const reusableId =
+        flags.reuseId && known?.kind === "matched" ? known.gbId : null;
+      const pinnedId = flags.gbId ?? reusableId;
+      const choice: gb.GBCourse | "multi" | null = pinnedId != null
         ? ({
-            id: flags.gbId,
-            name: preset.name,
+            id: pinnedId,
+            name:
+              (known?.kind === "matched" ? known.gbName : undefined) ??
+              preset.name,
             address: undefined,
           } as gb.GBCourse)
         : pickBestMatch(await findCandidates(preset), preset);

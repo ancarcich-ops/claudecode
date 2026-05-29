@@ -1,0 +1,51 @@
+# Day 1 GolfBert imports (~46 LA-area courses). Their coordinates were
+# written to a database that has since been replaced, so they show 0/18
+# in the live DB. Re-import them into the current database with:
+#   npx tsx scripts/import-golfbert.ts --ids-from=scripts/day1-ids.txt --force --reuse-id
+# (Ensure local .env DATABASE_URL points at the LIVE Neon DB first.)
+alondra-park
+angeles-national
+annandale-gc
+bel-air-cc
+brookside-1
+brookside-2
+calabasas-cc
+california-cc
+costa-mesa-mesa-linda
+coyote-hills
+dad-miller-gc
+debell-gc
+el-caballero-cc
+el-dorado-park
+friendly-hills-cc
+goose-creek
+griffith-wilson
+hacienda-gc
+hansen-dam
+hillcrest-cc-la
+industry-hills-eisenhower
+industry-hills-zaharias
+lakeside-gc
+lakewood-cc
+los-amigos-gc
+los-verdes
+meadowlark-gc
+mesa-verde-cc
+mile-square-classic
+mile-square-players
+mountaingate-cc
+navy-seal-beach-destroyer
+old-ranch-cc
+oregon-golf-club
+rancho-park
+recreation-park-18
+rio-hondo
+riviera-cc
+santa-anita-gc
+skylinks-long-beach
+trump-la
+westchester-gc
+westridge-gc
+whittier-narrows-gc
+wilshire-cc
+woodley-lakes
