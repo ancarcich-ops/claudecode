@@ -3,13 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "./db";
+import { randomBytes } from "node:crypto";
 import {
   clearSession,
   getCurrentUser,
-  getOrCreateUser,
   requireUser,
   setSession,
 } from "./auth";
+import { hashPassword, verifyPassword, passwordError } from "./password";
+import { sendEmail, passwordResetEmail, appUrl } from "./email";
 import { recordOddsSnapshot } from "./match";
 import { computeAndPersistMatchWinners } from "./matchWinners";
 import { defaultPars } from "./odds";
@@ -34,21 +36,143 @@ import {
 import { findOrCreateCourseByName } from "./course";
 import { assignHoles, fetchOsmGolfFeatures, geocodeCourse } from "./osm";
 
-export async function signInAction(formData: FormData) {
-  const username = String(formData.get("username") ?? "");
+// Same-origin relative redirect guard (avoids open-redirect abuse).
+function safeNext(raw: string): string {
+  const v = raw.trim();
+  return v.startsWith("/") && !v.startsWith("//") ? v : "/";
+}
+
+const USERNAME_RE = /^[A-Za-z0-9._-]{2,20}$/;
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
+// Auth results are returned (not thrown) so the form pages can show a
+// friendly inline error. Most successful actions redirect and never
+// return; the password-reset *request* returns { ok: true } so its
+// page can show a "check your email" confirmation.
+type AuthResult = { error: string } | { ok: true } | undefined;
+
+export async function signUpAction(_prev: AuthResult, formData: FormData): Promise<AuthResult> {
+  const username = String(formData.get("username") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const password = String(formData.get("password") ?? "");
   const displayName = String(formData.get("displayName") ?? "").trim() || null;
-  const nextRaw = String(formData.get("next") ?? "").trim();
-  // Only honor same-origin relative redirects to avoid open-redirect abuse.
-  const next = nextRaw.startsWith("/") && !nextRaw.startsWith("//") ? nextRaw : "/";
-  const user = await getOrCreateUser(username);
-  if (displayName && displayName !== user.displayName) {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { displayName },
-    });
+  const next = safeNext(String(formData.get("next") ?? ""));
+
+  if (!USERNAME_RE.test(username)) {
+    return { error: "Username must be 2-20 chars: letters, numbers, . _ -" };
   }
+  if (!EMAIL_RE.test(email)) return { error: "Enter a valid email address." };
+  const pwErr = passwordError(password);
+  if (pwErr) return { error: pwErr };
+
+  // Uniqueness checks. email is stored lowercased so an exact match is
+  // effectively case-insensitive; username is matched exactly. (We
+  // avoid Prisma's `mode: "insensitive"` since it's Postgres-only and
+  // the dev client is generated from the SQLite schema.)
+  const existing = await prisma.user.findFirst({
+    where: { OR: [{ username }, { email }] },
+    select: { username: true, email: true },
+  });
+  if (existing) {
+    if (existing.email === email) {
+      return { error: "An account with that email already exists." };
+    }
+    return { error: "That username is taken." };
+  }
+
+  const passwordHash = await hashPassword(password);
+  const user = await prisma.user.create({
+    data: { username, email, passwordHash, displayName },
+  });
   await setSession(user.id);
   redirect(next);
+}
+
+export async function signInAction(_prev: AuthResult, formData: FormData): Promise<AuthResult> {
+  // Accept either username or email in the single "identifier" field.
+  const identifier = String(formData.get("identifier") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+  const next = safeNext(String(formData.get("next") ?? ""));
+  if (!identifier || !password) {
+    return { error: "Enter your username/email and password." };
+  }
+  const isEmail = identifier.includes("@");
+  const user = await prisma.user.findFirst({
+    where: isEmail
+      ? { email: identifier.toLowerCase() }
+      : { username: identifier },
+  });
+  // Generic error -- don't reveal whether the account exists.
+  const ok = user && (await verifyPassword(password, user.passwordHash));
+  if (!ok) return { error: "Incorrect username/email or password." };
+  await setSession(user.id);
+  redirect(next);
+}
+
+export async function requestPasswordResetAction(
+  _prev: AuthResult,
+  formData: FormData,
+): Promise<AuthResult> {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (!EMAIL_RE.test(email)) return { error: "Enter a valid email address." };
+  const user = await prisma.user.findFirst({
+    where: { email },
+  });
+  // Always behave the same whether or not the account exists, so this
+  // endpoint can't be used to enumerate registered emails. Only mint +
+  // send when the user actually exists.
+  if (user) {
+    const token = randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    await prisma.passwordResetToken.create({
+      data: { token, userId: user.id, expiresAt },
+    });
+    const resetUrl = `${appUrl()}/reset-password?token=${token}`;
+    const msg = passwordResetEmail(resetUrl);
+    await sendEmail({ to: email, ...msg });
+  }
+  // No redirect -- the page shows a "check your email" confirmation
+  // regardless of whether the account existed (anti-enumeration).
+  return { ok: true };
+}
+
+export async function resetPasswordAction(
+  _prev: AuthResult,
+  formData: FormData,
+): Promise<AuthResult> {
+  const token = String(formData.get("token") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+  if (!token) return { error: "Missing reset token." };
+  const pwErr = passwordError(password);
+  if (pwErr) return { error: pwErr };
+
+  const row = await prisma.passwordResetToken.findUnique({
+    where: { token },
+    include: { user: true },
+  });
+  if (!row || row.usedAt || row.expiresAt < new Date()) {
+    return { error: "This reset link is invalid or has expired." };
+  }
+  const passwordHash = await hashPassword(password);
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: row.userId },
+      data: { passwordHash },
+    }),
+    prisma.passwordResetToken.update({
+      where: { id: row.id },
+      data: { usedAt: new Date() },
+    }),
+    // Invalidate any other outstanding sessions + reset tokens for this
+    // user so a compromised password can't linger.
+    prisma.session.deleteMany({ where: { userId: row.userId } }),
+    prisma.passwordResetToken.updateMany({
+      where: { userId: row.userId, usedAt: null },
+      data: { usedAt: new Date() },
+    }),
+  ]);
+  await setSession(row.userId);
+  redirect("/");
 }
 
 export async function signOutAction() {

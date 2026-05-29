@@ -12,17 +12,6 @@ const LEGACY_USER_COOKIE = "fm_user";
 // users rarely sign back in on a phone.
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 365;
 
-export async function getOrCreateUser(username: string) {
-  const trimmed = username.trim();
-  if (!trimmed) throw new Error("Username required");
-  const user = await prisma.user.upsert({
-    where: { username: trimmed },
-    update: {},
-    create: { username: trimmed },
-  });
-  return user;
-}
-
 function mintToken(): string {
   // 32 bytes hex = 64 chars. Opaque and unguessable.
   return randomBytes(32).toString("hex");
