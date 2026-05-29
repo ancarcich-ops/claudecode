@@ -14,6 +14,12 @@ datasource db {
 model User {
   id          String   @id @default(cuid())
   username    String   @unique
+  // Email + password for proper auth. Nullable at the DB level so the
+  // column can be added to an existing table without a destructive
+  // migration, but REQUIRED at the application layer (signup always
+  // sets both). email is unique among non-null values.
+  email        String?  @unique
+  passwordHash String?
   displayName String?
   // Avatar customization. avatarUrl wins when set (real uploaded photo).
   // Otherwise the boring-avatars generator uses avatarSeed (defaults to id)
@@ -33,6 +39,21 @@ model User {
   createdGroups    Group[]       @relation("GroupCreator")
   groupMemberships GroupMember[]
   sessions         Session[]
+  passwordResets   PasswordResetToken[]
+}
+
+// One-time password reset tokens, emailed to the user as a link.
+// Single-use (usedAt set on redemption) and short-lived (expiresAt).
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
 }
 
 // Server-side session tokens. Replaces the legacy 'cookie carries the

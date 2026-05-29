@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import { SignInForm } from "./AuthForms";
+import { SignUpForm } from "../login/AuthForms";
 
-export default async function LoginPage({
+export default async function SignUpPage({
   searchParams,
 }: {
   searchParams: { next?: string };
@@ -20,12 +20,13 @@ export default async function LoginPage({
     <div className="mx-auto max-w-md mt-16">
       <div className="card p-6">
         <h1 className="font-display text-2xl font-semibold tracking-tight mb-1">
-          Welcome back.
+          Open the line.
         </h1>
         <p className="text-sm text-mute mb-5">
-          Sign in to open lines, log scores, and track your group.
+          Create your account — a handle your group recognizes, plus an
+          email so you can always get back in.
         </p>
-        <SignInForm next={next} />
+        <SignUpForm next={next} />
       </div>
     </div>
   );
