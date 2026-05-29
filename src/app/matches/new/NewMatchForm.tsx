@@ -73,6 +73,38 @@ const STEPS = [
   { key: "extras", title: "Side games" },
 ] as const;
 
+// Full pre-fill for edit mode. Mirrors every piece of wizard state so an
+// existing match can be reopened in the same form. Built server-side in
+// /matches/[id]/edit from the stored Match + MatchPlayer + SideGame rows.
+export type MatchEditInitial = {
+  courseName: string;
+  scheduledAt: string; // datetime-local "YYYY-MM-DDTHH:mm"
+  holes: 9 | 18;
+  startingHole: 1 | 10;
+  scoringMode: ScoringMode;
+  format: "INDIVIDUAL" | "SCRAMBLE" | "BOTH";
+  scrambleHcpMode: "GROSS" | "AVG" | "CUSTOM";
+  scrambleCustomA: string;
+  scrambleCustomB: string;
+  players: { name: string; handicap: string; userId: string | null; team: 0 | 1 }[];
+  sideGames: SideGameKind[];
+  tvtRules: TeamVsTeamRule[];
+  vegasBirdieFlip: boolean;
+  vegasDoubleHoles: "OFF" | "INCREMENTAL" | "EXPONENTIAL";
+  vegasStake: string;
+  targetsStat: "PAR_OR_BETTER" | "BIRDIE_OR_BETTER";
+  targetsTarget: string;
+  targetsAnte: string;
+  matchStrokesMode: "AUTO" | "MANUAL";
+  matchManualStrokes: Record<number, string>;
+  matchAutoPress: boolean;
+  matchAutoPressThreshold: string;
+  matchStake: string;
+  sixesStake: string;
+  notes: string;
+  groupId: string;
+};
+
 export default function NewMatchForm({
   action,
   defaultPlayerName,
@@ -83,6 +115,9 @@ export default function NewMatchForm({
   groups,
   defaultGroupId,
   templates = [],
+  initial,
+  submitLabel,
+  hiddenFields,
 }: {
   action: (formData: FormData) => Promise<void>;
   defaultPlayerName: string;
@@ -96,19 +131,37 @@ export default function NewMatchForm({
   defaultGroupId: string;
   // Cloneable past rounds; tapping one pre-fills the whole wizard.
   templates?: MatchTemplate[];
+  // When present, the wizard opens in edit mode: every field is
+  // pre-filled from an existing match and the submit button reads
+  // submitLabel (e.g. "Save changes") instead of "Open market".
+  initial?: MatchEditInitial;
+  submitLabel?: string;
+  // Extra hidden inputs rendered inside the form (e.g. { matchId } for edit).
+  hiddenFields?: Record<string, string>;
 }) {
   const [step, setStep] = useState(0);
   const [templatesOpen, setTemplatesOpen] = useState(false);
-  const [players, setPlayers] = useState<PlayerRow[]>([
-    {
-      name: defaultPlayerName,
-      handicap: defaultPlayerHandicap,
-      userId: currentUserId,
-      team: 0,
-    },
-    { name: "", handicap: "15", userId: null, team: 1 },
-  ]);
-  const [sideGames, setSideGames] = useState<Set<SideGameKind>>(new Set());
+  const [players, setPlayers] = useState<PlayerRow[]>(() =>
+    initial
+      ? initial.players.map((p) => ({
+          name: p.name,
+          handicap: p.handicap,
+          userId: p.userId,
+          team: p.team,
+        }))
+      : [
+          {
+            name: defaultPlayerName,
+            handicap: defaultPlayerHandicap,
+            userId: currentUserId,
+            team: 0,
+          },
+          { name: "", handicap: "15", userId: null, team: 1 },
+        ],
+  );
+  const [sideGames, setSideGames] = useState<Set<SideGameKind>>(
+    () => new Set(initial?.sideGames ?? []),
+  );
 
   const toggleSideGame = (kind: SideGameKind) =>
     setSideGames((curr) => {
@@ -117,7 +170,7 @@ export default function NewMatchForm({
       else next.add(kind);
       return next;
     });
-  const [courseName, setCourseName] = useState("");
+  const [courseName, setCourseName] = useState(initial?.courseName ?? "");
   const [nearby, setNearby] = useState<NearbyCourse[] | null>(null);
   // Controls visibility of the custom course-search dropdown. iOS
   // Safari's native <datalist> renders as 3 chips on the keyboard
@@ -126,10 +179,14 @@ export default function NewMatchForm({
   // the input that opens on focus.
   const [courseFocused, setCourseFocused] = useState(false);
   const [locating, startLocating] = useTransition();
-  const [holes, setHoles] = useState<9 | 18>(18);
+  const [holes, setHoles] = useState<9 | 18>(initial?.holes ?? 18);
   // 1 = full or front 9, 10 = back 9. Only meaningful when holes === 9.
-  const [startingHole, setStartingHole] = useState<1 | 10>(1);
-  const [scoringMode, setScoringMode] = useState<ScoringMode>("NET");
+  const [startingHole, setStartingHole] = useState<1 | 10>(
+    initial?.startingHole ?? 1,
+  );
+  const [scoringMode, setScoringMode] = useState<ScoringMode>(
+    initial?.scoringMode ?? "NET",
+  );
   // Wrapping the scoringMode setter so a transition INTO CUSTOM
   // resets every player's strokes-given to "0". The field's meaning
   // flips when CUSTOM is picked -- it's no longer the player's HCP
@@ -151,17 +208,21 @@ export default function NewMatchForm({
   // TEAM_VS_TEAM is auto-added to the side-games list and the team
   // rule picker surfaces alongside the scoring picker.
   const [format, setFormat] = useState<"INDIVIDUAL" | "SCRAMBLE" | "BOTH">(
-    "INDIVIDUAL",
+    initial?.format ?? "INDIVIDUAL",
   );
   const [scrambleHcpMode, setScrambleHcpMode] = useState<
     "GROSS" | "AVG" | "CUSTOM"
-  >("GROSS");
+  >(initial?.scrambleHcpMode ?? "GROSS");
   // Custom per-team allowances, only used when scrambleHcpMode is
   // CUSTOM. Strings instead of numbers so the input is comfortable
   // to type in (leading 0s, partial entries during edit, etc.); the
   // submitted scrambleConfig coerces to numbers.
-  const [scrambleCustomA, setScrambleCustomA] = useState("");
-  const [scrambleCustomB, setScrambleCustomB] = useState("");
+  const [scrambleCustomA, setScrambleCustomA] = useState(
+    initial?.scrambleCustomA ?? "",
+  );
+  const [scrambleCustomB, setScrambleCustomB] = useState(
+    initial?.scrambleCustomB ?? "",
+  );
   // Team-vs-Team side game configuration. The team picker (chips
   // per player row) shares state with the SCRAMBLE format's chips
   // -- PlayerRow.team is the single source of truth and surfaces
@@ -170,14 +231,18 @@ export default function NewMatchForm({
   // Team rules are now multi-select; each selected rule produces its
   // own leaderboard. Wagers were removed from this surface to declutter
   // the picker -- money games happen at the group level, not here.
-  const [tvtRules, setTvtRules] = useState<Set<TeamVsTeamRule>>(
-    () => new Set(["BEST_BALL"]),
+  const [tvtRules, setTvtRules] = useState<Set<TeamVsTeamRule>>(() =>
+    initial && initial.tvtRules.length > 0
+      ? new Set(initial.tvtRules)
+      : new Set(["BEST_BALL"]),
   );
   // Vegas-specific options. Only honored when VEGAS is among tvtRules.
-  const [vegasBirdieFlip, setVegasBirdieFlip] = useState(false);
+  const [vegasBirdieFlip, setVegasBirdieFlip] = useState(
+    initial?.vegasBirdieFlip ?? false,
+  );
   const [vegasDoubleHoles, setVegasDoubleHoles] = useState<
     "OFF" | "INCREMENTAL" | "EXPONENTIAL"
-  >("OFF");
+  >(initial?.vegasDoubleHoles ?? "OFF");
   const toggleTvtRule = (r: TeamVsTeamRule) => {
     setTvtRules((prev) => {
       const next = new Set(prev);
@@ -194,29 +259,35 @@ export default function NewMatchForm({
   // chosen to be sensible for an 18-hole round.
   const [targetsStat, setTargetsStat] = useState<
     "PAR_OR_BETTER" | "BIRDIE_OR_BETTER"
-  >("PAR_OR_BETTER");
-  const [targetsTarget, setTargetsTarget] = useState("10");
+  >(initial?.targetsStat ?? "PAR_OR_BETTER");
+  const [targetsTarget, setTargetsTarget] = useState(
+    initial?.targetsTarget ?? "10",
+  );
   // Optional pot ante per player. Blank/zero = no pot, just the count.
-  const [targetsAnte, setTargetsAnte] = useState("");
+  const [targetsAnte, setTargetsAnte] = useState(initial?.targetsAnte ?? "");
   // Match-play stroke-giving. AUTO = use the match scoringMode + each
   // player's handicap (default). MANUAL = use per-player strokes typed
   // below, regardless of the scoringMode.
   const [matchStrokesMode, setMatchStrokesMode] = useState<"AUTO" | "MANUAL">(
-    "AUTO",
+    initial?.matchStrokesMode ?? "AUTO",
   );
   const [matchManualStrokes, setMatchManualStrokes] = useState<
     Record<number, string>
-  >({});
+  >(() => initial?.matchManualStrokes ?? {});
   // Match auto-press: only meaningful for 2-player matches; the
   // server compute ignores it otherwise.
-  const [matchAutoPress, setMatchAutoPress] = useState(false);
-  const [matchAutoPressThreshold, setMatchAutoPressThreshold] = useState("2");
+  const [matchAutoPress, setMatchAutoPress] = useState(
+    initial?.matchAutoPress ?? false,
+  );
+  const [matchAutoPressThreshold, setMatchAutoPressThreshold] = useState(
+    initial?.matchAutoPressThreshold ?? "2",
+  );
   // Match dollar wager per dot. Blank/zero = no $ math.
-  const [matchStake, setMatchStake] = useState("");
+  const [matchStake, setMatchStake] = useState(initial?.matchStake ?? "");
   // Sixes dollar wager per dot.
-  const [sixesStake, setSixesStake] = useState("");
+  const [sixesStake, setSixesStake] = useState(initial?.sixesStake ?? "");
   // Vegas dollar wager per Vegas point.
-  const [vegasStake, setVegasStake] = useState("");
+  const [vegasStake, setVegasStake] = useState(initial?.vegasStake ?? "");
 
   // Keep sideGames in sync with the format picker. Both Teams
   // (SCRAMBLE) and Both auto-enable TEAM_VS_TEAM so the rule picker
@@ -419,6 +490,7 @@ export default function NewMatchForm({
   // text isn't the OS's wordy default that overflows the half-width
   // box on phones.
   const [scheduledAt, setScheduledAt] = useState<string>(() => {
+    if (initial?.scheduledAt) return initial.scheduledAt;
     // Default to 15 minutes from now: most users open the form right
     // before teeing off, and a short lead-time keeps the line "open"
     // briefly so the group can lock wagers in before the round starts.
@@ -496,6 +568,13 @@ export default function NewMatchForm({
         }
       }}
     >
+      {/* Extra hidden inputs the parent needs submitted with the form
+          (e.g. matchId in edit mode). Kept inside this <form> so they
+          actually post -- nesting a second <form> would not. */}
+      {hiddenFields &&
+        Object.entries(hiddenFields).map(([name, value]) => (
+          <input key={name} type="hidden" name={name} value={value} />
+        ))}
       {/* Step header: progress dots + back arrow + step title. */}
       <div className="flex items-center justify-between gap-3">
         <button
@@ -1248,6 +1327,7 @@ export default function NewMatchForm({
             name="notes"
             className="input"
             placeholder="Skins game, $5 closeouts, etc."
+            defaultValue={initial?.notes ?? ""}
           />
         </div>
       </div>
@@ -1726,7 +1806,7 @@ export default function NewMatchForm({
                 : "Next →"}
           </button>
         ) : (
-          <OpenMarketButton />
+          <OpenMarketButton label={submitLabel} />
         )}
       </div>
     </form>
@@ -1736,8 +1816,10 @@ export default function NewMatchForm({
 // Submit button that disables itself once the server action is in
 // flight. Without this, a double-tap (or a slow network nudging the
 // user to retry) creates duplicate matches.
-function OpenMarketButton() {
+function OpenMarketButton({ label }: { label?: string }) {
   const { pending } = useFormStatus();
+  const idle = label ?? "Open market";
+  const busy = label ? "Saving…" : "Opening market…";
   return (
     <button
       key="submit"
@@ -1746,7 +1828,7 @@ function OpenMarketButton() {
       aria-busy={pending}
       className="btn btn-primary w-full disabled:opacity-60 disabled:cursor-not-allowed"
     >
-      {pending ? "Opening market…" : "Open market"}
+      {pending ? busy : idle}
     </button>
   );
 }
