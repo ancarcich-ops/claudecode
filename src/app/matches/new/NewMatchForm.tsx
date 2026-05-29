@@ -140,6 +140,13 @@ export default function NewMatchForm({
   hiddenFields?: Record<string, string>;
 }) {
   const [step, setStep] = useState(0);
+  // Guided progressive reveal for the Round step. The user is walked
+  // through one decision at a time -- 0: course, 1: tee + holes, 2:
+  // format + scoring, 3: details (everything revealed). Completed
+  // groups collapse into editable summary chips; the active group gets
+  // a pulsing emerald ring. In edit mode the whole step is pre-answered,
+  // so start fully revealed.
+  const [roundStep, setRoundStep] = useState(initial ? 3 : 0);
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [players, setPlayers] = useState<PlayerRow[]>(() =>
     initial
@@ -481,6 +488,8 @@ export default function NewMatchForm({
     );
     setSideGames(new Set(t.sideGames));
     setTemplatesOpen(false);
+    // Cloning fills every Round field, so skip the guided reveal.
+    setRoundStep(3);
   };
 
   // Controlled tee-time string in the same shape as <input
@@ -614,9 +623,21 @@ export default function NewMatchForm({
         </h2>
       </div>
 
-      {/* Step 1: Course + tee + scoring + visibility + notes */}
+      {/* Step 1: Course + tee + scoring + visibility + notes.
+          Guided progressive reveal: one group at a time, completed ones
+          collapse to editable chips. roundStep drives it. */}
       <div hidden={step !== 0} className="card p-5 space-y-4">
-        <div>
+        {roundStep > 0 && (
+          <StepChip
+            label="Course"
+            value={courseName || "—"}
+            onEdit={() => setRoundStep(0)}
+          />
+        )}
+        <div
+          hidden={roundStep !== 0}
+          className={roundStep === 0 ? "field-active" : undefined}
+        >
           <div className="flex items-baseline justify-between gap-2">
             <label className="label" htmlFor="courseName">
               Course
@@ -660,6 +681,7 @@ export default function NewMatchForm({
                     onClick={() => {
                       onCourseChange(c.name);
                       setNearby(null);
+                      setRoundStep((s) => (s === 0 ? 1 : s));
                     }}
                     className="w-full text-left px-2.5 py-2 text-sm hover:bg-panel/70 flex items-center justify-between gap-2"
                   >
@@ -700,6 +722,7 @@ export default function NewMatchForm({
                         onClick={() => {
                           onCourseChange(c);
                           setCourseFocused(false);
+                          setRoundStep((s) => (s === 0 ? 1 : s));
                         }}
                         className="w-full text-left px-2.5 py-2 text-sm hover:bg-panel/70 border-b border-border last:border-b-0"
                       >
@@ -722,6 +745,7 @@ export default function NewMatchForm({
                         onClick={() => {
                           onCourseChange(p.name);
                           setCourseFocused(false);
+                          setRoundStep((s) => (s === 0 ? 1 : s));
                         }}
                         className="w-full text-left px-2.5 py-2 hover:bg-panel/70 block"
                       >
@@ -780,9 +804,37 @@ export default function NewMatchForm({
               if you don&apos;t see your favorite course on the list yet.
             </p>
           )}
+          {roundStep === 0 && (
+            <button
+              type="button"
+              onClick={() => setRoundStep(1)}
+              disabled={!matchedPreset}
+              className="btn btn-primary w-full mt-3 disabled:opacity-50"
+            >
+              {matchedPreset ? "Continue →" : "Pick a course to continue"}
+            </button>
+          )}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        {roundStep > 1 && (
+          <StepChip
+            label="Tee & holes"
+            value={`${formatTeeShort(scheduledAt)} · ${
+              holes === 18 ? "18 holes" : startingHole === 10 ? "Back 9" : "Front 9"
+            }`}
+            onEdit={() => setRoundStep(1)}
+          />
+        )}
+        {/* `hidden` class (not attribute) because the `grid` display
+            utility would otherwise override the [hidden] attribute and
+            leak the tee/holes row onto the Course step. */}
+        <div
+          className={
+            roundStep === 1
+              ? "grid grid-cols-2 gap-3 field-active"
+              : "hidden"
+          }
+        >
           <div>
             <label className="label" htmlFor="scheduledAt">
               Tee time
@@ -829,6 +881,8 @@ export default function NewMatchForm({
                     onClick={() => {
                       onHolesChange(opt.holes);
                       setStartingHole(opt.start);
+                      // Holes is the decisive tap in the tee+holes group.
+                      setRoundStep((s) => (s === 1 ? 2 : s));
                     }}
                     className={
                       "flex items-center justify-center rounded-md border px-2 py-2 transition min-h-[3.25rem] " +
@@ -845,14 +899,43 @@ export default function NewMatchForm({
             </div>
           </div>
         </div>
+        {roundStep === 1 && (
+          <button
+            type="button"
+            onClick={() => setRoundStep(2)}
+            className="btn btn-primary w-full disabled:opacity-50"
+          >
+            Continue →
+          </button>
+        )}
 
+        {roundStep > 2 && (
+          <StepChip
+            label="Format"
+            value={`${
+              format === "SCRAMBLE"
+                ? "Teams"
+                : format === "BOTH"
+                  ? "Both"
+                  : "Individual"
+            } · ${
+              format === "SCRAMBLE"
+                ? `Team ${scrambleHcpMode.toLowerCase()}`
+                : MODE_COPY[scoringMode].label
+            }`}
+            onEdit={() => setRoundStep(2)}
+          />
+        )}
         {/* Match format. Individual is the existing all-vs-all play;
             scramble is 2 teams sharing one ball-per-team-per-hole.
             When scramble is selected, the scoring picker below
             collapses into the team-handicap picker -- individual
             handicap math doesn't apply when only the team's score
             counts. */}
-        <div>
+        <div
+          hidden={roundStep !== 2}
+          className={roundStep === 2 ? "field-active" : undefined}
+        >
           <label className="label">Format</label>
           {/* "Both" is a client-side shortcut for INDIVIDUAL + the
               TEAM_VS_TEAM side game. Server still receives
@@ -986,7 +1069,7 @@ export default function NewMatchForm({
         {/* Scoring picker shows for INDIVIDUAL or BOTH (BOTH still
             uses individual handicap math; the team handicap mode in
             the SCRAMBLE branch doesn't apply). */}
-        <div hidden={format === "SCRAMBLE"}>
+        <div hidden={roundStep !== 2 || format === "SCRAMBLE"}>
           <label className="label">Scoring</label>
           <input type="hidden" name="scoringMode" value={scoringMode} />
           <div className="grid grid-cols-3 gap-2">
@@ -997,7 +1080,13 @@ export default function NewMatchForm({
                 <button
                   key={m}
                   type="button"
-                  onClick={() => changeScoringMode(m)}
+                  onClick={() => {
+                    changeScoringMode(m);
+                    // Individual: scoring is the last decision in this
+                    // group, so a tap completes it. Teams/Both still have
+                    // team config below, so they use Continue.
+                    if (format === "INDIVIDUAL") setRoundStep((s) => (s < 3 ? 3 : s));
+                  }}
                   className={
                     "flex flex-col items-center justify-center gap-0.5 rounded-md border px-2 py-2 transition min-h-[3.25rem] " +
                     (active
@@ -1024,7 +1113,7 @@ export default function NewMatchForm({
             the team rule picker so the "what's the allowance" decision
             sits in the same slot as "what's the scoring" for the
             Individual format. */}
-        <div hidden={format !== "SCRAMBLE"}>
+        <div hidden={roundStep !== 2 || format !== "SCRAMBLE"}>
           <label className="label">Team handicap</label>
           <div className="grid grid-cols-3 gap-2">
             {(["GROSS", "AVG", "CUSTOM"] as const).map((m) => {
@@ -1108,7 +1197,7 @@ export default function NewMatchForm({
             sits below the team handicap picker -- handicap-first
             mirrors how "what's the allowance" lives above the scoring
             details on the Individual flow. */}
-        <div hidden={format !== "BOTH" && format !== "SCRAMBLE"}>
+        <div hidden={roundStep !== 2 || (format !== "BOTH" && format !== "SCRAMBLE")}>
           <label className="label">Team rules</label>
           <p className="text-[10.5px] text-mute mb-2 leading-snug">
             Pick one or more — each runs simultaneously with its own
@@ -1217,8 +1306,17 @@ export default function NewMatchForm({
             Players split into 2 teams; live odds price team-vs-team.
           </p>
         </div>
+        {roundStep === 2 && (
+          <button
+            type="button"
+            onClick={() => setRoundStep(3)}
+            className="btn btn-primary w-full"
+          >
+            Continue →
+          </button>
+        )}
 
-        {templates.length > 0 && (
+        {roundStep === 0 && templates.length > 0 && (
           <div className="rounded-md border border-border bg-panel2/60">
             <button
               type="button"
@@ -1288,6 +1386,8 @@ export default function NewMatchForm({
           </div>
         )}
 
+        {roundStep >= 3 && (
+          <>
         <div>
           <label className="label" htmlFor="groupId">
             Visible to
@@ -1330,6 +1430,8 @@ export default function NewMatchForm({
             defaultValue={initial?.notes ?? ""}
           />
         </div>
+          </>
+        )}
       </div>
 
       {/* Step 2: Players */}
@@ -1792,6 +1894,9 @@ export default function NewMatchForm({
           sure a stray replayed click can't morph into a form submit. */}
       <div className="sticky bottom-2 pt-2">
         {step < STEPS.length - 1 ? (
+          // During the guided Round reveal the inline "Continue" buttons
+          // drive progress; the sticky Next appears once it's complete.
+          step === 0 && roundStep < 3 ? null : (
           <button
             key="next"
             type="button"
@@ -1805,6 +1910,7 @@ export default function NewMatchForm({
                 ? "Fill in every player to continue"
                 : "Next →"}
           </button>
+          )
         ) : (
           <OpenMarketButton label={submitLabel} />
         )}
@@ -1829,6 +1935,35 @@ function OpenMarketButton({ label }: { label?: string }) {
       className="btn btn-primary w-full disabled:opacity-60 disabled:cursor-not-allowed"
     >
       {pending ? busy : idle}
+    </button>
+  );
+}
+
+// Collapsed summary of a completed wizard group. Tap to jump back and
+// edit that decision.
+function StepChip({
+  label,
+  value,
+  onEdit,
+}: {
+  label: string;
+  value: string;
+  onEdit: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onEdit}
+      className="w-full flex items-center justify-between gap-2 rounded-md border border-borderSoft bg-panel2/40 px-3 py-2 text-left hover:border-accent/40 transition-colors"
+    >
+      <span className="flex items-center gap-2 min-w-0">
+        <span aria-hidden className="text-accent text-sm leading-none">✓</span>
+        <span className="text-[10px] uppercase tracking-wider text-mute shrink-0">
+          {label}
+        </span>
+        <span className="text-sm text-ink truncate">{value}</span>
+      </span>
+      <span className="text-[11px] text-mute shrink-0">Edit</span>
     </button>
   );
 }

@@ -196,6 +196,25 @@ body {
 /* Auth primary-button loading dots (login flow). */
 @keyframes dotBlink { 0%,100% { opacity: 0.25; } 50% { opacity: 1; } }
 
+/* New-match guided wizard: pulsing emerald ring on the field the user
+   should act on next. Draws the eye to the single active decision. */
+@keyframes field-ring {
+  0%, 100% { box-shadow: 0 0 0 1px rgb(var(--color-accent) / 0.45), 0 0 0 4px rgb(var(--color-accent) / 0.08); }
+  50%      { box-shadow: 0 0 0 1px rgb(var(--color-accent) / 0.85), 0 0 0 6px rgb(var(--color-accent) / 0.18); }
+}
+.field-active {
+  animation: field-ring 2.2s ease-in-out infinite;
+  border-radius: 0.75rem;
+  /* Push the ring outward from the content (toward the card edge) so it
+     frames the field with breathing room instead of crowding the text.
+     Equal padding + negative margin keeps surrounding layout in place. */
+  padding: 0.7rem;
+  margin: -0.7rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .field-active { animation: none; box-shadow: 0 0 0 1px rgb(var(--color-accent) / 0.6); }
+}
+
 /* Ticker tape marquee. Content is duplicated for seamless loop. */
 @keyframes scroll-l { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 .scroll-l { animation: scroll-l 28s linear infinite; }
