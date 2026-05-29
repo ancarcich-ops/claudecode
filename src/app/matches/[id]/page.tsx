@@ -638,8 +638,7 @@ export default async function MatchPage({
                   : null
               }
             />
-            {match.status !== "UPCOMING" && (
-              <OnCourseMode
+            <OnCourseMode
                 matchId={match.id}
                 courseName={match.courseName}
                 holes={match.holes}
@@ -669,8 +668,13 @@ export default async function MatchPage({
                     ? { speedMph: wind.speedMph, fromDeg: wind.fromDeg }
                     : null
                 }
+                // Pre-round: the launcher both flips the match to live and
+                // opens GPS in one tap. Live: the action is omitted and the
+                // launcher just opens GPS.
+                startMatchAction={
+                  match.status === "UPCOMING" ? startMatchAction : undefined
+                }
               />
-            )}
           </div>
         </section>
       )}
