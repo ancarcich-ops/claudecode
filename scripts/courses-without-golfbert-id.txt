@@ -1,0 +1,202 @@
+
+=== MULTI-MATCH (4) ===
+  arrowcreek-cc                      ArrowCreek Country Club — Reno, NV
+      candidates: 5259 (ArrowCreek Golf Club (Legends course), Reno)  |  17485 (Arrowcreek Golf Club (Challenge course), Reno)
+  charlotte-country-club             Charlotte Country Club — Charlotte, NC
+      candidates: 10152 (Charlotte Country Club, Charlotte)  |  10598 (Charlotte Country Club, Charlotte)
+  memorial-park                      Memorial Park Golf Course — Houston, TX
+      candidates: 2590 (Memorial Park Golf Course, Houston)  |  15962 (Memorial Park Golf Course, Houston)
+  sunbrook                           Sunbrook Golf Course — St. George, UT
+      candidates: 17820 (Sunbrook Golf Club (The Point), St. George)  |  17821 (Sunbrook Golf Club (Woodbridge), St. George)
+
+=== NO-MATCH (182) ===
+  aldarra                            Aldarra Golf Club — Sammamish, WA
+  anaheim-hills                      Anaheim Hills Golf Course — Anaheim Hills
+  angel-park-mountain                Angel Park - Mountain Course — Las Vegas, NV
+  angel-park-palm                    Angel Park - Palm Course — Las Vegas, NV
+  bay-hill-championship              Arnold Palmer's Bay Hill Club - Championship Course — Orlando, FL
+  bandon-dunes                       Bandon Dunes Golf Resort - Bandon Dunes — Bandon, OR
+  bandon-trails                      Bandon Dunes Golf Resort - Bandon Trails — Bandon, OR
+  bandon-old-macdonald               Bandon Dunes Golf Resort - Old Macdonald — Bandon, OR
+  bandon-pacific-dunes               Bandon Dunes Golf Resort - Pacific Dunes — Bandon, OR
+  bayonet                            Bayonet & Black Horse - Bayonet Course — Seaside, CA
+  black-horse                        Bayonet & Black Horse - Black Horse Course — Seaside, CA
+  bighorn-gc-canyons                 Bighorn Golf Club - Canyons — Palm Desert, CA
+  bighorn-gc-mountains               Bighorn Golf Club - Mountains — Palm Desert, CA
+  black-butte-big-meadow             Black Butte Ranch - Big Meadow Course — Sisters, OR
+  black-butte-glaze-meadow           Black Butte Ranch - Glaze Meadow Course — Sisters, OR
+  black-diamond-ranch-quarry         Black Diamond Ranch - Quarry Course — Lecanto, FL
+  blackhorse-north                   BlackHorse Golf Club - North Course — Cypress, TX
+  blackhorse-south                   BlackHorse Golf Club - South Course — Cypress, TX
+  blackwolf-run-meadow-valleys       Blackwolf Run - Meadow Valleys Course — Kohler, WI
+  blackwolf-run-river                Blackwolf Run - River Course — Kohler, WI
+  brasada-ranch                      Brasada Ranch Golf Course — Powell Butte, OR
+  camelback-ambiente                 Camelback Golf Club - Ambiente Course — Scottsdale, AZ
+  camelback-padre                    Camelback Golf Club - Padre Course — Scottsdale, AZ
+  cherry-hills-sun-city              Cherry Hills Country Club — Menifee, CA
+  cimarron-boulder                   Cimarron Golf Resort - Boulder Course — Cathedral City, CA
+  cog-hill-dubsdread                 Cog Hill Golf & Country Club - Course No. 4 Dubsdread — Lemont, IL
+  coronado-muni                      Coronado Municipal Golf Course — Coronado, CA
+  costa-mesa-los-lagos               Costa Mesa CC - Los Lagos — Costa Mesa
+  coto-de-caza-north                 Coto de Caza - North Course — Coto de Caza
+  coto-de-caza-south                 Coto de Caza - South Course — Coto de Caza
+  cottonwood-ivanhoe                 Cottonwood at Rancho San Diego - Ivanhoe Course — El Cajon, CA
+  cottonwood-monte-vista             Cottonwood at Rancho San Diego - Monte Vista Course — El Cajon, CA
+  crosswater                         Crosswater Club at Sunriver — Sunriver, OR
+  desert-mountain-chiricahua         Desert Mountain - Chiricahua Course — Scottsdale, AZ
+  desert-mountain-cochise            Desert Mountain - Cochise Course — Scottsdale, AZ
+  desert-mountain-geronimo           Desert Mountain - Geronimo Course — Scottsdale, AZ
+  desert-mountain-outlaw             Desert Mountain - Outlaw Course — Scottsdale, AZ
+  desert-mountain-renegade           Desert Mountain - Renegade Course — Scottsdale, AZ
+  desert-willow-firecliff            Desert Willow - Firecliff — Palm Desert, CA
+  desert-willow-mountain-view        Desert Willow - Mountain View — Palm Desert, CA
+  dragonridge-cc                     DragonRidge Country Club — Henderson, NV
+  entrada-snow-canyon                Entrada at Snow Canyon Country Club — St. George, UT
+  forest-highlands-canyon            Forest Highlands - Canyon Course — Flagstaff, AZ
+  forest-highlands-meadow            Forest Highlands - Meadow Course — Flagstaff, AZ
+  genoa-lakes-lakes                  Genoa Lakes - Lakes Course — Genoa, NV
+  glenwild                           Glenwild Golf Club & Spa — Park City, UT
+  gold-mountain-cascade              Gold Mountain Golf Club - Cascade Course — Bremerton, WA
+  gold-mountain-olympic              Gold Mountain Golf Club - Olympic Course — Bremerton, WA
+  grayhawk-raptor                    Grayhawk - Raptor Course — Scottsdale, AZ
+  grayhawk-talon                     Grayhawk - Talon Course — Scottsdale, AZ
+  griffith-harding                   Griffith Park - Harding Course — Los Angeles
+  half-moon-bay-ocean                Half Moon Bay - Ocean Course — Half Moon Bay, CA
+  half-moon-bay-old                  Half Moon Bay - Old Course — Half Moon Bay, CA
+  heron-lakes-great-blue             Heron Lakes - Great Blue Course — Portland, OR
+  heron-lakes-greenback              Heron Lakes - Greenback Course — Portland, OR
+  incline-village-championship       Incline Village Championship Course — Incline Village, NV
+  indian-springs-cc                  Indian Springs Country Club — Indio, CA
+  indian-wells-celebrity             Indian Wells Golf Resort - Celebrity — Indian Wells, CA
+  indian-wells-players               Indian Wells Golf Resort - Players — Indian Wells, CA
+  innisbrook-copperhead              Innisbrook Resort - Copperhead Course — Palm Harbor, FL
+  innisbrook-island                  Innisbrook Resort - Island Course — Palm Harbor, FL
+  journey-pechanga                   Journey at Pechanga — Temecula, CA
+  jw-marriott-palm                   JW Marriott Desert Springs - Palm Course — Palm Desert, CA
+  jw-marriott-valley                 JW Marriott Desert Springs - Valley Course — Palm Desert, CA
+  kiawah-ocean                       Kiawah Island Golf Resort - Ocean Course — Kiawah Island, SC
+  kiawah-turtle-point                Kiawah Island Golf Resort - Turtle Point Course — Kiawah Island, SC
+  la-quinta-resort-dunes             La Quinta Resort - Dunes Course — La Quinta, CA
+  la-quinta-resort-mountain          La Quinta Resort - Mountain Course — La Quinta, CA
+  lv-paiute-snow-mountain            Las Vegas Paiute - Snow Mountain Course — Las Vegas, NV
+  lv-paiute-sun-mountain             Las Vegas Paiute - Sun Mountain Course — Las Vegas, NV
+  lv-paiute-wolf                     Las Vegas Paiute - Wolf Course — Las Vegas, NV
+  lacc-north                         Los Angeles Country Club (North) — Beverly Hills
+  marriott-shadow-ridge              Marriott Shadow Ridge Golf Club — Palm Desert, CA
+  medinah-no-3                       Medinah Country Club - Course No. 3 — Medinah, IL
+  mirabel-club                       Mirabel Club — Scottsdale, AZ
+  mission-hills-pete-dye-challenge   Mission Hills CC - Pete Dye Challenge — Rancho Mirage, CA
+  mission-hills-dinah-shore          Mission Hills Country Club - Dinah Shore Tournament — Rancho Mirage, CA
+  mpcc-dunes                         Monterey Peninsula Country Club - Dunes Course — Pebble Beach, CA
+  mpcc-shore                         Monterey Peninsula Country Club - Shore Course — Pebble Beach, CA
+  mountain-dell-canyon               Mountain Dell - Canyon Course — Salt Lake City, UT
+  mountain-dell-lake                 Mountain Dell - Lake Course — Salt Lake City, UT
+  newcastle-china-creek              Newcastle Golf Club - China Creek Course — Newcastle, WA
+  newcastle-coal-creek               Newcastle Golf Club - Coal Creek Course — Newcastle, WA
+  north-ranch-cc                     North Ranch Country Club — Westlake Village, CA
+  oakland-hills-south                Oakland Hills Country Club - South Course — Bloomfield Township, MI
+  olivas-links                       Olivas Links — Ventura, CA
+  olympia-fields-north               Olympia Fields Country Club - North Course — Olympia Fields, IL
+  olympic-club-lake                  Olympic Club - Lake Course — San Francisco, CA
+  olympic-club-ocean                 Olympic Club - Ocean Course — San Francisco, CA
+  pelican-hill-north                 Pelican Hill - Ocean North — Newport Coast
+  pelican-hill-south                 Pelican Hill - Ocean South — Newport Coast
+  pga-national-champion              PGA National - Champion Course — Palm Beach Gardens, FL
+  pga-national-estate                PGA National - Estate Course — Palm Beach Gardens, FL
+  pga-national-fazio                 PGA National - Fazio Course — Palm Beach Gardens, FL
+  pga-national-palmer                PGA National - Palmer Course — Palm Beach Gardens, FL
+  pga-national-squire                PGA National - Squire Course — Palm Beach Gardens, FL
+  pga-west-nicklaus-tournament       PGA West - Nicklaus Tournament Course — La Quinta, CA
+  pga-west-stadium                   PGA West - Stadium Course — La Quinta, CA
+  pinehurst-no-10                    Pinehurst Resort - No. 10 Course — Aberdeen, NC
+  pinehurst-no-2                     Pinehurst Resort - No. 2 Course — Pinehurst, NC
+  pinehurst-no-4                     Pinehurst Resort - No. 4 Course — Pinehurst, NC
+  pinehurst-no-6                     Pinehurst Resort - No. 6 Course — Pinehurst, NC
+  pinehurst-no-7                     Pinehurst Resort - No. 7 Course — Pinehurst, NC
+  pinehurst-no-8                     Pinehurst Resort - No. 8 Course — Pinehurst, NC
+  pinehurst-no-9                     Pinehurst Resort - No. 9 Course — Pinehurst, NC
+  promontory-nicklaus                Promontory Club - Nicklaus Painted Valley Course — Park City, UT
+  promontory-pete-dye                Promontory Club - Pete Dye Canyon Course — Park City, UT
+  pronghorn-fazio                    Pronghorn Club - Fazio Course — Bend, OR
+  pronghorn-nicklaus                 Pronghorn Club - Nicklaus Course — Bend, OR
+  pumpkin-ridge-ghost-creek          Pumpkin Ridge - Ghost Creek — North Plains, OR
+  pumpkin-ridge-witch-hollow         Pumpkin Ridge - Witch Hollow — North Plains, OR
+  red-rock-cc-mountain               Red Rock Country Club - Mountain Course — Las Vegas, NV
+  river-ridge-victoria-lakes         River Ridge - Victoria Lakes Course — Oxnard, CA
+  river-ridge-vineyard               River Ridge - Vineyard Course — Oxnard, CA
+  salishan                           Salishan Spa & Golf Resort — Gleneden Beach, OR
+  sand-canyon-cc-desert-mountain     Sand Canyon CC - Desert/Mountain — Canyon Country
+  sand-canyon-cc-mountain-valley     Sand Canyon CC - Mountain/Valley — Canyon Country
+  sand-canyon-cc-valley-desert       Sand Canyon CC - Valley/Desert — Canyon Country
+  sand-hollow-championship           Sand Hollow Golf Resort - Championship Course — Hurricane, UT
+  sand-valley-mammoth-dunes          Sand Valley Golf Resort - Mammoth Dunes Course — Nekoosa, WI
+  sand-valley-sand-valley            Sand Valley Golf Resort - Sand Valley Course — Nekoosa, WI
+  sand-valley-sedge-valley           Sand Valley Golf Resort - Sedge Valley Course — Nekoosa, WI
+  scga-rancho-california             SCGA Members Club at Rancho California — Murrieta, CA
+  seminole                           Seminole Golf Club — Juno Beach, FL
+  balboa-gc                          Sepulveda Balboa Course — Encino
+  encino-gc                          Sepulveda Encino Course — Encino
+  sherwood-cc                        Sherwood Country Club — Thousand Oaks, CA
+  silverleaf-club                    Silverleaf Club — Scottsdale, AZ
+  soldier-hollow-gold                Soldier Hollow - Gold Course — Midway, UT
+  streamsong-black                   Streamsong Resort - Black Course — Streamsong, FL
+  streamsong-blue                    Streamsong Resort - Blue Course — Streamsong, FL
+  streamsong-red                     Streamsong Resort - Red Course — Streamsong, FL
+  suncadia-prospector                Suncadia Resort - Prospector Course — Cle Elum, WA
+  suncadia-rope-rider                Suncadia Resort - Rope Rider Course — Cle Elum, WA
+  sunriver-meadows                   Sunriver Resort - Meadows Course — Sunriver, OR
+  sunriver-woodlands                 Sunriver Resort - Woodlands Course — Sunriver, OR
+  sycuan-oak-glen                    Sycuan Golf Resort - Oak Glen Course — El Cajon, CA
+  sycuan-willow-glen                 Sycuan Golf Resort - Willow Glen Course — El Cajon, CA
+  tahquitz-creek-legend              Tahquitz Creek Golf Resort - Legend Course — Palm Springs, CA
+  tahquitz-creek-resort              Tahquitz Creek Golf Resort - Resort Course — Palm Springs, CA
+  talking-stick-north                Talking Stick - North Course — Scottsdale, AZ
+  talking-stick-south                Talking Stick - South Course — Scottsdale, AZ
+  boulders-north                     The Boulders - North Course — Carefree, AZ
+  boulders-south                     The Boulders - South Course — Carefree, AZ
+  the-bridges                        The Bridges Golf Club — San Ramon, CA
+  home-course                        The Home Course — DuPont, WA
+  spanish-bay                        The Links at Spanish Bay — Pebble Beach, CA
+  sea-pines-ocean                    The Ocean Course at Sea Pines — Hilton Head Island, SC
+  the-reserve-club                   The Reserve Club at Indian Wells — Indian Wells, CA
+  reserve-north                      The Reserve Vineyards & Golf Club - North Course — Aloha, OR
+  reserve-south                      The Reserve Vineyards & Golf Club - South Course — Aloha, OR
+  wildcat-highlands                  The Wildcat Golf Club - Highlands Course — Houston, TX
+  wildcat-lakes                      The Wildcat Golf Club - Lakes Course — Houston, TX
+  torrey-pines-north                 Torrey Pines - North — La Jolla, CA
+  torrey-pines-south                 Torrey Pines - South — La Jolla, CA
+  toscana-cc                         Toscana Country Club — Indian Wells, CA
+  tpc-sawgrass-dyes-valley           TPC Sawgrass - Dye's Valley Course — Ponte Vedra Beach, FL
+  tpc-sawgrass-stadium               TPC Sawgrass - The Players Stadium Course — Ponte Vedra Beach, FL
+  tpc-scottsdale-champions           TPC Scottsdale - Champions Course — Scottsdale, AZ
+  tpc-scottsdale-stadium             TPC Scottsdale - Stadium Course — Scottsdale, AZ
+  trinity-forest                     Trinity Forest Golf Club — Dallas, TX
+  troon-north-monument               Troon North - Monument Course — Scottsdale, AZ
+  troon-north-pinnacle               Troon North - Pinnacle Course — Scottsdale, AZ
+  trump-doral-blue-monster           Trump National Doral - Blue Monster Course — Miami, FL
+  trump-doral-gold                   Trump National Doral - Gold Course — Miami, FL
+  trump-doral-red-tiger              Trump National Doral - Red Tiger Course — Miami, FL
+  tukwet-champions                   Tukwet Canyon - Champions — Beaumont, CA
+  tukwet-legends                     Tukwet Canyon - Legends — Beaumont, CA
+  tumble-creek                       Tumble Creek Club at Suncadia — Cle Elum, WA
+  ut-golf-club                       University of Texas Golf Club — Austin, TX
+  vaquero-club                       Vaquero Club — Westlake, TX
+  ventana-canyon-mountain            Ventana Canyon - Mountain Course — Tucson, AZ
+  we-ko-pa-cholla                    We-Ko-Pa Golf Club - Cholla Course — Fort McDowell, AZ
+  we-ko-pa-saguaro                   We-Ko-Pa Golf Club - Saguaro Course — Fort McDowell, AZ
+  westin-mh-gary-player              Westin Mission Hills - Gary Player Course — Rancho Mirage, CA
+  westin-mh-pete-dye                 Westin Mission Hills - Pete Dye Resort Course — Rancho Mirage, CA
+  whisper-rock-lower                 Whisper Rock - Lower Course — Scottsdale, AZ
+  whisper-rock-upper                 Whisper Rock - Upper Course — Scottsdale, AZ
+  whistling-straits-irish            Whistling Straits - Irish Course — Sheboygan, WI
+  whistling-straits-straits          Whistling Straits - Straits Course — Sheboygan, WI
+  wildfire-faldo                     Wildfire Golf Club - Faldo Championship Course — Phoenix, AZ
+  wildfire-palmer                    Wildfire Golf Club - Palmer Signature Course — Phoenix, AZ
+
+=== FAILED (1) ===
+  silverado-north                    Silverado Resort - North Course — Napa, CA
+
+Total needing a manual code: 187
+
+Once you have the GolfBert ids, pair each with:
+  npx tsx scripts/import-golfbert.ts --id=<preset-id> --gb-id=<number>
