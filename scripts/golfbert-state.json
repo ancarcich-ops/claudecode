@@ -110,36 +110,31 @@
     "dbImported": true
   },
   {
-    "kind": "multi-match",
+    "kind": "matched",
     "presetId": "brentwood-cc",
-    "query": "Brentwood Country Club | Brentwood",
-    "candidates": [
-      {
-        "id": 8817,
-        "name": "Brentwood Country Club",
-        "city": "Brentwood"
-      },
-      {
-        "id": 13055,
-        "name": "Brentwood Country Club",
-        "city": "Brentwood"
-      },
-      {
-        "id": 13902,
-        "name": "Brentwood Country Club",
-        "city": "Brentwood"
-      },
-      {
-        "id": 16492,
-        "name": "Brentwood Country Club",
-        "city": "Brentwood"
-      },
-      {
-        "id": 16493,
-        "name": "Brentwood Country Club",
-        "city": "Brentwood"
-      }
-    ]
+    "gbId": 8817,
+    "gbName": "Brentwood Country Club",
+    "pars": [
+      4,
+      3,
+      5,
+      3,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -887,21 +882,31 @@
     "dbImported": true
   },
   {
-    "kind": "multi-match",
+    "kind": "matched",
     "presetId": "braemar-cc",
-    "query": "Braemar Country Club | Tarzana, CA",
-    "candidates": [
-      {
-        "id": 2148,
-        "name": "Braemar Country Club (East)",
-        "city": "Tarzana"
-      },
-      {
-        "id": 18140,
-        "name": "Braemar Country Club (West)",
-        "city": "Tarzana"
-      }
-    ]
+    "gbId": 2148,
+    "gbName": "Braemar Country Club",
+    "pars": [
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4,
+      3,
+      5,
+      3,
+      5,
+      4,
+      4,
+      4,
+      4,
+      3
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -1125,21 +1130,31 @@
     "dbImported": true
   },
   {
-    "kind": "multi-match",
+    "kind": "matched",
     "presetId": "montebello-gc",
-    "query": "Montebello Golf Course | Montebello, CA",
-    "candidates": [
-      {
-        "id": 1766,
-        "name": "Montebello Country Club",
-        "city": "Montebello"
-      },
-      {
-        "id": 16234,
-        "name": "Montebello Country Club",
-        "city": "Montebello"
-      }
-    ]
+    "gbId": 1766,
+    "gbName": "Montebello Golf Course",
+    "pars": [
+      4,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      3,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -1282,21 +1297,31 @@
     "dbImported": true
   },
   {
-    "kind": "multi-match",
+    "kind": "matched",
     "presetId": "los-coyotes-cc",
-    "query": "Los Coyotes Country Club | Buena Park, CA",
-    "candidates": [
-      {
-        "id": 1417,
-        "name": "Los Coyotes Country Club (Valley)",
-        "city": "Buena Park"
-      },
-      {
-        "id": 18102,
-        "name": "Los Coyotes Country Club (Vista)",
-        "city": "Buena Park"
-      }
-    ]
+    "gbId": 1417,
+    "gbName": "Los Coyotes Country Club",
+    "pars": [
+      5,
+      3,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -1381,19 +1406,85 @@
     "dbImported": true
   },
   {
-    "kind": "no-match",
+    "kind": "matched",
     "presetId": "barton-creek-fazio-foothills",
-    "query": "Barton Creek Resort - Fazio Foothills | Austin, TX"
+    "gbId": 18828,
+    "gbName": "Barton Creek Resort - Fazio Foothills",
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
-    "kind": "no-match",
+    "kind": "matched",
     "presetId": "barton-creek-fazio-canyons",
-    "query": "Barton Creek Resort - Fazio Canyons | Austin, TX"
+    "gbId": 2293,
+    "gbName": "Barton Creek Resort - Fazio Canyons",
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      5,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
-    "kind": "no-match",
+    "kind": "matched",
     "presetId": "barton-creek-crenshaw-cliffside",
-    "query": "Barton Creek Resort - Crenshaw Cliffside | Austin, TX"
+    "gbId": 18829,
+    "gbName": "Barton Creek Resort - Crenshaw Cliffside",
+    "pars": [
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      5,
+      5,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -1452,9 +1543,31 @@
     "dbImported": true
   },
   {
-    "kind": "no-match",
+    "kind": "matched",
     "presetId": "hills-cc-hills-course",
-    "query": "The Hills Country Club - Hills Course | Austin, TX"
+    "gbId": 18708,
+    "gbName": "The Hills Country Club - Hills Course",
+    "pars": [
+      5,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      5,
+      3,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -1518,21 +1631,31 @@
     "dbImported": true
   },
   {
-    "kind": "multi-match",
+    "kind": "matched",
     "presetId": "roy-kizer",
-    "query": "Roy Kizer Golf Course | Austin, TX",
-    "candidates": [
-      {
-        "id": 2290,
-        "name": "Jimmy Clay/Roy Kizer Golf Course",
-        "city": "Austin"
-      },
-      {
-        "id": 17383,
-        "name": "Jimmy Clay/ Roy Kizer Golf courses (Kizer)",
-        "city": "Austin"
-      }
-    ]
+    "gbId": 17383,
+    "gbName": "Roy Kizer Golf Course",
+    "pars": [
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -2390,21 +2513,31 @@
     "dbImported": true
   },
   {
-    "kind": "multi-match",
+    "kind": "matched",
     "presetId": "grand-golf-club",
-    "query": "The Grand Golf Club | San Diego, CA",
-    "candidates": [
-      {
-        "id": 2020,
-        "name": "The Grand Golf Club",
-        "city": "San Diego"
-      },
-      {
-        "id": 16555,
-        "name": "The Grand Golf Club",
-        "city": "San Diego"
-      }
-    ]
+    "gbId": 2020,
+    "gbName": "The Grand Golf Club",
+    "pars": [
+      4,
+      4,
+      5,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "no-match",
@@ -2440,21 +2573,31 @@
     "dbImported": true
   },
   {
-    "kind": "multi-match",
+    "kind": "matched",
     "presetId": "riverwalk",
-    "query": "Riverwalk Golf Club | San Diego, CA",
-    "candidates": [
-      {
-        "id": 2010,
-        "name": "Riverwalk Golf Club (Presidio)",
-        "city": "San Diego"
-      },
-      {
-        "id": 16545,
-        "name": "Riverwalk Golf Club (Friars)",
-        "city": "San Diego"
-      }
-    ]
+    "gbId": 2010,
+    "gbName": "Riverwalk Golf Club",
+    "pars": [
+      4,
+      3,
+      5,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -3126,21 +3269,31 @@
     "dbImported": true
   },
   {
-    "kind": "multi-match",
+    "kind": "matched",
     "presetId": "western-hills-cc",
-    "query": "Western Hills Country Club | Chino Hills, CA",
-    "candidates": [
-      {
-        "id": 1463,
-        "name": "Western Hills Golf & Country Club",
-        "city": "Chino Hills"
-      },
-      {
-        "id": 16053,
-        "name": "Western Hills Golf & Country Club",
-        "city": "Chino Hills"
-      }
-    ]
+    "gbId": 1463,
+    "gbName": "Western Hills Country Club",
+    "pars": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -3171,21 +3324,31 @@
     "dbImported": true
   },
   {
-    "kind": "multi-match",
+    "kind": "matched",
     "presetId": "eagle-glen-gc",
-    "query": "Eagle Glen Golf Club | Corona, CA",
-    "candidates": [
-      {
-        "id": 1490,
-        "name": "Eagle Glen Golf Club",
-        "city": "Corona"
-      },
-      {
-        "id": 16522,
-        "name": "Eagle Glen Golf Club",
-        "city": "Corona"
-      }
-    ]
+    "gbId": 1490,
+    "gbName": "Eagle Glen Golf Club",
+    "pars": [
+      4,
+      4,
+      5,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -3244,21 +3407,31 @@
     "dbImported": true
   },
   {
-    "kind": "multi-match",
+    "kind": "matched",
     "presetId": "cross-creek-gc",
-    "query": "Cross Creek Golf Club | Temecula, CA",
-    "candidates": [
-      {
-        "id": 2154,
-        "name": "Cross Creek Golf Club",
-        "city": "Temecula"
-      },
-      {
-        "id": 16866,
-        "name": "Cross Creek Golf Club",
-        "city": "Temecula"
-      }
-    ]
+    "gbId": 2154,
+    "gbName": "Cross Creek Golf Club",
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "no-match",
@@ -3271,26 +3444,31 @@
     "query": "Journey at Pechanga | Temecula, CA"
   },
   {
-    "kind": "multi-match",
+    "kind": "matched",
     "presetId": "temecula-creek-inn",
-    "query": "Temecula Creek Inn Golf Course | Temecula, CA",
-    "candidates": [
-      {
-        "id": 2155,
-        "name": "Temecula Creek Inn Golf (Oaks-9 course)",
-        "city": "Temecula"
-      },
-      {
-        "id": 16867,
-        "name": "Temecula Creek Inn Golf (Creek-9 course)",
-        "city": "Temecula"
-      },
-      {
-        "id": 17348,
-        "name": "Temecula Creek Inn Golf (Stonehouse-9 course)",
-        "city": "Temecula"
-      }
-    ]
+    "gbId": 2155,
+    "gbName": "Temecula Creek Inn Golf Course",
+    "pars": [
+      4,
+      5,
+      3,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -3321,21 +3499,31 @@
     "dbImported": true
   },
   {
-    "kind": "multi-match",
+    "kind": "matched",
     "presetId": "redhawk-gc",
-    "query": "Redhawk Golf Club | Temecula, CA",
-    "candidates": [
-      {
-        "id": 2156,
-        "name": "Redhawk Golf Club",
-        "city": "Temecula"
-      },
-      {
-        "id": 16868,
-        "name": "Redhawk Golf Club",
-        "city": "Temecula"
-      }
-    ]
+    "gbId": 2156,
+    "gbName": "Redhawk Golf Club",
+    "pars": [
+      5,
+      4,
+      4,
+      3,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -3871,21 +4059,31 @@
     "query": "Olympic Club - Ocean Course | San Francisco, CA"
   },
   {
-    "kind": "multi-match",
+    "kind": "matched",
     "presetId": "tpc-harding-park",
-    "query": "TPC Harding Park | San Francisco, CA",
-    "candidates": [
-      {
-        "id": 2033,
-        "name": "TPC Harding Park (Harding)",
-        "city": "San Francisco"
-      },
-      {
-        "id": 18131,
-        "name": "TPC Harding Park (Fleming)",
-        "city": "San Francisco"
-      }
-    ]
+    "gbId": 2033,
+    "gbName": "TPC Harding Park",
+    "pars": [
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      3,
+      5,
+      5,
+      3,
+      5,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -4060,21 +4258,31 @@
     "query": "The Boulders - South Course | Carefree, AZ"
   },
   {
-    "kind": "multi-match",
+    "kind": "matched",
     "presetId": "shadow-creek",
-    "query": "Shadow Creek | North Las Vegas, NV",
-    "candidates": [
-      {
-        "id": 5245,
-        "name": "Shadow Creek Golf Course",
-        "city": "North Las Vegas"
-      },
-      {
-        "id": 17179,
-        "name": "Shadow Creek Golf Club",
-        "city": "North Las Vegas"
-      }
-    ]
+    "gbId": 5245,
+    "gbName": "Shadow Creek",
+    "pars": [
+      4,
+      4,
+      4,
+      5,
+      3,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      5,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -4356,378 +4564,2014 @@
     "dbImported": true
   },
   {
-    "kind": "failed",
+    "kind": "multi-match",
     "presetId": "memorial-park",
-    "error": "GolfBert 429 on /v1/courses/?name=Memorial+Park+Golf+Course&city=Houston&state=TX&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Memorial Park Golf Course | Houston, TX",
+    "candidates": [
+      {
+        "id": 2590,
+        "name": "Memorial Park Golf Course",
+        "city": "Houston"
+      },
+      {
+        "id": 15962,
+        "name": "Memorial Park Golf Course",
+        "city": "Houston"
+      }
+    ]
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "blackhorse-north",
-    "error": "GolfBert 429 on /v1/courses/?name=BlackHorse+Golf+Club+-+North+Course&city=Cypress&state=TX&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "BlackHorse Golf Club - North Course | Cypress, TX"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "blackhorse-south",
-    "error": "GolfBert 429 on /v1/courses/?name=BlackHorse+Golf+Club+-+South+Course&city=Cypress&state=TX&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "BlackHorse Golf Club - South Course | Cypress, TX"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "wildcat-highlands",
-    "error": "GolfBert 429 on /v1/courses/?name=The+Wildcat+Golf+Club+-+Highlands+Course&city=Houston&state=TX&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "The Wildcat Golf Club - Highlands Course | Houston, TX"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "wildcat-lakes",
-    "error": "GolfBert 429 on /v1/courses/?name=The+Wildcat+Golf+Club+-+Lakes+Course&city=Houston&state=TX&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "The Wildcat Golf Club - Lakes Course | Houston, TX"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "desert-mountain-cochise",
-    "error": "GolfBert 429 on /v1/courses/?name=Desert+Mountain+-+Cochise+Course&city=Scottsdale&state=AZ&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Desert Mountain - Cochise Course | Scottsdale, AZ"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "desert-mountain-geronimo",
-    "error": "GolfBert 429 on /v1/courses/?name=Desert+Mountain+-+Geronimo+Course&city=Scottsdale&state=AZ&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Desert Mountain - Geronimo Course | Scottsdale, AZ"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "desert-mountain-renegade",
-    "error": "GolfBert 429 on /v1/courses/?name=Desert+Mountain+-+Renegade+Course&city=Scottsdale&state=AZ&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Desert Mountain - Renegade Course | Scottsdale, AZ"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "desert-mountain-outlaw",
-    "error": "GolfBert 429 on /v1/courses/?name=Desert+Mountain+-+Outlaw+Course&city=Scottsdale&state=AZ&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Desert Mountain - Outlaw Course | Scottsdale, AZ"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "desert-mountain-chiricahua",
-    "error": "GolfBert 429 on /v1/courses/?name=Desert+Mountain+-+Chiricahua+Course&city=Scottsdale&state=AZ&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Desert Mountain - Chiricahua Course | Scottsdale, AZ"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "talking-stick-north",
-    "error": "GolfBert 429 on /v1/courses/?name=Talking+Stick+-+North+Course&city=Scottsdale&state=AZ&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Talking Stick - North Course | Scottsdale, AZ"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "talking-stick-south",
-    "error": "GolfBert 429 on /v1/courses/?name=Talking+Stick+-+South+Course&city=Scottsdale&state=AZ&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Talking Stick - South Course | Scottsdale, AZ"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "whisper-rock-lower",
-    "error": "GolfBert 429 on /v1/courses/?name=Whisper+Rock+-+Lower+Course&city=Scottsdale&state=AZ&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Whisper Rock - Lower Course | Scottsdale, AZ"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "whisper-rock-upper",
-    "error": "GolfBert 429 on /v1/courses/?name=Whisper+Rock+-+Upper+Course&city=Scottsdale&state=AZ&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Whisper Rock - Upper Course | Scottsdale, AZ"
   },
   {
-    "kind": "failed",
+    "kind": "matched",
     "presetId": "estancia-club",
-    "error": "GolfBert 429 on /v1/courses/?name=Estancia+Club&city=Scottsdale&state=AZ&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "gbId": 100,
+    "gbName": "Estancia Club, The",
+    "gbCity": "Scottsdale",
+    "pars": [
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      3,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "silverleaf-club",
-    "error": "GolfBert 429 on /v1/courses/?name=Silverleaf+Club&city=Scottsdale&state=AZ&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Silverleaf Club | Scottsdale, AZ"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "mirabel-club",
-    "error": "GolfBert 429 on /v1/courses/?name=Mirabel+Club&city=Scottsdale&state=AZ&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Mirabel Club | Scottsdale, AZ"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "camelback-ambiente",
-    "error": "GolfBert 429 on /v1/courses/?name=Camelback+Golf+Club+-+Ambiente+Course&city=Scottsdale&state=AZ&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Camelback Golf Club - Ambiente Course | Scottsdale, AZ"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "camelback-padre",
-    "error": "GolfBert 429 on /v1/courses/?name=Camelback+Golf+Club+-+Padre+Course&city=Scottsdale&state=AZ&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Camelback Golf Club - Padre Course | Scottsdale, AZ"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "wildfire-faldo",
-    "error": "GolfBert 429 on /v1/courses/?name=Wildfire+Golf+Club+-+Faldo+Championship+Course&city=Phoenix&state=AZ&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Wildfire Golf Club - Faldo Championship Course | Phoenix, AZ"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "wildfire-palmer",
-    "error": "GolfBert 429 on /v1/courses/?name=Wildfire+Golf+Club+-+Palmer+Signature+Course&city=Phoenix&state=AZ&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Wildfire Golf Club - Palmer Signature Course | Phoenix, AZ"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "forest-highlands-canyon",
-    "error": "GolfBert 429 on /v1/courses/?name=Forest+Highlands+-+Canyon+Course&city=Flagstaff&state=AZ&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Forest Highlands - Canyon Course | Flagstaff, AZ"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "forest-highlands-meadow",
-    "error": "GolfBert 429 on /v1/courses/?name=Forest+Highlands+-+Meadow+Course&city=Flagstaff&state=AZ&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Forest Highlands - Meadow Course | Flagstaff, AZ"
   },
   {
-    "kind": "failed",
+    "kind": "matched",
     "presetId": "quintero-golf-club",
-    "error": "GolfBert 429 on /v1/courses/?name=Quintero+Golf+Club&city=Peoria&state=AZ&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "gbId": 4607,
+    "gbName": "Quintero Golf & Country Club",
+    "gbCity": "Peoria",
+    "pars": [
+      4,
+      5,
+      4,
+      4,
+      4,
+      3,
+      4,
+      5,
+      3,
+      5,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "ventana-canyon-mountain",
-    "error": "GolfBert 429 on /v1/courses/?name=Ventana+Canyon+-+Mountain+Course&city=Tucson&state=AZ&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Ventana Canyon - Mountain Course | Tucson, AZ"
   },
   {
-    "kind": "failed",
+    "kind": "matched",
     "presetId": "tpc-summerlin",
-    "error": "GolfBert 429 on /v1/courses/?name=TPC+Summerlin&city=Las+Vegas&state=NV&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "gbId": 5212,
+    "gbName": "TPC Summerlin",
+    "gbCity": "Las Vegas",
+    "pars": [
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "failed",
+    "kind": "matched",
     "presetId": "bears-best-las-vegas",
-    "error": "GolfBert 429 on /v1/courses/?name=Bear%27s+Best+Las+Vegas&city=Las+Vegas&state=NV&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "gbId": 5222,
+    "gbName": "Bear's Best Las Vegas",
+    "gbCity": "Las Vegas",
+    "pars": [
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4,
+      3,
+      4,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "failed",
+    "kind": "matched",
     "presetId": "reflection-bay",
-    "error": "GolfBert 429 on /v1/courses/?name=Reflection+Bay+Golf+Club&city=Henderson&state=NV&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "gbId": 5200,
+    "gbName": "Lake Las Vegas Resort - Reflection Bay and The Falls",
+    "gbCity": "Henderson",
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      3,
+      5,
+      4,
+      4,
+      5,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "failed",
+    "kind": "matched",
     "presetId": "rio-secco",
-    "error": "GolfBert 429 on /v1/courses/?name=Rio+Secco+Golf+Club&city=Henderson&state=NV&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "gbId": 5195,
+    "gbName": "Rio Secco Golf Club",
+    "gbCity": "Henderson",
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      5,
+      5
+    ],
+    "dbImported": true
   },
   {
-    "kind": "failed",
+    "kind": "matched",
     "presetId": "southern-highlands",
-    "error": "GolfBert 429 on /v1/courses/?name=Southern+Highlands+Golf+Club&city=Las+Vegas&state=NV&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "gbId": 5233,
+    "gbName": "Southern Highlands Golf Club",
+    "gbCity": "Las Vegas",
+    "pars": [
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "angel-park-mountain",
-    "error": "GolfBert 429 on /v1/courses/?name=Angel+Park+-+Mountain+Course&city=Las+Vegas&state=NV&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Angel Park - Mountain Course | Las Vegas, NV"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "angel-park-palm",
-    "error": "GolfBert 429 on /v1/courses/?name=Angel+Park+-+Palm+Course&city=Las+Vegas&state=NV&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Angel Park - Palm Course | Las Vegas, NV"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "dragonridge-cc",
-    "error": "GolfBert 429 on /v1/courses/?name=DragonRidge+Country+Club&city=Henderson&state=NV&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "DragonRidge Country Club | Henderson, NV"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "red-rock-cc-mountain",
-    "error": "GolfBert 429 on /v1/courses/?name=Red+Rock+Country+Club+-+Mountain+Course&city=Las+Vegas&state=NV&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Red Rock Country Club - Mountain Course | Las Vegas, NV"
   },
   {
-    "kind": "failed",
+    "kind": "matched",
     "presetId": "edgewood-tahoe",
-    "error": "GolfBert 429 on /v1/courses/?name=Edgewood+Tahoe+Golf+Course&city=Stateline&state=NV&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "gbId": 18454,
+    "gbName": "Edgewood Tahoe G.C.",
+    "gbCity": "Stateline",
+    "pars": [
+      4,
+      4,
+      5,
+      5,
+      3,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      5,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
-    "kind": "failed",
+    "kind": "matched",
     "presetId": "old-greenwood",
-    "error": "GolfBert 429 on /v1/courses/?name=Old+Greenwood+Golf+Course&city=Truckee&state=CA&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "gbId": 18457,
+    "gbName": "Old Greenwood Golf Club",
+    "gbCity": "Truckee",
+    "pars": [
+      4,
+      5,
+      3,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      5,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "failed",
+    "kind": "matched",
     "presetId": "montreux-gcc",
-    "error": "GolfBert 429 on /v1/courses/?name=Montreux+Golf+%26+Country+Club&city=Reno&state=NV&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "gbId": 5260,
+    "gbName": "Montreux Golf & Country Club",
+    "gbCity": "Reno",
+    "pars": [
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      5
+    ],
+    "dbImported": true
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "genoa-lakes-lakes",
-    "error": "GolfBert 429 on /v1/courses/?name=Genoa+Lakes+-+Lakes+Course&city=Genoa&state=NV&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Genoa Lakes - Lakes Course | Genoa, NV"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "incline-village-championship",
-    "error": "GolfBert 429 on /v1/courses/?name=Incline+Village+Championship+Course&city=Incline+Village&state=NV&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Incline Village Championship Course | Incline Village, NV"
   },
   {
-    "kind": "failed",
+    "kind": "multi-match",
     "presetId": "arrowcreek-cc",
-    "error": "GolfBert 429 on /v1/courses/?name=ArrowCreek+Country+Club&city=Reno&state=NV&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "ArrowCreek Country Club | Reno, NV",
+    "candidates": [
+      {
+        "id": 5259,
+        "name": "ArrowCreek Golf Club (Legends course)",
+        "city": "Reno"
+      },
+      {
+        "id": 17485,
+        "name": "Arrowcreek Golf Club (Challenge course)",
+        "city": "Reno"
+      }
+    ]
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "sand-hollow-championship",
-    "error": "GolfBert 429 on /v1/courses/?name=Sand+Hollow+Golf+Resort+-+Championship+Course&city=Hurricane&state=UT&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Sand Hollow Golf Resort - Championship Course | Hurricane, UT"
   },
   {
-    "kind": "failed",
+    "kind": "matched",
     "presetId": "coral-canyon",
-    "error": "GolfBert 429 on /v1/courses/?name=Coral+Canyon+Golf+Course&city=Washington&state=UT&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "gbId": 17516,
+    "gbName": "Coral Canyon Golf Club",
+    "gbCity": "Washington",
+    "pars": [
+      5,
+      5,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      3,
+      5,
+      4,
+      5,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "entrada-snow-canyon",
-    "error": "GolfBert 429 on /v1/courses/?name=Entrada+at+Snow+Canyon+Country+Club&city=St.+George&state=UT&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Entrada at Snow Canyon Country Club | St. George, UT"
   },
   {
-    "kind": "failed",
+    "kind": "matched",
     "presetId": "the-ledges",
-    "error": "GolfBert 429 on /v1/courses/?name=The+Ledges+Golf+Club&city=St.+George&state=UT&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "gbId": 18737,
+    "gbName": "The Ledges of St. George",
+    "gbCity": "St. George",
+    "pars": [
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      4,
+      4,
+      5,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "failed",
+    "kind": "multi-match",
     "presetId": "sunbrook",
-    "error": "GolfBert 429 on /v1/courses/?name=Sunbrook+Golf+Course&city=St.+George&state=UT&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Sunbrook Golf Course | St. George, UT",
+    "candidates": [
+      {
+        "id": 17820,
+        "name": "Sunbrook Golf Club (The Point)",
+        "city": "St. George"
+      },
+      {
+        "id": 17821,
+        "name": "Sunbrook Golf Club (Woodbridge)",
+        "city": "St. George"
+      }
+    ]
   },
   {
-    "kind": "failed",
+    "kind": "matched",
     "presetId": "bonneville-golf",
-    "error": "GolfBert 429 on /v1/courses/?name=Bonneville+Golf+Course&city=Salt+Lake+City&state=UT&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "gbId": 6338,
+    "gbName": "Bonneville Golf Course",
+    "gbCity": "Salt Lake City",
+    "pars": [
+      4,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "mountain-dell-canyon",
-    "error": "GolfBert 429 on /v1/courses/?name=Mountain+Dell+-+Canyon+Course&city=Salt+Lake+City&state=UT&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Mountain Dell - Canyon Course | Salt Lake City, UT"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "mountain-dell-lake",
-    "error": "GolfBert 429 on /v1/courses/?name=Mountain+Dell+-+Lake+Course&city=Salt+Lake+City&state=UT&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Mountain Dell - Lake Course | Salt Lake City, UT"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "promontory-pete-dye",
-    "error": "GolfBert 429 on /v1/courses/?name=Promontory+Club+-+Pete+Dye+Canyon+Course&city=Park+City&state=UT&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Promontory Club - Pete Dye Canyon Course | Park City, UT"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "promontory-nicklaus",
-    "error": "GolfBert 429 on /v1/courses/?name=Promontory+Club+-+Nicklaus+Painted+Valley+Course&city=Park+City&state=UT&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Promontory Club - Nicklaus Painted Valley Course | Park City, UT"
   },
   {
-    "kind": "failed",
+    "kind": "matched",
     "presetId": "park-meadows-cc",
-    "error": "GolfBert 429 on /v1/courses/?name=Park+Meadows+Country+Club&city=Park+City&state=UT&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "gbId": 6316,
+    "gbName": "Park Meadows Golf Club",
+    "gbCity": "Park City",
+    "pars": [
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      3,
+      4,
+      3,
+      5,
+      4,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "glenwild",
-    "error": "GolfBert 429 on /v1/courses/?name=Glenwild+Golf+Club+%26+Spa&city=Park+City&state=UT&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Glenwild Golf Club & Spa | Park City, UT"
   },
   {
-    "kind": "failed",
+    "kind": "matched",
     "presetId": "red-ledges",
-    "error": "GolfBert 429 on /v1/courses/?name=Red+Ledges&city=Heber+City&state=UT&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "gbId": 19660,
+    "gbName": "Red Ledges Golf Club",
+    "gbCity": "Heber City",
+    "pars": [
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "failed",
+    "kind": "matched",
     "presetId": "victory-ranch",
-    "error": "GolfBert 429 on /v1/courses/?name=Victory+Ranch&city=Kamas&state=UT&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "gbId": 19659,
+    "gbName": "Victory Ranch Golf Club",
+    "gbCity": "Kamas",
+    "pars": [
+      4,
+      3,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "soldier-hollow-gold",
-    "error": "GolfBert 429 on /v1/courses/?name=Soldier+Hollow+-+Gold+Course&city=Midway&state=UT&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Soldier Hollow - Gold Course | Midway, UT"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "tpc-sawgrass-stadium",
-    "error": "GolfBert 429 on /v1/courses/?name=TPC+Sawgrass+-+The+Players+Stadium+Course&city=Ponte+Vedra+Beach&state=FL&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "TPC Sawgrass - The Players Stadium Course | Ponte Vedra Beach, FL"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "tpc-sawgrass-dyes-valley",
-    "error": "GolfBert 429 on /v1/courses/?name=TPC+Sawgrass+-+Dye%27s+Valley+Course&city=Ponte+Vedra+Beach&state=FL&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "TPC Sawgrass - Dye's Valley Course | Ponte Vedra Beach, FL"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "streamsong-red",
-    "error": "GolfBert 429 on /v1/courses/?name=Streamsong+Resort+-+Red+Course&city=Streamsong&state=FL&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Streamsong Resort - Red Course | Streamsong, FL"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "streamsong-blue",
-    "error": "GolfBert 429 on /v1/courses/?name=Streamsong+Resort+-+Blue+Course&city=Streamsong&state=FL&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Streamsong Resort - Blue Course | Streamsong, FL"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "streamsong-black",
-    "error": "GolfBert 429 on /v1/courses/?name=Streamsong+Resort+-+Black+Course&city=Streamsong&state=FL&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Streamsong Resort - Black Course | Streamsong, FL"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "trump-doral-blue-monster",
-    "error": "GolfBert 429 on /v1/courses/?name=Trump+National+Doral+-+Blue+Monster+Course&city=Miami&state=FL&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Trump National Doral - Blue Monster Course | Miami, FL"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "trump-doral-red-tiger",
-    "error": "GolfBert 429 on /v1/courses/?name=Trump+National+Doral+-+Red+Tiger+Course&city=Miami&state=FL&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Trump National Doral - Red Tiger Course | Miami, FL"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "trump-doral-gold",
-    "error": "GolfBert 429 on /v1/courses/?name=Trump+National+Doral+-+Gold+Course&city=Miami&state=FL&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Trump National Doral - Gold Course | Miami, FL"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "bay-hill-championship",
-    "error": "GolfBert 429 on /v1/courses/?name=Arnold+Palmer%27s+Bay+Hill+Club+-+Championship+Course&city=Orlando&state=FL&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Arnold Palmer's Bay Hill Club - Championship Course | Orlando, FL"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "pga-national-champion",
-    "error": "GolfBert 429 on /v1/courses/?name=PGA+National+-+Champion+Course&city=Palm+Beach+Gardens&state=FL&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "PGA National - Champion Course | Palm Beach Gardens, FL"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "pga-national-palmer",
-    "error": "GolfBert 429 on /v1/courses/?name=PGA+National+-+Palmer+Course&city=Palm+Beach+Gardens&state=FL&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "PGA National - Palmer Course | Palm Beach Gardens, FL"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "pga-national-squire",
-    "error": "GolfBert 429 on /v1/courses/?name=PGA+National+-+Squire+Course&city=Palm+Beach+Gardens&state=FL&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "PGA National - Squire Course | Palm Beach Gardens, FL"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "pga-national-estate",
-    "error": "GolfBert 429 on /v1/courses/?name=PGA+National+-+Estate+Course&city=Palm+Beach+Gardens&state=FL&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "PGA National - Estate Course | Palm Beach Gardens, FL"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "pga-national-fazio",
-    "error": "GolfBert 429 on /v1/courses/?name=PGA+National+-+Fazio+Course&city=Palm+Beach+Gardens&state=FL&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "PGA National - Fazio Course | Palm Beach Gardens, FL"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "innisbrook-copperhead",
-    "error": "GolfBert 429 on /v1/courses/?name=Innisbrook+Resort+-+Copperhead+Course&city=Palm+Harbor&state=FL&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Innisbrook Resort - Copperhead Course | Palm Harbor, FL"
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "innisbrook-island",
-    "error": "GolfBert 429 on /v1/courses/?name=Innisbrook+Resort+-+Island+Course&city=Palm+Harbor&state=FL&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Innisbrook Resort - Island Course | Palm Harbor, FL"
   },
   {
-    "kind": "failed",
+    "kind": "matched",
     "presetId": "lake-nona",
-    "error": "GolfBert 429 on /v1/courses/?name=Lake+Nona+Golf+%26+Country+Club&city=Orlando&state=FL&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "gbId": 3979,
+    "gbName": "Lake Nona Golf & Country Club",
+    "gbCity": "Orlando",
+    "pars": [
+      4,
+      5,
+      4,
+      3,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "seminole",
-    "error": "GolfBert 429 on /v1/courses/?name=Seminole+Golf+Club&city=Juno+Beach&state=FL&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Seminole Golf Club | Juno Beach, FL"
   },
   {
-    "kind": "failed",
+    "kind": "matched",
     "presetId": "the-concession",
-    "error": "GolfBert 429 on /v1/courses/?name=The+Concession+Golf+Club&city=Bradenton&state=FL&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "gbId": 17277,
+    "gbName": "The Concession Golf Club",
+    "gbCity": "Bradenton",
+    "pars": [
+      4,
+      4,
+      5,
+      3,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      4,
+      5,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "no-match",
+    "presetId": "black-diamond-ranch-quarry",
+    "query": "Black Diamond Ranch - Quarry Course | Lecanto, FL"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "pinehurst-no-2",
+    "query": "Pinehurst Resort - No. 2 Course | Pinehurst, NC"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "pinehurst-no-4",
+    "query": "Pinehurst Resort - No. 4 Course | Pinehurst, NC"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "pinehurst-no-6",
+    "query": "Pinehurst Resort - No. 6 Course | Pinehurst, NC"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "pinehurst-no-7",
+    "query": "Pinehurst Resort - No. 7 Course | Pinehurst, NC"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "pinehurst-no-8",
+    "query": "Pinehurst Resort - No. 8 Course | Pinehurst, NC"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "pinehurst-no-9",
+    "query": "Pinehurst Resort - No. 9 Course | Pinehurst, NC"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "pinehurst-no-10",
+    "query": "Pinehurst Resort - No. 10 Course | Aberdeen, NC"
+  },
+  {
+    "kind": "matched",
+    "presetId": "pine-needles",
+    "gbId": 10498,
+    "gbName": "Pine Needles Lodge & Golf Club",
+    "gbCity": "Southern Pines",
+    "pars": [
+      5,
+      4,
+      3,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "mid-pines",
+    "gbId": 10497,
+    "gbName": "Mid Pines Inn & Golf Club",
+    "gbCity": "Southern Pines",
+    "pars": [
+      4,
+      3,
+      4,
+      4,
+      5,
+      5,
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "tobacco-road",
+    "gbId": 10473,
+    "gbName": "Tobacco Road Golf Club",
+    "gbCity": "Sanford",
+    "pars": [
+      5,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      5,
+      3,
+      4,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "quail-hollow",
+    "gbId": 17133,
+    "gbName": "Quail Hollow Club",
+    "gbCity": "Charlotte",
+    "pars": [
+      4,
+      3,
+      4,
+      4,
+      5,
+      3,
+      5,
+      4,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "multi-match",
+    "presetId": "charlotte-country-club",
+    "query": "Charlotte Country Club | Charlotte, NC",
+    "candidates": [
+      {
+        "id": 10152,
+        "name": "Charlotte Country Club",
+        "city": "Charlotte"
+      },
+      {
+        "id": 10598,
+        "name": "Charlotte Country Club",
+        "city": "Charlotte"
+      }
+    ]
+  },
+  {
+    "kind": "matched",
+    "presetId": "sedgefield",
+    "gbId": 10266,
+    "gbName": "Sedgefield Country Club",
+    "gbCity": "Greensboro",
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      5,
+      3,
+      4,
+      5
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "no-match",
+    "presetId": "kiawah-ocean",
+    "query": "Kiawah Island Golf Resort - Ocean Course | Kiawah Island, SC"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "kiawah-turtle-point",
+    "query": "Kiawah Island Golf Resort - Turtle Point Course | Kiawah Island, SC"
+  },
+  {
+    "kind": "matched",
+    "presetId": "harbour-town",
+    "gbId": 17195,
+    "gbName": "Sea Pines Resort - Harbour Town",
+    "gbCity": "Hilton Head Island",
+    "pars": [
+      4,
+      5,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "no-match",
+    "presetId": "sea-pines-ocean",
+    "query": "The Ocean Course at Sea Pines | Hilton Head Island, SC"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "whistling-straits-straits",
+    "query": "Whistling Straits - Straits Course | Sheboygan, WI"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "whistling-straits-irish",
+    "query": "Whistling Straits - Irish Course | Sheboygan, WI"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "blackwolf-run-river",
+    "query": "Blackwolf Run - River Course | Kohler, WI"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "blackwolf-run-meadow-valleys",
+    "query": "Blackwolf Run - Meadow Valleys Course | Kohler, WI"
+  },
+  {
+    "kind": "matched",
+    "presetId": "erin-hills",
+    "gbId": 7666,
+    "gbName": "Erin Hills Golf Course",
+    "gbCity": "Erin",
+    "pars": [
+      5,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      5
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "no-match",
+    "presetId": "sand-valley-sand-valley",
+    "query": "Sand Valley Golf Resort - Sand Valley Course | Nekoosa, WI"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "sand-valley-mammoth-dunes",
+    "query": "Sand Valley Golf Resort - Mammoth Dunes Course | Nekoosa, WI"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "sand-valley-sedge-valley",
+    "query": "Sand Valley Golf Resort - Sedge Valley Course | Nekoosa, WI"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "cog-hill-dubsdread",
+    "query": "Cog Hill Golf & Country Club - Course No. 4 Dubsdread | Lemont, IL"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "olympia-fields-north",
+    "query": "Olympia Fields Country Club - North Course | Olympia Fields, IL"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "medinah-no-3",
+    "query": "Medinah Country Club - Course No. 3 | Medinah, IL"
+  },
+  {
+    "kind": "matched",
+    "presetId": "crystal-downs",
+    "gbId": 579,
+    "gbName": "Crystal Downs Country Club",
+    "gbCity": "Frankfort",
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "no-match",
+    "presetId": "oakland-hills-south",
+    "query": "Oakland Hills Country Club - South Course | Bloomfield Township, MI"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "pronghorn-nicklaus",
+    "query": "Pronghorn Club - Nicklaus Course | Bend, OR"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "pronghorn-fazio",
+    "query": "Pronghorn Club - Fazio Course | Bend, OR"
+  },
+  {
+    "kind": "matched",
+    "presetId": "tetherow",
+    "gbId": 18882,
+    "gbName": "Tetherow Golf Club",
+    "gbCity": "Bend",
+    "pars": [
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "no-match",
+    "presetId": "brasada-ranch",
+    "query": "Brasada Ranch Golf Course | Powell Butte, OR"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "black-butte-big-meadow",
+    "query": "Black Butte Ranch - Big Meadow Course | Sisters, OR"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "black-butte-glaze-meadow",
+    "query": "Black Butte Ranch - Glaze Meadow Course | Sisters, OR"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "crosswater",
+    "query": "Crosswater Club at Sunriver | Sunriver, OR"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "sunriver-meadows",
+    "query": "Sunriver Resort - Meadows Course | Sunriver, OR"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "sunriver-woodlands",
+    "query": "Sunriver Resort - Woodlands Course | Sunriver, OR"
+  },
+  {
+    "kind": "matched",
+    "presetId": "aspen-lakes",
+    "gbId": 5145,
+    "gbName": "Aspen Lakes Golf Course",
+    "gbCity": "Sisters",
+    "pars": [
+      4,
+      4,
+      5,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      5
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "juniper",
+    "gbId": 5129,
+    "gbName": "Juniper Golf Club",
+    "gbCity": "Redmond",
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      4,
+      5,
+      5,
+      3,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      5
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "no-match",
+    "presetId": "reserve-north",
+    "query": "The Reserve Vineyards & Golf Club - North Course | Aloha, OR"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "reserve-south",
+    "query": "The Reserve Vineyards & Golf Club - South Course | Aloha, OR"
+  },
+  {
+    "kind": "matched",
+    "presetId": "langdon-farms",
+    "gbId": 4986,
+    "gbName": "Langdon Farms Golf Club",
+    "gbCity": "Aurora",
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "no-match",
+    "presetId": "heron-lakes-great-blue",
+    "query": "Heron Lakes - Great Blue Course | Portland, OR"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "heron-lakes-greenback",
+    "query": "Heron Lakes - Greenback Course | Portland, OR"
+  },
+  {
+    "kind": "matched",
+    "presetId": "eastmoreland",
+    "gbId": 5113,
+    "gbName": "Eastmoreland Golf Course",
+    "gbCity": "Portland",
+    "pars": [
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      5,
+      4,
+      5,
+      3,
+      5,
+      4,
+      4,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "waverley",
+    "gbId": 5118,
+    "gbName": "Waverley Country Club",
+    "gbCity": "Portland",
+    "pars": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      3,
+      4,
+      5
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "columbia-edgewater",
+    "gbId": 5121,
+    "gbName": "Columbia Edgewater Country Club",
+    "gbCity": "Portland",
+    "pars": [
+      5,
+      4,
+      5,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "tokatee",
+    "gbId": 5004,
+    "gbName": "Tokatee Golf Club",
+    "gbCity": "Blue River",
+    "pars": [
+      4,
+      4,
+      5,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "eugene-cc",
+    "gbId": 5038,
+    "gbName": "Eugene Country Club",
+    "gbCity": "Eugene",
+    "pars": [
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      3,
+      5,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      5,
+      4,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "no-match",
+    "presetId": "salishan",
+    "query": "Salishan Spa & Golf Resort | Gleneden Beach, OR"
+  },
+  {
+    "kind": "matched",
+    "presetId": "stone-creek",
+    "gbId": 5110,
+    "gbName": "Stone Creek",
+    "gbCity": "Oregon City",
+    "pars": [
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      3,
+      4,
+      5
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "sahalee",
+    "gbId": 17200,
+    "gbName": "Sahalee Country Club (South/North Courses)",
+    "gbCity": "Sammamish",
+    "pars": [
+      4,
+      5,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "no-match",
+    "presetId": "aldarra",
+    "query": "Aldarra Golf Club | Sammamish, WA"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "home-course",
+    "query": "The Home Course | DuPont, WA"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "tumble-creek",
+    "query": "Tumble Creek Club at Suncadia | Cle Elum, WA"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "suncadia-prospector",
+    "query": "Suncadia Resort - Prospector Course | Cle Elum, WA"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "suncadia-rope-rider",
+    "query": "Suncadia Resort - Rope Rider Course | Cle Elum, WA"
+  },
+  {
+    "kind": "matched",
+    "presetId": "mccormick-woods",
+    "gbId": 4866,
+    "gbName": "McCormick Woods Golf Course",
+    "gbCity": "Port Orchard",
+    "pars": [
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "trophy-lake",
+    "gbId": 4868,
+    "gbName": "Trophy Lake Golf & Casting Club",
+    "gbCity": "Port Orchard",
+    "pars": [
+      4,
+      5,
+      3,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "no-match",
+    "presetId": "gold-mountain-olympic",
+    "query": "Gold Mountain Golf Club - Olympic Course | Bremerton, WA"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "gold-mountain-cascade",
+    "query": "Gold Mountain Golf Club - Cascade Course | Bremerton, WA"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "newcastle-coal-creek",
+    "query": "Newcastle Golf Club - Coal Creek Course | Newcastle, WA"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "newcastle-china-creek",
+    "query": "Newcastle Golf Club - China Creek Course | Newcastle, WA"
+  },
+  {
+    "kind": "matched",
+    "presetId": "tacoma-cc",
+    "gbId": 4949,
+    "gbName": "Tacoma Country & Golf Club",
+    "gbCity": "Lakewood",
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      5,
+      4,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "cypress-point",
+    "gbId": 17160,
+    "gbName": "Cypress Point Club",
+    "gbCity": "Pebble Beach",
+    "pars": [
+      4,
+      5,
+      3,
+      4,
+      5,
+      5,
+      3,
+      4,
+      4,
+      5,
+      4,
+      4,
+      4,
+      4,
+      3,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "poppy-hills",
+    "gbId": 1887,
+    "gbName": "Poppy Hills Golf Course",
+    "gbCity": "Pebble Beach",
+    "pars": [
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      5,
+      5,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "no-match",
+    "presetId": "mpcc-dunes",
+    "query": "Monterey Peninsula Country Club - Dunes Course | Pebble Beach, CA"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "mpcc-shore",
+    "query": "Monterey Peninsula Country Club - Shore Course | Pebble Beach, CA"
+  },
+  {
+    "kind": "matched",
+    "presetId": "quail-lodge",
+    "gbId": 1441,
+    "gbName": "Quail Lodge Resort & Golf Club",
+    "gbCity": "Carmel",
+    "pars": [
+      5,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      5,
+      5,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "pacific-grove",
+    "gbId": 1830,
+    "gbName": "Pacific Grove Municipal Golf Course",
+    "gbCity": "Pacific Grove",
+    "pars": [
+      3,
+      3,
+      4,
+      4,
+      5,
+      5,
+      4,
+      4,
+      3,
+      3,
+      4,
+      5,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "no-match",
+    "presetId": "bayonet",
+    "query": "Bayonet & Black Horse - Bayonet Course | Seaside, CA"
+  },
+  {
+    "kind": "no-match",
+    "presetId": "black-horse",
+    "query": "Bayonet & Black Horse - Black Horse Course | Seaside, CA"
+  },
+  {
+    "kind": "matched",
+    "presetId": "lake-merced",
+    "gbId": 1503,
+    "gbName": "Lake Merced Golf Club",
+    "gbCity": "Daly City",
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      4,
+      5
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "stanford",
+    "gbId": 2122,
+    "gbName": "Stanford University Golf Course, The",
+    "gbCity": "Stanford",
+    "pars": [
+      5,
+      4,
+      3,
+      3,
+      4,
+      4,
+      3,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "crystal-springs",
+    "gbId": 1420,
+    "gbName": "Crystal Springs Golf Course",
+    "gbCity": "Burlingame",
+    "pars": [
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      3,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      5
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "lincoln-park-sf",
+    "gbId": 2029,
+    "gbName": "Lincoln Park Golf Course",
+    "gbCity": "San Francisco",
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      3,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "meadow-club",
+    "gbId": 1549,
+    "gbName": "Meadow Club",
+    "gbCity": "Fairfax",
+    "pars": [
+      5,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      5,
+      3,
+      5,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "no-match",
+    "presetId": "the-bridges",
+    "query": "The Bridges Golf Club | San Ramon, CA"
+  },
+  {
+    "kind": "matched",
+    "presetId": "wente-vineyards",
+    "gbId": 1698,
+    "gbName": "Course at Wente Vineyards, The",
+    "gbCity": "Livermore",
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
+  },
+  {
+    "kind": "matched",
+    "presetId": "tilden-park",
+    "gbId": 1390,
+    "gbName": "Tilden Park Golf Course",
+    "gbCity": "Berkeley",
+    "pars": [
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "failed",
-    "presetId": "black-diamond-ranch-quarry",
-    "error": "GolfBert 429 on /v1/courses/?name=Black+Diamond+Ranch+-+Quarry+Course&city=Lecanto&state=FL&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "presetId": "silverado-north",
+    "error": "GolfBert 429 on /v1/courses/?name=Silverado+Resort+-+North+Course&city=Napa&state=CA&limit=5: {\"message\":\"Limit Exceeded\"}"
   }
 ]
