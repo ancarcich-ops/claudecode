@@ -679,6 +679,70 @@ export default async function MatchPage({
         </section>
       )}
 
+      {/* Inline Team-vs-Team standings. For a "Both" match the team
+          competition IS the point, so we surface its leaderboards
+          right above the tabs instead of burying them in Side games. */}
+      {(() => {
+        const tvt = sideGameSections.find((sg) => sg.kind === "TEAM_VS_TEAM");
+        if (!tvt || tvt.leaderboards.length === 0) return null;
+        return (
+          <section className="card p-4">
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <h2 className="font-display text-base font-semibold text-ink">
+                Teams
+              </h2>
+              <span className="text-[11px] text-mute">
+                {tvt.leaderboards.length === 1
+                  ? "Live"
+                  : `${tvt.leaderboards.length} rules`}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {tvt.leaderboards.map((lb) => (
+                <div
+                  key={lb.key}
+                  className="border border-border rounded-md p-3"
+                >
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="text-xs uppercase tracking-wider text-accent font-medium">
+                      {lb.title}
+                    </div>
+                    {lb.subtitle && (
+                      <div className="text-[10px] text-mute">{lb.subtitle}</div>
+                    )}
+                  </div>
+                  <ul className="space-y-1.5">
+                    {lb.rows.map((r, i) => (
+                      <li
+                        key={r.playerId}
+                        className="flex items-center justify-between text-sm"
+                      >
+                        <span
+                          className={
+                            "truncate " +
+                            (r.isLeader ? "text-ink font-medium" : "text-mute")
+                          }
+                        >
+                          {i + 1}. {r.player}
+                        </span>
+                        <span
+                          className={
+                            "font-mono tabular-nums shrink-0 " +
+                            (r.isLeader ? "text-accent" : "text-mute")
+                          }
+                        >
+                          {r.value}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+      })()}
+
       <MatchTabs
         defaultTabId="scorecard"
         tabs={buildMatchTabs({
