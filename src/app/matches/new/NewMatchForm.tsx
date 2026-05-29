@@ -1560,10 +1560,18 @@ export default function NewMatchForm({
             <span className="text-[11px] text-mute">{sideGames.size} on</span>
           </div>
           <p className="text-[11px] text-mute mb-3">
-            Track extra games alongside the main{" "}
-            {modeCopy.label.toLowerCase()} match. Leaderboards update live as
-            scores come in.
+            Side games are <span className="text-ink">optional</span>. Pick any
+            you&apos;d like to track below &mdash; or just open the market to
+            get started.
           </p>
+          <OpenMarketButton label="Open market →" />
+          <div className="flex items-center gap-3 my-3">
+            <div className="h-px flex-1 bg-borderSoft" />
+            <span className="text-[10px] uppercase tracking-wider text-faint shrink-0">
+              or add side games
+            </span>
+            <div className="h-px flex-1 bg-borderSoft" />
+          </div>
           <div className="space-y-2">
             {/* TEAM_VS_TEAM is intentionally hidden from this list --
                 the only way to enable it is via the "Both" format
