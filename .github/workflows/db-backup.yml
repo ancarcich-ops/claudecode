@@ -1,0 +1,61 @@
+name: Database backup
+
+# Daily logical backup of the production Postgres (Neon) database.
+# Runs pg_dump and uploads the dump as a workflow artifact. This is the
+# safety net that lets us recover from an accidental data loss within
+# the artifact retention window (90 days) -- independent of Neon's
+# own free-tier 6-hour history.
+#
+# Setup (one-time): add a repository secret named BACKUP_DATABASE_URL
+# with a DIRECT (non-pooled) Neon connection string -- i.e. the host
+# WITHOUT "-pooler". pg_dump needs a session-level connection and fails
+# through the pgbouncer pooler endpoint.
+#   Settings -> Secrets and variables -> Actions -> New repository secret
+#   Name:  BACKUP_DATABASE_URL
+#   Value: postgresql://neondb_owner:PASSWORD@ep-curly-block-aqep9zw8.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require
+
+on:
+  schedule:
+    # 09:00 UTC daily (~1-2am Pacific). GitHub cron is UTC.
+    - cron: "0 9 * * *"
+  # Allow manual runs from the Actions tab any time.
+  workflow_dispatch: {}
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    # No-op (skips, doesn't fail) if the secret isn't configured yet.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.repository_owner != '' }}
+    steps:
+      - name: Guard - require BACKUP_DATABASE_URL
+        env:
+          BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+        run: |
+          if [ -z "$BACKUP_DATABASE_URL" ]; then
+            echo "::error::BACKUP_DATABASE_URL secret is not set. See the workflow header for setup steps."
+            exit 1
+          fi
+
+      - name: Dump database
+        env:
+          BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+        run: |
+          STAMP="$(date -u +%Y%m%d-%H%M%S)"
+          OUT="backup-${STAMP}.sql.gz"
+          # pg_dump 17 (newest) can dump PG 16 and 17 servers; run it
+          # from the official image so the client version always matches
+          # or exceeds Neon's server. --no-owner / --no-privileges keep
+          # the dump portable for restore into any role.
+          docker run --rm -e PGURL="$BACKUP_DATABASE_URL" postgres:17-alpine \
+            sh -c 'pg_dump "$PGURL" --no-owner --no-privileges' \
+            | gzip > "$OUT"
+          echo "Wrote $OUT ($(du -h "$OUT" | cut -f1))"
+          echo "ARTIFACT_NAME=$OUT" >> "$GITHUB_ENV"
+
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: ${{ env.ARTIFACT_NAME }}
+          retention-days: 90
+          if-no-files-found: error
