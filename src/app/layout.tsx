@@ -6,6 +6,7 @@ import BottomTabBar from "@/components/BottomTabBar";
 import HeaderBar from "@/components/HeaderBar";
 import { getSettings } from "@/lib/settings";
 import { getWhoOrDefault } from "@/lib/identity";
+import { paletteKey } from "@/lib/palettes";
 
 const display = Fraunces({
   subsets: ["latin"],
@@ -21,8 +22,8 @@ const body = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "Bloom — Geena's Cravings",
-  description: "A sweet little tracker for Geena's pregnancy cravings 🌸",
+  title: "Bloom — Pregnancy Cravings",
+  description: "A sweet little tracker for pregnancy cravings 🌸",
   icons: { icon: "/icon.svg", apple: "/apple-icon.svg" },
   manifest: "/manifest.webmanifest",
   appleWebApp: {
@@ -50,7 +51,11 @@ export default async function RootLayout({
   ]);
 
   return (
-    <html lang="en" className={`${display.variable} ${body.variable}`}>
+    <html
+      lang="en"
+      data-palette={paletteKey(settings.palette)}
+      className={`${display.variable} ${body.variable}`}
+    >
       <head>
         <script
           dangerouslySetInnerHTML={{

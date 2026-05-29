@@ -15,8 +15,6 @@ import {
   CartesianGrid,
 } from "recharts";
 
-const ACCENT = "#ec7ba4";
-
 export type Slice = { name: string; value: number; color: string };
 export type Bar2 = { label: string; count: number };
 
@@ -53,7 +51,7 @@ export function CategoryPie({ data }: { data: Slice[] }) {
   );
 }
 
-export function TopFoods({ data }: { data: Bar2[] }) {
+export function TopFoods({ data, accent = "#ec7ba4" }: { data: Bar2[]; accent?: string }) {
   return (
     <div style={{ height: Math.max(120, data.length * 38) }} className="w-full">
       <ResponsiveContainer>
@@ -68,22 +66,22 @@ export function TopFoods({ data }: { data: Bar2[] }) {
             tick={{ fontSize: 12 }}
           />
           <Tooltip cursor={{ fill: "rgb(var(--color-panel2))" }} />
-          <Bar dataKey="count" fill={ACCENT} radius={[6, 6, 6, 6]} barSize={18} />
+          <Bar dataKey="count" fill={accent} radius={[6, 6, 6, 6]} barSize={18} />
         </BarChart>
       </ResponsiveContainer>
     </div>
   );
 }
 
-export function OverTime({ data }: { data: Bar2[] }) {
+export function OverTime({ data, accent = "#ec7ba4" }: { data: Bar2[]; accent?: string }) {
   return (
     <div className="h-52 w-full">
       <ResponsiveContainer>
         <AreaChart data={data} margin={{ left: -20, right: 8, top: 8 }}>
           <defs>
             <linearGradient id="craveFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={ACCENT} stopOpacity={0.5} />
-              <stop offset="100%" stopColor={ACCENT} stopOpacity={0} />
+              <stop offset="0%" stopColor={accent} stopOpacity={0.5} />
+              <stop offset="100%" stopColor={accent} stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--color-borderSoft))" vertical={false} />
@@ -93,7 +91,7 @@ export function OverTime({ data }: { data: Bar2[] }) {
           <Area
             type="monotone"
             dataKey="count"
-            stroke={ACCENT}
+            stroke={accent}
             strokeWidth={2.5}
             fill="url(#craveFill)"
           />
@@ -103,7 +101,7 @@ export function OverTime({ data }: { data: Bar2[] }) {
   );
 }
 
-export function TrimesterBars({ data }: { data: Bar2[] }) {
+export function TrimesterBars({ data, accent = "#ec7ba4" }: { data: Bar2[]; accent?: string }) {
   return (
     <div className="h-52 w-full">
       <ResponsiveContainer>
@@ -112,7 +110,7 @@ export function TrimesterBars({ data }: { data: Bar2[] }) {
           <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
           <YAxis allowDecimals={false} tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
           <Tooltip cursor={{ fill: "rgb(var(--color-panel2))" }} />
-          <Bar dataKey="count" fill={ACCENT} radius={[8, 8, 0, 0]} barSize={48} />
+          <Bar dataKey="count" fill={accent} radius={[8, 8, 0, 0]} barSize={48} />
         </BarChart>
       </ResponsiveContainer>
     </div>

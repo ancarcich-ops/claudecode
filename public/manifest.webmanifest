@@ -1,7 +1,7 @@
 {
-  "name": "Bloom — Geena's Cravings",
+  "name": "Bloom — Pregnancy Cravings",
   "short_name": "Bloom",
-  "description": "A sweet little tracker for Geena's pregnancy cravings.",
+  "description": "A sweet little tracker for pregnancy cravings.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#fff6f2",

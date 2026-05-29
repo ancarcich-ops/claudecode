@@ -6,6 +6,7 @@ import { prisma } from "./db";
 import { getWhoOrDefault, setWhoCookie, type Who } from "./identity";
 import { getSettings } from "./settings";
 import { pregnancyProgress } from "./pregnancy";
+import { paletteKey } from "./palettes";
 
 function str(form: FormData, key: string): string {
   const v = form.get(key);
@@ -164,21 +165,17 @@ export async function deleteAversion(id: string) {
 
 export async function updateSettings(form: FormData) {
   const dueDateRaw = str(form, "dueDate");
+  const fields = {
+    dueDate: dueDateRaw ? new Date(dueDateRaw) : null,
+    momName: str(form, "momName") || "Mom",
+    partnerName: str(form, "partnerName") || "Partner",
+    babyName: str(form, "babyName") || null,
+    palette: paletteKey(str(form, "palette")),
+  };
   await prisma.settings.upsert({
     where: { id: "singleton" },
-    update: {
-      dueDate: dueDateRaw ? new Date(dueDateRaw) : null,
-      momName: str(form, "momName") || "Geena",
-      partnerName: str(form, "partnerName") || "Daddy",
-      babyName: str(form, "babyName") || null,
-    },
-    create: {
-      id: "singleton",
-      dueDate: dueDateRaw ? new Date(dueDateRaw) : null,
-      momName: str(form, "momName") || "Geena",
-      partnerName: str(form, "partnerName") || "Daddy",
-      babyName: str(form, "babyName") || null,
-    },
+    update: fields,
+    create: { id: "singleton", ...fields },
   });
   revalidatePath("/", "layout");
 }

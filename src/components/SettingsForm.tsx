@@ -4,17 +4,21 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { updateSettings } from "@/lib/actions";
+import PalettePicker from "./PalettePicker";
+import type { PaletteKey } from "@/lib/palettes";
 
 export default function SettingsForm({
   dueDate,
   momName,
   partnerName,
   babyName,
+  palette,
 }: {
   dueDate: string; // yyyy-mm-dd or ""
   momName: string;
   partnerName: string;
   babyName: string;
+  palette: PaletteKey;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -59,6 +63,11 @@ export default function SettingsForm({
           Baby&apos;s name / nickname <span className="text-faint normal-case">(optional)</span>
         </label>
         <input id="babyName" name="babyName" defaultValue={babyName} placeholder="Baby girl 💕" className="input" />
+      </div>
+      <div>
+        <span className="label">Color theme</span>
+        <PalettePicker defaultValue={palette} />
+        <p className="mt-2 text-xs text-faint">Tap a color to preview it instantly; Save to keep it.</p>
       </div>
       <button type="submit" disabled={pending} className="btn btn-primary w-full py-2.5">
         {pending ? "Saving…" : "Save"}

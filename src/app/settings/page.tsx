@@ -1,4 +1,5 @@
 import { getSettings } from "@/lib/settings";
+import { paletteKey } from "@/lib/palettes";
 import SettingsForm from "@/components/SettingsForm";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -25,6 +26,7 @@ export default async function SettingsPage() {
         momName={settings.momName}
         partnerName={settings.partnerName}
         babyName={settings.babyName ?? ""}
+        palette={paletteKey(settings.palette)}
       />
 
       <div>

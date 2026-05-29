@@ -52,8 +52,9 @@ model Aversion {
 model Settings {
   id          String    @id @default("singleton")
   dueDate     DateTime?
-  momName     String    @default("Geena")
-  partnerName String    @default("Daddy")
+  momName     String    @default("Mom")
+  partnerName String    @default("Partner")
   babyName    String?
+  palette     String    @default("blush")
   updatedAt   DateTime  @default(now()) @updatedAt
 }

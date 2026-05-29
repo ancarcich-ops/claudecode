@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
+import { accentFor } from "@/lib/palettes";
 import { categoryMeta } from "@/lib/categories";
 import { CategoryPie, TopFoods, OverTime, TrimesterBars, type Slice, type Bar2 } from "@/components/charts";
 import EmptyState from "@/components/EmptyState";
@@ -72,6 +73,8 @@ export default async function TrendsPage() {
     cravings.reduce((s, c) => s + c.intensity, 0) / cravings.length
   ).toFixed(1);
 
+  const accent = accentFor(settings.palette);
+
   return (
     <div className="space-y-5">
       <h1 className="font-display text-2xl font-semibold text-ink">Trends 📊</h1>
@@ -86,19 +89,19 @@ export default async function TrendsPage() {
       </ChartCard>
 
       <ChartCard title="Most-craved foods" subtitle="Her greatest hits">
-        <TopFoods data={topFoods} />
+        <TopFoods data={topFoods} accent={accent} />
       </ChartCard>
 
       <ChartCard
         title={haveWeeks ? "Cravings by week" : "Cravings by month"}
         subtitle="When the cravings strike"
       >
-        <OverTime data={overTime} />
+        <OverTime data={overTime} accent={accent} />
       </ChartCard>
 
       {hasTrimester && (
         <ChartCard title="By trimester" subtitle="How appetite shifts over time">
-          <TrimesterBars data={triCounts} />
+          <TrimesterBars data={triCounts} accent={accent} />
         </ChartCard>
       )}
     </div>

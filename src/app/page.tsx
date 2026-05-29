@@ -79,7 +79,7 @@ export default async function HomePage() {
         <EmptyState
           emoji="🍓"
           title="No cravings yet"
-          subtitle="Tap the + to log the first one. Geena, that means you too!"
+          subtitle={`Tap the + to log the first one. ${settings.momName}, that means you too!`}
           ctaHref="/log"
           ctaLabel="Log a craving"
         />

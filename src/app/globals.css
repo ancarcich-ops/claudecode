@@ -44,6 +44,27 @@
   --recharts-axis: 194 155 172;
 }
 
+/* ---- Per-instance accent palettes (data-palette on <html>) ----
+   Each copy of the app stores its palette in Settings; the accent applies in
+   both day & dusk, while the soft background tint only shifts in day mode. */
+[data-palette="sky"] { --color-accent: 90 166 220; --color-accentDim: 58 138 196; }
+[data-palette="sky"]:not([data-theme="dark"]) { --color-bg: 244 249 255; --color-panel2: 232 242 252; --color-border: 205 224 242; --color-borderSoft: 224 236 249; }
+
+[data-palette="lavender"] { --color-accent: 168 139 220; --color-accentDim: 138 106 198; }
+[data-palette="lavender"]:not([data-theme="dark"]) { --color-bg: 250 247 255; --color-panel2: 240 235 251; --color-border: 222 213 242; --color-borderSoft: 235 230 249; }
+
+[data-palette="mint"] { --color-accent: 63 185 143; --color-accentDim: 42 162 122; }
+[data-palette="mint"]:not([data-theme="dark"]) { --color-bg: 244 252 249; --color-panel2: 230 247 240; --color-border: 205 234 222; --color-borderSoft: 224 244 236; }
+
+[data-palette="peach"] { --color-accent: 239 143 90; --color-accentDim: 222 120 72; --ink-on-accent: 60 33 20; }
+[data-palette="peach"]:not([data-theme="dark"]) { --color-bg: 255 248 243; --color-panel2: 255 238 230; --color-border: 247 222 208; --color-borderSoft: 251 233 224; }
+
+[data-palette="sunshine"] { --color-accent: 224 169 59; --color-accentDim: 198 146 44; --ink-on-accent: 60 45 18; }
+[data-palette="sunshine"]:not([data-theme="dark"]) { --color-bg: 255 251 240; --color-panel2: 252 245 226; --color-border: 240 228 196; --color-borderSoft: 248 240 220; }
+
+[data-palette="rose"] { --color-accent: 224 90 120; --color-accentDim: 198 66 98; }
+[data-palette="rose"]:not([data-theme="dark"]) { --color-bg: 255 245 246; --color-panel2: 253 233 236; --color-border: 246 211 217; --color-borderSoft: 251 229 233; }
+
 html,
 body {
   background: rgb(var(--color-bg));
