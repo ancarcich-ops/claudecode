@@ -193,6 +193,9 @@ body {
 @keyframes flicker { 0%,100% { opacity: 1; } 50% { opacity: 0.7; } }
 .flicker { animation: flicker 1.6s ease-in-out infinite; }
 
+/* Auth primary-button loading dots (login flow). */
+@keyframes dotBlink { 0%,100% { opacity: 0.25; } 50% { opacity: 1; } }
+
 /* Ticker tape marquee. Content is duplicated for seamless loop. */
 @keyframes scroll-l { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 .scroll-l { animation: scroll-l 28s linear infinite; }

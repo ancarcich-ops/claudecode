@@ -17,16 +17,8 @@ export default async function LoginPage({
   if (user) redirect(next);
 
   return (
-    <div className="mx-auto max-w-md mt-16">
-      <div className="card p-6">
-        <h1 className="font-display text-2xl font-semibold tracking-tight mb-1">
-          Welcome back.
-        </h1>
-        <p className="text-sm text-mute mb-5">
-          Sign in to open lines, log scores, and track your group.
-        </p>
-        <SignInForm next={next} />
-      </div>
+    <div className="mx-auto max-w-sm w-full px-1 pt-8 sm:pt-12">
+      <SignInForm next={next} />
     </div>
   );
 }
