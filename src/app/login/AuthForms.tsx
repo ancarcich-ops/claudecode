@@ -18,6 +18,16 @@ import {
 
 type AuthState = { error: string } | { ok: true } | undefined;
 
+// Carry the post-auth destination across the sign-in <-> sign-up links so an
+// invite flow (e.g. /login?next=/groups/join?code=XXX) survives the user
+// switching forms. Without this a new invitee who taps "Create account"
+// loses the join intent and lands on the home page instead of the group.
+function withNext(path: string, next: string) {
+  return next && next !== "/"
+    ? `${path}?next=${encodeURIComponent(next)}`
+    : path;
+}
+
 // ── Field primitives ────────────────────────────────────────────────
 function FieldLabel({
   children,
@@ -286,7 +296,11 @@ export function SignInForm({ next }: { next: string }) {
       <ForgotLink />
       <ErrorNote state={state} />
       <PrimaryButton label="Sign in" />
-      <SecondaryFooter lead="New here?" href="/signup" action="Create account" />
+      <SecondaryFooter
+        lead="New here?"
+        href={withNext("/signup", next)}
+        action="Create account"
+      />
     </form>
   );
 }
@@ -336,7 +350,7 @@ export function SignUpForm({ next }: { next: string }) {
       </div>
       <SecondaryFooter
         lead="Already a member?"
-        href="/login"
+        href={withNext("/login", next)}
         action="Sign in"
       />
     </form>
