@@ -204,7 +204,12 @@ body {
 }
 .field-active {
   animation: field-ring 2.2s ease-in-out infinite;
-  border-radius: 0.6rem;
+  border-radius: 0.75rem;
+  /* Push the ring outward from the content (toward the card edge) so it
+     frames the field with breathing room instead of crowding the text.
+     Equal padding + negative margin keeps surrounding layout in place. */
+  padding: 0.7rem;
+  margin: -0.7rem;
 }
 @media (prefers-reduced-motion: reduce) {
   .field-active { animation: none; box-shadow: 0 0 0 1px rgb(var(--color-accent) / 0.6); }

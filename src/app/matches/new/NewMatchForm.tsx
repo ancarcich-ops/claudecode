@@ -681,6 +681,7 @@ export default function NewMatchForm({
                     onClick={() => {
                       onCourseChange(c.name);
                       setNearby(null);
+                      setRoundStep((s) => (s === 0 ? 1 : s));
                     }}
                     className="w-full text-left px-2.5 py-2 text-sm hover:bg-panel/70 flex items-center justify-between gap-2"
                   >
@@ -721,6 +722,7 @@ export default function NewMatchForm({
                         onClick={() => {
                           onCourseChange(c);
                           setCourseFocused(false);
+                          setRoundStep((s) => (s === 0 ? 1 : s));
                         }}
                         className="w-full text-left px-2.5 py-2 text-sm hover:bg-panel/70 border-b border-border last:border-b-0"
                       >
@@ -743,6 +745,7 @@ export default function NewMatchForm({
                         onClick={() => {
                           onCourseChange(p.name);
                           setCourseFocused(false);
+                          setRoundStep((s) => (s === 0 ? 1 : s));
                         }}
                         className="w-full text-left px-2.5 py-2 hover:bg-panel/70 block"
                       >
@@ -874,6 +877,8 @@ export default function NewMatchForm({
                     onClick={() => {
                       onHolesChange(opt.holes);
                       setStartingHole(opt.start);
+                      // Holes is the decisive tap in the tee+holes group.
+                      setRoundStep((s) => (s === 1 ? 2 : s));
                     }}
                     className={
                       "flex items-center justify-center rounded-md border px-2 py-2 transition min-h-[3.25rem] " +
@@ -1071,7 +1076,13 @@ export default function NewMatchForm({
                 <button
                   key={m}
                   type="button"
-                  onClick={() => changeScoringMode(m)}
+                  onClick={() => {
+                    changeScoringMode(m);
+                    // Individual: scoring is the last decision in this
+                    // group, so a tap completes it. Teams/Both still have
+                    // team config below, so they use Continue.
+                    if (format === "INDIVIDUAL") setRoundStep((s) => (s < 3 ? 3 : s));
+                  }}
                   className={
                     "flex flex-col items-center justify-center gap-0.5 rounded-md border px-2 py-2 transition min-h-[3.25rem] " +
                     (active
