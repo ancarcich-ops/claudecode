@@ -48,6 +48,7 @@ export default function OnCourseMode({
   myMatchPlayerId,
   players,
   wind,
+  startMatchAction,
 }: {
   matchId: string;
   courseName: string;
@@ -74,6 +75,9 @@ export default function OnCourseMode({
     scoresByHole: Record<number, number>;
   }>;
   wind: { speedMph: number; fromDeg: number } | null;
+  // When set (pre-round / UPCOMING), tapping the launcher marks the match
+  // live before opening the GPS view, so "start the round" is one tap.
+  startMatchAction?: (formData: FormData) => Promise<void>;
 }) {
   // Normalize the optional prop once so every downstream consumer can
   // treat it as a guaranteed array without re-checking.
@@ -247,8 +251,20 @@ export default function OnCourseMode({
     return (
       <button
         type="button"
-        onClick={() => setActive(true)}
-        className="btn btn-primary w-full sm:w-auto"
+        disabled={pending}
+        onClick={() => {
+          // Open GPS immediately for a snappy feel; if the match hasn't
+          // started yet, flip it to live in the background.
+          setActive(true);
+          if (startMatchAction) {
+            const fd = new FormData();
+            fd.set("matchId", matchId);
+            startTransition(() => {
+              startMatchAction(fd).catch(() => {});
+            });
+          }
+        }}
+        className="btn btn-primary w-full sm:w-auto disabled:opacity-60"
       >
         Start on-course GPS and scorecard →
       </button>
