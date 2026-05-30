@@ -8,8 +8,10 @@
 //   under par (birdie) -> solid accent (emerald) + "-1"
 //   eagle              -> solid gold + "-2" (or more for albatross etc.)
 //   par                -> mute fill at 32% (neutral disc, no number)
-//   bogey              -> solid danger fill + "+1"
-//   double or worse    -> solid danger fill + the actual "+2", "+3", ...
+//   bogey              -> muted danger fill (darker red) + "+1"
+//   double or worse    -> solid danger fill (bright red) + the actual
+//                         "+2", "+3", ... so the brighter red and the
+//                         halo together make "worse than bogey" obvious
 //   current hole       -> dashed accent border, accent 8% fill
 //   unplayed           -> 1px border, transparent fill
 //
@@ -65,7 +67,7 @@ function Dot({ dot }: { dot: DotData }) {
       case "par":
         return "bg-mute/30 border border-mute/30";
       case "bogey":
-        return "bg-danger text-white";
+        return "bg-danger/55 text-white";
       case "double":
         return "bg-danger shadow-[0_0_0_1.5px_rgb(var(--color-danger)/0.5)] text-white";
       case "current":
