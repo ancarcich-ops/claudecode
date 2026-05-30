@@ -32,7 +32,6 @@
     "presetId": "riviera-cc",
     "gbId": 1831,
     "gbName": "Riviera Country Club, The",
-    "gbCity": "Pacific Palisades",
     "pars": [
       5,
       4,
@@ -230,7 +229,6 @@
     "presetId": "hansen-dam",
     "gbId": 1833,
     "gbName": "Hansen Dam Golf Course",
-    "gbCity": "Pacoima",
     "pars": [
       4,
       5,
@@ -258,7 +256,6 @@
     "presetId": "woodley-lakes",
     "gbId": 2198,
     "gbName": "Woodley Lakes Golf Course",
-    "gbCity": "Van Nuys",
     "pars": [
       4,
       4,
@@ -286,7 +283,6 @@
     "presetId": "los-verdes",
     "gbId": 1930,
     "gbName": "Los Verdes Golf Course",
-    "gbCity": "Rancho Palos Verdes",
     "pars": [
       5,
       4,
@@ -314,7 +310,6 @@
     "presetId": "el-dorado-park",
     "gbId": 1710,
     "gbName": "El Dorado Park Golf Club",
-    "gbCity": "Long Beach",
     "pars": [
       4,
       4,
@@ -342,7 +337,6 @@
     "presetId": "rio-hondo",
     "gbId": 1519,
     "gbName": "Rio Hondo Golf Club",
-    "gbCity": "Downey",
     "pars": [
       4,
       4,
@@ -560,7 +554,6 @@
     "presetId": "coyote-hills",
     "gbId": 1578,
     "gbName": "Coyote Hills Golf Course",
-    "gbCity": "Fullerton",
     "pars": [
       4,
       4,
@@ -723,7 +716,6 @@
     "presetId": "whittier-narrows-gc",
     "gbId": 1975,
     "gbName": "Whittier Narrows Golf Course",
-    "gbCity": "Rosemead",
     "pars": [
       5,
       3,
@@ -751,7 +743,6 @@
     "presetId": "calabasas-cc",
     "gbId": 1422,
     "gbName": "Calabasas Golf & Country Club",
-    "gbCity": "Calabasas",
     "pars": [
       4,
       4,
@@ -779,7 +770,6 @@
     "presetId": "el-caballero-cc",
     "gbId": 2149,
     "gbName": "El Caballero Country Club",
-    "gbCity": "Tarzana",
     "pars": [
       5,
       4,
@@ -834,7 +824,6 @@
     "presetId": "annandale-gc",
     "gbId": 1874,
     "gbName": "Annandale Golf Course",
-    "gbCity": "Pasadena",
     "pars": [
       4,
       4,
@@ -916,7 +905,6 @@
     "presetId": "hillcrest-cc-la",
     "gbId": 1720,
     "gbName": "Hillcrest Country Club",
-    "gbCity": "Los Angeles",
     "pars": [
       4,
       3,
@@ -944,7 +932,6 @@
     "presetId": "friendly-hills-cc",
     "gbId": 2229,
     "gbName": "Friendly Hills Country Club",
-    "gbCity": "Whittier",
     "pars": [
       5,
       3,
@@ -999,7 +986,6 @@
     "presetId": "meadowlark-gc",
     "gbId": 1623,
     "gbName": "Meadowlark Golf Course",
-    "gbCity": "Huntington Beach",
     "pars": [
       4,
       4,
@@ -1027,7 +1013,6 @@
     "presetId": "lakewood-cc",
     "gbId": 1685,
     "gbName": "Lakewood Country Club",
-    "gbCity": "Lakewood",
     "pars": [
       4,
       4,
@@ -1055,7 +1040,6 @@
     "presetId": "westridge-gc",
     "gbId": 1653,
     "gbName": "Westridge Golf Club",
-    "gbCity": "La Habra",
     "pars": [
       4,
       5,
@@ -1164,7 +1148,6 @@
     "presetId": "los-amigos-gc",
     "gbId": 1520,
     "gbName": "Los Amigos Country Club",
-    "gbCity": "Downey",
     "pars": [
       5,
       4,
@@ -1192,7 +1175,6 @@
     "presetId": "santa-anita-gc",
     "gbId": 1353,
     "gbName": "Santa Anita Golf Course",
-    "gbCity": "Arcadia",
     "pars": [
       4,
       4,
@@ -1220,7 +1202,6 @@
     "presetId": "california-cc",
     "gbId": 2231,
     "gbName": "California Country Club",
-    "gbCity": "Whittier",
     "pars": [
       5,
       3,
@@ -1248,7 +1229,6 @@
     "presetId": "old-ranch-cc",
     "gbId": 2098,
     "gbName": "Old Ranch Country Club",
-    "gbCity": "Seal Beach",
     "pars": [
       4,
       4,
@@ -1276,7 +1256,6 @@
     "presetId": "mesa-verde-cc",
     "gbId": 1494,
     "gbName": "Mesa Verde Country Club",
-    "gbCity": "Costa Mesa",
     "pars": [
       5,
       4,
@@ -4771,21 +4750,31 @@
     "dbImported": true
   },
   {
-    "kind": "multi-match",
+    "kind": "matched",
     "presetId": "memorial-park",
-    "query": "Memorial Park Golf Course | Houston, TX",
-    "candidates": [
-      {
-        "id": 2590,
-        "name": "Memorial Park Golf Course",
-        "city": "Houston"
-      },
-      {
-        "id": 15962,
-        "name": "Memorial Park Golf Course",
-        "city": "Houston"
-      }
-    ]
+    "gbId": 2590,
+    "gbName": "Memorial Park Golf Course",
+    "pars": [
+      5,
+      3,
+      5,
+      4,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      3,
+      4,
+      4,
+      5,
+      3,
+      5,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -5274,21 +5263,31 @@
     "dbImported": false
   },
   {
-    "kind": "multi-match",
+    "kind": "matched",
     "presetId": "arrowcreek-cc",
-    "query": "ArrowCreek Country Club | Reno, NV",
-    "candidates": [
-      {
-        "id": 5259,
-        "name": "ArrowCreek Golf Club (Legends course)",
-        "city": "Reno"
-      },
-      {
-        "id": 17485,
-        "name": "Arrowcreek Golf Club (Challenge course)",
-        "city": "Reno"
-      }
-    ]
+    "gbId": 5259,
+    "gbName": "ArrowCreek Country Club",
+    "pars": [
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      5,
+      3,
+      5,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -5363,21 +5362,31 @@
     "dbImported": true
   },
   {
-    "kind": "multi-match",
+    "kind": "matched",
     "presetId": "sunbrook",
-    "query": "Sunbrook Golf Course | St. George, UT",
-    "candidates": [
-      {
-        "id": 17820,
-        "name": "Sunbrook Golf Club (The Point)",
-        "city": "St. George"
-      },
-      {
-        "id": 17821,
-        "name": "Sunbrook Golf Club (Woodbridge)",
-        "city": "St. George"
-      }
-    ]
+    "gbId": 17820,
+    "gbName": "Sunbrook Golf Course",
+    "pars": [
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -5899,21 +5908,31 @@
     "dbImported": true
   },
   {
-    "kind": "multi-match",
+    "kind": "matched",
     "presetId": "charlotte-country-club",
-    "query": "Charlotte Country Club | Charlotte, NC",
-    "candidates": [
-      {
-        "id": 10152,
-        "name": "Charlotte Country Club",
-        "city": "Charlotte"
-      },
-      {
-        "id": 10598,
-        "name": "Charlotte Country Club",
-        "city": "Charlotte"
-      }
-    ]
+    "gbId": 10152,
+    "gbName": "Charlotte Country Club",
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      5,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
