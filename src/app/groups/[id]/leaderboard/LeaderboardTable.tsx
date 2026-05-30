@@ -111,7 +111,7 @@ export default function LeaderboardTable({
               onClick={() => onHeaderClick("totalWins", true)}
               align="right"
               accent
-              hint="Total wins across all game types"
+              hint="Across all games"
             />
           </tr>
         </thead>
@@ -208,7 +208,7 @@ function SortHeader({
   return (
     <th
       className={
-        "font-medium uppercase tracking-wider text-[10px] py-2 px-2 " +
+        "font-medium uppercase tracking-wider text-[10px] py-2 px-2 align-bottom " +
         (align === "left" ? "text-left " : "text-right ") +
         (sticky ? "sticky left-0 bg-panel " : "") +
         (accent ? "text-accent " : "")
@@ -228,6 +228,16 @@ function SortHeader({
           {active ? (sortDir === "asc" ? "▲" : "▼") : "⇅"}
         </span>
       </button>
+      {hint && (
+        <div
+          className={
+            "text-[9px] text-faint font-normal normal-case tracking-normal leading-tight mt-0.5 " +
+            (align === "right" ? "text-right" : "text-left")
+          }
+        >
+          {hint}
+        </div>
+      )}
     </th>
   );
 }
