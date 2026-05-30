@@ -936,7 +936,7 @@ export default function NewMatchForm({
           hidden={roundStep !== 2}
           className={roundStep === 2 ? "field-active" : undefined}
         >
-          <label className="label">Format</label>
+          <label className="label">Round format</label>
           {/* "Both" is a client-side shortcut for INDIVIDUAL + the
               TEAM_VS_TEAM side game. Server still receives
               format=INDIVIDUAL; the side-games hidden inputs +
@@ -1070,7 +1070,7 @@ export default function NewMatchForm({
             uses individual handicap math; the team handicap mode in
             the SCRAMBLE branch doesn't apply). */}
         <div hidden={roundStep !== 2 || format === "SCRAMBLE"}>
-          <label className="label">Scoring</label>
+          <label className="label">Round scoring</label>
           <input type="hidden" name="scoringMode" value={scoringMode} />
           <div className="grid grid-cols-3 gap-2">
             {(Object.keys(MODE_COPY) as ScoringMode[]).map((m) => {
