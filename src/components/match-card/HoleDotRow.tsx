@@ -7,7 +7,8 @@
 //
 //   under par (birdie) -> solid accent (emerald) + "-1"
 //   eagle              -> solid gold + "-2" (or more for albatross etc.)
-//   par                -> mute fill at 32% (neutral disc, no number)
+//   par                -> faint accent fill + border (subtle green so it
+//                         reads as quietly positive, not neutral grey)
 //   bogey              -> muted danger fill (darker red) + "+1"
 //   double or worse    -> solid danger fill (bright red) + the actual
 //                         "+2", "+3", ... so the brighter red and the
@@ -65,7 +66,7 @@ function Dot({ dot }: { dot: DotData }) {
       case "birdie":
         return "bg-accent text-ink-on-accent";
       case "par":
-        return "bg-mute/30 border border-mute/30";
+        return "bg-accent/15 border border-accent/30";
       case "bogey":
         return "bg-danger/55 text-white";
       case "double":
