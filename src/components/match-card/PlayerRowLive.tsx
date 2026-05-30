@@ -70,18 +70,28 @@ export default function PlayerRowLive({
             />
           </div>
         </div>
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex items-end gap-3 shrink-0">
           {player.holesPlayed > 0 && (
-            <span
-              className={"font-mono tabular-nums text-sm " + netColor}
-            >
-              {netLabel}
-            </span>
+            <div className="flex flex-col items-end leading-none">
+              <span className="font-mono text-[9px] uppercase tracking-wider text-faint mb-1">
+                To par
+              </span>
+              <span
+                className={"font-mono tabular-nums text-sm " + netColor}
+              >
+                {netLabel}
+              </span>
+            </div>
           )}
-          <ProbabilityTick
-            playerId={player.id}
-            probability={player.winProbability}
-          />
+          <div className="flex flex-col items-end leading-none">
+            <span className="font-mono text-[9px] uppercase tracking-wider text-faint mb-1">
+              Win
+            </span>
+            <ProbabilityTick
+              playerId={player.id}
+              probability={player.winProbability}
+            />
+          </div>
         </div>
       </div>
 
