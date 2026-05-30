@@ -6,8 +6,9 @@
 //   under par (birdie) -> solid accent (emerald)
 //   eagle              -> solid gold + soft glow
 //   par                -> mute fill at 32% (neutral disc)
-//   bogey              -> danger fill at 70%
-//   double or worse    -> solid danger
+//   bogey              -> solid danger fill (one clear red square)
+//   double or worse    -> solid danger + a danger halo ring so it reads
+//                         visually louder than a single bogey at a glance
 //   current hole       -> dashed accent border, accent 8% fill
 //   unplayed           -> 1px border, transparent fill
 //
@@ -63,9 +64,9 @@ function Dot({ kind }: { kind: DotKind }) {
       case "par":
         return "bg-mute/30 border border-mute/30";
       case "bogey":
-        return "bg-danger/70";
-      case "double":
         return "bg-danger";
+      case "double":
+        return "bg-danger shadow-[0_0_0_1.5px_rgb(var(--color-danger)/0.5)]";
       case "current":
         return "border border-dashed border-accent bg-accent/10";
       case "unplayed":
