@@ -32,7 +32,6 @@
     "presetId": "riviera-cc",
     "gbId": 1831,
     "gbName": "Riviera Country Club, The",
-    "gbCity": "Pacific Palisades",
     "pars": [
       5,
       4,
@@ -222,15 +221,33 @@
     "presetId": "griffith-harding",
     "gbId": 1718,
     "gbName": "Griffith Park Golf Courses",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "hansen-dam",
     "gbId": 1833,
     "gbName": "Hansen Dam Golf Course",
-    "gbCity": "Pacoima",
     "pars": [
       4,
       5,
@@ -258,7 +275,6 @@
     "presetId": "woodley-lakes",
     "gbId": 2198,
     "gbName": "Woodley Lakes Golf Course",
-    "gbCity": "Van Nuys",
     "pars": [
       4,
       4,
@@ -286,7 +302,6 @@
     "presetId": "los-verdes",
     "gbId": 1930,
     "gbName": "Los Verdes Golf Course",
-    "gbCity": "Rancho Palos Verdes",
     "pars": [
       5,
       4,
@@ -314,7 +329,6 @@
     "presetId": "el-dorado-park",
     "gbId": 1710,
     "gbName": "El Dorado Park Golf Club",
-    "gbCity": "Long Beach",
     "pars": [
       4,
       4,
@@ -342,7 +356,6 @@
     "presetId": "rio-hondo",
     "gbId": 1519,
     "gbName": "Rio Hondo Golf Club",
-    "gbCity": "Downey",
     "pars": [
       4,
       4,
@@ -560,7 +573,6 @@
     "presetId": "coyote-hills",
     "gbId": 1578,
     "gbName": "Coyote Hills Golf Course",
-    "gbCity": "Fullerton",
     "pars": [
       4,
       4,
@@ -723,7 +735,6 @@
     "presetId": "whittier-narrows-gc",
     "gbId": 1975,
     "gbName": "Whittier Narrows Golf Course",
-    "gbCity": "Rosemead",
     "pars": [
       5,
       3,
@@ -751,7 +762,6 @@
     "presetId": "calabasas-cc",
     "gbId": 1422,
     "gbName": "Calabasas Golf & Country Club",
-    "gbCity": "Calabasas",
     "pars": [
       4,
       4,
@@ -779,7 +789,6 @@
     "presetId": "el-caballero-cc",
     "gbId": 2149,
     "gbName": "El Caballero Country Club",
-    "gbCity": "Tarzana",
     "pars": [
       5,
       4,
@@ -834,7 +843,6 @@
     "presetId": "annandale-gc",
     "gbId": 1874,
     "gbName": "Annandale Golf Course",
-    "gbCity": "Pasadena",
     "pars": [
       4,
       4,
@@ -916,7 +924,6 @@
     "presetId": "hillcrest-cc-la",
     "gbId": 1720,
     "gbName": "Hillcrest Country Club",
-    "gbCity": "Los Angeles",
     "pars": [
       4,
       3,
@@ -944,7 +951,6 @@
     "presetId": "friendly-hills-cc",
     "gbId": 2229,
     "gbName": "Friendly Hills Country Club",
-    "gbCity": "Whittier",
     "pars": [
       5,
       3,
@@ -999,7 +1005,6 @@
     "presetId": "meadowlark-gc",
     "gbId": 1623,
     "gbName": "Meadowlark Golf Course",
-    "gbCity": "Huntington Beach",
     "pars": [
       4,
       4,
@@ -1027,7 +1032,6 @@
     "presetId": "lakewood-cc",
     "gbId": 1685,
     "gbName": "Lakewood Country Club",
-    "gbCity": "Lakewood",
     "pars": [
       4,
       4,
@@ -1055,7 +1059,6 @@
     "presetId": "westridge-gc",
     "gbId": 1653,
     "gbName": "Westridge Golf Club",
-    "gbCity": "La Habra",
     "pars": [
       4,
       5,
@@ -1164,7 +1167,6 @@
     "presetId": "los-amigos-gc",
     "gbId": 1520,
     "gbName": "Los Amigos Country Club",
-    "gbCity": "Downey",
     "pars": [
       5,
       4,
@@ -1192,7 +1194,6 @@
     "presetId": "santa-anita-gc",
     "gbId": 1353,
     "gbName": "Santa Anita Golf Course",
-    "gbCity": "Arcadia",
     "pars": [
       4,
       4,
@@ -1220,7 +1221,6 @@
     "presetId": "california-cc",
     "gbId": 2231,
     "gbName": "California Country Club",
-    "gbCity": "Whittier",
     "pars": [
       5,
       3,
@@ -1248,7 +1248,6 @@
     "presetId": "old-ranch-cc",
     "gbId": 2098,
     "gbName": "Old Ranch Country Club",
-    "gbCity": "Seal Beach",
     "pars": [
       4,
       4,
@@ -1276,7 +1275,6 @@
     "presetId": "mesa-verde-cc",
     "gbId": 1494,
     "gbName": "Mesa Verde Country Club",
-    "gbCity": "Costa Mesa",
     "pars": [
       5,
       4,
@@ -1693,24 +1691,81 @@
     "presetId": "lacc-north",
     "gbId": 1723,
     "gbName": "Los Angeles Country Club (North)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      5,
+      5,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      3,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "balboa-gc",
     "gbId": 1538,
     "gbName": "Sepulveda Golf Complex (Balboa)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "encino-gc",
     "gbId": 18109,
     "gbName": "Sepulveda Golf Complex (Encino)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      3,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      5,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -1773,40 +1828,135 @@
     "presetId": "sand-canyon-cc-valley-desert",
     "gbId": 18954,
     "gbName": "Sand Canyon Country Club",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      5,
+      5,
+      4,
+      4,
+      3,
+      4,
+      3,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "sand-canyon-cc-desert-mountain",
     "gbId": 18954,
     "gbName": "Sand Canyon Country Club",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      5,
+      5,
+      4,
+      4,
+      3,
+      4,
+      3,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "sand-canyon-cc-mountain-valley",
     "gbId": 18954,
     "gbName": "Sand Canyon Country Club",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      5,
+      5,
+      4,
+      4,
+      3,
+      4,
+      3,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "pelican-hill-south",
     "gbId": 18119,
     "gbName": "Pelican Hill Golf Club (South)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      3,
+      3,
+      5,
+      4,
+      3,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "pelican-hill-north",
     "gbId": 1798,
     "gbName": "Pelican Hill Golf Club (North)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      5,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -1986,24 +2136,81 @@
     "presetId": "anaheim-hills",
     "gbId": 1343,
     "gbName": "Anaheim Hills Golf Course",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      3,
+      5,
+      5,
+      4,
+      4,
+      4,
+      3,
+      4,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "coto-de-caza-south",
     "gbId": 18143,
     "gbName": "Coto de Caza Golf & Racquet Club (South)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      4,
+      4,
+      3,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "coto-de-caza-north",
     "gbId": 1495,
     "gbName": "Coto de Caza Golf & Racquet Club (North)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      5,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      4,
+      4,
+      5,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -2066,8 +2273,27 @@
     "presetId": "costa-mesa-los-lagos",
     "gbId": 18107,
     "gbName": "Costa Mesa Golf & Country Club (Los Lagos)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      5,
+      4,
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      5,
+      3,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -2354,32 +2580,108 @@
     "presetId": "bighorn-gc-canyons",
     "gbId": 18120,
     "gbName": "Bighorn Golf Club (Canyons)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      5,
+      3,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "bighorn-gc-mountains",
     "gbId": 1857,
     "gbName": "Bighorn Golf Club (Mountains)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      5,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "pga-west-stadium",
     "gbId": 17376,
     "gbName": "PGA West (TPC Stadium course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      5,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      5,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "pga-west-nicklaus-tournament",
     "gbId": 17375,
     "gbName": "PGA West (Nicklaus Tournament course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -2414,24 +2716,81 @@
     "presetId": "la-quinta-resort-mountain",
     "gbId": 1665,
     "gbName": "La Quinta Resort & Club (Mountain course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      5,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "la-quinta-resort-dunes",
     "gbId": 17374,
     "gbName": "La Quinta Resort and Club (Dunes course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      4,
+      4,
+      4,
+      3,
+      5,
+      3,
+      5,
+      4,
+      4,
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "mission-hills-dinah-shore",
     "gbId": 1927,
     "gbName": "Mission Hills Country Club",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      5,
+      3,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      5,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "no-match",
@@ -2443,16 +2802,54 @@
     "presetId": "desert-willow-firecliff",
     "gbId": 1842,
     "gbName": "Desert Willow Golf Resort (Firecliff)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "desert-willow-mountain-view",
     "gbId": 17732,
     "gbName": "Desert Willow (Mountain View)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      5,
+      3,
+      4,
+      4,
+      4,
+      4,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "no-match",
@@ -2464,24 +2861,81 @@
     "presetId": "indian-wells-players",
     "gbId": 1628,
     "gbName": "Indian Wells Golf Resort (Players course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      5,
+      4,
+      4,
+      4,
+      4,
+      4,
+      5,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "jw-marriott-palm",
     "gbId": 1838,
     "gbName": "Desert Springs C.C. (JW Marriott) Palms course",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4,
+      5,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "jw-marriott-valley",
     "gbId": 17373,
     "gbName": "Desert Springs C.C. (JW Marriott) Valley course",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      3,
+      5,
+      5,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "no-match",
@@ -2526,16 +2980,54 @@
     "presetId": "torrey-pines-north",
     "gbId": 17078,
     "gbName": "Torrey Pines Golf Club (North Course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      5,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "torrey-pines-south",
     "gbId": 17080,
     "gbName": "Torrey Pines Golf Club (South Course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -2625,8 +3117,27 @@
     "presetId": "coronado-muni",
     "gbId": 1492,
     "gbName": "Coronado Golf Course",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -2880,12 +3391,9 @@
     "dbImported": true
   },
   {
-    "kind": "matched",
+    "kind": "skipped",
     "presetId": "olivas-links",
-    "gbId": 2201,
-    "gbName": "Olivas Park Golf Course",
-    "pars": [],
-    "dbImported": false
+    "reason": "Golfbert returned 1 holes"
   },
   {
     "kind": "matched",
@@ -2948,8 +3456,27 @@
     "presetId": "river-ridge-vineyard",
     "gbId": 1829,
     "gbName": "River Ridge Golf Club",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      3,
+      4,
+      5,
+      3,
+      5,
+      4,
+      5,
+      4,
+      4,
+      3
+    ],
+    "dbImported": true
   },
   {
     "kind": "no-match",
@@ -2966,8 +3493,27 @@
     "presetId": "sherwood-cc",
     "gbId": 2160,
     "gbName": "Sherwood Country Club",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      3,
+      4,
+      5,
+      4,
+      4,
+      4,
+      4,
+      4,
+      5,
+      3,
+      5,
+      4,
+      3,
+      5,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -3531,16 +4077,54 @@
     "presetId": "scga-rancho-california",
     "gbId": 1785,
     "gbName": "SCGA Member's Club at Rancho California",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      5,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "journey-pechanga",
     "gbId": 19015,
     "gbName": "Journey at Pechanga",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      5,
+      4,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -3713,8 +4297,27 @@
     "presetId": "cottonwood-ivanhoe",
     "gbId": 1525,
     "gbName": "Cottonwood Golf Club (Ivanhoe Course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      5,
+      3
+    ],
+    "dbImported": true
   },
   {
     "kind": "no-match",
@@ -3726,16 +4329,54 @@
     "presetId": "sycuan-oak-glen",
     "gbId": 17356,
     "gbName": "Sycuan Resort (Oak Glen course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      4,
+      3,
+      4,
+      3,
+      5,
+      4,
+      4,
+      5,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "sycuan-willow-glen",
     "gbId": 17358,
     "gbName": "Sycuan Resort (Willow Glen course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4,
+      5,
+      3,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      5,
+      3
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -3798,48 +4439,162 @@
     "presetId": "marriott-shadow-ridge",
     "gbId": 1852,
     "gbName": "Golf Course at Marriott's Shadow Ridge Resort",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "westin-mh-gary-player",
     "gbId": 1928,
     "gbName": "Westin Mission Hills Resort (Gary Player course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "westin-mh-pete-dye",
     "gbId": 17736,
     "gbName": "Westin Mission Hills Resort (Pete Dye Resort Course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "cimarron-boulder",
     "gbId": 1448,
     "gbName": "Cimarron Golf Club (Boulder course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      5,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "tahquitz-creek-resort",
     "gbId": 17379,
     "gbName": "Tahquitz Creek Golf Resort (Resort course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      3,
+      5,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "tahquitz-creek-legend",
     "gbId": 1865,
     "gbName": "Tahquitz Creek Golf Resort (Legends course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      5,
+      4,
+      4,
+      5,
+      3,
+      4,
+      3,
+      4,
+      4,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      3
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -4047,16 +4802,54 @@
     "presetId": "tukwet-champions",
     "gbId": 17346,
     "gbName": "Morongo Golf Club at Tukwet Canyon - Champions course",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      5,
+      4,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "tukwet-legends",
     "gbId": 17347,
     "gbName": "Morongo Golf Club at Tukwet Canyon - Legends course",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -4180,16 +4973,32 @@
     "presetId": "spanish-bay",
     "gbId": 1884,
     "gbName": "The Links at Spanish Bay",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      5,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "matched",
+    "kind": "failed",
     "presetId": "olympic-club-lake",
-    "gbId": 17169,
-    "gbName": "The Olympic Club (Lake Course)",
-    "pars": [],
-    "dbImported": false
+    "error": "GolfBert 429 on /v1/courses/17169: {\"message\":\"Limit Exceeded\"}"
   },
   {
     "kind": "matched",
@@ -4771,21 +5580,31 @@
     "dbImported": true
   },
   {
-    "kind": "multi-match",
+    "kind": "matched",
     "presetId": "memorial-park",
-    "query": "Memorial Park Golf Course | Houston, TX",
-    "candidates": [
-      {
-        "id": 2590,
-        "name": "Memorial Park Golf Course",
-        "city": "Houston"
-      },
-      {
-        "id": 15962,
-        "name": "Memorial Park Golf Course",
-        "city": "Houston"
-      }
-    ]
+    "gbId": 2590,
+    "gbName": "Memorial Park Golf Course",
+    "pars": [
+      5,
+      3,
+      5,
+      4,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      3,
+      4,
+      4,
+      5,
+      3,
+      5,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -5274,21 +6093,31 @@
     "dbImported": false
   },
   {
-    "kind": "multi-match",
+    "kind": "matched",
     "presetId": "arrowcreek-cc",
-    "query": "ArrowCreek Country Club | Reno, NV",
-    "candidates": [
-      {
-        "id": 5259,
-        "name": "ArrowCreek Golf Club (Legends course)",
-        "city": "Reno"
-      },
-      {
-        "id": 17485,
-        "name": "Arrowcreek Golf Club (Challenge course)",
-        "city": "Reno"
-      }
-    ]
+    "gbId": 5259,
+    "gbName": "ArrowCreek Country Club",
+    "pars": [
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      5,
+      3,
+      5,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -5363,21 +6192,31 @@
     "dbImported": true
   },
   {
-    "kind": "multi-match",
+    "kind": "matched",
     "presetId": "sunbrook",
-    "query": "Sunbrook Golf Course | St. George, UT",
-    "candidates": [
-      {
-        "id": 17820,
-        "name": "Sunbrook Golf Club (The Point)",
-        "city": "St. George"
-      },
-      {
-        "id": 17821,
-        "name": "Sunbrook Golf Club (Woodbridge)",
-        "city": "St. George"
-      }
-    ]
+    "gbId": 17820,
+    "gbName": "Sunbrook Golf Course",
+    "pars": [
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -5899,21 +6738,31 @@
     "dbImported": true
   },
   {
-    "kind": "multi-match",
+    "kind": "matched",
     "presetId": "charlotte-country-club",
-    "query": "Charlotte Country Club | Charlotte, NC",
-    "candidates": [
-      {
-        "id": 10152,
-        "name": "Charlotte Country Club",
-        "city": "Charlotte"
-      },
-      {
-        "id": 10598,
-        "name": "Charlotte Country Club",
-        "city": "Charlotte"
-      }
-    ]
+    "gbId": 10152,
+    "gbName": "Charlotte Country Club",
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      5,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
