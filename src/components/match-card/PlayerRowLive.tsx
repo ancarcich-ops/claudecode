@@ -70,10 +70,19 @@ export default function PlayerRowLive({
             />
           </div>
         </div>
-        <ProbabilityTick
-          playerId={player.id}
-          probability={player.winProbability}
-        />
+        <div className="flex items-center gap-2.5 shrink-0">
+          {player.holesPlayed > 0 && (
+            <span
+              className={"font-mono tabular-nums text-sm " + netColor}
+            >
+              {netLabel}
+            </span>
+          )}
+          <ProbabilityTick
+            playerId={player.id}
+            probability={player.winProbability}
+          />
+        </div>
       </div>
 
       <div className="mt-2">
@@ -85,11 +94,6 @@ export default function PlayerRowLive({
           <span className="inline-flex items-center gap-1 rounded-full bg-panel2 border border-border px-2 py-0.5">
             <span className="font-mono text-[10px] uppercase tracking-wider text-mute">
               thru {player.holesPlayed} of {totalHoles}
-            </span>
-            <span
-              className={"font-mono text-[10px] tabular-nums " + netColor}
-            >
-              {netLabel}
             </span>
           </span>
           {player.momentum && <MomentumChip m={player.momentum} />}
