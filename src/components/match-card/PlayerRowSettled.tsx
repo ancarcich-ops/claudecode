@@ -66,13 +66,18 @@ export default function PlayerRowSettled({
             </span>
           </div>
         </div>
-        <span
-          className={
-            "font-mono tabular-nums text-sm " + color(player.netToPar)
-          }
-        >
-          {fmt(player.netToPar)}
-        </span>
+        <div className="flex flex-col items-end leading-none">
+          <span className="font-mono text-[9px] uppercase tracking-wider text-faint mb-1">
+            To par
+          </span>
+          <span
+            className={
+              "font-mono tabular-nums text-sm " + color(player.netToPar)
+            }
+          >
+            {fmt(player.netToPar)}
+          </span>
+        </div>
       </div>
 
       <div className="mt-2">

@@ -1,8 +1,13 @@
 // Top-level Match Card. Status-aware: renders one of three layouts
 // (LIVE / SETTLED / UPCOMING) sharing a common shell. Whole card is a
-// single tap target -> /matches/[id].
+// single tap target -> /matches/[id]. Settled cards include a small
+// chevron toggle that collapses the body so a long history of finals
+// doesn't dominate the home feed.
+
+"use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import type { MatchCardData } from "@/lib/matchCard";
 import StatusPill from "./StatusPill";
 import HeaderTicker from "./HeaderTicker";
@@ -14,6 +19,8 @@ export default function MatchCard({ data }: { data: MatchCardData }) {
   const isLive = data.status === "IN_PROGRESS";
   const isSettled = data.status === "COMPLETED";
   const isUpcoming = data.status === "UPCOMING";
+  // Settled-only collapse. Open by default; per-card state, not persisted.
+  const [collapsed, setCollapsed] = useState(false);
 
   const cardCls =
     "card p-4 sm:p-5 block transition-colors " +
@@ -29,7 +36,17 @@ export default function MatchCard({ data }: { data: MatchCardData }) {
 
   return (
     <Link href={`/matches/${data.id}`} className={cardCls}>
-      <Header data={data} />
+      <Header
+        data={data}
+        collapseToggle={
+          isSettled ? (
+            <CollapseToggle
+              collapsed={collapsed}
+              onToggle={() => setCollapsed((c) => !c)}
+            />
+          ) : null
+        }
+      />
 
       {(isLive || isUpcoming) && data.tickerItems.length > 0 && (
         <div className="mt-3">
@@ -41,29 +58,31 @@ export default function MatchCard({ data }: { data: MatchCardData }) {
         <ResultBand winner={winner} />
       )}
 
-      <div className="mt-2 divide-y divide-border/60">
-        {data.players.map((p) =>
-          isLive ? (
-            <PlayerRowLive
-              key={p.id}
-              player={p}
-              totalHoles={data.totalHoles}
-              matchId={data.id}
-            />
-          ) : isSettled ? (
-            <PlayerRowSettled
-              key={p.id}
-              player={p}
-              totalHoles={data.totalHoles}
-              isWinner={p.rank === 1}
-            />
-          ) : (
-            <PlayerRowUpcoming key={p.id} player={p} matchId={data.id} />
-          ),
-        )}
-      </div>
+      {(!isSettled || !collapsed) && (
+        <div className="mt-2 divide-y divide-border/60">
+          {data.players.map((p) =>
+            isLive ? (
+              <PlayerRowLive
+                key={p.id}
+                player={p}
+                totalHoles={data.totalHoles}
+                matchId={data.id}
+              />
+            ) : isSettled ? (
+              <PlayerRowSettled
+                key={p.id}
+                player={p}
+                totalHoles={data.totalHoles}
+                isWinner={p.rank === 1}
+              />
+            ) : (
+              <PlayerRowUpcoming key={p.id} player={p} matchId={data.id} />
+            ),
+          )}
+        </div>
+      )}
 
-      {isSettled && (
+      {isSettled && !collapsed && (
         <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-2.5">
           <span className="font-mono text-[10px] uppercase tracking-wider text-mute truncate">
             {data.totalHoles} holes
@@ -79,7 +98,42 @@ export default function MatchCard({ data }: { data: MatchCardData }) {
   );
 }
 
-function Header({ data }: { data: MatchCardData }) {
+// Chevron toggle. Lives inside the card <Link>, so it must swallow the
+// click (preventDefault + stopPropagation) to avoid navigating to the
+// match detail page when the user just wants to collapse the card.
+function CollapseToggle({
+  collapsed,
+  onToggle,
+}: {
+  collapsed: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={collapsed ? "Expand round" : "Collapse round"}
+      aria-expanded={!collapsed}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onToggle();
+      }}
+      className="h-7 w-7 inline-flex items-center justify-center rounded-md text-mute hover:text-ink hover:bg-panel2/60 transition-colors"
+    >
+      <span aria-hidden className="text-[12px] leading-none">
+        {collapsed ? "▸" : "▾"}
+      </span>
+    </button>
+  );
+}
+
+function Header({
+  data,
+  collapseToggle,
+}: {
+  data: MatchCardData;
+  collapseToggle?: React.ReactNode;
+}) {
   const formatted = new Intl.DateTimeFormat(undefined, {
     weekday: "short",
     hour: "numeric",
@@ -113,8 +167,9 @@ function Header({ data }: { data: MatchCardData }) {
           )}
         </div>
       </div>
-      <div className="shrink-0">
+      <div className="shrink-0 flex items-center gap-1.5">
         <StatusPill status={data.status} scheduledAt={data.scheduledAt} />
+        {collapseToggle}
       </div>
     </div>
   );
