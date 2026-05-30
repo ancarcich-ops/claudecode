@@ -18,6 +18,11 @@ export type DotKind =
   | "current"
   | "unplayed";
 
+// One score-grid square. `kind` drives color; `rel` is the diff vs par
+// (e.g. -1 for a birdie, +2 for a double), used to render the number
+// inside the box for played holes.
+export type Dot = { kind: DotKind; rel?: number };
+
 export type Momentum =
   | { kind: "eagle"; hole: number }
   | { kind: "birdie"; hole: number }
@@ -41,8 +46,10 @@ export type PlayerCard = {
   netToPar: number;
   holesPlayed: number;
   // Length = totalHoles. Indexed from `startingHole`. Each entry
-  // describes the per-hole result; null is "not yet played".
-  dots: DotKind[];
+  // describes the per-hole result; `rel` carries the diff vs par so the
+  // dot can render the number (-1, +1, +2, ...). `rel` is omitted for
+  // par/current/unplayed where no number should show.
+  dots: Dot[];
   // For SETTLED: per-nine net (only meaningful for 18-hole rounds).
   outNet: number;
   inNet: number;
@@ -218,7 +225,7 @@ export function buildMatchCardData(
 
   const players: PlayerCard[] = cardPlayers.map((p) => {
     const byHole = new Map(p.scores.map((s) => [s.hole, s.strokes]));
-    const dots: DotKind[] = [];
+    const dots: Dot[] = [];
     // Chronological order of holes the player actually scored, with the
     // diff vs par. Used both for the sparkline cumulative array and the
     // momentum read.
@@ -237,16 +244,16 @@ export function buildMatchCardData(
         if (hole <= 9) outNet += diff;
         else inNet += diff;
         holesPlayed++;
-        dots.push(dotKindFor(diff));
+        dots.push({ kind: dotKindFor(diff), rel: diff });
         playedDiffs.push({ hole, diff });
       } else if (
         hole === currentHole &&
         m.status === "IN_PROGRESS" &&
         maxLoggedHole > 0
       ) {
-        dots.push("current");
+        dots.push({ kind: "current" });
       } else {
-        dots.push("unplayed");
+        dots.push({ kind: "unplayed" });
       }
     }
     // Cumulative running net for the sparkline -- oldest scored hole on
