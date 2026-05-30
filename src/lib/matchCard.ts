@@ -214,12 +214,22 @@ export function buildMatchCardData(
   const lastHole = startingHole + totalHoles - 1;
   const currentHole = Math.min(maxLoggedHole + 1, lastHole);
 
-  // Final standings (settled) -- rank by net.
-  const playerNets = cardPlayers.map((p) => {
+  // Final standings (settled). Rank by the match's scoring mode: GROSS
+  // ranks by raw strokes; NET/CUSTOM subtract the player's handicap (or
+  // strokes-given column). Earlier this always subtracted handicap,
+  // which gave the wrong winner on a gross match.
+  const useNet = m.scoringMode !== "GROSS";
+  const playerScores = cardPlayers.map((p) => {
     const gross = p.scores.reduce((s, x) => s + x.strokes, 0);
-    return { id: p.id, net: gross - p.handicap, gross };
+    return {
+      id: p.id,
+      score: useNet ? gross - p.handicap : gross,
+      gross,
+    };
   });
-  const rankedIds = [...playerNets].sort((a, b) => a.net - b.net).map((x) => x.id);
+  const rankedIds = [...playerScores]
+    .sort((a, b) => a.score - b.score)
+    .map((x) => x.id);
   const rankFor = (id: string) =>
     m.status === "COMPLETED" ? rankedIds.indexOf(id) + 1 : 0;
 
