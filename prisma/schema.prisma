@@ -40,6 +40,44 @@ model User {
   groupMemberships GroupMember[]
   sessions         Session[]
   passwordResets   PasswordResetToken[]
+  passkeys         Passkey[]
+}
+
+// WebAuthn / passkey credentials. Each row is one device (Face ID on
+// iPhone, Touch ID on Mac, etc.) the user enrolled. publicKey is the
+// base64url-encoded COSE public key bytes; we verify assertion
+// signatures against it on sign-in. counter is bumped after each
+// successful auth (replay protection).
+model Passkey {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialId String    @unique
+  publicKey    String
+  counter      Int       @default(0)
+  // Comma-separated transports hint ("internal", "hybrid", "usb", ...).
+  transports   String?
+  deviceName   String?
+  createdAt    DateTime  @default(now())
+  lastUsedAt   DateTime?
+
+  @@index([userId])
+}
+
+// Short-lived registration / authentication challenge. Stored in DB so
+// it survives across Vercel serverless instances. Cleaned up on use or
+// after expiresAt. userId is null for the auth flow (we don't know the
+// user yet -- discoverable credentials resolve them after the assertion).
+model WebauthnChallenge {
+  id        String   @id @default(cuid())
+  userId    String?
+  challenge String   @unique
+  // "registration" | "authentication"
+  kind      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
 }
 
 // One-time password reset tokens, emailed to the user as a link.

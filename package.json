@@ -16,6 +16,8 @@
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "@radix-ui/react-select": "^2.2.6",
+    "@simplewebauthn/browser": "^13.3.0",
+    "@simplewebauthn/server": "^13.3.1",
     "@types/canvas-confetti": "^1.9.0",
     "@vercel/blob": "^2.3.3",
     "aws4": "^1.13.2",
