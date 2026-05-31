@@ -149,12 +149,23 @@ export default function OnCourseMode({
   // next tee, flip the active hole. autoAdvancedRef gates so a single
   // transition can't bounce.
   const autoAdvancedRef = useRef<number | null>(null);
+  // Timestamp of the last manual hole pick. While within
+  // MANUAL_OVERRIDE_MS, suppress the GPS-driven auto-advance so the
+  // user can tap back to a prior hole (to fix a score) without being
+  // immediately yanked forward by virtue of standing on hole+1's tee.
+  const manualPickAtRef = useRef<number>(0);
+  const MANUAL_OVERRIDE_MS = 120_000;
+  const pickHole = (h: number) => {
+    manualPickAtRef.current = Date.now();
+    setHole(h);
+  };
   useEffect(() => {
     autoAdvancedRef.current = null;
   }, [hole]);
   useEffect(() => {
     if (!pos) return;
     if (hole >= lastHole) return;
+    if (Date.now() - manualPickAtRef.current < MANUAL_OVERRIDE_MS) return;
     const nextHole = hole + 1;
     if (autoAdvancedRef.current === nextHole) return;
     const curGeo = holeGeoByHole[hole];
@@ -571,10 +582,12 @@ export default function OnCourseMode({
         <HolePicker
           firstHole={firstHole}
           lastHole={lastHole}
+          /* below: pickHole, not setHole, so a manual tap suppresses
+             the GPS auto-advance for a couple of minutes. */
           activeHole={hole}
           pars={pars}
           scoresByHole={scoresByHole ?? {}}
-          onPick={setHole}
+          onPick={pickHole}
         />
         <div className="mt-2 px-4 text-center font-mono tabular-nums text-[11.5px] tracking-[0.14em] uppercase text-white/78">
           PAR {par}

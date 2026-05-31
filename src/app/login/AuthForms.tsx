@@ -9,6 +9,7 @@ import {
   requestPasswordResetAction,
   resetPasswordAction,
 } from "@/lib/actions";
+import PasskeyLoginButton from "./PasskeyLoginButton";
 
 // "The Clubhouse" auth visual language (from the Sticks branding kit):
 // big Bricolage headings, mono uppercase field labels, 52px fields with
@@ -296,6 +297,7 @@ export function SignInForm({ next }: { next: string }) {
       <ForgotLink />
       <ErrorNote state={state} />
       <PrimaryButton label="Sign in" />
+      <PasskeyLoginButton next={next} />
       <SecondaryFooter
         lead="New here?"
         href={withNext("/signup", next)}

@@ -2225,5 +2225,239 @@ export async function adminRenameCourseAction(formData: FormData) {
   return { newName };
 }
 
+// ─────────────────────────────────────────────────────────────────────
+// WebAuthn / passkey actions
+// ─────────────────────────────────────────────────────────────────────
+// Enroll + sign-in with Face ID / Touch ID / Windows Hello / Android
+// fingerprint. All four steps (start register, finish register, start
+// auth, finish auth) are colocated here; the per-step crypto lives in
+// @simplewebauthn/server. Challenges round-trip through Postgres so a
+// pair of start+finish calls can hit different serverless instances.
+
+// We type these RegistrationResponseJSON / AuthenticationResponseJSON
+// objects the browser hands us as `unknown` and let the verify*
+// helpers parse them. Avoids dragging the heavy simplewebauthn types
+// into the action signatures.
+export async function startPasskeyRegistrationAction(): Promise<unknown> {
+  const user = await requireUser();
+  const { generateRegistrationOptions } = await import("@simplewebauthn/server");
+  const {
+    rpId,
+    rpName,
+    storeChallenge,
+    base64UrlToBytes,
+    sweepExpiredChallenges,
+  } = await import("./webauthn");
+  await sweepExpiredChallenges();
+
+  // Exclude credentials already enrolled on this user so the OS prompt
+  // skips "you already added this device."
+  const existing = await prisma.passkey.findMany({
+    where: { userId: user.id },
+    select: { credentialId: true, transports: true },
+  });
+
+  const options = await generateRegistrationOptions({
+    rpName: rpName(),
+    rpID: rpId(),
+    userID: base64UrlToBytes(Buffer.from(user.id, "utf-8").toString("base64url")),
+    userName: user.username,
+    userDisplayName: user.displayName ?? user.username,
+    attestationType: "none",
+    // Discoverable / resident key so the user can sign in without
+    // typing their username later -- Face ID alone is enough.
+    authenticatorSelection: {
+      residentKey: "required",
+      userVerification: "preferred",
+    },
+    excludeCredentials: existing.map((p) => ({
+      id: p.credentialId,
+      transports: (p.transports ?? "").split(",").filter(Boolean) as never,
+    })),
+  });
+
+  await storeChallenge(options.challenge, "registration", user.id);
+  return options;
+}
+
+export async function finishPasskeyRegistrationAction(input: {
+  response: unknown;
+  deviceName?: string | null;
+}): Promise<{ ok: true; deviceName: string } | { error: string }> {
+  const user = await requireUser();
+  const { verifyRegistrationResponse } = await import("@simplewebauthn/server");
+  const {
+    rpId,
+    expectedOrigin,
+    consumeChallenge,
+    bytesToBase64Url,
+  } = await import("./webauthn");
+
+  const response = input.response as {
+    response: { clientDataJSON: string };
+  };
+  // Extract the challenge from the client data so we can look it up
+  // and confirm we issued it.
+  let challenge: string | null = null;
+  try {
+    const cd = JSON.parse(
+      Buffer.from(response.response.clientDataJSON, "base64url").toString("utf-8"),
+    );
+    challenge = typeof cd.challenge === "string" ? cd.challenge : null;
+  } catch {
+    return { error: "Malformed registration response" };
+  }
+  if (!challenge) return { error: "Missing challenge" };
+  const issued = await consumeChallenge(challenge, "registration");
+  if (!issued || issued.userId !== user.id) {
+    return { error: "Challenge expired or invalid" };
+  }
+
+  let verification;
+  try {
+    verification = await verifyRegistrationResponse({
+      response: response as never,
+      expectedChallenge: challenge,
+      expectedOrigin: expectedOrigin(),
+      expectedRPID: rpId(),
+      requireUserVerification: false,
+    });
+  } catch (err) {
+    return { error: (err as Error).message };
+  }
+  if (!verification.verified || !verification.registrationInfo) {
+    return { error: "Could not verify passkey" };
+  }
+  const reg = verification.registrationInfo;
+  const credential = reg.credential as unknown as {
+    id: string;
+    publicKey: Uint8Array;
+    counter: number;
+    transports?: string[];
+  };
+
+  const deviceName = (input.deviceName ?? "").trim() || "This device";
+  await prisma.passkey.create({
+    data: {
+      userId: user.id,
+      credentialId: credential.id,
+      publicKey: bytesToBase64Url(credential.publicKey),
+      counter: credential.counter,
+      transports: (credential.transports ?? []).join(",") || null,
+      deviceName,
+    },
+  });
+  revalidatePath("/settings");
+  return { ok: true, deviceName };
+}
+
+export async function startPasskeyAuthenticationAction(): Promise<unknown> {
+  const { generateAuthenticationOptions } = await import("@simplewebauthn/server");
+  const { rpId, storeChallenge, sweepExpiredChallenges } = await import("./webauthn");
+  await sweepExpiredChallenges();
+  const options = await generateAuthenticationOptions({
+    rpID: rpId(),
+    userVerification: "preferred",
+    // Empty allowCredentials lets the platform surface every passkey
+    // bound to this RP -- the user picks (or auto-selects if there's
+    // only one). True passwordless sign-in.
+    allowCredentials: [],
+  });
+  await storeChallenge(options.challenge, "authentication", null);
+  return options;
+}
+
+export async function finishPasskeyAuthenticationAction(input: {
+  response: unknown;
+  next?: string;
+}): Promise<{ ok: true; next: string } | { error: string }> {
+  const { verifyAuthenticationResponse } = await import("@simplewebauthn/server");
+  const {
+    rpId,
+    expectedOrigin,
+    consumeChallenge,
+    base64UrlToBytes,
+    bytesToBase64Url,
+  } = await import("./webauthn");
+
+  const response = input.response as {
+    id: string;
+    response: { clientDataJSON: string };
+  };
+  let challenge: string | null = null;
+  try {
+    const cd = JSON.parse(
+      Buffer.from(response.response.clientDataJSON, "base64url").toString("utf-8"),
+    );
+    challenge = typeof cd.challenge === "string" ? cd.challenge : null;
+  } catch {
+    return { error: "Malformed authentication response" };
+  }
+  if (!challenge) return { error: "Missing challenge" };
+  const issued = await consumeChallenge(challenge, "authentication");
+  if (!issued) return { error: "Challenge expired or invalid" };
+
+  const stored = await prisma.passkey.findUnique({
+    where: { credentialId: response.id },
+  });
+  if (!stored) return { error: "Unknown passkey" };
+
+  let verification;
+  try {
+    verification = await verifyAuthenticationResponse({
+      response: response as never,
+      expectedChallenge: challenge,
+      expectedOrigin: expectedOrigin(),
+      expectedRPID: rpId(),
+      requireUserVerification: false,
+      credential: {
+        id: stored.credentialId,
+        publicKey: base64UrlToBytes(stored.publicKey),
+        counter: stored.counter,
+        transports: (stored.transports ?? "")
+          .split(",")
+          .filter(Boolean) as never,
+      },
+    });
+  } catch (err) {
+    return { error: (err as Error).message };
+  }
+  if (!verification.verified) return { error: "Verification failed" };
+
+  await prisma.passkey.update({
+    where: { id: stored.id },
+    data: {
+      counter: verification.authenticationInfo.newCounter,
+      lastUsedAt: new Date(),
+    },
+  });
+  // Silence "unused" warning: bytesToBase64Url is exported but not used here.
+  void bytesToBase64Url;
+  await setSession(stored.userId);
+  return { ok: true, next: safeNext(input.next ?? "/") };
+}
+
+export async function removePasskeyAction(formData: FormData): Promise<void> {
+  const user = await requireUser();
+  const passkeyId = String(formData.get("passkeyId") ?? "");
+  if (!passkeyId) return;
+  const row = await prisma.passkey.findUnique({ where: { id: passkeyId } });
+  if (!row || row.userId !== user.id) return;
+  await prisma.passkey.delete({ where: { id: passkeyId } });
+  revalidatePath("/settings");
+}
+
+export async function listMyPasskeysAction(): Promise<
+  Array<{ id: string; deviceName: string | null; createdAt: Date; lastUsedAt: Date | null }>
+> {
+  const user = await getCurrentUser();
+  if (!user) return [];
+  return prisma.passkey.findMany({
+    where: { userId: user.id },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, deviceName: true, createdAt: true, lastUsedAt: true },
+  });
+}
+
 // Admin: ping GolfBert + search wrappers above.
 export { getCurrentUser };
