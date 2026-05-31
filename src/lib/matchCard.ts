@@ -18,10 +18,11 @@ export type DotKind =
   | "current"
   | "unplayed";
 
-// One score-grid square. `kind` drives color; `rel` is the diff vs par
-// (e.g. -1 for a birdie, +2 for a double), used to render the number
-// inside the box for played holes.
-export type Dot = { kind: DotKind; rel?: number };
+// One score-grid square. `kind` drives color; `strokes` is what gets
+// rendered inside the box for played holes (the raw stroke count, not
+// relative to par). `rel` is kept around for any consumer that wants
+// the diff vs par directly.
+export type Dot = { kind: DotKind; strokes?: number; rel?: number };
 
 export type Momentum =
   | { kind: "eagle"; hole: number }
@@ -258,7 +259,7 @@ export function buildMatchCardData(
         if (hole <= 9) outNet += diff;
         else inNet += diff;
         holesPlayed++;
-        dots.push({ kind: dotKindFor(diff), rel: diff });
+        dots.push({ kind: dotKindFor(diff), strokes, rel: diff });
         playedDiffs.push({ hole, diff });
       } else if (
         hole === currentHole &&
