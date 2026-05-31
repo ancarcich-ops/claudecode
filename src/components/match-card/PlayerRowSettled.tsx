@@ -88,7 +88,7 @@ export default function PlayerRowSettled({
         {totalHoles === 18 && (
           <span className="inline-flex items-center gap-2 rounded-full bg-panel2 border border-border px-2 py-0.5">
             <span className="font-mono text-[10px] uppercase tracking-wider text-mute">
-              Out
+              Front
             </span>
             <span
               className={"font-mono text-[10px] tabular-nums " + color(player.outNet)}
@@ -97,7 +97,7 @@ export default function PlayerRowSettled({
             </span>
             <span className="text-faint text-[10px]">|</span>
             <span className="font-mono text-[10px] uppercase tracking-wider text-mute">
-              In
+              Back
             </span>
             <span
               className={"font-mono text-[10px] tabular-nums " + color(player.inNet)}
