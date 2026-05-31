@@ -2,8 +2,10 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { computeUserStats } from "@/lib/userStats";
+import { listMyPasskeysAction } from "@/lib/actions";
 import AvatarEditor from "./AvatarEditor";
 import HandicapCard from "./HandicapCard";
+import PasskeysCard from "./PasskeysCard";
 import ReplayOnboarding from "./ReplayOnboarding";
 import ThemeToggle from "./ThemeToggle";
 
@@ -33,6 +35,7 @@ export default async function SettingsPage() {
   const stats = await computeUserStats(user.id);
   const handicap = stats?.handicap ?? null;
   const totalRounds = stats?.rounds.length ?? 0;
+  const passkeys = await listMyPasskeysAction();
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -61,6 +64,8 @@ export default async function SettingsPage() {
         fromRounds={handicap?.fromRounds ?? 0}
         totalRounds={totalRounds}
       />
+
+      <PasskeysCard initialPasskeys={passkeys} />
 
       <ThemeToggle />
 
