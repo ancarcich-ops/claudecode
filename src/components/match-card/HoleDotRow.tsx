@@ -1,18 +1,18 @@
 // 9 + | + 9 grid of score dots, one per hole. Colors follow the design
 // system (intentionally different from the standalone /stats chart so
 // green = positive everywhere inside a card). Each played hole also
-// renders the diff vs par inside the square (e.g. -1, +2) so a bogey
-// and a double bogey are visually unambiguous, not just two shades of
-// red:
+// renders the raw stroke count inside the square (e.g. 3, 5) so a bogey
+// and a double bogey are visually unambiguous and the actual score is
+// readable at a glance, not just shades of red:
 //
-//   under par (birdie) -> solid accent (emerald) + "-1"
-//   eagle              -> solid gold + "-2" (or more for albatross etc.)
+//   under par (birdie) -> solid accent (emerald)
+//   eagle              -> solid gold
 //   par                -> faint accent fill + border (subtle green so it
 //                         reads as quietly positive, not neutral grey)
-//   bogey              -> muted danger fill (darker red) + "+1"
-//   double or worse    -> solid danger fill (bright red) + the actual
-//                         "+2", "+3", ... so the brighter red and the
-//                         halo together make "worse than bogey" obvious
+//   bogey              -> muted danger fill (darker red)
+//   double or worse    -> solid danger fill (bright red) + halo ring
+//                         so the brighter red and the halo together
+//                         make "worse than bogey" obvious
 //   current hole       -> dashed accent border, accent 8% fill
 //   unplayed           -> 1px border, transparent fill
 //

@@ -141,7 +141,9 @@ function ReviewSheet({
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-3"
+      // z-50 so we render above the fixed MobileTabBar (z-40), which
+      // was otherwise covering the sheet's footer on mobile.
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-3"
       role="dialog"
       aria-modal="true"
       onClick={onClose}
@@ -318,7 +320,15 @@ function ReviewSheet({
           </section>
         </div>
 
-        <footer className="border-t border-border p-3 flex items-center gap-2">
+        <footer
+          // Respect the iPhone home-indicator safe area so the buttons
+          // don't sit under the swipe-up zone.
+          style={{
+            paddingBottom:
+              "max(0.75rem, calc(env(safe-area-inset-bottom) + 0.5rem))",
+          }}
+          className="border-t border-border px-3 pt-3 flex items-center gap-2"
+        >
           <button
             type="button"
             onClick={onClose}

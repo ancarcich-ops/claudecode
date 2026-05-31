@@ -19,10 +19,9 @@ const bars = [
 const SESSION_KEY = "sticks-splash-shown-v1";
 
 // Total time we hold the splash before fading. Long enough for the
-// bars to finish rising, the wordmark + tagline to settle, and the
-// pulse dot to breathe once so the lockup reads as "alive" before
-// the app shell takes over.
-const HOLD_MS = 2800;
+// bars to finish rising and the wordmark + tagline to read; trimmed
+// from 2.8s to feel snappier on cold load.
+const HOLD_MS = 1500;
 // Opacity fade-out -- short, since the underlying app shell is
 // already rendered behind the overlay.
 const FADE_MS = 240;
