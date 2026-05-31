@@ -133,7 +133,7 @@ export default function NewMatchForm({
   templates?: MatchTemplate[];
   // When present, the wizard opens in edit mode: every field is
   // pre-filled from an existing match and the submit button reads
-  // submitLabel (e.g. "Save changes") instead of "Open market".
+  // submitLabel (e.g. "Save changes") instead of "Start round".
   initial?: MatchEditInitial;
   submitLabel?: string;
   // Extra hidden inputs rendered inside the form (e.g. { matchId } for edit).
@@ -1564,7 +1564,7 @@ export default function NewMatchForm({
             you&apos;d like to track below &mdash; or just open the market to
             get started.
           </p>
-          <OpenMarketButton label="Open market →" />
+          <OpenMarketButton label="Start round →" />
           <div className="flex items-center gap-3 my-3">
             <div className="h-px flex-1 bg-borderSoft" />
             <span className="text-[10px] uppercase tracking-wider text-faint shrink-0">
@@ -1932,8 +1932,8 @@ export default function NewMatchForm({
 // user to retry) creates duplicate matches.
 function OpenMarketButton({ label }: { label?: string }) {
   const { pending } = useFormStatus();
-  const idle = label ?? "Open market";
-  const busy = label ? "Saving…" : "Opening market…";
+  const idle = label ?? "Start round";
+  const busy = label ? "Saving…" : "Starting round…";
   return (
     <button
       key="submit"

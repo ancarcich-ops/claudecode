@@ -137,7 +137,7 @@ export default async function HomePage() {
           <EmptyIllustration
             kind="noMatches"
             title="Quiet Saturday."
-            body="No rounds on the board yet. Post a tee time so the market opens."
+            body="No rounds on the board yet. Post a tee time to start the round."
             action={
               user ? (
                 <Link className="btn btn-primary text-sm" href="/matches/new">

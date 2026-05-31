@@ -397,7 +397,7 @@ function buildTickerItems(
     items.push(`${totalWagers} WAGER${totalWagers === 1 ? "" : "S"}`);
   }
   if (!isSolo && status === "UPCOMING") {
-    items.push(`MARKET OPEN`);
+    items.push(`READY TO START`);
   }
   return items;
 }
