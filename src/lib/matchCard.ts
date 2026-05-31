@@ -315,7 +315,14 @@ export function buildMatchCardData(
     scheduledAt: m.scheduledAt,
     wagerCount: m._count.wagers,
     players,
-    nextHole: buildNextHole(currentHole, pars, startingHole, m.status),
+    // When the round has reached its final hole, there's no "next" --
+    // currentHole gets clamped to lastHole by Math.min above, which
+    // otherwise leaves the LIVE card cheerfully announcing the final
+    // hole as still upcoming.
+    nextHole:
+      maxLoggedHole >= lastHole
+        ? null
+        : buildNextHole(currentHole, pars, startingHole, m.status),
     isSolo: players.length === 1,
     tickerItems: buildTickerItems(
       players,

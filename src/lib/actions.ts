@@ -1131,6 +1131,10 @@ export async function logScoreAction(formData: FormData) {
 
   await recordOddsSnapshot(matchId);
   revalidatePath(`/matches/${matchId}`);
+  // The home feed's LIVE card reads the same per-hole score data, so
+  // it needs to refresh too -- otherwise a score logged on the match
+  // page leaves the home card stale until the user navigates here.
+  revalidatePath("/");
 }
 
 export async function updateHandicapAction(formData: FormData) {
