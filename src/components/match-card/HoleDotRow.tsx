@@ -78,7 +78,7 @@ function Dot({ dot }: { dot: DotData }) {
         return "border border-border";
     }
   })();
-  const label = relLabel(dot);
+  const label = strokesLabel(dot);
   return (
     <span
       className={
@@ -92,12 +92,11 @@ function Dot({ dot }: { dot: DotData }) {
   );
 }
 
-// Number drawn inside each played square. Par stays blank (a "0" would
-// read as clutter on a neutral disc); current and unplayed have no
-// score yet, so blank too.
-function relLabel(dot: DotData): string {
-  if (dot.rel == null) return "";
-  if (dot.kind === "par") return "";
-  if (dot.rel > 0) return `+${dot.rel}`;
-  return String(dot.rel);
+// Number drawn inside each played square: the raw stroke count for
+// that hole (e.g. 3 / 5 / 7). The color of the square encodes the
+// rel-to-par; the number tells you the actual score. Current and
+// unplayed have no score yet, so they stay blank.
+function strokesLabel(dot: DotData): string {
+  if (dot.strokes == null) return "";
+  return String(dot.strokes);
 }
