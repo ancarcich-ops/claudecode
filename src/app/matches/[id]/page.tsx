@@ -1390,13 +1390,19 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
       badge: `${odds.meta.holesPlayed}/${match.holes}`,
       content: scorecardContent,
     },
-    {
+  ];
+  // Solo rounds: no opponent to price, no one to wager against -- skip
+  // the Market tab entirely so the page is just scorecard (+ optional
+  // Side games).
+  const isSolo = match.players.length === 1;
+  if (!isSolo) {
+    tabs.push({
       id: "market",
       label: "Market",
       badge: odds.meta.totalWagers > 0 ? odds.meta.totalWagers : null,
       content: marketContent,
-    },
-  ];
+    });
+  }
   if (hasSideGames) {
     tabs.push({
       id: "side-games",

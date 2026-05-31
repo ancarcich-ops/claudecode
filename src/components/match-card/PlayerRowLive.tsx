@@ -17,10 +17,14 @@ export default function PlayerRowLive({
   player,
   totalHoles,
   matchId,
+  isSolo,
 }: {
   player: PlayerCard;
   totalHoles: number;
   matchId: string;
+  // True for 1-player matches. We hide the win % column and the quick
+  // wager affordance -- nothing to bet against, win is trivially 100%.
+  isSolo?: boolean;
 }) {
   const flashCls = useRowFlash(player.id, player.winProbability);
   const netLabel =
@@ -62,12 +66,14 @@ export default function PlayerRowLive({
             <span className="font-mono text-[10px] text-mute shrink-0">
               hcp {player.handicap.toFixed(1).replace(/\.0$/, "")}
             </span>
-            <QuickWagerButton
-              matchId={matchId}
-              pickedPlayerId={player.id}
-              playerName={player.name}
-              isMyPick={player.isMyPick}
-            />
+            {!isSolo && (
+              <QuickWagerButton
+                matchId={matchId}
+                pickedPlayerId={player.id}
+                playerName={player.name}
+                isMyPick={player.isMyPick}
+              />
+            )}
           </div>
         </div>
         <div className="flex items-end gap-3 shrink-0">
@@ -83,15 +89,17 @@ export default function PlayerRowLive({
               </span>
             </div>
           )}
-          <div className="flex flex-col items-end leading-none">
-            <span className="font-mono text-[9px] uppercase tracking-wider text-faint mb-1">
-              Win
-            </span>
-            <ProbabilityTick
-              playerId={player.id}
-              probability={player.winProbability}
-            />
-          </div>
+          {!isSolo && (
+            <div className="flex flex-col items-end leading-none">
+              <span className="font-mono text-[9px] uppercase tracking-wider text-faint mb-1">
+                Win
+              </span>
+              <ProbabilityTick
+                playerId={player.id}
+                probability={player.winProbability}
+              />
+            </div>
+          )}
         </div>
       </div>
 
