@@ -509,7 +509,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
   },
   {
     id: "costa-mesa-los-lagos",
-    name: "Costa Mesa Golf & Country Club (Los Lagos)",
+    name: "Costa Mesa CC - Los Lagos",
     city: "Costa Mesa",
     region: "OC",
     access: "municipal",
