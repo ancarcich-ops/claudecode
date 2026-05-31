@@ -69,24 +69,20 @@ export default function ReviewAndFinishCard({
   return (
     <>
       <section className="card p-4 border-accent/40 bg-accent/[0.04]">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="min-w-0">
-            <h2 className="font-display text-base font-semibold text-ink">
-              Round complete
-            </h2>
-            <p className="text-[11px] text-mute mt-0.5">
-              Every hole is logged for every player. Review the scorecard, then
-              finish the round.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className="btn btn-primary shrink-0"
-          >
-            Review and finish round →
-          </button>
-        </div>
+        <h2 className="font-display text-base font-semibold text-ink">
+          Round complete
+        </h2>
+        <p className="text-[11px] text-mute mt-0.5 mb-3">
+          Every hole is logged for every player. Review the scorecard, then
+          finish the round.
+        </p>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="btn btn-primary w-full"
+        >
+          Review and finish round →
+        </button>
       </section>
 
       {open && (
@@ -173,7 +169,7 @@ function ReviewSheet({
           </button>
         </header>
 
-        <div className="overflow-y-auto p-4 space-y-5">
+        <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-5">
           {/* Per-player totals ranked. */}
           <section>
             <h3 className="font-mono text-[10px] uppercase tracking-wider text-mute mb-2">
