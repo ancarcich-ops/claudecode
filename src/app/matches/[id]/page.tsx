@@ -42,6 +42,7 @@ import MatchChartTabs, {
 } from "./MatchChartTabs";
 import MatchActionsMenu, { type MatchAction } from "./MatchActionsMenu";
 import MatchTabs, { type MatchTab } from "./MatchTabs";
+import ReviewAndFinishCard from "./ReviewAndFinishCard";
 import BBBEditor from "./BBBEditor";
 import SnakeEditor from "./SnakeEditor";
 import WolfEditor from "./WolfEditor";
@@ -740,6 +741,39 @@ export default async function MatchPage({
               ))}
             </div>
           </section>
+        );
+      })()}
+
+      {/* When every player has logged every hole and the match is still
+          marked IN_PROGRESS, show a review + finish affordance. The
+          inner client component also auto-opens the summary sheet on
+          the first render after completion (sessionStorage-gated). */}
+      {(() => {
+        const need = match.holes * match.players.length;
+        const got = match.players.reduce((s, p) => s + p.scores.length, 0);
+        const isFullyScored = need > 0 && got === need;
+        const canFinishRound =
+          isFullyScored && match.status === "IN_PROGRESS" && isCreator;
+        if (!canFinishRound) return null;
+        return (
+          <ReviewAndFinishCard
+            matchId={match.id}
+            holes={match.holes}
+            startingHole={matchStart}
+            pars={pars}
+            scoringMode={scoringMode}
+            players={playerMeta.map((p) => ({
+              id: p.id,
+              displayName: p.displayName,
+              handicap: p.handicap,
+              color: p.color,
+              scores: p.scores.map((s) => ({
+                hole: s.hole,
+                strokes: s.strokes,
+              })),
+            }))}
+            completeAction={completeMatchAction}
+          />
         );
       })()}
 
