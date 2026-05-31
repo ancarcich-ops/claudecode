@@ -318,21 +318,11 @@ export default function OnCourseMode({
     })
     .sort((a, b) => (a.distance ?? 1e9) - (b.distance ?? 1e9));
 
-  // Landmarks (yardage pills) the map should overlay. Cap at ~4 so it
-  // stays readable: front of green (if marked + not the same as center),
-  // up to 2 nearby hazards, and the AIM pill when an aim is set.
+  // Landmarks (yardage pills) the map should overlay. Kept lean: up to
+  // 2 nearby hazards + the AIM pill when an aim is set. The pin itself
+  // (green center) is drawn separately; the front/back distances live
+  // in the F/C/B card below the map, so we don't re-label them here.
   const landmarks: Landmark[] = [];
-  if (greenFrontLatLng && front != null) {
-    landmarks.push({
-      id: "front",
-      lat: greenFrontLatLng.lat,
-      lng: greenFrontLatLng.lng,
-      prefix: "F",
-      yds: front,
-      orientation: "below",
-      dim: aimPoint != null,
-    });
-  }
   // 2 closest hazards as tiny pills.
   for (const h of holeHazards.slice(0, 2)) {
     if (h.distance == null) continue;
@@ -540,18 +530,6 @@ export default function OnCourseMode({
             aim={aimPoint}
             onAim={(p) => setAimPoint(p)}
             landmarks={landmarks}
-            calibration={
-              greenSet
-                ? {
-                    showFront: !frontMarked,
-                    showBack: !backMarked,
-                    showTee: !teeSet,
-                    onMarkFront: () => markGreen("front"),
-                    onMarkBack: () => markGreen("back"),
-                    onMarkTee: () => markTeeHere(),
-                  }
-                : undefined
-            }
             emptyState={
               !greenSet
                 ? {
