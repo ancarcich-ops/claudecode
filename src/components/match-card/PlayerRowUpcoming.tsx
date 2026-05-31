@@ -12,9 +12,12 @@ import type { PlayerCard } from "@/lib/matchCard";
 export default function PlayerRowUpcoming({
   player,
   matchId,
+  isSolo,
 }: {
   player: PlayerCard;
   matchId: string;
+  // Hide wager + odds affordances for a 1-player round.
+  isSolo?: boolean;
 }) {
   const pct = Math.max(0, Math.min(1, player.winProbability));
   return (
@@ -43,28 +46,34 @@ export default function PlayerRowUpcoming({
             <span className="font-mono text-[10px] text-mute shrink-0">
               hcp {player.handicap.toFixed(1).replace(/\.0$/, "")}
             </span>
-            <QuickWagerButton
-              matchId={matchId}
-              pickedPlayerId={player.id}
-              playerName={player.name}
-              isMyPick={player.isMyPick}
-            />
+            {!isSolo && (
+              <QuickWagerButton
+                matchId={matchId}
+                pickedPlayerId={player.id}
+                playerName={player.name}
+                isMyPick={player.isMyPick}
+              />
+            )}
           </div>
         </div>
-        <ProbabilityTick
-          playerId={player.id}
-          probability={player.winProbability}
-        />
+        {!isSolo && (
+          <ProbabilityTick
+            playerId={player.id}
+            probability={player.winProbability}
+          />
+        )}
       </div>
-      <div className="mt-2 h-1 rounded-full bg-border/50 overflow-hidden">
-        <div
-          className="h-full rounded-full transition-[width] duration-700 ease-out"
-          style={{
-            width: `${pct * 100}%`,
-            background: player.color,
-          }}
-        />
-      </div>
+      {!isSolo && (
+        <div className="mt-2 h-1 rounded-full bg-border/50 overflow-hidden">
+          <div
+            className="h-full rounded-full transition-[width] duration-700 ease-out"
+            style={{
+              width: `${pct * 100}%`,
+              background: player.color,
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }
