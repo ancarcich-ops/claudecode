@@ -831,7 +831,7 @@ function LaunchStep({
         Time to open a line.
       </h2>
       <p className="text-sm text-mute mt-3 max-w-sm mx-auto leading-relaxed">
-        Post your tee time, pick the players, and the market opens.
+        Post your tee time, pick the players, and the round starts.
         Score during the round; everyone watching sees the line move.
       </p>
 
