@@ -251,6 +251,7 @@ export default function NewMatchForm({
     "OFF" | "INCREMENTAL" | "EXPONENTIAL"
   >(initial?.vegasDoubleHoles ?? "OFF");
   const toggleTvtRule = (r: TeamVsTeamRule) => {
+    let added = false;
     setTvtRules((prev) => {
       const next = new Set(prev);
       if (next.has(r)) {
@@ -258,9 +259,22 @@ export default function NewMatchForm({
         if (next.size > 1) next.delete(r);
       } else {
         next.add(r);
+        added = true;
       }
       return next;
     });
+    // Auto-flip Scramble -> Both when a rule that needs each player to
+    // play their own ball is added. Scramble only records one ball per
+    // team per hole, so rules like High/Low, Best Ball, Vegas, Sum,
+    // Aggregate Net are uncomputable in that mode. All current
+    // TEAM_VS_TEAM_RULES need two balls, so any add while in scramble
+    // triggers the switch.
+    if (added && format === "SCRAMBLE") {
+      setFormat("BOTH");
+      toast.message(
+        `Switched to Both — ${teamVsTeamRuleLabel(r)} needs each player to play their own ball.`,
+      );
+    }
   };
   // Targets config -- only sent when TARGETS is selected. Defaults
   // chosen to be sensible for an 18-hole round.
