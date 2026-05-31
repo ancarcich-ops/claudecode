@@ -87,6 +87,10 @@ export type MatchCardData = {
   // Players in seat order.
   players: PlayerCard[];
   nextHole: NextHole | null;
+  // True when there's only one player. The whole market apparatus
+  // (win probabilities, wagers, leader race) is meaningless in that
+  // case -- consumer components hide it.
+  isSolo: boolean;
   // Marquee items for the LIVE header ticker.
   tickerItems: string[];
 };
@@ -312,7 +316,13 @@ export function buildMatchCardData(
     wagerCount: m._count.wagers,
     players,
     nextHole: buildNextHole(currentHole, pars, startingHole, m.status),
-    tickerItems: buildTickerItems(players, m.status, m._count.wagers),
+    isSolo: players.length === 1,
+    tickerItems: buildTickerItems(
+      players,
+      m.status,
+      m._count.wagers,
+      players.length === 1,
+    ),
   };
 }
 
@@ -352,28 +362,34 @@ function buildTickerItems(
   players: PlayerCard[],
   status: string,
   totalWagers: number,
+  isSolo: boolean,
 ): string[] {
   const items: string[] = [];
-  // Top three by probability so the marquee leads with the line.
+  // Top three by probability so the marquee leads with the line. Skip
+  // for solo rounds -- one player is always 100% to "win," it's noise.
   const sorted = [...players].sort(
     (a, b) => b.winProbability - a.winProbability,
   );
-  for (const p of sorted.slice(0, 3)) {
-    const pct = Math.round(p.winProbability * 100);
-    items.push(`${p.name.toUpperCase()} ${pct}%`);
+  if (!isSolo) {
+    for (const p of sorted.slice(0, 3)) {
+      const pct = Math.round(p.winProbability * 100);
+      items.push(`${p.name.toUpperCase()} ${pct}%`);
+    }
   }
   if (status === "IN_PROGRESS") {
     const leader = sorted[0];
     if (leader && leader.holesPlayed > 0) {
       const sign = leader.netToPar > 0 ? "+" : "";
       const npar = leader.netToPar === 0 ? "E" : `${sign}${leader.netToPar}`;
-      items.push(`LEADER ${npar} THRU ${leader.holesPlayed}`);
+      // "Leader" implies a race; for solo just label it "score."
+      const label = isSolo ? "SCORE" : "LEADER";
+      items.push(`${label} ${npar} THRU ${leader.holesPlayed}`);
     }
   }
   if (totalWagers > 0) {
     items.push(`${totalWagers} WAGER${totalWagers === 1 ? "" : "S"}`);
   }
-  if (status === "UPCOMING") {
+  if (!isSolo && status === "UPCOMING") {
     items.push(`MARKET OPEN`);
   }
   return items;
