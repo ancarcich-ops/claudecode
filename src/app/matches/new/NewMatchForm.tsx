@@ -356,6 +356,16 @@ export default function NewMatchForm({
     });
   }, [format]);
 
+  // Custom strokes aren't offered on Individual rounds (single ball,
+  // every player's own card), so snap a leftover CUSTOM selection back
+  // to NET whenever the format flips that way. Stops the scoringMode
+  // state from drifting away from what's visible in the picker.
+  useEffect(() => {
+    if (format === "INDIVIDUAL" && scoringMode === "CUSTOM") {
+      setScoringMode("NET");
+    }
+  }, [format, scoringMode]);
+
   const presetByName = useMemo(() => {
     const m = new Map<string, CoursePreset>();
     for (const p of presets) m.set(p.name.toLowerCase(), p);
@@ -982,7 +992,7 @@ export default function NewMatchForm({
               format === "SCRAMBLE"
                 ? "Teams"
                 : format === "BOTH"
-                  ? "Individual vs Team"
+                  ? "Individual and Team"
                   : "Individual"
             } · ${
               format === "SCRAMBLE"
@@ -1036,7 +1046,7 @@ export default function NewMatchForm({
               ? "Solo round — no opponents, no odds. Just log your card."
               : players.length < 4
                 ? "Add more players in the next step or bump the size up to unlock team formats."
-                : "Foursome unlocks Teams (one ball per side) and Individual vs Team scoring."}
+                : "Foursome unlocks Teams (one ball per side) and Individual and Team scoring."}
           </p>
           {players.length > 1 && (
             <>
@@ -1151,7 +1161,7 @@ export default function NewMatchForm({
                   ? "Individual"
                   : f === "SCRAMBLE"
                     ? "Teams"
-                    : "Individual vs Team";
+                    : "Individual and Team";
               return (
                 <button
                   key={f}
@@ -1187,8 +1197,17 @@ export default function NewMatchForm({
         <div hidden={roundStep !== 2 || format === "SCRAMBLE"}>
           <label className="label">Round scoring</label>
           <input type="hidden" name="scoringMode" value={scoringMode} />
-          <div className="grid grid-cols-3 gap-2">
-            {(Object.keys(MODE_COPY) as ScoringMode[]).map((m) => {
+          <div
+            className={`grid gap-2 ${format === "INDIVIDUAL" ? "grid-cols-2" : "grid-cols-3"}`}
+          >
+            {(Object.keys(MODE_COPY) as ScoringMode[])
+              // Custom strokes are a group-handicapping device -- only
+              // meaningful when there's more than one player and a
+              // shared agreement on allowances. Hide it on Individual
+              // (which includes solo) where Net + Gross cover every
+              // case.
+              .filter((m) => !(m === "CUSTOM" && format === "INDIVIDUAL"))
+              .map((m) => {
               const active = scoringMode === m;
               const c = MODE_COPY[m];
               return (
