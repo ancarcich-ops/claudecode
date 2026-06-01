@@ -141,21 +141,37 @@ async function main() {
   // process.env.USERNAME is the OS account, so we strongly prefer the
   // SEED_ prefix.
   const usernameRaw = (process.env.SEED_USERNAME ?? process.env.USERNAME ?? "").trim();
-  const username = usernameRaw.toLowerCase();
-  if (!username) {
+  if (!usernameRaw) {
     console.error(
       "[seed] Set SEED_USERNAME to the app username you're seeding history for.",
     );
     process.exit(1);
   }
-  console.log(`[seed] Using username "${username}"`);
+  console.log(`[seed] Looking up "${usernameRaw}"...`);
 
-  // Require the user already exists -- don't silently create a duplicate
-  // from a typo'd env var on a production DB.
-  const user = await prisma.user.findUnique({ where: { username } });
+  // Try the exact case first; fall back to a case-insensitive ILIKE so
+  // "seuss.md" matches "Seuss.md" without forcing the operator to know
+  // the stored capitalisation. Require the user already exists -- never
+  // silently create a duplicate from a typo on a production DB.
+  let user = await prisma.user.findUnique({ where: { username: usernameRaw } });
+  if (!user) {
+    const matches = await prisma.$queryRaw<
+      { id: string; username: string; displayName: string | null }[]
+    >`SELECT id, username, "displayName" FROM "User" WHERE LOWER(username) = LOWER(${usernameRaw}) LIMIT 2`;
+    if (matches.length === 1) {
+      user = await prisma.user.findUnique({ where: { id: matches[0].id } });
+    } else if (matches.length > 1) {
+      console.error(
+        `[seed] Multiple users match "${usernameRaw}" case-insensitively. Pass the exact spelling:\n` +
+          matches.map((m) => `  ${m.username}`).join("\n"),
+      );
+      await prisma.$disconnect();
+      process.exit(1);
+    }
+  }
   if (!user) {
     console.error(
-      `[seed] No user with username "${username}". Check spelling (case-insensitive). Refusing to auto-create on prod.`,
+      `[seed] No user with username "${usernameRaw}" (also tried case-insensitive). Refusing to auto-create on prod.`,
     );
     await prisma.$disconnect();
     process.exit(1);
