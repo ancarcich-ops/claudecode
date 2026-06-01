@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { computeUserStats } from "@/lib/userStats";
 
 export const dynamic = "force-dynamic";
 
@@ -33,5 +34,19 @@ export async function GET(req: NextRequest) {
     )
     .slice(0, 8);
 
-  return NextResponse.json({ users: matched });
+  // Attach each candidate's Sticks index (or null = pending) so the
+  // form can prefill a real handicap instead of the hardcoded "15"
+  // default. Computed in parallel; we only ship 8 results so the cost
+  // is bounded.
+  const enriched = await Promise.all(
+    matched.map(async (u) => {
+      const stats = await computeUserStats(u.id).catch(() => null);
+      return {
+        ...u,
+        handicapIndex: stats?.handicap?.index ?? null,
+      };
+    }),
+  );
+
+  return NextResponse.json({ users: enriched });
 }
