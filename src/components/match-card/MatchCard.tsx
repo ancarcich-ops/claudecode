@@ -54,7 +54,7 @@ export default function MatchCard({ data }: { data: MatchCardData }) {
         </div>
       )}
 
-      {isSettled && winner && (
+      {isSettled && winner && !data.isSolo && (
         <ResultBand winner={winner} />
       )}
 
