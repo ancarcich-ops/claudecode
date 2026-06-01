@@ -109,6 +109,7 @@ export default function NewMatchForm({
   action,
   defaultPlayerName,
   defaultPlayerHandicap = "12",
+  userHandicapPending = false,
   currentUserId,
   recentCourses,
   presets,
@@ -124,6 +125,10 @@ export default function NewMatchForm({
   // Pre-filled handicap for the creator's seat. Comes from their computed
   // Sticks index when available; the parent supplies the fallback string.
   defaultPlayerHandicap?: string;
+  // True when the creator hasn't logged 3+ rounds yet, so we don't have a
+  // real index for them. The form leaves their hcp field blank instead of
+  // faking a value, and surfaces a small note explaining what's missing.
+  userHandicapPending?: boolean;
   currentUserId: string;
   recentCourses: string[];
   presets: CoursePreset[];
@@ -1462,6 +1467,12 @@ export default function NewMatchForm({
                   ? "Lowest gross wins; handicap is informational."
                   : "Lowest gross minus handicap wins."}
             </p>
+            {userHandicapPending && scoringMode !== "CUSTOM" && (
+              <p className="text-[10.5px] text-mute mt-1 italic">
+                Sticks index pending — log 3+ rounds to auto-fill yours. Enter
+                a value for now.
+              </p>
+            )}
           </div>
           <button
             type="button"

@@ -78,7 +78,7 @@ export default async function PersonalStatsPage({
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0 w-full justify-center flex-wrap sm:w-auto sm:justify-end">
-          {handicap && (
+          {handicap ? (
             <Link
               href="/settings"
               className="rounded-md border border-accent/30 bg-accent/10 px-2.5 py-1.5 text-center hover:border-accent/50 transition-colors"
@@ -91,6 +91,21 @@ export default async function PersonalStatsPage({
                 {formatIndex(handicap.index)}
               </div>
             </Link>
+          ) : (
+            <div
+              className="rounded-md border border-dashed border-border bg-panel2 px-2.5 py-1.5 text-center"
+              title="Log 3+ rounds to unlock your auto-computed index"
+            >
+              <div className="text-[9px] uppercase tracking-wider text-mute leading-none">
+                Sticks idx
+              </div>
+              <div className="font-display italic font-medium text-sm text-mute leading-tight mt-0.5">
+                pending
+              </div>
+              <div className="text-[9px] text-mute leading-none mt-0.5">
+                {Math.min(stats.rounds.length, 3)}/3 rounds
+              </div>
+            </div>
           )}
           {avg18 != null && (
             <div

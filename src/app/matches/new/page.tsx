@@ -81,10 +81,13 @@ export default async function NewMatchPage() {
   // when available. Falls back to the historical default of "12" so the
   // form never lands empty.
   const userStats = await computeUserStats(user.id);
-  const defaultHandicap =
-    userStats?.handicap != null
-      ? userStats.handicap.index.toFixed(1)
-      : "12";
+  // Don't fake a default when the user hasn't logged enough rounds for an
+  // index -- leave the field blank so the creator types something explicit,
+  // and pass a pending flag down so the form can label why.
+  const userHandicapPending = !userStats?.handicap;
+  const defaultHandicap = userHandicapPending
+    ? ""
+    : userStats!.handicap!.index.toFixed(1);
 
   const groups = await listUserGroups(user.id);
   const activeGroup = getActiveGroupId();
@@ -108,6 +111,7 @@ export default async function NewMatchPage() {
         action={createMatchAction}
         defaultPlayerName={defaultName}
         defaultPlayerHandicap={defaultHandicap}
+        userHandicapPending={userHandicapPending}
         currentUserId={user.id}
         recentCourses={recentCourses}
         presets={COURSE_PRESETS}
