@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { GeistSans } from 'geist/font/sans';
 import './globals.css';
 import Nav from '@/components/Nav';
 
@@ -10,12 +11,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen">
+    <html lang="en" className={GeistSans.variable}>
+      <body className="min-h-screen font-sans">
         <Nav />
-        <main className="mx-auto max-w-5xl px-4 py-6">{children}</main>
-        <footer className="mx-auto max-w-5xl px-4 py-10 text-xs text-white/40">
-          Unofficial. Data from the MLB Stats API. Not affiliated with MLB or the Atlanta Braves.
+        <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+        <footer className="mx-auto max-w-5xl px-4 pb-12 pt-6">
+          <div className="border-t border-white/10 pt-6 text-xs text-slate-500">
+            Unofficial fan project. Live data from the MLB Stats API. Not affiliated with
+            MLB or the Atlanta Braves.
+          </div>
         </footer>
       </body>
     </html>
