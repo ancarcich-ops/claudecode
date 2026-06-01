@@ -930,7 +930,7 @@ export default function NewMatchForm({
               format === "SCRAMBLE"
                 ? "Teams"
                 : format === "BOTH"
-                  ? "Both"
+                  ? "Individual vs Team"
                   : "Individual"
             } · ${
               format === "SCRAMBLE"
@@ -1052,7 +1052,7 @@ export default function NewMatchForm({
                   ? "Individual"
                   : f === "SCRAMBLE"
                     ? "Teams"
-                    : "Both";
+                    : "Individual vs Team";
               return (
                 <button
                   key={f}
