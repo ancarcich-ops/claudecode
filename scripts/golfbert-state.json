@@ -6731,7 +6731,9 @@
   {
     "kind": "failed",
     "presetId": "angel-park-palm",
-    "error": "\nInvalid `prisma.courseHole.upsert()` invocation in\nC:\\Users\\andre\\claudecode\\scripts\\import-golfbert.ts:271:29\n\n  268 // live admin import flow's behaviour.\n  269 await prisma.courseHazard.deleteMany({ where: { courseId: course.id } });\n  270 for (const h of imported.holes) {\n→ 271   await prisma.courseHole.upsert(\nCan't reach database server at `ep-curly-block-aqep9zw8-pooler.c-8.us-east-1.aws.neon.tech:5432`\n\nPlease make sure your database server is running at `ep-curly-block-aqep9zw8-pooler.c-8.us-east-1.aws.neon.tech:5432`."
+    "error": "\nInvalid `prisma.courseHole.upsert()` invocation in\nC:\\Users\\andre\\claudecode\\scripts\\import-golfbert.ts:271:29\n\n  268 // live admin import flow's behaviour.\n  269 await prisma.courseHazard.deleteMany({ where: { courseId: course.id } });\n  270 for (const h of imported.holes) {\n\u2192 271   await prisma.courseHole.upsert(\nCan't reach database server at `ep-curly-block-aqep9zw8-pooler.c-8.us-east-1.aws.neon.tech:5432`\n\nPlease make sure your database server is running at `ep-curly-block-aqep9zw8-pooler.c-8.us-east-1.aws.neon.tech:5432`.",
+    "gbId": 5214,
+    "gbName": "Angel Park Golf Club (Palm course)"
   },
   {
     "kind": "matched",
@@ -6933,7 +6935,9 @@
   {
     "kind": "failed",
     "presetId": "sand-hollow-championship",
-    "error": "\nInvalid `prisma.courseHazard.create()` invocation in\nC:\\Users\\andre\\claudecode\\scripts\\import-golfbert.ts:305:33\n\n  302   },\n  303 });\n  304 for (const hz of h.hazards) {\n→ 305   await prisma.courseHazard.create(\nServer has closed the connection."
+    "error": "\nInvalid `prisma.courseHazard.create()` invocation in\nC:\\Users\\andre\\claudecode\\scripts\\import-golfbert.ts:305:33\n\n  302   },\n  303 });\n  304 for (const hz of h.hazards) {\n\u2192 305   await prisma.courseHazard.create(\nServer has closed the connection.",
+    "gbId": 18590,
+    "gbName": "Sand Hollow Resort Golf Course (Championship)"
   },
   {
     "kind": "matched",
@@ -6966,7 +6970,9 @@
   {
     "kind": "failed",
     "presetId": "entrada-snow-canyon",
-    "error": "fetch failed"
+    "error": "fetch failed",
+    "gbId": 16748,
+    "gbName": "Entrada at Snow Canyon"
   },
   {
     "kind": "matched",
@@ -7054,22 +7060,30 @@
   {
     "kind": "failed",
     "presetId": "mountain-dell-canyon",
-    "error": "fetch failed"
+    "error": "fetch failed",
+    "gbId": 6345,
+    "gbName": "Mountain Dell Golf Course"
   },
   {
     "kind": "failed",
     "presetId": "mountain-dell-lake",
-    "error": "fetch failed"
+    "error": "fetch failed",
+    "gbId": 6345,
+    "gbName": "Mountain Dell Golf Course"
   },
   {
     "kind": "failed",
     "presetId": "promontory-pete-dye",
-    "error": "fetch failed"
+    "error": "fetch failed",
+    "gbId": 18631,
+    "gbName": "Promontory Club (Pete Dye Canyon Golf Club)"
   },
   {
     "kind": "failed",
     "presetId": "promontory-nicklaus",
-    "error": "fetch failed"
+    "error": "fetch failed",
+    "gbId": 18630,
+    "gbName": "Promontory Club (Painted Valley Golf Club)"
   },
   {
     "kind": "matched",
@@ -7102,7 +7116,9 @@
   {
     "kind": "failed",
     "presetId": "glenwild",
-    "error": "fetch failed"
+    "error": "fetch failed",
+    "gbId": 18624,
+    "gbName": "Glenwild Golf Club and Spa"
   },
   {
     "kind": "matched",
@@ -7163,17 +7179,23 @@
   {
     "kind": "failed",
     "presetId": "soldier-hollow-gold",
-    "error": "fetch failed"
+    "error": "fetch failed",
+    "gbId": 18626,
+    "gbName": "Soldier Hollow Golf Course (Gold Course)"
   },
   {
     "kind": "failed",
     "presetId": "tpc-sawgrass-stadium",
-    "error": "fetch failed"
+    "error": "fetch failed",
+    "gbId": 20509,
+    "gbName": "TPC Sawgrass (Stadium)"
   },
   {
     "kind": "failed",
     "presetId": "tpc-sawgrass-dyes-valley",
-    "error": "fetch failed"
+    "error": "fetch failed",
+    "gbId": 4087,
+    "gbName": "TPC Sawgrass (Dye Valley)"
   },
   {
     "kind": "matched",
