@@ -1017,7 +1017,7 @@ export default function NewMatchForm({
             {(
               [
                 [1, "Solo"],
-                [2, "2-player"],
+                [2, "Twosome"],
                 [3, "Threesome"],
                 [4, "Foursome"],
               ] as const
@@ -1193,8 +1193,10 @@ export default function NewMatchForm({
 
         {/* Scoring picker shows for INDIVIDUAL or BOTH (BOTH still
             uses individual handicap math; the team handicap mode in
-            the SCRAMBLE branch doesn't apply). */}
-        <div hidden={roundStep !== 2 || format === "SCRAMBLE"}>
+            the SCRAMBLE branch doesn't apply). Solo rounds skip it
+            entirely -- there's no opponent so Net vs Gross is
+            cosmetic; default Net carries through. */}
+        <div hidden={roundStep !== 2 || format === "SCRAMBLE" || isSolo}>
           <label className="label">Round scoring</label>
           <input type="hidden" name="scoringMode" value={scoringMode} />
           <div
