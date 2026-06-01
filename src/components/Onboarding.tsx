@@ -332,8 +332,8 @@ function WelcomeStep() {
         />
         <FeatureRow
           icon={<GamesIcon />}
-          title="All your favorite side games"
-          body="Including Stableford, Skins, Nassau, Wolf, BBB, Snake."
+          title="Every game in your group"
+          body="Stableford, Skins, Nassau, Match, Sixes, Targets, Wolf, BBB, Snake. Plus team formats — Best Ball, High/Low, Vegas, Sum, Aggregate Net — with a live team leaderboard above the scorecard."
         />
         <FeatureRow
           icon={<TrophyIcon />}
@@ -347,8 +347,8 @@ function WelcomeStep() {
         />
         <FeatureRow
           icon={<GpsIcon />}
-          title="GPS rangefinder"
-          body="Yardages to the front, center, and back without leaving the app."
+          title="Satellite GPS, 350+ courses"
+          body="Live distances to the green plus a pre-round preview of every hole — for every course we've mapped."
         />
       </div>
     </div>
@@ -672,9 +672,11 @@ function CardGuideStep() {
           label="Hole dot row"
           body={
             <>
-              One dot per hole. <span className="text-accent">Green</span> = birdie ·{" "}
-              <span className="text-gold">gold</span> = eagle · gray = par ·{" "}
-              <span className="text-danger">red</span> = bogey or worse · dashed = current hole · empty = unplayed.
+              Each played box shows your raw <span className="text-ink">strokes</span> for the hole. Color hints at par:{" "}
+              <span className="text-accent">solid emerald</span> = birdie · <span className="text-gold">gold</span> = eagle ·{" "}
+              <span className="text-accent">soft green</span> = par ·{" "}
+              <span className="text-danger">muted red</span> = bogey ·{" "}
+              <span className="text-danger">bright red + halo</span> = double or worse. Dashed border = current hole, empty = unplayed.
             </>
           }
         />
