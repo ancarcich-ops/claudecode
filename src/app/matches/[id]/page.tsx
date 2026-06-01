@@ -758,6 +758,8 @@ export default async function MatchPage({
         return (
           <ReviewAndFinishCard
             matchId={match.id}
+            courseName={match.courseName}
+            scheduledAt={match.scheduledAt.toISOString()}
             holes={match.holes}
             startingHole={matchStart}
             pars={pars}
