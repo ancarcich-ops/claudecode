@@ -72,12 +72,27 @@ export default async function PublicProfilePage({
       </div>
 
       <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
-        {handicap && (
+        {handicap ? (
           <Chip
             label="Sticks idx"
             value={formatIndex(handicap.index)}
             tone="accent"
           />
+        ) : (
+          <div
+            title="Index unlocks after 3+ logged rounds"
+            className="rounded-md border border-dashed border-border bg-panel2 px-2.5 py-1.5 text-center"
+          >
+            <div className="text-[9px] uppercase tracking-wider text-mute leading-none">
+              Sticks idx
+            </div>
+            <div className="font-display italic font-medium text-sm text-mute leading-tight mt-0.5">
+              pending
+            </div>
+            <div className="text-[9px] text-mute leading-none mt-0.5">
+              {Math.min(stats.rounds.length, 3)}/3 rounds
+            </div>
+          </div>
         )}
         {avg18 != null && (
           <Chip label="Avg 18" value={avg18.toFixed(1)} />
