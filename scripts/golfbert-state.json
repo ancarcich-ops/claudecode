@@ -4989,24 +4989,43 @@
       3,
       5,
       4,
+      3,
       4,
-      4,
-      4
+      5
     ],
     "dbImported": true
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "olympic-club-lake",
-    "error": "GolfBert 429 on /v1/courses/17169: {\"message\":\"Limit Exceeded\"}"
+    "query": "The Olympic Club (Lake Course) | San Francisco, CA"
   },
   {
     "kind": "matched",
     "presetId": "olympic-club-ocean",
     "gbId": 18132,
     "gbName": "The Olympic Club (Ocean)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      5,
+      3,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -5068,16 +5087,54 @@
     "presetId": "half-moon-bay-old",
     "gbId": 17743,
     "gbName": "Half Moon Bay Golf Links (Old Course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "half-moon-bay-ocean",
     "gbId": 1603,
     "gbName": "Half Moon Bay Golf Links (Ocean Course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      5,
+      3,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -5168,80 +5225,248 @@
     "presetId": "tpc-scottsdale-stadium",
     "gbId": 16136,
     "gbName": "TPC Scottsdale (Stadium course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "tpc-scottsdale-champions",
     "gbId": 18905,
     "gbName": "TPC Scottsdale (Champions course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      3,
+      5,
+      5,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "matched",
+    "kind": "skipped",
     "presetId": "troon-north-pinnacle",
-    "gbId": 16151,
-    "gbName": "Troon North Golf Club (Pinnacle course)",
-    "pars": [],
-    "dbImported": false
+    "reason": "Golfbert returned 0 holes"
   },
   {
     "kind": "matched",
     "presetId": "troon-north-monument",
     "gbId": 101,
     "gbName": "Troon North Golf Club (Monument course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      5,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "grayhawk-talon",
     "gbId": 16144,
     "gbName": "Grayhawk Golf Club (Talon)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "grayhawk-raptor",
     "gbId": 94,
     "gbName": "Grayhawk Golf Club (Raptor course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      4,
+      5,
+      3,
+      4,
+      5,
+      3,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "we-ko-pa-saguaro",
     "gbId": 18081,
     "gbName": "We-Ko-Pa Golf Club (Saguaro)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      5,
+      3,
+      4,
+      3,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "we-ko-pa-cholla",
     "gbId": 4517,
     "gbName": "We-Ko-Pa Golf Club (Cholla)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      3,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "boulders-north",
     "gbId": 17329,
     "gbName": "The Boulders Golf Club (North course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      5,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      5,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "boulders-south",
     "gbId": 17330,
     "gbName": "The Boulders Golf Club (South course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      5,
+      3,
+      3,
+      4,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -5387,24 +5612,81 @@
     "presetId": "lv-paiute-snow-mountain",
     "gbId": 5224,
     "gbName": "Las Vegas Paiute Resort (Snow Mountain course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      5,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      3,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "lv-paiute-sun-mountain",
     "gbId": 17475,
     "gbName": "Las Vegas Paiute Resort (Sun mountain course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "lv-paiute-wolf",
     "gbId": 17476,
     "gbName": "Las Vegas Paiute Resort (Wolf course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      5,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -5439,48 +5721,162 @@
     "presetId": "bandon-dunes",
     "gbId": 4992,
     "gbName": "Bandon Dunes Resort (Bandon Dunes Course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      4,
+      4,
+      5,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "bandon-pacific-dunes",
     "gbId": 17163,
     "gbName": "Bandon Dunes Resort (Pacific Dunes Course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      3,
+      5,
+      4,
+      3,
+      5,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "bandon-old-macdonald",
     "gbId": 18854,
     "gbName": "Bandon Dunes Resort (Old Macdonald Course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "bandon-trails",
     "gbId": 17198,
     "gbName": "Bandon Dunes Resort (Bandon Trails Course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "pumpkin-ridge-witch-hollow",
     "gbId": 18568,
     "gbName": "Pumpkin Ridge - Witch Hollow",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      5,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "pumpkin-ridge-ghost-creek",
     "gbId": 5106,
     "gbName": "Pumpkin Ridge - Ghost Creek",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      4,
+      5,
+      4,
+      5,
+      3,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -5548,8 +5944,27 @@
     "presetId": "vaquero-club",
     "gbId": 18668,
     "gbName": "Vaquero Golf Club",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      5,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      5,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -5611,32 +6026,108 @@
     "presetId": "blackhorse-north",
     "gbId": 2407,
     "gbName": "BlackHorse Golf Club (North course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "blackhorse-south",
     "gbId": 17399,
     "gbName": "Blackhorse Golf Club (South course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "wildcat-highlands",
     "gbId": 2594,
     "gbName": "Wildcat Golf Club (Highlands course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      5,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "wildcat-lakes",
     "gbId": 15966,
     "gbName": "Wildcat Golf Club (Lakes course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "no-match",
@@ -5658,8 +6149,27 @@
     "presetId": "desert-mountain-outlaw",
     "gbId": 18795,
     "gbName": "Outlaw Course at Desert Mountain Golf Club",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      4,
+      3,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      5,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "no-match",
@@ -5671,32 +6181,108 @@
     "presetId": "talking-stick-north",
     "gbId": 82,
     "gbName": "Talking Stick Golf Club (North course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      4,
+      4,
+      4,
+      3,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "talking-stick-south",
     "gbId": 16132,
     "gbName": "Talking Stick Golf Club (South course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      5,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "whisper-rock-lower",
     "gbId": 18919,
     "gbName": "Whisper Rock Golf Club (Lower)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "whisper-rock-upper",
     "gbId": 18918,
     "gbName": "Whisper Rock Golf Club (Upper)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -5731,16 +6317,54 @@
     "presetId": "silverleaf-club",
     "gbId": 18794,
     "gbName": "Silverleaf Golf Club",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "mirabel-club",
     "gbId": 18917,
     "gbName": "Mirabel Golf Club",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      4,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "no-match",
@@ -5752,40 +6376,135 @@
     "presetId": "camelback-padre",
     "gbId": 79,
     "gbName": "Camelback Golf Club (Padre course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "wildfire-faldo",
     "gbId": 17333,
     "gbName": "Wildfire Golf Club (Faldo course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      5,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "wildfire-palmer",
     "gbId": 70,
     "gbName": "Wildfire Golf Club (Palmer course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      4,
+      5,
+      4,
+      3,
+      5,
+      3,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "forest-highlands-canyon",
     "gbId": 4512,
     "gbName": "Forest Highlands Golf Club",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      5,
+      3,
+      5,
+      3,
+      4,
+      3,
+      4,
+      3,
+      4,
+      3,
+      5,
+      3,
+      5,
+      4,
+      4,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "forest-highlands-meadow",
     "gbId": 4512,
     "gbName": "Forest Highlands Golf Club",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      5,
+      3,
+      5,
+      3,
+      4,
+      3,
+      4,
+      3,
+      4,
+      3,
+      5,
+      3,
+      5,
+      4,
+      4,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -5820,8 +6539,27 @@
     "presetId": "ventana-canyon-mountain",
     "gbId": 4680,
     "gbName": "Ventana Canyon Golf Club (Mountain Course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      3,
+      4,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -5968,24 +6706,59 @@
     "presetId": "angel-park-mountain",
     "gbId": 17472,
     "gbName": "Angel Park G.C. (Mountain course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      4,
+      3,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "matched",
+    "kind": "failed",
     "presetId": "angel-park-palm",
-    "gbId": 5214,
-    "gbName": "Angel Park Golf Club (Palm course)",
-    "pars": [],
-    "dbImported": false
+    "error": "\nInvalid `prisma.courseHole.upsert()` invocation in\nC:\\Users\\andre\\claudecode\\scripts\\import-golfbert.ts:271:29\n\n  268 // live admin import flow's behaviour.\n  269 await prisma.courseHazard.deleteMany({ where: { courseId: course.id } });\n  270 for (const h of imported.holes) {\n→ 271   await prisma.courseHole.upsert(\nCan't reach database server at `ep-curly-block-aqep9zw8-pooler.c-8.us-east-1.aws.neon.tech:5432`\n\nPlease make sure your database server is running at `ep-curly-block-aqep9zw8-pooler.c-8.us-east-1.aws.neon.tech:5432`."
   },
   {
     "kind": "matched",
     "presetId": "dragonridge-cc",
     "gbId": 5192,
     "gbName": "Dragon Ridge Golf Club",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      4,
+      5,
+      4,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "no-match",
@@ -6081,16 +6854,54 @@
     "presetId": "genoa-lakes-lakes",
     "gbId": 17489,
     "gbName": "Genoa Lakes Golf and Resort (Lakes course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      4,
+      4,
+      4,
+      3,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      4,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "incline-village-championship",
     "gbId": 5203,
     "gbName": "Golf Courses At Incline Village (Championship Course)",
-    "pars": [],
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      4,
+      4,
+      5,
+      3,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
@@ -6120,12 +6931,9 @@
     "dbImported": true
   },
   {
-    "kind": "matched",
+    "kind": "failed",
     "presetId": "sand-hollow-championship",
-    "gbId": 18590,
-    "gbName": "Sand Hollow Resort Golf Course (Championship)",
-    "pars": [],
-    "dbImported": false
+    "error": "\nInvalid `prisma.courseHazard.create()` invocation in\nC:\\Users\\andre\\claudecode\\scripts\\import-golfbert.ts:305:33\n\n  302   },\n  303 });\n  304 for (const hz of h.hazards) {\n→ 305   await prisma.courseHazard.create(\nServer has closed the connection."
   },
   {
     "kind": "matched",
@@ -6156,12 +6964,9 @@
     "dbImported": true
   },
   {
-    "kind": "matched",
+    "kind": "failed",
     "presetId": "entrada-snow-canyon",
-    "gbId": 16748,
-    "gbName": "Entrada at Snow Canyon",
-    "pars": [],
-    "dbImported": false
+    "error": "fetch failed"
   },
   {
     "kind": "matched",
@@ -6247,36 +7052,24 @@
     "dbImported": true
   },
   {
-    "kind": "matched",
+    "kind": "failed",
     "presetId": "mountain-dell-canyon",
-    "gbId": 6345,
-    "gbName": "Mountain Dell Golf Course",
-    "pars": [],
-    "dbImported": false
+    "error": "fetch failed"
   },
   {
-    "kind": "matched",
+    "kind": "failed",
     "presetId": "mountain-dell-lake",
-    "gbId": 6345,
-    "gbName": "Mountain Dell Golf Course",
-    "pars": [],
-    "dbImported": false
+    "error": "fetch failed"
   },
   {
-    "kind": "matched",
+    "kind": "failed",
     "presetId": "promontory-pete-dye",
-    "gbId": 18631,
-    "gbName": "Promontory Club (Pete Dye Canyon Golf Club)",
-    "pars": [],
-    "dbImported": false
+    "error": "fetch failed"
   },
   {
-    "kind": "matched",
+    "kind": "failed",
     "presetId": "promontory-nicklaus",
-    "gbId": 18630,
-    "gbName": "Promontory Club (Painted Valley Golf Club)",
-    "pars": [],
-    "dbImported": false
+    "error": "fetch failed"
   },
   {
     "kind": "matched",
@@ -6307,12 +7100,9 @@
     "dbImported": true
   },
   {
-    "kind": "matched",
+    "kind": "failed",
     "presetId": "glenwild",
-    "gbId": 18624,
-    "gbName": "Glenwild Golf Club and Spa",
-    "pars": [],
-    "dbImported": false
+    "error": "fetch failed"
   },
   {
     "kind": "matched",
@@ -6371,28 +7161,19 @@
     "dbImported": true
   },
   {
-    "kind": "matched",
+    "kind": "failed",
     "presetId": "soldier-hollow-gold",
-    "gbId": 18626,
-    "gbName": "Soldier Hollow Golf Course (Gold Course)",
-    "pars": [],
-    "dbImported": false
+    "error": "fetch failed"
   },
   {
-    "kind": "matched",
+    "kind": "failed",
     "presetId": "tpc-sawgrass-stadium",
-    "gbId": 20509,
-    "gbName": "TPC Sawgrass (Stadium)",
-    "pars": [],
-    "dbImported": false
+    "error": "fetch failed"
   },
   {
-    "kind": "matched",
+    "kind": "failed",
     "presetId": "tpc-sawgrass-dyes-valley",
-    "gbId": 4087,
-    "gbName": "TPC Sawgrass (Dye Valley)",
-    "pars": [],
-    "dbImported": false
+    "error": "fetch failed"
   },
   {
     "kind": "matched",
