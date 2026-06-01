@@ -1012,7 +1012,7 @@ export default function NewMatchForm({
           hidden={roundStep !== 2}
           className={roundStep === 2 ? "field-active" : undefined}
         >
-          <label className="label">Round size</label>
+          <label className="label">Number of players</label>
           <div className="grid grid-cols-4 gap-2">
             {(
               [
