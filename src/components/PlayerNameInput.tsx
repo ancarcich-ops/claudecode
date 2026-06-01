@@ -6,6 +6,18 @@ type Suggestion = {
   id: string;
   username: string;
   displayName: string | null;
+  // Auto-computed Sticks index. `null` means the user hasn't logged
+  // 3+ rounds yet -- callers should treat this as "pending" and not
+  // fake a default handicap.
+  handicapIndex: number | null;
+};
+
+export type PlayerPick = {
+  name: string;
+  userId: string | null;
+  // Only set when the user picked a linked Sticks account. `index`
+  // is the auto-computed Sticks index, or null if pending.
+  handicapIndex?: number | null;
 };
 
 export default function PlayerNameInput({
@@ -16,7 +28,7 @@ export default function PlayerNameInput({
 }: {
   value: string;
   userId: string | null;
-  onChange: (next: { name: string; userId: string | null }) => void;
+  onChange: (next: PlayerPick) => void;
   placeholder: string;
 }) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -56,7 +68,11 @@ export default function PlayerNameInput({
   };
 
   const pick = (s: Suggestion) => {
-    onChange({ name: s.displayName ?? s.username, userId: s.id });
+    onChange({
+      name: s.displayName ?? s.username,
+      userId: s.id,
+      handicapIndex: s.handicapIndex,
+    });
     setOpen(false);
   };
 

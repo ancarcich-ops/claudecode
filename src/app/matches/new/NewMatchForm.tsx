@@ -26,6 +26,11 @@ type PlayerRow = {
   // for even indices, 1 for odd, so an unedited 4-player match opens
   // as a clean 2v2 split.
   team: 0 | 1;
+  // True when this slot is linked to a real Sticks user who hasn't
+  // logged 3+ rounds yet, so we don't have a real index. The form
+  // leaves the field blank + italic + flagged with a pending note so
+  // nobody confuses a fake default for a real handicap.
+  handicapPending?: boolean;
 };
 type ScoringMode = "NET" | "GROSS" | "CUSTOM";
 
@@ -170,6 +175,7 @@ export default function NewMatchForm({
             handicap: defaultPlayerHandicap,
             userId: currentUserId,
             team: 0,
+            handicapPending: userHandicapPending,
           },
           { name: "", handicap: "15", userId: null, team: 1 },
           { name: "", handicap: "15", userId: null, team: 0 },
@@ -1584,12 +1590,18 @@ export default function NewMatchForm({
                   ? "Lowest gross wins; handicap is informational."
                   : "Lowest gross minus handicap wins."}
             </p>
-            {userHandicapPending && scoringMode !== "CUSTOM" && (
-              <p className="text-[10.5px] text-mute mt-1 italic">
-                Sticks index pending — log 3+ rounds to auto-fill yours. Enter
-                a value for now.
-              </p>
-            )}
+            {scoringMode !== "CUSTOM" &&
+              players.some((p) => p.handicapPending) && (
+                <p className="text-[10.5px] text-mute mt-1 italic">
+                  Sticks index pending for{" "}
+                  {players
+                    .filter((p) => p.handicapPending)
+                    .map((p) => p.name)
+                    .filter(Boolean)
+                    .join(", ") || "one player"}
+                  {" "}— log 3+ rounds to auto-fill. Enter a value for now.
+                </p>
+              )}
           </div>
           <button
             type="button"
@@ -1616,9 +1628,37 @@ export default function NewMatchForm({
                 <PlayerNameInput
                   value={p.name}
                   userId={p.userId}
-                  onChange={(next) =>
-                    setPlayer(i, { name: next.name, userId: next.userId })
-                  }
+                  onChange={(next) => {
+                    // When the user picks a linked Sticks account we
+                    // also receive their auto-computed index. Real
+                    // index -> prefill the handicap field. Null index
+                    // (pending: <3 rounds logged) -> blank field +
+                    // pending flag so the row italicizes and surfaces
+                    // the "3+ rounds" note below.
+                    if (next.userId && next.handicapIndex != null) {
+                      setPlayer(i, {
+                        name: next.name,
+                        userId: next.userId,
+                        handicap: next.handicapIndex.toFixed(1),
+                        handicapPending: false,
+                      });
+                    } else if (next.userId) {
+                      setPlayer(i, {
+                        name: next.name,
+                        userId: next.userId,
+                        handicap: "",
+                        handicapPending: true,
+                      });
+                    } else {
+                      // Unlinked / free-typed name -- leave the
+                      // handicap alone and clear the pending flag.
+                      setPlayer(i, {
+                        name: next.name,
+                        userId: next.userId,
+                        handicapPending: false,
+                      });
+                    }
+                  }}
                   placeholder={`Player ${i + 1}`}
                 />
                 <input
@@ -1627,19 +1667,34 @@ export default function NewMatchForm({
                   step={scoringMode === "CUSTOM" ? "1" : "0.1"}
                   min={0}
                   value={p.handicap}
-                  onChange={(e) => setPlayer(i, { handicap: e.target.value })}
-                  placeholder={modeCopy.field}
+                  onChange={(e) =>
+                    // A manual edit means the user is taking ownership
+                    // of the value -- clear the pending italic so the
+                    // field reads like any other entry.
+                    setPlayer(i, {
+                      handicap: e.target.value,
+                      handicapPending: false,
+                    })
+                  }
+                  placeholder={p.handicapPending ? "pending" : modeCopy.field}
                   title={
-                    scoringMode === "CUSTOM"
-                      ? `Strokes given to ${p.name || `player ${i + 1}`}`
-                      : modeCopy.field
+                    p.handicapPending
+                      ? "Sticks index unlocks after 3+ logged rounds — enter a value for now."
+                      : scoringMode === "CUSTOM"
+                        ? `Strokes given to ${p.name || `player ${i + 1}`}`
+                        : modeCopy.field
                   }
                   aria-label={
                     scoringMode === "CUSTOM"
                       ? `Strokes given to ${p.name || `player ${i + 1}`}`
                       : modeCopy.field
                   }
-                  className="input w-20 shrink-0 text-center px-2"
+                  className={
+                    "input w-20 shrink-0 text-center px-2 " +
+                    (p.handicapPending
+                      ? "italic placeholder:italic text-mute placeholder:text-mute border-dashed"
+                      : "")
+                  }
                 />
                 <button
                   type="button"
