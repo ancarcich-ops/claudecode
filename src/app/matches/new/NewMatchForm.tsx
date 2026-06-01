@@ -613,9 +613,17 @@ export default function NewMatchForm({
     return true;
   })();
 
+  // Solo rounds skip the Side games step entirely -- no opponents means
+  // there's nothing meaningful to wager on -- so the Players screen
+  // doubles as the final step and its "Next" button becomes "Start
+  // round" instead.
+  const isSolo = players.length === 1;
+  const lastStep = isSolo ? 1 : STEPS.length - 1;
+  const visibleSteps = isSolo ? STEPS.slice(0, 2) : STEPS;
+
   const tryNext = () => {
     if (!canAdvance) return;
-    if (step < STEPS.length - 1) setStep(step + 1);
+    if (step < lastStep) setStep(step + 1);
   };
   const goBack = () => {
     if (step > 0) setStep(step - 1);
@@ -630,7 +638,7 @@ export default function NewMatchForm({
         // the sticky CTA tries to fire submit before the user has
         // reached the final step, swallow it. The "Open market" button
         // (rendered only on the last step) is the only legitimate path.
-        if (step !== STEPS.length - 1) {
+        if (step !== lastStep) {
           e.preventDefault();
         }
       }}
@@ -656,7 +664,7 @@ export default function NewMatchForm({
           ←
         </button>
         <div className="flex items-center gap-1.5">
-          {STEPS.map((_, i) => (
+          {visibleSteps.map((_, i) => (
             <span
               key={i}
               className={
@@ -671,7 +679,7 @@ export default function NewMatchForm({
           ))}
         </div>
         <span className="w-10 text-right text-[10px] uppercase tracking-wider text-mute">
-          {step + 1}/{STEPS.length}
+          {step + 1}/{visibleSteps.length}
         </span>
       </div>
 
@@ -1658,8 +1666,9 @@ export default function NewMatchForm({
           ))}
         </div>
         <p className="text-xs text-mute mt-3">
-          Crowd wagers and live scoring shift the line from there. Playing
-          solo is fine — drop everyone else to log just your round.
+          {isSolo
+            ? "Solo round — no opponents, no side games. Hit Start round to log your card."
+            : "Crowd wagers and live scoring shift the line from there. Playing solo is fine — drop everyone else to log just your round."}
         </p>
       </div>
 
@@ -2014,7 +2023,7 @@ export default function NewMatchForm({
           on the final step. Distinct `key`s + `type=button` on Next make
           sure a stray replayed click can't morph into a form submit. */}
       <div className="sticky bottom-2 pt-2">
-        {step < STEPS.length - 1 ? (
+        {step < lastStep ? (
           // During the guided Round reveal the inline "Continue" buttons
           // drive progress; the sticky Next appears once it's complete.
           step === 0 && roundStep < 3 ? null : (
@@ -2033,7 +2042,13 @@ export default function NewMatchForm({
           </button>
           )
         ) : (
-          <OpenMarketButton label={submitLabel} />
+          // Solo rounds finalize on the Players step (no Side games to
+          // pick), so the bottom CTA flips to "Start round" right there.
+          <OpenMarketButton
+            label={
+              isSolo && !submitLabel ? "Start round →" : submitLabel
+            }
+          />
         )}
       </div>
     </form>
