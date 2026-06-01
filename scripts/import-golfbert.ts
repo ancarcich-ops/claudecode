@@ -91,7 +91,19 @@ type MultiMatch = {
   candidates: { id: number; name: string; city?: string }[];
 };
 type Skipped = { kind: "skipped"; presetId: string; reason: string };
-type Failed = { kind: "failed"; presetId: string; error: string };
+type Failed = {
+  kind: "failed";
+  presetId: string;
+  error: string;
+  // Preserve the prior match's Golfbert id + name when the previous
+  // state was "matched" so a --reuse-id retry on the next run can
+  // skip the search step and head straight back to the same course.
+  // Otherwise a transient DB blip mid-run forces an expensive
+  // re-search (and risks a multi-match that needs manual resolving).
+  gbId?: number;
+  gbName?: string;
+  gbCity?: string;
+};
 type Outcome = Pending | Matched | NoMatch | MultiMatch | Skipped | Failed;
 
 const STATE_PATH = "scripts/golfbert-state.json";
@@ -397,15 +409,27 @@ async function main() {
       // --reuse-id) > name search. Reusing the stored id skips the
       // search call and guarantees the same course as the prior import.
       const known = state.get(preset.id);
+      // Reuse the gbId from either a matched or a failed prior entry.
+      // (Failed rows carry forward the gbId from their previous match so
+      // a transient DB hiccup mid-run doesn't force a costly re-search.)
       const reusableId =
-        flags.reuseId && known?.kind === "matched" ? known.gbId : null;
+        flags.reuseId
+          ? known?.kind === "matched"
+            ? known.gbId
+            : known?.kind === "failed" && known.gbId != null
+              ? known.gbId
+              : null
+          : null;
       const pinnedId = flags.gbId ?? reusableId;
       const choice: gb.GBCourse | "multi" | null = pinnedId != null
         ? ({
             id: pinnedId,
             name:
-              (known?.kind === "matched" ? known.gbName : undefined) ??
-              preset.name,
+              (known?.kind === "matched"
+                ? known.gbName
+                : known?.kind === "failed"
+                  ? known.gbName
+                  : undefined) ?? preset.name,
             address: undefined,
           } as gb.GBCourse)
         : pickBestMatch(await findCandidates(preset), preset);
@@ -481,10 +505,18 @@ async function main() {
       saveState(state);
     } catch (err) {
       const msg = (err as Error).message;
+      const prior = state.get(preset.id);
+      const carry =
+        prior?.kind === "matched"
+          ? { gbId: prior.gbId, gbName: prior.gbName, gbCity: prior.gbCity }
+          : prior?.kind === "failed"
+            ? { gbId: prior.gbId, gbName: prior.gbName, gbCity: prior.gbCity }
+            : {};
       state.set(preset.id, {
         kind: "failed",
         presetId: preset.id,
         error: msg,
+        ...carry,
       });
       console.log(`${tag} FAILED ${preset.id}: ${msg}`);
       saveState(state);
