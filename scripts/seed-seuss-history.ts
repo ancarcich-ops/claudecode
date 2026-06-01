@@ -37,37 +37,39 @@ const ALONDRA_FRONT_9 = ALONDRA_18.slice(0, 9); // par 36
 const ROUNDS: Round[] = [
   {
     scheduledAt: new Date("2026-05-15T15:00:00-07:00"),
-    courseName: "Alondra Park GC - North",
+    courseName: "Alondra Park Golf Course",
     pars: ALONDRA_FRONT_9,
     totalOverPar: 5, // 41 strokes on par 36
   },
   {
     scheduledAt: new Date("2026-05-01T15:00:00-07:00"),
-    courseName: "Escena GC",
+    courseName: "Escena Golf Club",
     pars: PAR_18_72,
     totalOverPar: 13, // 85 on par 72
   },
   {
     scheduledAt: new Date("2026-04-18T15:00:00-07:00"),
     courseName: "Recreation Park - South 9",
-    // Executive layout, par 31 (5 par-3s, 4 par-4s).
+    // Executive layout, par 31 (5 par-3s, 4 par-4s). Not in the
+    // mapped-course catalog -- kept as text-only.
     pars: [3, 4, 3, 4, 3, 3, 3, 4, 4],
     totalOverPar: 11, // 42 on par 31
   },
   {
     scheduledAt: new Date("2026-04-12T15:00:00-07:00"),
-    courseName: "Torrey Pines GC - North",
+    courseName: "Torrey Pines Golf Club (North Course)",
     pars: [4, 5, 4, 3, 4, 4, 3, 5, 4, 4, 4, 3, 4, 5, 5, 3, 4, 4], // par 72
     totalOverPar: 16,
   },
   {
     scheduledAt: new Date("2026-04-03T15:00:00-07:00"),
-    courseName: "Alondra Park GC - North",
+    courseName: "Alondra Park Golf Course",
     pars: ALONDRA_18,
     totalOverPar: 16, // 88 on par 72
   },
   {
     scheduledAt: new Date("2026-03-19T15:00:00-07:00"),
+    // Not in the mapped catalog -- kept as text-only.
     courseName: "Wolf Creek Golf Club",
     // 17 holes played, par 68 layout: 3 par-3s, 12 par-4s, 2 par-5s = 67.
     // Bump one 4 to 5 -> 68.
