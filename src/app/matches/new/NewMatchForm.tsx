@@ -162,12 +162,17 @@ export default function NewMatchForm({
           team: p.team,
         }))
       : [
+          // Default to a foursome with 1 filled + 3 blanks. The Round
+          // step's "Round size" chip lets the user collapse this to
+          // Solo / 2-player / Threesome before editing names.
           {
             name: defaultPlayerName,
             handicap: defaultPlayerHandicap,
             userId: currentUserId,
             team: 0,
           },
+          { name: "", handicap: "15", userId: null, team: 1 },
+          { name: "", handicap: "15", userId: null, team: 0 },
           { name: "", handicap: "15", userId: null, team: 1 },
         ],
   );
@@ -326,24 +331,29 @@ export default function NewMatchForm({
   // Skins / Nassau / BBB / Wolf have nothing to score against.
   // Snake survives because it's event-based (3-putts).
   useEffect(() => {
-    if (format === "BOTH" || format === "SCRAMBLE") {
-      setSideGames((curr) => {
-        const next = new Set(curr);
+    setSideGames((curr) => {
+      const next = new Set(curr);
+      if (format === "BOTH" || format === "SCRAMBLE") {
         next.add("TEAM_VS_TEAM");
         if (format === "SCRAMBLE") {
           for (const k of next) {
             if (k !== "SNAKE" && k !== "TEAM_VS_TEAM") next.delete(k);
           }
         }
-        // Only return a new Set if something actually changed.
-        if (next.size === curr.size) {
-          let same = true;
-          for (const k of next) if (!curr.has(k)) { same = false; break; }
-          if (same) return curr;
-        }
-        return next;
-      });
-    }
+      } else {
+        // Format reverted to INDIVIDUAL (e.g. user dropped the round
+        // size below 4) -- clear the auto-added team game so the
+        // submitted match doesn't carry a stale team config.
+        next.delete("TEAM_VS_TEAM");
+      }
+      // Only return a new Set if something actually changed.
+      if (next.size === curr.size) {
+        let same = true;
+        for (const k of next) if (!curr.has(k)) { same = false; break; }
+        if (same) return curr;
+      }
+      return next;
+    });
   }, [format]);
 
   const presetByName = useMemo(() => {
@@ -486,6 +496,35 @@ export default function NewMatchForm({
     setPlayers((rows) =>
       rows.length > 1 ? rows.filter((_, idx) => idx !== i) : rows,
     );
+
+  // Round-size chip: snap the players array to N slots without losing
+  // existing names. Growing pads with blanks; shrinking drops trailing
+  // rows. Format chips that need 4+ players auto-revert to Individual
+  // when the size drops below 4, and solo always means Individual.
+  const setPlayerCount = (n: 1 | 2 | 3 | 4) => {
+    setPlayers((rows) => {
+      if (rows.length === n) return rows;
+      if (rows.length > n) return rows.slice(0, n);
+      const out = [...rows];
+      while (out.length < n) {
+        const team0 = out.filter((r) => r.team === 0).length;
+        const team1 = out.filter((r) => r.team === 1).length;
+        out.push({
+          name: "",
+          handicap: "15",
+          userId: null,
+          team: team0 <= team1 ? 0 : 1,
+        });
+      }
+      return out;
+    });
+    if (n < 4 && (format === "SCRAMBLE" || format === "BOTH")) {
+      setFormat("INDIVIDUAL");
+    }
+    if (n === 1) {
+      setFormat("INDIVIDUAL");
+    }
+  };
 
   // Clone a past round into the wizard. Pulls everything except tee time
   // (stays at the default tomorrow pick) and notes (round-specific). The
@@ -955,6 +994,44 @@ export default function NewMatchForm({
           hidden={roundStep !== 2}
           className={roundStep === 2 ? "field-active" : undefined}
         >
+          <label className="label">Round size</label>
+          <div className="grid grid-cols-4 gap-2">
+            {(
+              [
+                [1, "Solo"],
+                [2, "2-player"],
+                [3, "Threesome"],
+                [4, "Foursome"],
+              ] as const
+            ).map(([n, label]) => {
+              const active = players.length === n;
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setPlayerCount(n)}
+                  className={
+                    "flex items-center justify-center rounded-md border px-1 py-2 transition min-h-[2.75rem] " +
+                    (active
+                      ? "border-accent bg-accent/10 text-ink"
+                      : "border-border text-mute hover:text-ink")
+                  }
+                  aria-pressed={active}
+                >
+                  <span className="text-[12px] font-medium">{label}</span>
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-[11px] text-mute mt-1.5 mb-4">
+            {players.length === 1
+              ? "Solo round — no opponents, no odds. Just log your card."
+              : players.length < 4
+                ? "Add more players in the next step or bump the size up to unlock team formats."
+                : "Foursome unlocks Teams (one ball per side) and Individual vs Team scoring."}
+          </p>
+          {players.length > 1 && (
+            <>
           <label className="label">Round format</label>
           {/* "Both" is a client-side shortcut for INDIVIDUAL + the
               TEAM_VS_TEAM side game. Server still receives
@@ -1049,8 +1126,17 @@ export default function NewMatchForm({
                 : ""
             }
           />
-          <div className="grid grid-cols-3 gap-2">
-            {(["INDIVIDUAL", "SCRAMBLE", "BOTH"] as const).map((f) => {
+          <div className={`grid gap-2 ${players.length >= 4 ? "grid-cols-3" : "grid-cols-2"}`}>
+            {(["INDIVIDUAL", "SCRAMBLE", "BOTH"] as const)
+              .filter((f) => {
+                // Teams (Scramble) needs 4 players (2v2 ball-per-team).
+                // Individual vs Team needs >= 2; with 3 we keep it
+                // hidden since teams can't be even.
+                if (f === "SCRAMBLE") return players.length >= 4;
+                if (f === "BOTH") return players.length >= 4;
+                return true;
+              })
+              .map((f) => {
               const active = format === f;
               const label =
                 f === "INDIVIDUAL"
@@ -1083,6 +1169,8 @@ export default function NewMatchForm({
                 ? "Players split into 2 teams; live odds price team-vs-team."
                 : "Each player keeps their own score AND teams are scored from those individual scores. Live odds still price players individually; a team-vs-team side game tracks the team competition."}
           </p>
+            </>
+          )}
         </div>
 
         {/* Scoring picker shows for INDIVIDUAL or BOTH (BOTH still
