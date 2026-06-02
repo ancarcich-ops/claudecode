@@ -1,7 +1,9 @@
 "use client";
 
 import {
+  createContext,
   forwardRef,
+  useContext,
   useEffect,
   useImperativeHandle,
   useRef,
@@ -15,6 +17,15 @@ import {
 // HoleMiniMap to Mapbox GL JS (vector tiles, native pinch/pan with
 // re-anchoring overlays), at which point this component can be
 // retired.
+
+// Published to children so things like yardage pills can stay at a
+// constant on-screen size: counter-scale by 1/scale so they don't
+// grow with the satellite when the user zooms in. HoleMiniMap also
+// uses it to decide when nearby hazard pills collapse into a cluster.
+export const ZoomContext = createContext<number>(1);
+export function useZoom(): number {
+  return useContext(ZoomContext);
+}
 
 type Props = {
   children: React.ReactNode;
@@ -95,6 +106,38 @@ const PinchZoom = forwardRef<PinchZoomHandle, Props>(function PinchZoom(
     return {
       x: Math.max(-maxX, Math.min(maxX, x)),
       y: Math.max(-maxY, Math.min(maxY, y)),
+    };
+  };
+
+  // Rubber-band clamp for in-flight single-finger drags: allow some
+  // overscroll past the hard clamp with resistance, so the map feels
+  // draggable even at base zoom (the user asked to "pan anywhere on
+  // the course" without first zooming in). On touchend we animate
+  // back into the hard clamp -- handled in onTouchEnd below.
+  const RUBBER_FRACTION = 0.3;
+  const rubberBand = (s: number, x: number, y: number) => {
+    const el = outerRef.current;
+    if (!el) return { x, y };
+    const w = el.clientWidth;
+    const h = el.clientHeight;
+    const maxX = ((s - 1) * w) / 2;
+    const maxY = ((s - 1) * h) / 2;
+    const overshootX = w * RUBBER_FRACTION;
+    const overshootY = h * RUBBER_FRACTION;
+    const apply = (v: number, max: number, overshoot: number) => {
+      if (v > max) {
+        const over = v - max;
+        return max + overshoot * (1 - Math.exp(-over / overshoot));
+      }
+      if (v < -max) {
+        const over = -max - v;
+        return -max - overshoot * (1 - Math.exp(-over / overshoot));
+      }
+      return v;
+    };
+    return {
+      x: apply(x, maxX, overshootX),
+      y: apply(y, maxY, overshootY),
     };
   };
 
@@ -198,15 +241,16 @@ const PinchZoom = forwardRef<PinchZoomHandle, Props>(function PinchZoom(
           return;
         }
         lastTapRef.current = { t: now, x: cx, y: cy };
-        if (scale > 1) {
-          gesture.current = {
-            kind: "pan",
-            startX: t.clientX,
-            startY: t.clientY,
-            startTx: tx,
-            startTy: ty,
-          };
-        }
+        // Single-finger drag = pan at any zoom, including 1x. At
+        // base zoom the rubber-band overscroll gives the user some
+        // "look around" room before the snap-back kicks in.
+        gesture.current = {
+          kind: "pan",
+          startX: t.clientX,
+          startY: t.clientY,
+          startTx: tx,
+          startTy: ty,
+        };
       }
     };
 
@@ -233,7 +277,9 @@ const PinchZoom = forwardRef<PinchZoomHandle, Props>(function PinchZoom(
       } else if (g.kind === "pan" && e.touches.length === 1) {
         const dx = e.touches[0].clientX - g.startX;
         const dy = e.touches[0].clientY - g.startY;
-        const c = clamp(scale, g.startTx + dx, g.startTy + dy);
+        // Rubber-band so drags past the hard clamp feel resistant
+        // rather than dead. Snap-back happens in onTouchEnd.
+        const c = rubberBand(scale, g.startTx + dx, g.startTy + dy);
         setTx(c.x);
         setTy(c.y);
         e.preventDefault();
@@ -241,7 +287,19 @@ const PinchZoom = forwardRef<PinchZoomHandle, Props>(function PinchZoom(
     };
 
     const onTouchEnd = () => {
+      const wasPan = gesture.current?.kind === "pan";
       gesture.current = null;
+      if (wasPan) {
+        // If the drag ended outside the hard clamp (i.e. in the
+        // rubber-band zone), snap back to the nearest in-bounds
+        // point with an eased animation.
+        const c = clamp(scale, tx, ty);
+        if (c.x !== tx || c.y !== ty) {
+          setAnimating(true);
+          setTx(c.x);
+          setTy(c.y);
+        }
+      }
     };
 
     const onWheel = (e: WheelEvent) => {
@@ -327,7 +385,7 @@ const PinchZoom = forwardRef<PinchZoomHandle, Props>(function PinchZoom(
         }}
         onTransitionEnd={() => setAnimating(false)}
       >
-        {children}
+        <ZoomContext.Provider value={scale}>{children}</ZoomContext.Provider>
       </div>
       {/* Zoom chrome: vertical stack of +, -, and a reset chip that
           only appears when zoomed. Positioned where the old single
