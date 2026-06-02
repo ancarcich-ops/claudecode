@@ -373,6 +373,19 @@ async function main() {
       if (!prior) return true;
       return prior.kind === "failed" || prior.kind === "pending";
     });
+  } else {
+    // --force or --ids-from: still skip presets that are flat-out done
+    // (matched + DB-imported). There's nothing left to redo for those,
+    // and the GolfBert search step costs ~38 calls per preset -- a
+    // resumed --ids-from run was burning the whole daily budget
+    // re-fetching the front of the list before reaching the pending
+    // tail.
+    presets = presets.filter((p) => {
+      const prior = state.get(p.id);
+      if (!prior) return true;
+      if (prior.kind === "matched" && prior.dbImported) return false;
+      return true;
+    });
   }
 
   if (flags.limit != null) presets = presets.slice(0, flags.limit);
