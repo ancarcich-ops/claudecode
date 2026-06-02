@@ -1147,10 +1147,10 @@ function PresetChipsPortal({
       className="fixed left-1/2 -translate-x-1/2 z-[60] flex gap-1.5"
       style={{
         // Clears the FRONT/CENTER/BACK card on the study view
-        // (~220px tall with the help text and gradient) plus the
-        // home-indicator safe area. Sits just above the card with
-        // a comfortable gap.
-        bottom: "calc(env(safe-area-inset-bottom) + 240px)",
+        // (~165px tall with content + padding) plus the
+        // home-indicator safe area, with a small visible gap above
+        // the card. 240 was too generous and floated the row mid-map.
+        bottom: "calc(env(safe-area-inset-bottom) + 180px)",
       }}
     >
       <button
