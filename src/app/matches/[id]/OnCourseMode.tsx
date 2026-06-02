@@ -15,6 +15,7 @@ import {
   markTeeAction,
 } from "@/lib/actions";
 import HoleMiniMap, { type Landmark } from "./HoleMiniMap";
+import { useMapEngine } from "./useMapEngine";
 import ScoreSheet from "./ScoreSheet";
 
 // "On the course" view. Replaces the match-detail UI when active.
@@ -290,6 +291,8 @@ export default function OnCourseMode({
   const playerPos = pos
     ? { lat: pos.coords.latitude, lng: pos.coords.longitude }
     : null;
+  // Map engine toggle via `?map=gl`. Default static until parity.
+  const mapEngine = useMapEngine();
   const { front, center, back } = deriveGreenDistances(playerPos, geo ?? null);
   const greenCenterLatLng =
     geo?.greenLat != null && geo?.greenLng != null
@@ -507,6 +510,7 @@ export default function OnCourseMode({
       <div className="absolute inset-0 z-[10]">
         {playerPos ? (
           <HoleMiniMap
+            engine={mapEngine}
             player={playerPos}
             tee={
               geo?.teeLat != null && geo?.teeLng != null
