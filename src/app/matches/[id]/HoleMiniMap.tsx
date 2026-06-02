@@ -1146,7 +1146,11 @@ function PresetChipsPortal({
       // is z-40, sheets are z-50).
       className="fixed left-1/2 -translate-x-1/2 z-[60] flex gap-1.5"
       style={{
-        bottom: "calc(env(safe-area-inset-bottom) + 168px)",
+        // Clears the FRONT/CENTER/BACK card on the study view
+        // (~220px tall with the help text and gradient) plus the
+        // home-indicator safe area. Sits just above the card with
+        // a comfortable gap.
+        bottom: "calc(env(safe-area-inset-bottom) + 240px)",
       }}
     >
       <button
