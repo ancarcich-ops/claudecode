@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import PinchZoom, {
   useZoom,
   type PinchZoomHandle,
@@ -111,8 +112,10 @@ export default function HoleMiniMap({
   // viewBox to the container aspect.
   const wrapRef = useRef<HTMLDivElement>(null);
   // Imperative handle to PinchZoom -- lets the "Tee / Mid / Green"
-  // preset chips drive pan+zoom to those features without HoleMiniMap
-  // owning the zoom state.
+  // preset chips drive pan+zoom without HoleMiniMap owning the zoom
+  // state. Rendered via portal so the chips escape this component's
+  // stacking context (parents stack a higher-z bottom card over the
+  // map that would otherwise bury them).
   const pinchRef = useRef<PinchZoomHandle>(null);
   const [size, setSize] = useState<{ w: number; h: number }>({
     w: 400,
@@ -634,14 +637,13 @@ export default function HoleMiniMap({
         </>
       )}
       </PinchZoom>
-
-      {/* Pan-zoom preset chips. One tap pans + zooms to the named
-          feature so the user can flip between the three "views" you
-          actually want on-course (off the tee, fairway approach, on
-          the green) without pinching. Sits outside PinchZoom in DOM
-          order so the chrome doesn't get scaled. */}
+      {/* Preset chips render through a portal to document.body so the
+          row escapes HoleMiniMap's stacking context (the on-course /
+          study views both stack a higher-z bottom card over the map,
+          which used to bury the chips). Mounted only when there's a
+          tee or green to fly to. */}
       {(pTee || pGC) && (
-        <PresetChips
+        <PresetChipsPortal
           pinchRef={pinchRef}
           tee={pTee ? { fx: pTee.cx / Vw, fy: pTee.cy / Vh } : null}
           green={pGC ? { fx: pGC.cx / Vw, fy: pGC.cy / Vh } : null}
@@ -1067,12 +1069,15 @@ function ClusterPill({
 // PRESET CHIPS
 // =====================================================================
 //
-// Three-button pill row that drives the surrounding PinchZoom via its
-// imperative handle. Lives bottom-center where it won't clash with
-// the +/- buttons (top-right) or chrome the parent overlays on the
-// map. "Hole" resets to the full-hole view; the others pan + zoom
-// to the named feature.
-function PresetChips({
+// Four-button pill row that drives the surrounding PinchZoom via its
+// imperative handle. Rendered through a portal to document.body so it
+// escapes HoleMiniMap's stacking context -- the on-course / study
+// views stack a higher-z bottom card over the map at the same DOM
+// level, which would otherwise hide chips rendered inside the map.
+// Position is `fixed` because the portal target isn't a positioned
+// ancestor; offset is calculated from the bottom viewport edge so
+// the row clears typical bottom-chrome on both views.
+function PresetChipsPortal({
   pinchRef,
   tee,
   green,
@@ -1081,6 +1086,10 @@ function PresetChips({
   tee: { fx: number; fy: number } | null;
   green: { fx: number; fy: number } | null;
 }) {
+  // Portals can't render server-side; defer until after mount so
+  // SSR doesn't reach for document.body.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   // Mid = geometric midpoint of tee->green. Hidden if either
   // endpoint is missing rather than guessed.
   const mid =
@@ -1127,11 +1136,17 @@ function PresetChips({
         ? "bg-accent text-bg shadow-[0_0_0_1px_rgb(var(--color-accent)/0.5)]"
         : "bg-black/70 text-white active:bg-black/85");
 
-  return (
+  if (!mounted) return null;
+  return createPortal(
     <div
-      className="absolute left-1/2 -translate-x-1/2 z-30 flex gap-1.5"
+      // Sits above all in-app chrome (bottom cards, mobile tab bar,
+      // sheets) by anchoring to viewport bottom with a generous offset
+      // that clears the F/C/B card on the study view and the score
+      // pill on the on-course view. z-[60] beats both (mobile tab bar
+      // is z-40, sheets are z-50).
+      className="fixed left-1/2 -translate-x-1/2 z-[60] flex gap-1.5"
       style={{
-        bottom: "max(0.5rem, env(safe-area-inset-bottom))",
+        bottom: "calc(env(safe-area-inset-bottom) + 168px)",
       }}
     >
       <button
@@ -1169,6 +1184,7 @@ function PresetChips({
       >
         Hole
       </button>
-    </div>
+    </div>,
+    document.body,
   );
 }
