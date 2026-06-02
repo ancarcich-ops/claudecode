@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import PinchZoom from "@/components/PinchZoom";
+import PinchZoom, { useZoom } from "@/components/PinchZoom";
 
 // Top-down hole map. When NEXT_PUBLIC_MAPBOX_TOKEN is set, the base
 // layer is a Mapbox satellite image of the bounding box of all known
@@ -540,112 +540,30 @@ export default function HoleMiniMap({
         </div>
       )}
 
-      {/* Yardage pills. Caller passes lat/lng + label + style; we
-          position the tail tip at the projected pixel. */}
-      {landmarks?.map((l) => {
-        const pos = project({ lat: l.lat, lng: l.lng });
-        const orient = l.orientation ?? "above";
-        const variant = l.variant ?? "default";
-        const tone = l.tone ?? "white";
-        const isAccent = variant === "accent";
-        const isTiny = variant === "tiny";
-        const bodyBg = isAccent
-          ? "bg-accent text-ink-on-accent"
-          : tone === "sand"
-            ? "bg-white/95 text-[#3a2d10]"
-            : tone === "water"
-              ? "bg-white/95 text-[#0d2b48]"
-              : "bg-white text-[#0b0f0c]";
-        const prefixCls = isAccent
-          ? "text-ink-on-accent/55"
-          : tone === "sand"
-            ? "text-[#8a7a4f]"
-            : tone === "water"
-              ? "text-[#5d80a8]"
-              : "text-[#6b7c75]";
-        const dimCls = l.dim ? "opacity-50" : "";
-        const bodySizing = isTiny
-          ? "px-1.5 py-[3px] text-[11px] rounded-[7px]"
-          : "px-2.5 py-[4px] text-[15px] rounded-[10px]";
-        const prefixSize = isTiny ? "text-[7.5px]" : "text-[8.5px]";
-        const tailColor = isAccent ? "#34d399" : "#ffffff";
-        const tailSize = isTiny ? 4 : 5;
-        const tailH = isTiny ? 5 : 6;
-        return (
-          <div
-            key={l.id}
-            className={"absolute z-[20] pointer-events-none " + dimCls}
-            style={{
-              left: `${(pos.cx / Vw) * 100}%`,
-              top: `${(pos.cy / Vh) * 100}%`,
-              transform:
-                orient === "above"
-                  ? "translate(-50%, -100%)"
-                  : "translate(-50%, 0)",
-              filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.5))",
-            }}
-          >
-            {orient === "below" && (
-              <div
-                className="mx-auto"
-                style={{
-                  width: 0,
-                  height: 0,
-                  borderLeft: `${tailSize}px solid transparent`,
-                  borderRight: `${tailSize}px solid transparent`,
-                  borderBottom: `${tailH}px solid ${tailColor}`,
-                  marginBottom: -1,
-                }}
-              />
-            )}
-            <div
-              className={
-                "font-mono tabular-nums font-semibold inline-flex items-baseline gap-[3px] " +
-                bodySizing +
-                " " +
-                bodyBg
-              }
-            >
-              {l.prefix && (
-                <span
-                  className={
-                    "uppercase font-medium tracking-[0.14em] mr-[2px] " +
-                    prefixSize +
-                    " " +
-                    prefixCls
-                  }
-                >
-                  {l.prefix}
-                </span>
-              )}
-              {Math.round(l.yds)}
-              <span
-                className={
-                  "font-medium " +
-                  (isTiny ? "text-[9px]" : "text-[9px]") +
-                  " " +
-                  prefixCls
-                }
-              >
-                y
-              </span>
-            </div>
-            {orient === "above" && (
-              <div
-                className="mx-auto"
-                style={{
-                  width: 0,
-                  height: 0,
-                  borderLeft: `${tailSize}px solid transparent`,
-                  borderRight: `${tailSize}px solid transparent`,
-                  borderTop: `${tailH}px solid ${tailColor}`,
-                  marginTop: -1,
-                }}
-              />
-            )}
-          </div>
-        );
-      })}
+      {/* Yardage pills. Rendered through LandmarkLayer so pills can
+          (a) consume the surrounding PinchZoom's ZoomContext and stay
+          constant on-screen size at every zoom level, and (b) collapse
+          overlapping hazard pills into a single chip with a "+N"
+          count, so a green surrounded by bunkers doesn't pile up
+          into an illegible stack. */}
+      {landmarks && landmarks.length > 0 && (
+        <LandmarkLayer
+          items={landmarks.map((l) => {
+            const pos = project({ lat: l.lat, lng: l.lng });
+            return {
+              landmark: l,
+              // Container-relative pixels at scale=1. Used by the
+              // cluster pass to measure on-screen overlap.
+              px: (pos.cx / Vw) * size.w,
+              py: (pos.cy / Vh) * size.h,
+              // Percent form for left/top so positioning survives
+              // container resizes.
+              leftPct: (pos.cx / Vw) * 100,
+              topPct: (pos.cy / Vh) * 100,
+            };
+          })}
+        />
+      )}
 
       {/* Calibration chips (+F / +B / +Tee). Positioned near the
           relevant feature so the player can tap to refine. */}
@@ -792,5 +710,335 @@ function MapChip({
         })}
       </span>
     </button>
+  );
+}
+
+// =====================================================================
+// LANDMARK LAYER
+// =====================================================================
+//
+// Renders yardage pills as constant-size overlays (so they don't grow
+// with the satellite when the user zooms in) and groups nearby
+// hazard-style pills into a single cluster chip so a green surrounded
+// by bunkers stays readable.
+
+type LandmarkItem = {
+  landmark: Landmark;
+  px: number;
+  py: number;
+  leftPct: number;
+  topPct: number;
+};
+
+function LandmarkLayer({ items }: { items: LandmarkItem[] }) {
+  // Live zoom from the surrounding PinchZoom. Both the inverse-scale
+  // and the clustering threshold are driven from this -- as the user
+  // zooms in, pills stay the same size and the unscaled distance
+  // that counts as "overlapping" shrinks (so fewer cluster).
+  const zoom = useZoom();
+
+  // Hazard ids are namespaced with "hz-" by HoleStudyMode /
+  // OnCourseMode. Pin / AIM / Front / Back are navigational and
+  // always render solo so they can never get hidden inside a cluster.
+  const isHazard = (l: Landmark) =>
+    l.id.startsWith("hz-") || l.variant === "tiny";
+
+  // One pill is ~80px wide at constant size. If two centers land
+  // within ~85 visual pixels of each other, they collide. Convert
+  // to the unscaled-px space the items[] coords live in by dividing
+  // by zoom: at zoom=2 the visual budget covers half as many
+  // unscaled px, so the cluster shrinks.
+  const VISUAL_OVERLAP_PX = 85;
+  const threshold = VISUAL_OVERLAP_PX / Math.max(0.25, zoom);
+
+  // Greedy clustering of hazard items only. O(n^2) but n is small
+  // (typically <20 per hole).
+  type Cluster = { members: LandmarkItem[]; centerX: number; centerY: number };
+  const clusters: Cluster[] = [];
+  const assigned = new Set<number>();
+  const hazardItems = items
+    .map((it, i) => ({ it, i }))
+    .filter(({ it }) => isHazard(it.landmark));
+  for (const { it, i } of hazardItems) {
+    if (assigned.has(i)) continue;
+    const members = [it];
+    assigned.add(i);
+    for (const { it: other, i: j } of hazardItems) {
+      if (assigned.has(j)) continue;
+      const d = Math.hypot(it.px - other.px, it.py - other.py);
+      if (d < threshold) {
+        members.push(other);
+        assigned.add(j);
+      }
+    }
+    const cx = members.reduce((s, m) => s + m.leftPct, 0) / members.length;
+    const cy = members.reduce((s, m) => s + m.topPct, 0) / members.length;
+    clusters.push({ members, centerX: cx, centerY: cy });
+  }
+
+  const navLandmarks = items.filter((it) => !isHazard(it.landmark));
+
+  return (
+    <>
+      {navLandmarks.map((it) => (
+        <LandmarkPill
+          key={it.landmark.id}
+          landmark={it.landmark}
+          leftPct={it.leftPct}
+          topPct={it.topPct}
+          zoom={zoom}
+        />
+      ))}
+      {clusters.map((c) => {
+        if (c.members.length === 1) {
+          const it = c.members[0];
+          return (
+            <LandmarkPill
+              key={it.landmark.id}
+              landmark={it.landmark}
+              leftPct={it.leftPct}
+              topPct={it.topPct}
+              zoom={zoom}
+            />
+          );
+        }
+        // Multi-member: collapse to a single chip showing the
+        // closest distance + a "+N" badge. Closest is most relevant
+        // for shot planning.
+        const sorted = [...c.members].sort(
+          (a, b) => a.landmark.yds - b.landmark.yds,
+        );
+        const nearest = sorted[0].landmark;
+        const counts = new Map<string, number>();
+        for (const m of c.members) {
+          const p = m.landmark.prefix ?? "";
+          counts.set(p, (counts.get(p) ?? 0) + 1);
+        }
+        let dominantPrefix = nearest.prefix ?? "";
+        let dominantCount = 0;
+        for (const [p, n] of counts.entries()) {
+          if (n > dominantCount) {
+            dominantPrefix = p;
+            dominantCount = n;
+          }
+        }
+        return (
+          <ClusterPill
+            key={`cluster-${c.members.map((m) => m.landmark.id).join(":")}`}
+            leftPct={c.centerX}
+            topPct={c.centerY}
+            prefix={dominantPrefix}
+            yds={nearest.yds}
+            extra={c.members.length - 1}
+            tone={nearest.tone ?? "white"}
+            dim={c.members.every((m) => m.landmark.dim)}
+            zoom={zoom}
+          />
+        );
+      })}
+    </>
+  );
+}
+
+function LandmarkPill({
+  landmark: l,
+  leftPct,
+  topPct,
+  zoom,
+}: {
+  landmark: Landmark;
+  leftPct: number;
+  topPct: number;
+  zoom: number;
+}) {
+  const orient = l.orientation ?? "above";
+  const variant = l.variant ?? "default";
+  const tone = l.tone ?? "white";
+  const isAccent = variant === "accent";
+  const isTiny = variant === "tiny";
+  const bodyBg = isAccent
+    ? "bg-accent text-ink-on-accent"
+    : tone === "sand"
+      ? "bg-white/95 text-[#3a2d10]"
+      : tone === "water"
+        ? "bg-white/95 text-[#0d2b48]"
+        : "bg-white text-[#0b0f0c]";
+  const prefixCls = isAccent
+    ? "text-ink-on-accent/55"
+    : tone === "sand"
+      ? "text-[#8a7a4f]"
+      : tone === "water"
+        ? "text-[#5d80a8]"
+        : "text-[#6b7c75]";
+  const dimCls = l.dim ? "opacity-50" : "";
+  const bodySizing = isTiny
+    ? "px-1.5 py-[3px] text-[11px] rounded-[7px]"
+    : "px-2.5 py-[4px] text-[15px] rounded-[10px]";
+  const prefixSize = isTiny ? "text-[7.5px]" : "text-[8.5px]";
+  const tailColor = isAccent ? "#34d399" : "#ffffff";
+  const tailSize = isTiny ? 4 : 5;
+  const tailH = isTiny ? 5 : 6;
+
+  // Counter-scale by 1/zoom so the pill keeps its on-screen size as
+  // the satellite image grows underneath. transform-origin pins the
+  // tail tip to the projected pixel: bottom-center for "above" (tail
+  // points down at the feature), top-center for "below" (points up).
+  const scaleFactor = 1 / Math.max(0.25, zoom);
+  const transform =
+    orient === "above"
+      ? `translate(-50%, -100%) scale(${scaleFactor})`
+      : `translate(-50%, 0) scale(${scaleFactor})`;
+  const origin = orient === "above" ? "50% 100%" : "50% 0%";
+
+  return (
+    <div
+      className={"absolute z-[20] pointer-events-none " + dimCls}
+      style={{
+        left: `${leftPct}%`,
+        top: `${topPct}%`,
+        transform,
+        transformOrigin: origin,
+        filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.5))",
+      }}
+    >
+      {orient === "below" && (
+        <div
+          className="mx-auto"
+          style={{
+            width: 0,
+            height: 0,
+            borderLeft: `${tailSize}px solid transparent`,
+            borderRight: `${tailSize}px solid transparent`,
+            borderBottom: `${tailH}px solid ${tailColor}`,
+            marginBottom: -1,
+          }}
+        />
+      )}
+      <div
+        className={
+          "font-mono tabular-nums font-semibold inline-flex items-baseline gap-[3px] " +
+          bodySizing +
+          " " +
+          bodyBg
+        }
+      >
+        {l.prefix && (
+          <span
+            className={
+              "uppercase font-medium tracking-[0.14em] mr-[2px] " +
+              prefixSize +
+              " " +
+              prefixCls
+            }
+          >
+            {l.prefix}
+          </span>
+        )}
+        {Math.round(l.yds)}
+        <span className={"font-medium text-[9px] " + prefixCls}>y</span>
+      </div>
+      {orient === "above" && (
+        <div
+          className="mx-auto"
+          style={{
+            width: 0,
+            height: 0,
+            borderLeft: `${tailSize}px solid transparent`,
+            borderRight: `${tailSize}px solid transparent`,
+            borderTop: `${tailH}px solid ${tailColor}`,
+            marginTop: -1,
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function ClusterPill({
+  leftPct,
+  topPct,
+  prefix,
+  yds,
+  extra,
+  tone,
+  dim,
+  zoom,
+}: {
+  leftPct: number;
+  topPct: number;
+  prefix: string;
+  yds: number;
+  extra: number;
+  tone: Landmark["tone"];
+  dim: boolean;
+  zoom: number;
+}) {
+  const bodyBg =
+    tone === "sand"
+      ? "bg-white/95 text-[#3a2d10]"
+      : tone === "water"
+        ? "bg-white/95 text-[#0d2b48]"
+        : "bg-white text-[#0b0f0c]";
+  const prefixCls =
+    tone === "sand"
+      ? "text-[#8a7a4f]"
+      : tone === "water"
+        ? "text-[#5d80a8]"
+        : "text-[#6b7c75]";
+  const scaleFactor = 1 / Math.max(0.25, zoom);
+  return (
+    <div
+      className={
+        "absolute z-[21] pointer-events-none " + (dim ? "opacity-50" : "")
+      }
+      style={{
+        left: `${leftPct}%`,
+        top: `${topPct}%`,
+        transform: `translate(-50%, -100%) scale(${scaleFactor})`,
+        transformOrigin: "50% 100%",
+        filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.5))",
+      }}
+    >
+      <div
+        className={
+          "font-mono tabular-nums font-semibold inline-flex items-center gap-[4px] " +
+          "px-2 py-[3px] text-[12px] rounded-[8px] " +
+          bodyBg
+        }
+      >
+        {prefix && (
+          <span
+            className={
+              "uppercase font-medium tracking-[0.14em] text-[8px] " +
+              prefixCls
+            }
+          >
+            {prefix}
+          </span>
+        )}
+        <span>{Math.round(yds)}</span>
+        <span className={"font-medium text-[9px] " + prefixCls}>y</span>
+        <span
+          className={
+            "ml-[2px] inline-flex items-center justify-center " +
+            "rounded-full bg-black/85 text-white text-[9px] font-semibold " +
+            "px-1.5 py-[1px] min-w-[18px]"
+          }
+        >
+          +{extra}
+        </span>
+      </div>
+      <div
+        className="mx-auto"
+        style={{
+          width: 0,
+          height: 0,
+          borderLeft: "4px solid transparent",
+          borderRight: "4px solid transparent",
+          borderTop: "5px solid #ffffff",
+          marginTop: -1,
+        }}
+      />
+    </div>
   );
 }
