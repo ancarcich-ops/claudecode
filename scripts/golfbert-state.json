@@ -9867,8 +9867,8 @@
     "dbImported": true
   },
   {
-    "kind": "failed",
+    "kind": "no-match",
     "presetId": "silverado-north",
-    "error": "GolfBert 429 on /v1/courses/?name=Silverado+Resort+-+North+Course&city=Napa&state=CA&limit=5: {\"message\":\"Limit Exceeded\"}"
+    "query": "Silverado Resort - North Course | Napa, CA"
   }
 ]
