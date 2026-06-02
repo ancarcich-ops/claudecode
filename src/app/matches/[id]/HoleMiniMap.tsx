@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import PinchZoom, { useZoom } from "@/components/PinchZoom";
+import PinchZoom, {
+  useZoom,
+  type PinchZoomHandle,
+} from "@/components/PinchZoom";
 
 // Top-down hole map. When NEXT_PUBLIC_MAPBOX_TOKEN is set, the base
 // layer is a Mapbox satellite image of the bounding box of all known
@@ -107,6 +110,10 @@ export default function HoleMiniMap({
   // Measure the rendered size so we can match the satellite image +
   // viewBox to the container aspect.
   const wrapRef = useRef<HTMLDivElement>(null);
+  // Imperative handle to PinchZoom -- lets the "Tee / Mid / Green"
+  // preset chips drive pan+zoom to those features without HoleMiniMap
+  // owning the zoom state.
+  const pinchRef = useRef<PinchZoomHandle>(null);
   const [size, setSize] = useState<{ w: number; h: number }>({
     w: 400,
     h: 400,
@@ -250,7 +257,7 @@ export default function HoleMiniMap({
       {/* PinchZoom wraps the SVG + HTML overlays so they scale and pan
           together. Outer measurement container above stays unscaled
           (it's what feeds Vw/Vh for the SVG viewBox). */}
-      <PinchZoom>
+      <PinchZoom ref={pinchRef}>
       <svg
         viewBox={`0 0 ${Vw} ${Vh}`}
         className={"absolute inset-0 w-full h-full block " + (onAim ? "cursor-crosshair" : "")}
@@ -627,6 +634,19 @@ export default function HoleMiniMap({
         </>
       )}
       </PinchZoom>
+
+      {/* Pan-zoom preset chips. One tap pans + zooms to the named
+          feature so the user can flip between the three "views" you
+          actually want on-course (off the tee, fairway approach, on
+          the green) without pinching. Sits outside PinchZoom in DOM
+          order so the chrome doesn't get scaled. */}
+      {(pTee || pGC) && (
+        <PresetChips
+          pinchRef={pinchRef}
+          tee={pTee ? { fx: pTee.cx / Vw, fy: pTee.cy / Vh } : null}
+          green={pGC ? { fx: pGC.cx / Vw, fy: pGC.cy / Vh } : null}
+        />
+      )}
     </div>
   );
 }
@@ -1039,6 +1059,116 @@ function ClusterPill({
           marginTop: -1,
         }}
       />
+    </div>
+  );
+}
+
+// =====================================================================
+// PRESET CHIPS
+// =====================================================================
+//
+// Three-button pill row that drives the surrounding PinchZoom via its
+// imperative handle. Lives bottom-center where it won't clash with
+// the +/- buttons (top-right) or chrome the parent overlays on the
+// map. "Hole" resets to the full-hole view; the others pan + zoom
+// to the named feature.
+function PresetChips({
+  pinchRef,
+  tee,
+  green,
+}: {
+  pinchRef: React.RefObject<PinchZoomHandle>;
+  tee: { fx: number; fy: number } | null;
+  green: { fx: number; fy: number } | null;
+}) {
+  // Mid = geometric midpoint of tee->green. Hidden if either
+  // endpoint is missing rather than guessed.
+  const mid =
+    tee && green
+      ? { fx: (tee.fx + green.fx) / 2, fy: (tee.fy + green.fy) / 2 }
+      : null;
+
+  // Tracks which preset is active so the user can see at a glance
+  // where they were sent. v1 doesn't observe ad-hoc pinches, so the
+  // chip stays highlighted until another preset is tapped or the
+  // user hits Hole; acceptable tradeoff vs. wiring an onZoomChange
+  // callback through PinchZoom.
+  const [active, setActive] = useState<"tee" | "mid" | "green" | "hole">(
+    "hole",
+  );
+
+  const onTap = (
+    label: "tee" | "mid" | "green",
+    target: { fx: number; fy: number } | null,
+  ) => {
+    if (!target || !pinchRef.current) return;
+    if (active === label) {
+      // Tapping the active preset again restores the full hole
+      // view -- a nice "toggle" so you don't have to hunt for Hole.
+      pinchRef.current.reset();
+      setActive("hole");
+      return;
+    }
+    pinchRef.current.zoomToFraction(target.fx, target.fy, 2.5);
+    setActive(label);
+  };
+
+  const onHole = () => {
+    pinchRef.current?.reset();
+    setActive("hole");
+  };
+
+  const chipCls = (on: boolean, disabled: boolean) =>
+    "px-3 py-1.5 text-[11px] font-mono font-medium tracking-[0.04em] uppercase " +
+    "rounded-full backdrop-blur-sm transition-colors " +
+    (disabled
+      ? "bg-black/40 text-white/40 cursor-not-allowed"
+      : on
+        ? "bg-accent text-bg shadow-[0_0_0_1px_rgb(var(--color-accent)/0.5)]"
+        : "bg-black/70 text-white active:bg-black/85");
+
+  return (
+    <div
+      className="absolute left-1/2 -translate-x-1/2 z-30 flex gap-1.5"
+      style={{
+        bottom: "max(0.5rem, env(safe-area-inset-bottom))",
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => onTap("tee", tee)}
+        disabled={!tee}
+        className={chipCls(active === "tee", !tee)}
+        aria-pressed={active === "tee"}
+      >
+        Tee
+      </button>
+      <button
+        type="button"
+        onClick={() => onTap("mid", mid)}
+        disabled={!mid}
+        className={chipCls(active === "mid", !mid)}
+        aria-pressed={active === "mid"}
+      >
+        Mid
+      </button>
+      <button
+        type="button"
+        onClick={() => onTap("green", green)}
+        disabled={!green}
+        className={chipCls(active === "green", !green)}
+        aria-pressed={active === "green"}
+      >
+        Green
+      </button>
+      <button
+        type="button"
+        onClick={onHole}
+        className={chipCls(active === "hole", false)}
+        aria-pressed={active === "hole"}
+      >
+        Hole
+      </button>
     </div>
   );
 }
