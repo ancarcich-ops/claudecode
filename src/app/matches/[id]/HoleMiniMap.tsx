@@ -1146,11 +1146,10 @@ function PresetChipsPortal({
       // is z-40, sheets are z-50).
       className="fixed left-1/2 -translate-x-1/2 z-[60] flex gap-1.5"
       style={{
-        // Clears the FRONT/CENTER/BACK card on the study view
-        // (~165px tall with content + padding) plus the
-        // home-indicator safe area, with a small visible gap above
-        // the card. 240 was too generous and floated the row mid-map.
-        bottom: "calc(env(safe-area-inset-bottom) + 180px)",
+        // Lands the chip row right above the FRONT/CENTER/BACK card
+        // top edge. The card's own pb-safe-area handles the home
+        // indicator -- this offset is just the visible card height.
+        bottom: "calc(env(safe-area-inset-bottom) + 120px)",
       }}
     >
       <button
