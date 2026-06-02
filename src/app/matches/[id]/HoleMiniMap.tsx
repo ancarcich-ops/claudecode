@@ -2,10 +2,17 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import dynamic from "next/dynamic";
 import PinchZoom, {
   useZoom,
   type PinchZoomHandle,
 } from "@/components/PinchZoom";
+
+// Mapbox GL JS is ~800kB minified -- only load it when a caller
+// opts in via engine="gl", not on every page that renders a map.
+const HoleMiniMapGL = dynamic(() => import("./HoleMiniMapGL"), {
+  ssr: false,
+});
 
 // Top-down hole map. When NEXT_PUBLIC_MAPBOX_TOKEN is set, the base
 // layer is a Mapbox satellite image of the bounding box of all known
@@ -69,6 +76,7 @@ export default function HoleMiniMap({
   landmarks,
   calibration,
   emptyState,
+  engine,
 }: {
   player: Pt | null;
   tee: Pt | null;
@@ -105,7 +113,31 @@ export default function HoleMiniMap({
     onMarkGreen: () => void;
     onMarkTee: () => void;
   };
+
+  // Map engine. "static" (default) keeps the legacy static-tile +
+  // SVG implementation. "gl" hands rendering to Mapbox GL JS for
+  // native pinch/pan/zoom with vector tiles. The GL path is still
+  // missing aim / calibration / empty-state features in v1, so
+  // callers opt in per-surface.
+  engine?: "static" | "gl";
 }) {
+  // GL path: a thin wrapper component owns the map; bail out early
+  // so none of the static-path measurement or projection runs.
+  if (engine === "gl") {
+    return (
+      <HoleMiniMapGL
+        player={player}
+        tee={tee}
+        greenCenter={greenCenter}
+        greenFront={greenFront}
+        greenBack={greenBack}
+        greenPolygon={greenPolygon}
+        hazards={hazards}
+        landmarks={landmarks}
+      />
+    );
+  }
+
   const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
   // Measure the rendered size so we can match the satellite image +
