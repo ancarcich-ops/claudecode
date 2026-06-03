@@ -447,6 +447,55 @@ export async function createMatchAction(formData: FormData) {
   const userById = new Map(lookup.map((u) => [u.id, u]));
   const userByName = new Map(lookup.map((u) => [u.username.toLowerCase(), u]));
 
+  // Tournament binding. When `tournamentId` is in the form, the new
+  // match is round N of that tournament. roundNumber is either
+  // supplied explicitly or auto-computed as max(existing) + 1. We
+  // also bump the tournament's status from UPCOMING -> IN_PROGRESS
+  // the first time a round lands, so the group page chip flips.
+  const tournamentIdRaw = String(formData.get("tournamentId") ?? "").trim();
+  let tournamentId: string | null = null;
+  let roundNumber: number | null = null;
+  if (tournamentIdRaw) {
+    const tournament = await prisma.tournament.findUnique({
+      where: { id: tournamentIdRaw },
+      include: {
+        matches: { select: { roundNumber: true } },
+      },
+    });
+    if (tournament) {
+      // Public tournament: anyone can add rounds (mirrors public
+      // matches). Group-scoped: only members can.
+      let allowed = !tournament.groupId;
+      if (!allowed && tournament.groupId) {
+        const membership = await prisma.groupMember.findUnique({
+          where: {
+            groupId_userId: {
+              groupId: tournament.groupId,
+              userId: user.id,
+            },
+          },
+        });
+        allowed = !!membership;
+      }
+      if (allowed) {
+        tournamentId = tournament.id;
+        const supplied = parseInt(
+          String(formData.get("roundNumber") ?? ""),
+          10,
+        );
+        if (Number.isFinite(supplied) && supplied > 0) {
+          roundNumber = supplied;
+        } else {
+          const maxExisting = tournament.matches.reduce(
+            (m, r) => Math.max(m, r.roundNumber ?? 0),
+            0,
+          );
+          roundNumber = maxExisting + 1;
+        }
+      }
+    }
+  }
+
   const match = await prisma.match.create({
     data: {
       courseName,
@@ -460,6 +509,8 @@ export async function createMatchAction(formData: FormData) {
       scrambleConfig: scrambleConfigJson,
       createdById: user.id,
       groupId,
+      tournamentId,
+      roundNumber,
       players: {
         create: drafts.map((p, i) => {
           const explicit = p.explicitUserId
@@ -625,6 +676,17 @@ export async function createMatchAction(formData: FormData) {
   }
 
   await recordOddsSnapshot(match.id);
+
+  // Bump the tournament status when its first round lands so the
+  // group page chip flips UPCOMING -> IN_PROGRESS.
+  if (tournamentId) {
+    await prisma.tournament.updateMany({
+      where: { id: tournamentId, status: "UPCOMING" },
+      data: { status: "IN_PROGRESS" },
+    });
+    revalidatePath(`/tournaments/${tournamentId}`);
+  }
+
   revalidatePath("/");
   redirect(`/matches/${match.id}`);
 }

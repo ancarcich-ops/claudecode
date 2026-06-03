@@ -10,9 +10,34 @@ import NewMatchForm, { type MatchTemplate } from "./NewMatchForm";
 
 export const dynamic = "force-dynamic";
 
-export default async function NewMatchPage() {
+export default async function NewMatchPage({
+  searchParams,
+}: {
+  searchParams: { tournament?: string };
+}) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+
+  // Tournament round mode. When ?tournament=<id> is in the URL we
+  // load the tournament + roster, lock the group dropdown to the
+  // tournament's group, and pre-fill the players. createMatchAction
+  // honors the hidden tournamentId field and binds the new match to
+  // round N (auto-computed if roundNumber isn't passed).
+  const tournament = searchParams.tournament
+    ? await prisma.tournament.findUnique({
+        where: { id: searchParams.tournament },
+        include: {
+          roster: { orderBy: { createdAt: "asc" } },
+          matches: { select: { roundNumber: true } },
+        },
+      })
+    : null;
+  const nextRoundNumber = tournament
+    ? tournament.matches.reduce(
+        (m, r) => Math.max(m, r.roundNumber ?? 0),
+        0,
+      ) + 1
+    : null;
 
   const recent = await prisma.match.findMany({
     where: { createdById: user.id },
@@ -99,14 +124,49 @@ export default async function NewMatchPage() {
       ? activeGroup
       : "public";
 
+  // When this is a tournament round, override the default group + roster
+  // and surface the tournament header so the user knows what they're
+  // creating.
+  const resolvedDefaultGroupId = tournament
+    ? tournament.groupId ?? "public"
+    : defaultGroupId;
+  const prefilledPlayers = tournament
+    ? tournament.roster.map((r) => ({
+        name: r.displayName,
+        handicap:
+          r.handicapAtStart != null ? r.handicapAtStart.toFixed(1) : "",
+        userId: r.userId,
+      }))
+    : undefined;
+  const hiddenFields = tournament
+    ? {
+        tournamentId: tournament.id,
+        roundNumber: String(nextRoundNumber ?? 1),
+      }
+    : undefined;
+
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="font-display text-2xl font-semibold tracking-tight mb-1">
-        Open the line.
-      </h1>
-      <p className="text-sm text-mute mb-6">
-        Course, tee time, players. Odds move the second you publish.
-      </p>
+      {tournament ? (
+        <>
+          <h1 className="font-display text-2xl font-semibold tracking-tight mb-1">
+            Round {nextRoundNumber} · {tournament.name}
+          </h1>
+          <p className="text-sm text-mute mb-6">
+            Same roster, your course pick. Score rolls into the cumulative
+            standings.
+          </p>
+        </>
+      ) : (
+        <>
+          <h1 className="font-display text-2xl font-semibold tracking-tight mb-1">
+            Open the line.
+          </h1>
+          <p className="text-sm text-mute mb-6">
+            Course, tee time, players. Odds move the second you publish.
+          </p>
+        </>
+      )}
       <NewMatchForm
         action={createMatchAction}
         defaultPlayerName={defaultName}
@@ -116,8 +176,13 @@ export default async function NewMatchPage() {
         recentCourses={recentCourses}
         presets={COURSE_PRESETS}
         groups={groups.map((g) => ({ id: g.id, name: g.name }))}
-        defaultGroupId={defaultGroupId}
+        defaultGroupId={resolvedDefaultGroupId}
         templates={templates}
+        prefilledPlayers={prefilledPlayers}
+        hiddenFields={hiddenFields}
+        submitLabel={
+          tournament ? `Start round ${nextRoundNumber} →` : undefined
+        }
       />
     </div>
   );
