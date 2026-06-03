@@ -1,0 +1,288 @@
+// Merge candidates from scripts/discover-ca-candidates.json into
+// src/lib/courses.ts as new presets, and pre-stamp their gbIds in
+// scripts/golfbert-state.json so the next import script run can pull
+// real geometry via --reuse-id without searching.
+//
+// Run:
+//   npx tsx scripts/merge-discovery-candidates.ts --region=LA
+//   npx tsx scripts/merge-discovery-candidates.ts --region=SD --limit=30
+//
+// Flags:
+//   --region=LA|OC|IE|CV|SD|VC|NC|all   (required; "all" merges every region)
+//   --limit=N                            cap the batch size (default 999)
+//   --in=path.json                       discovery JSON path
+//                                        (default scripts/discover-ca-candidates.json)
+//   --dry-run                            print what would change, don't write
+//
+// Filters out driving ranges, par-3 / executive layouts, putting
+// greens, and obvious duplicates by slug. Generates a stable slug
+// from the name and ensures it doesn't collide with an existing
+// preset id.
+
+import { readFileSync, writeFileSync, existsSync } from "fs";
+import { resolve } from "path";
+import { COURSE_PRESETS, type CourseRegion } from "../src/lib/courses";
+
+type Candidate = {
+  gbId: number;
+  name: string;
+  city: string;
+  state: string;
+  zip?: string;
+  suggestedRegion: CourseRegion;
+  reason: string;
+};
+
+function parseFlags(argv: string[]) {
+  const flags: {
+    region: string;
+    limit: number;
+    in: string;
+    dryRun: boolean;
+  } = {
+    region: "",
+    limit: 999,
+    in: "scripts/discover-ca-candidates.json",
+    dryRun: false,
+  };
+  for (const a of argv.slice(2)) {
+    if (a.startsWith("--region=")) flags.region = a.slice("--region=".length);
+    else if (a.startsWith("--limit="))
+      flags.limit = parseInt(a.slice("--limit=".length), 10);
+    else if (a.startsWith("--in=")) flags.in = a.slice("--in=".length);
+    else if (a === "--dry-run") flags.dryRun = true;
+  }
+  if (!flags.region) {
+    console.error(
+      "Pass --region=LA|OC|IE|CV|SD|VC|NC|all (required).",
+    );
+    process.exit(1);
+  }
+  return flags;
+}
+
+// Drop entries that aren't 18-hole regulation courses or that look
+// like obvious junk in the GolfBert catalog. Conservative; if we drop
+// something legit it'll surface again on the next discovery sweep.
+function looksLikeRegulationCourse(name: string): boolean {
+  const n = name.toLowerCase();
+  const blocked = [
+    "driving range",
+    "putting green",
+    "miniature",
+    "mini golf",
+    "footgolf",
+    "disc golf",
+    "topgolf",
+    "practice center",
+    "practice range",
+    "academy",
+    "learning center",
+    "junior",
+    "par 3",
+    "par-3",
+    "executive",
+    "pitch and putt",
+    "pitch & putt",
+  ];
+  for (const bad of blocked) if (n.includes(bad)) return false;
+  return true;
+}
+
+// Slug an arbitrary course name into a stable, URL-safe id. Strips
+// the boilerplate words (Country Club / Golf Course / etc.) so two
+// near-duplicate names don't generate near-duplicate slugs.
+function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/\s+(country\s*club|golf\s*club|golf\s*course|golf\s*&\s*country\s*club|g\.c\.|c\.c\.|gcc|gc|cc)\b/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+// Region label used in the // --- region --- header that the new
+// presets land under in courses.ts. Match the existing comment style.
+const REGION_LABELS: Record<CourseRegion, string> = {
+  LA: "Los Angeles County (discovered)",
+  OC: "Orange County (discovered)",
+  IE: "Inland Empire (discovered)",
+  CV: "Coachella Valley (discovered)",
+  SD: "San Diego County (discovered)",
+  VC: "Ventura County (discovered)",
+  NC: "Northern California (discovered)",
+  AZ: "Arizona (discovered)",
+  NV: "Nevada (discovered)",
+  UT: "Utah (discovered)",
+  PNW: "Pacific Northwest (discovered)",
+  TX: "Texas (discovered)",
+  FL: "Florida (discovered)",
+  CAR: "Carolinas (discovered)",
+  MW: "Midwest (discovered)",
+  MX: "Mexico (discovered)",
+  HI: "Hawaii (discovered)",
+  NE: "Northeast (discovered)",
+  UK: "United Kingdom (discovered)",
+  CO: "Colorado (discovered)",
+  SE: "Southeast (discovered)",
+};
+
+type StateEntry = {
+  kind: "matched";
+  presetId: string;
+  gbId: number;
+  gbName: string;
+  gbCity: string;
+  pars: null;
+  dbImported: false;
+};
+
+function main() {
+  const flags = parseFlags(process.argv);
+  const inPath = resolve(process.cwd(), flags.in);
+  if (!existsSync(inPath)) {
+    console.error(`Discovery JSON not found at ${flags.in}`);
+    process.exit(1);
+  }
+  const all: Candidate[] = JSON.parse(readFileSync(inPath, "utf8"));
+  console.log(`[merge] Loaded ${all.length} candidates from ${flags.in}`);
+
+  const wantRegion = flags.region === "all" ? null : flags.region as CourseRegion;
+  const inRegion = all.filter((c) =>
+    wantRegion ? c.suggestedRegion === wantRegion : true,
+  );
+  console.log(
+    `[merge] ${inRegion.length} candidates match region=${flags.region}`,
+  );
+
+  // Apply junk filter.
+  const filtered = inRegion.filter((c) => looksLikeRegulationCourse(c.name));
+  const droppedJunk = inRegion.length - filtered.length;
+  if (droppedJunk > 0)
+    console.log(`[merge] dropped ${droppedJunk} junk entries (ranges, par-3s, ...)`);
+
+  // Dedupe vs existing preset slugs + within this batch itself.
+  const existingSlugs = new Set(COURSE_PRESETS.map((p) => p.id));
+  const seenSlugs = new Set<string>();
+  type Plan = {
+    preset: {
+      id: string;
+      name: string;
+      city: string;
+      region: CourseRegion;
+      access: "public";
+      holes: 18;
+    };
+    gbId: number;
+  };
+  const plan: Plan[] = [];
+  let collisions = 0;
+  for (const c of filtered) {
+    let slug = slugify(c.name);
+    if (!slug) continue;
+    if (existingSlugs.has(slug) || seenSlugs.has(slug)) {
+      // Try appending a city-derived suffix as a tiebreaker, then a
+      // numeric one.
+      const citySuffix = slugify(c.city).split("-")[0] ?? "";
+      let tried = false;
+      if (citySuffix && !existingSlugs.has(`${slug}-${citySuffix}`) && !seenSlugs.has(`${slug}-${citySuffix}`)) {
+        slug = `${slug}-${citySuffix}`;
+        tried = true;
+      }
+      if (!tried) {
+        let n = 2;
+        while (existingSlugs.has(`${slug}-${n}`) || seenSlugs.has(`${slug}-${n}`)) n++;
+        slug = `${slug}-${n}`;
+      }
+      collisions++;
+    }
+    seenSlugs.add(slug);
+    plan.push({
+      preset: {
+        id: slug,
+        name: c.name,
+        city: `${c.city}, ${c.state}`.replace(/^,\s*/, ""),
+        region: c.suggestedRegion,
+        access: "public", // pessimistic default; user can refine
+        holes: 18,
+      },
+      gbId: c.gbId,
+    });
+    if (plan.length >= flags.limit) break;
+  }
+  console.log(
+    `[merge] ${plan.length} presets will be added${collisions > 0 ? ` (${collisions} slug collisions handled)` : ""}`,
+  );
+
+  if (plan.length === 0) {
+    console.log("[merge] nothing to do.");
+    return;
+  }
+
+  if (flags.dryRun) {
+    console.log("");
+    console.log("--- Dry run preview (first 30) ---");
+    for (const p of plan.slice(0, 30)) {
+      console.log(`  ${p.preset.id}  gbId=${p.gbId}  ${p.preset.name}  (${p.preset.city})`);
+    }
+    if (plan.length > 30) console.log(`  ... +${plan.length - 30} more`);
+    return;
+  }
+
+  // Generate the TypeScript snippet we'll splice into courses.ts.
+  const PAR_18_72_LITERAL = "p(18, 72)";
+  const header = `\n  // --- ${REGION_LABELS[wantRegion ?? "NC"] ?? "Discovered"} ---\n`;
+  const lines = plan.map(
+    (p) =>
+      `  { id: ${JSON.stringify(p.preset.id)}, name: ${JSON.stringify(p.preset.name)}, city: ${JSON.stringify(p.preset.city)}, region: "${p.preset.region}", access: "${p.preset.access}", holes: 18, pars: ${PAR_18_72_LITERAL} },`,
+  );
+  const snippet = header + lines.join("\n") + "\n";
+
+  // Splice into courses.ts: insert before the closing `];` of the
+  // COURSE_PRESETS array.
+  const coursesPath = resolve(process.cwd(), "src/lib/courses.ts");
+  const file = readFileSync(coursesPath, "utf8");
+  const closeIdx = file.lastIndexOf("\n];");
+  if (closeIdx === -1) {
+    console.error("Couldn't find COURSE_PRESETS close `];` -- aborting.");
+    process.exit(1);
+  }
+  const updated = file.slice(0, closeIdx) + snippet + file.slice(closeIdx);
+  writeFileSync(coursesPath, updated);
+  console.log(`[merge] courses.ts: appended ${plan.length} presets`);
+
+  // Pre-stamp golfbert-state.json so a subsequent import script run
+  // with --reuse-id pulls real geometry without a search round-trip.
+  const statePath = resolve(process.cwd(), "scripts/golfbert-state.json");
+  const state: Record<string, StateEntry | Record<string, unknown>> = JSON.parse(
+    readFileSync(statePath, "utf8"),
+  );
+  const keys = Object.keys(state)
+    .map(Number)
+    .filter((n) => !isNaN(n));
+  let nextIdx = (keys.length > 0 ? Math.max(...keys) : -1) + 1;
+  for (const p of plan) {
+    state[String(nextIdx)] = {
+      kind: "matched",
+      presetId: p.preset.id,
+      gbId: p.gbId,
+      gbName: p.preset.name,
+      gbCity: p.preset.city.split(",")[0]?.trim() ?? "",
+      pars: null,
+      dbImported: false,
+    };
+    nextIdx++;
+  }
+  writeFileSync(statePath, JSON.stringify(state, null, 2) + "\n");
+  console.log(`[merge] golfbert-state.json: added ${plan.length} entries`);
+  console.log("");
+  console.log("Next step:");
+  console.log(
+    "  npx tsx scripts/import-golfbert.ts --reuse-id --ids-from=<one of the new ids>",
+  );
+  console.log(
+    "  -- or just rerun the standard --ids-from=<batch file> --force --reuse-id",
+  );
+}
+
+main();
