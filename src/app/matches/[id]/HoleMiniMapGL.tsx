@@ -89,6 +89,10 @@ export default function HoleMiniMapGL({
   const lineSvgRef = useRef<SVGSVGElement>(null);
   const lineHaloRef = useRef<SVGLineElement>(null);
   const lineSolidRef = useRef<SVGLineElement>(null);
+  // Second pair of <line>s for the aim->pin dashed continuation.
+  // Same imperative approach as the solid play line.
+  const lineDashedHaloRef = useRef<SVGLineElement>(null);
+  const lineDashedRef = useRef<SVGLineElement>(null);
   // HTML markers we own and need to clean up between renders. GL JS
   // doesn't track them, so we keep our own roster keyed by feature
   // id.
@@ -438,32 +442,53 @@ export default function HoleMiniMapGL({
     }
   }, [tee, greenCenter, greenFront, greenBack, player, greenPolygon, hazards, aim]);
 
-  // SVG overlay driver for the player->aim line. We keep the GL JS
-  // line layers below as a fallback, but the SVG line is what the
-  // user actually sees -- thick, halo'd, always paints.
+  // SVG overlay driver for the aim play lines. We keep the GL JS
+  // line layers below as a fallback, but the SVG lines are what the
+  // user actually sees -- bright, halo'd, always paint. Two pairs:
+  // (halo + solid) for player->aim, and (halo + dashed) for the
+  // aim->pin continuation.
   useEffect(() => {
     const map = mapRef.current;
     const halo = lineHaloRef.current;
     const solid = lineSolidRef.current;
-    if (!map || !halo || !solid) return;
+    const dashedHalo = lineDashedHaloRef.current;
+    const dashed = lineDashedRef.current;
+    if (!map || !halo || !solid || !dashedHalo || !dashed) return;
+
+    const drawLine = (
+      el: SVGLineElement,
+      a: { x: number; y: number },
+      b: { x: number; y: number },
+    ) => {
+      el.setAttribute("x1", String(a.x));
+      el.setAttribute("y1", String(a.y));
+      el.setAttribute("x2", String(b.x));
+      el.setAttribute("y2", String(b.y));
+      el.style.display = "";
+    };
 
     const update = () => {
-      if (!aim || !player) {
+      // Player->aim play line.
+      if (aim && player) {
+        const a = map.project([player.lng, player.lat]);
+        const b = map.project([aim.lng, aim.lat]);
+        drawLine(halo, a, b);
+        drawLine(solid, a, b);
+      } else {
         halo.style.display = "none";
         solid.style.display = "none";
-        return;
       }
-      const a = map.project([player.lng, player.lat]);
-      const b = map.project([aim.lng, aim.lat]);
-      const set = (el: SVGLineElement) => {
-        el.setAttribute("x1", String(a.x));
-        el.setAttribute("y1", String(a.y));
-        el.setAttribute("x2", String(b.x));
-        el.setAttribute("y2", String(b.y));
-        el.style.display = "";
-      };
-      set(halo);
-      set(solid);
+      // Aim->pin continuation. Lights up the rest of the play after
+      // the aim point so the line "completes" at the hole.
+      if (aim && greenCenter) {
+        const a = map.project([aim.lng, aim.lat]);
+        const b = map.project([greenCenter.lng, greenCenter.lat]);
+        drawLine(dashedHalo, a, b);
+        drawLine(dashed, a, b);
+      } else {
+        dashedHalo.style.display = "none";
+        dashed.style.display = "none";
+      }
     };
 
     update();
@@ -473,7 +498,7 @@ export default function HoleMiniMapGL({
       map.off("move", update);
       map.off("zoom", update);
     };
-  }, [aim, player]);
+  }, [aim, player, greenCenter]);
 
   // Aim layers: solid line player->aim, dashed line aim->pin, two
   // pixel-radius rings around the aim point, plus a quiet dashed
@@ -809,28 +834,48 @@ export default function HoleMiniMapGL({
         className="absolute inset-0 w-full h-full"
         style={{ cursor: onAim ? "crosshair" : undefined }}
       />
-      {/* SVG overlay for the bold player->aim play line. Lives above
-          the map canvas but below the HTML markers (player, aim dot,
-          pills) since markers get appended to the container later by
-          GL JS. pointer-events:none so it doesn't eat taps. */}
+      {/* SVG overlay for the play lines. Lives above the map canvas
+          but below the HTML markers (player, aim dot, pills) since
+          markers get appended to the container later by GL JS.
+          pointer-events:none so it doesn't eat taps. */}
       <svg
         ref={lineSvgRef}
         className="absolute inset-0 w-full h-full pointer-events-none"
         style={{ zIndex: 1 }}
       >
+        {/* Player -> aim: solid green with a subtle white halo. */}
         <line
           ref={lineHaloRef}
           stroke="#ffffff"
-          strokeOpacity="0.6"
-          strokeWidth="7"
+          strokeOpacity="0.4"
+          strokeWidth="4"
           strokeLinecap="round"
           style={{ display: "none" }}
         />
         <line
           ref={lineSolidRef}
           stroke="#34d399"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          style={{ display: "none" }}
+        />
+        {/* Aim -> pin: dashed green, slightly quieter than the
+            solid, with its own halo so it stays legible. */}
+        <line
+          ref={lineDashedHaloRef}
+          stroke="#ffffff"
+          strokeOpacity="0.3"
           strokeWidth="4"
           strokeLinecap="round"
+          style={{ display: "none" }}
+        />
+        <line
+          ref={lineDashedRef}
+          stroke="#34d399"
+          strokeOpacity="0.8"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeDasharray="6 5"
           style={{ display: "none" }}
         />
       </svg>
