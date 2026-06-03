@@ -57,6 +57,8 @@ export default function HoleMiniMapGL({
   greenPolygon,
   hazards,
   landmarks,
+  aim,
+  onAim,
 }: {
   player: Pt | null;
   tee: Pt | null;
@@ -66,6 +68,11 @@ export default function HoleMiniMapGL({
   greenPolygon: Pt[] | null;
   hazards: Hazard[];
   landmarks?: Landmark[];
+  // Aim picker. When `onAim` is provided the map listens for clicks
+  // and reports the lat/lng back. `aim` is the current aim location;
+  // null = no aim, render a quiet player->pin reference line.
+  aim?: Pt | null;
+  onAim?: (latLng: Pt | null) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -73,6 +80,13 @@ export default function HoleMiniMapGL({
   // doesn't track them, so we keep our own roster keyed by feature
   // id.
   const markersRef = useRef<Map<string, mapboxgl.Marker>>(new Map());
+  // Latest onAim in a ref so the one-time click listener never has
+  // to be rebound on each render. Same trick GL JS suggests in its
+  // examples.
+  const onAimRef = useRef<typeof onAim>(onAim);
+  useEffect(() => {
+    onAimRef.current = onAim;
+  }, [onAim]);
 
   // Bounding box of everything we want visible -- we fit to this on
   // mount so the whole hole lands in view.
@@ -135,6 +149,16 @@ export default function HoleMiniMapGL({
       attributionControl: false,
     });
     map.touchZoomRotate.disableRotation();
+
+    // Tap-to-aim. The map gives us lngLat directly -- no projection
+    // math like the static path needed -- so we just hand the coord
+    // up. Crosshair cursor on the container signals tappability on
+    // desktop; on touch it's invisible but harmless.
+    map.on("click", (e) => {
+      const cb = onAimRef.current;
+      if (!cb) return;
+      cb({ lat: e.lngLat.lat, lng: e.lngLat.lng });
+    });
 
     mapRef.current = map;
 
@@ -343,6 +367,156 @@ export default function HoleMiniMapGL({
     }
   }, [tee, greenCenter, player, greenPolygon, hazards]);
 
+  // Aim layers: solid line player->aim, dashed line aim->pin, two
+  // pixel-radius rings around the aim point, plus a quiet dashed
+  // reference line player->pin when there's no aim yet. All managed
+  // through GeoJSON sources/layers so panning + zooming keeps them
+  // welded to lat/lng natively.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const apply = () => {
+      const lineFC = (coords: Pt[] | null): GeoJSON.FeatureCollection => ({
+        type: "FeatureCollection",
+        features:
+          coords && coords.length >= 2
+            ? [
+                {
+                  type: "Feature",
+                  properties: {},
+                  geometry: {
+                    type: "LineString",
+                    coordinates: coords.map(
+                      (p) => [p.lng, p.lat] as [number, number],
+                    ),
+                  },
+                },
+              ]
+            : [],
+      });
+      const pointFC = (p: Pt | null): GeoJSON.FeatureCollection => ({
+        type: "FeatureCollection",
+        features: p
+          ? [
+              {
+                type: "Feature",
+                properties: {},
+                geometry: { type: "Point", coordinates: [p.lng, p.lat] },
+              },
+            ]
+          : [],
+      });
+
+      const aimSolid = aim && player ? lineFC([player, aim]) : lineFC(null);
+      const aimDashed =
+        aim && greenCenter ? lineFC([aim, greenCenter]) : lineFC(null);
+      const aimPoint = pointFC(aim ?? null);
+      const ref =
+        !aim && player && greenCenter
+          ? lineFC([player, greenCenter])
+          : lineFC(null);
+
+      const upsertSource = (
+        id: string,
+        data: GeoJSON.FeatureCollection,
+      ) => {
+        const existing = map.getSource(id);
+        if (existing) {
+          (existing as mapboxgl.GeoJSONSource).setData(data);
+        } else {
+          map.addSource(id, { type: "geojson", data });
+        }
+      };
+      upsertSource("aim-solid", aimSolid);
+      upsertSource("aim-dashed", aimDashed);
+      upsertSource("aim-point", aimPoint);
+      upsertSource("aim-ref", ref);
+
+      // Reference line first, so the solid aim line layered above
+      // paints over it once both exist.
+      if (!map.getLayer("aim-ref")) {
+        map.addLayer({
+          id: "aim-ref",
+          type: "line",
+          source: "aim-ref",
+          paint: {
+            "line-color": "#34d399",
+            "line-opacity": 0.35,
+            "line-width": 1.5,
+            "line-dasharray": [2, 3],
+          },
+          layout: { "line-cap": "round", "line-join": "round" },
+        });
+      }
+      // Solid player->aim. Bright + thick like the static version.
+      if (!map.getLayer("aim-solid")) {
+        map.addLayer({
+          id: "aim-solid",
+          type: "line",
+          source: "aim-solid",
+          paint: {
+            "line-color": "#34d399",
+            "line-opacity": 0.95,
+            "line-width": 3,
+          },
+          layout: { "line-cap": "round", "line-join": "round" },
+        });
+      }
+      // Dashed aim->pin. Quieter than the solid; gives a sense of
+      // the remaining play distance after the aim.
+      if (!map.getLayer("aim-dashed")) {
+        map.addLayer({
+          id: "aim-dashed",
+          type: "line",
+          source: "aim-dashed",
+          paint: {
+            "line-color": "#34d399",
+            "line-opacity": 0.55,
+            "line-width": 2,
+            "line-dasharray": [2, 3],
+          },
+          layout: { "line-cap": "round", "line-join": "round" },
+        });
+      }
+      // Inner + outer aim rings. Constant pixel radii so they don't
+      // dominate when the user zooms in. The outer ring is more
+      // transparent + dashed to feel like the secondary range.
+      if (!map.getLayer("aim-ring-inner")) {
+        map.addLayer({
+          id: "aim-ring-inner",
+          type: "circle",
+          source: "aim-point",
+          paint: {
+            "circle-radius": 18,
+            "circle-color": "transparent",
+            "circle-stroke-color": "#34d399",
+            "circle-stroke-opacity": 0.6,
+            "circle-stroke-width": 2,
+          },
+        });
+      }
+      if (!map.getLayer("aim-ring-outer")) {
+        map.addLayer({
+          id: "aim-ring-outer",
+          type: "circle",
+          source: "aim-point",
+          paint: {
+            "circle-radius": 26,
+            "circle-color": "transparent",
+            "circle-stroke-color": "#34d399",
+            "circle-stroke-opacity": 0.3,
+            "circle-stroke-width": 1.5,
+          },
+        });
+      }
+    };
+    if (map.isStyleLoaded()) {
+      apply();
+    } else {
+      map.once("style.load", apply);
+    }
+  }, [aim, player, greenCenter]);
+
   // Yardage pills as HTML markers. Rebuilt fresh on every change
   // because the pill bodies are cheap and rebuilding is simpler than
   // reconciling per-pill style.
@@ -380,7 +554,7 @@ export default function HoleMiniMapGL({
     <div
       ref={containerRef}
       className="absolute inset-0 w-full h-full"
-      // Mapbox GL JS expects a real layout box; nothing magical here.
+      style={{ cursor: onAim ? "crosshair" : undefined }}
     />
   );
 }
