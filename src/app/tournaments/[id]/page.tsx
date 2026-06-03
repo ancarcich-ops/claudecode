@@ -1,13 +1,13 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
-import { getTournamentById } from "@/lib/tournaments";
+import {
+  computeTournamentLeaderboard,
+  getTournamentById,
+} from "@/lib/tournaments";
 
 export const dynamic = "force-dynamic";
 
-// Placeholder detail page -- shows the tournament name, status, roster,
-// and an empty rounds list. The real leaderboard + round creation
-// flow ships in PR 3 and PR 4.
 export default async function TournamentDetailPage({
   params,
 }: {
@@ -18,6 +18,7 @@ export default async function TournamentDetailPage({
 
   const tournament = await getTournamentById(params.id);
   if (!tournament) notFound();
+  const leaderboard = await computeTournamentLeaderboard(tournament.id);
 
   const scheduleLabel = tournament.scheduledStartAt
     ? new Date(tournament.scheduledStartAt).toLocaleString(undefined, {
@@ -153,13 +154,136 @@ export default async function TournamentDetailPage({
       </section>
 
       <section className="card p-5">
-        <h2 className="font-display text-base font-semibold text-ink mb-2">
-          Leaderboard
-        </h2>
-        <p className="text-sm text-mute">
-          Cumulative standings show up here once rounds start completing.
-        </p>
+        <div className="flex items-baseline justify-between mb-3 gap-2">
+          <h2 className="font-display text-base font-semibold text-ink">
+            Leaderboard
+          </h2>
+          <span className="text-[11px] text-mute">
+            {tournament.scoringMode === "GROSS"
+              ? "Sum of gross strokes"
+              : "Sum of net (gross − handicap)"}
+          </span>
+        </div>
+        {completedRounds === 0 ? (
+          <p className="text-sm text-mute">
+            Standings show up here once the first round wraps. Every roster
+            player gets a row; players who miss rounds show DNP and sink to
+            the bottom.
+          </p>
+        ) : (
+          <LeaderboardTable
+            rows={leaderboard}
+            roundCount={
+              tournament.matches.filter((m) => m.roundNumber != null).length
+            }
+            scoringMode={tournament.scoringMode}
+          />
+        )}
       </section>
+    </div>
+  );
+}
+
+// Cumulative leaderboard. Players ranked by total (lower wins) with
+// ties drawn at the same rank. Per-round scores show numerically when
+// the round is complete and the player took part, `—` for rounds the
+// player skipped, blank for rounds that haven't finished yet.
+function LeaderboardTable({
+  rows,
+  roundCount,
+  scoringMode,
+}: {
+  rows: {
+    rank: number;
+    displayName: string;
+    latestHandicap: number | null;
+    roundScores: (number | null)[];
+    total: number;
+    playedRounds: number;
+  }[];
+  roundCount: number;
+  scoringMode: string;
+}) {
+  const roundHeaders = Array.from({ length: roundCount }, (_, i) => i + 1);
+  const totalLabel = scoringMode === "GROSS" ? "Gross" : "Net";
+  return (
+    <div className="overflow-x-auto rounded-md border border-border">
+      <table className="text-[11px] font-mono tabular-nums w-full">
+        <thead>
+          <tr className="bg-panel2/60 text-mute">
+            <th className="text-left px-2 py-1.5 font-medium uppercase tracking-wider w-8">
+              #
+            </th>
+            <th className="text-left px-2 py-1.5 font-medium uppercase tracking-wider">
+              Player
+            </th>
+            {roundHeaders.map((n) => (
+              <th
+                key={n}
+                className="px-2 py-1.5 text-center font-medium uppercase tracking-wider"
+              >
+                R{n}
+              </th>
+            ))}
+            <th className="px-2 py-1.5 text-right text-ink font-medium uppercase tracking-wider">
+              {totalLabel}
+            </th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-border/60">
+          {rows.map((r) => {
+            const isLeader = r.rank === 1;
+            return (
+              <tr key={r.displayName} className={isLeader ? "bg-gold/[0.06]" : ""}>
+                <td
+                  className={
+                    "px-2 py-2 text-left " +
+                    (isLeader ? "text-gold font-semibold" : "text-mute")
+                  }
+                >
+                  {r.rank}
+                </td>
+                <td className="px-2 py-2 text-left text-ink font-sans">
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <span className={isLeader ? "font-medium" : ""}>
+                      {r.displayName}
+                    </span>
+                    {r.latestHandicap != null && (
+                      <span className="text-[10px] text-mute font-mono">
+                        HCP {r.latestHandicap.toFixed(1)}
+                      </span>
+                    )}
+                  </div>
+                </td>
+                {r.roundScores.map((s, i) => (
+                  <td
+                    key={i}
+                    className={
+                      "px-2 py-2 text-center " +
+                      (s == null ? "text-faint" : "text-ink")
+                    }
+                  >
+                    {s == null ? "—" : s}
+                  </td>
+                ))}
+                <td
+                  className={
+                    "px-2 py-2 text-right " +
+                    (isLeader ? "text-gold font-semibold" : "text-ink font-medium")
+                  }
+                >
+                  {r.total}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      {rows.length === 0 && (
+        <div className="px-3 py-4 text-sm text-mute text-center">
+          No scores yet.
+        </div>
+      )}
     </div>
   );
 }

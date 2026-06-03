@@ -1126,14 +1126,45 @@ export async function reopenMatchAction(formData: FormData) {
 export async function completeMatchAction(formData: FormData) {
   await requireUser();
   const matchId = String(formData.get("matchId"));
-  await prisma.match.update({
+  const completed = await prisma.match.update({
     where: { id: matchId },
     data: { status: "COMPLETED", completedAt: new Date() },
+    select: { tournamentId: true },
   });
   await recordOddsSnapshot(matchId);
   // Snapshot per-game winners so leaderboard queries can skip the engine
   // for historical matches.
   await computeAndPersistMatchWinners(matchId);
+
+  // Tournament auto-completion. If this match was the last planned
+  // round (or every planned round is now finished), flip the
+  // tournament's status to COMPLETED so the group page chip + detail
+  // page header read "Final" without the creator having to do anything.
+  if (completed.tournamentId) {
+    const tournament = await prisma.tournament.findUnique({
+      where: { id: completed.tournamentId },
+      select: {
+        roundsPlanned: true,
+        status: true,
+        matches: {
+          select: { status: true, roundNumber: true },
+        },
+      },
+    });
+    if (tournament && tournament.status !== "COMPLETED") {
+      const completedRounds = tournament.matches.filter(
+        (m) => m.status === "COMPLETED" && m.roundNumber != null,
+      ).length;
+      if (completedRounds >= tournament.roundsPlanned) {
+        await prisma.tournament.update({
+          where: { id: completed.tournamentId },
+          data: { status: "COMPLETED", completedAt: new Date() },
+        });
+      }
+    }
+    revalidatePath(`/tournaments/${completed.tournamentId}`);
+  }
+
   revalidatePath(`/matches/${matchId}`);
   revalidatePath("/");
 }
