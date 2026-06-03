@@ -26,14 +26,16 @@ model User {
   ghinNumber  String?
   createdAt   DateTime @default(now())
 
-  createdMatches   Match[]       @relation("MatchCreator")
-  playerSeats      MatchPlayer[]
-  wagers           Wager[]
-  createdGroups    Group[]       @relation("GroupCreator")
-  groupMemberships GroupMember[]
-  sessions         Session[]
-  passwordResets   PasswordResetToken[]
-  passkeys         Passkey[]
+  createdMatches      Match[]            @relation("MatchCreator")
+  playerSeats         MatchPlayer[]
+  wagers              Wager[]
+  createdGroups       Group[]            @relation("GroupCreator")
+  groupMemberships    GroupMember[]
+  sessions            Session[]
+  passwordResets      PasswordResetToken[]
+  passkeys            Passkey[]
+  createdTournaments  Tournament[]       @relation("TournamentCreator")
+  tournamentEntries   TournamentPlayer[]
 }
 
 // WebAuthn / passkey credentials. Each row is one device (Face ID on
@@ -108,6 +110,7 @@ model Group {
 
   members     GroupMember[]
   matches     Match[]
+  tournaments Tournament[]
 }
 
 model GroupMember {
@@ -142,6 +145,12 @@ model Match {
   createdBy    User        @relation("MatchCreator", fields: [createdById], references: [id])
   groupId      String?
   group        Group?      @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  // When this match is round N of a tournament, both columns are set.
+  // Null on standalone (non-tournament) matches. SetNull on tournament
+  // delete so the play history isn't lost.
+  tournamentId String?
+  tournament   Tournament? @relation(fields: [tournamentId], references: [id], onDelete: SetNull)
+  roundNumber  Int?
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @default(now()) @updatedAt
   startedAt    DateTime?
@@ -153,6 +162,68 @@ model Match {
   wagers       Wager[]
   oddsSnapshots OddsSnapshot[]
   sideGames    SideGame[]
+
+  @@index([tournamentId, roundNumber])
+}
+
+// Multi-round tournament container. Holds N matches (each tagged with
+// tournamentId + roundNumber), a fixed roster of players, and a
+// cumulative leaderboard derived from the child matches' scores.
+// MVP: no cuts, scoring mode applies to every round, players can be
+// linked Sticks users or free-typed names (same as MatchPlayer).
+model Tournament {
+  id               String   @id @default(cuid())
+  name             String
+  // NET (handicap applied per round) or GROSS (raw stroke totals
+  // summed). Same mode applied to every round; child matches still
+  // carry their own scoringMode but the leaderboard rolls up using
+  // this one.
+  scoringMode      String   @default("NET")
+  // Soft target -- the creator can add more rounds later. Actual
+  // rounds tracked via the matches[] relation; this is just so the
+  // detail page can render "Round 3 of 4" expected progress.
+  roundsPlanned    Int      @default(2)
+  scheduledStartAt DateTime?
+  // UPCOMING / IN_PROGRESS / COMPLETED.
+  status           String   @default("UPCOMING")
+  createdById      String
+  createdBy        User     @relation("TournamentCreator", fields: [createdById], references: [id])
+  // Group scope. "public" is a real Group row so this is required
+  // semantically; we keep it nullable for parity with Match.
+  groupId          String?
+  group            Group?   @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @default(now()) @updatedAt
+  completedAt      DateTime?
+  notes            String?
+
+  matches          Match[]
+  roster           TournamentPlayer[]
+
+  @@index([groupId, createdAt])
+}
+
+// One entry in a tournament's roster. Same signup shape as
+// MatchPlayer: every round's match pulls these names into its own
+// players[] list at creation. handicapAtStart captures the player's
+// Sticks index when they joined so leaderboard math stays stable
+// even if their live handicap shifts during the event.
+model TournamentPlayer {
+  id              String     @id @default(cuid())
+  tournamentId    String
+  tournament      Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  displayName     String
+  // Optional link to a real Sticks account; free-typed names have
+  // userId = null.
+  userId          String?
+  user            User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  // Pre-tournament handicap snapshot. Null if the player has no
+  // index yet (under 3 logged rounds).
+  handicapAtStart Float?
+  createdAt       DateTime   @default(now())
+
+  @@index([tournamentId])
+  @@unique([tournamentId, displayName])
 }
 
 model SideGame {
