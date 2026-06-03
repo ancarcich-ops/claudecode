@@ -203,12 +203,7 @@ export default function HoleStudyMode({
             greenFront={greenFront}
             greenBack={greenBack}
             greenPolygon={geo?.greenPolygon ?? null}
-            hazards={holeHazards.map((h) => ({
-              id: h.id,
-              kind: h.kind,
-              lat: h.lat,
-              lng: h.lng,
-            }))}
+            hazards={[]}
             aim={aimPoint}
             onAim={(p) => setAimPoint(p)}
             landmarks={landmarks}
