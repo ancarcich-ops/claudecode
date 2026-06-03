@@ -134,6 +134,8 @@ export default function HoleMiniMap({
         greenPolygon={greenPolygon}
         hazards={hazards}
         landmarks={landmarks}
+        aim={aim}
+        onAim={onAim}
       />
     );
   }
