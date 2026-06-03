@@ -476,6 +476,21 @@ export default function HoleMiniMapGL({
           layout: { "line-cap": "round", "line-join": "round" },
         });
       }
+      // White halo behind the aim-solid line so it pops against
+      // busy satellite imagery.
+      if (!map.getLayer("aim-solid-halo")) {
+        map.addLayer({
+          id: "aim-solid-halo",
+          type: "line",
+          source: "aim-solid",
+          paint: {
+            "line-color": "#ffffff",
+            "line-opacity": 0.55,
+            "line-width": 6,
+          },
+          layout: { "line-cap": "round", "line-join": "round" },
+        });
+      }
       // Solid player->aim. Bright + thick like the static version.
       if (!map.getLayer("aim-solid")) {
         map.addLayer({
@@ -484,8 +499,8 @@ export default function HoleMiniMapGL({
           source: "aim-solid",
           paint: {
             "line-color": "#34d399",
-            "line-opacity": 0.95,
-            "line-width": 3,
+            "line-opacity": 1,
+            "line-width": 4,
           },
           layout: { "line-cap": "round", "line-join": "round" },
         });
@@ -506,17 +521,34 @@ export default function HoleMiniMapGL({
           layout: { "line-cap": "round", "line-join": "round" },
         });
       }
+      // Solid green dot at the aim location -- the visible "pin"
+      // that anchors the AIM SET state. Without this the user can't
+      // see exactly where they tapped, only the rings and lines
+      // around it.
+      if (!map.getLayer("aim-dot")) {
+        map.addLayer({
+          id: "aim-dot",
+          type: "circle",
+          source: "aim-point",
+          paint: {
+            "circle-radius": 7,
+            "circle-color": "#34d399",
+            "circle-stroke-color": "#ffffff",
+            "circle-stroke-width": 2,
+          },
+        });
+      }
       // Inner + outer aim rings. Constant pixel radii so they don't
-      // dominate when the user zooms in. The outer ring is more
-      // transparent + dashed to feel like the secondary range.
+      // dominate when the user zooms in. Color set via rgba so Mapbox
+      // doesn't interpret "transparent" oddly across browsers.
       if (!map.getLayer("aim-ring-inner")) {
         map.addLayer({
           id: "aim-ring-inner",
           type: "circle",
           source: "aim-point",
           paint: {
-            "circle-radius": 18,
-            "circle-color": "transparent",
+            "circle-radius": 22,
+            "circle-color": "rgba(0,0,0,0)",
             "circle-stroke-color": "#34d399",
             "circle-stroke-opacity": 0.6,
             "circle-stroke-width": 2,
@@ -529,8 +561,8 @@ export default function HoleMiniMapGL({
           type: "circle",
           source: "aim-point",
           paint: {
-            "circle-radius": 26,
-            "circle-color": "transparent",
+            "circle-radius": 32,
+            "circle-color": "rgba(0,0,0,0)",
             "circle-stroke-color": "#34d399",
             "circle-stroke-opacity": 0.3,
             "circle-stroke-width": 1.5,
