@@ -124,6 +124,7 @@ export default function NewMatchForm({
   initial,
   submitLabel,
   hiddenFields,
+  prefilledPlayers,
 }: {
   action: (formData: FormData) => Promise<void>;
   defaultPlayerName: string;
@@ -148,6 +149,14 @@ export default function NewMatchForm({
   submitLabel?: string;
   // Extra hidden inputs rendered inside the form (e.g. { matchId } for edit).
   hiddenFields?: Record<string, string>;
+  // Pre-fills the roster when the user is starting a tournament round.
+  // Honored only when `initial` isn't set (which is the create flow);
+  // otherwise edit-mode takes precedence.
+  prefilledPlayers?: {
+    name: string;
+    handicap: string;
+    userId: string | null;
+  }[];
 }) {
   const [step, setStep] = useState(0);
   // Guided progressive reveal for the Round step. The user is walked
@@ -158,30 +167,42 @@ export default function NewMatchForm({
   // so start fully revealed.
   const [roundStep, setRoundStep] = useState(initial ? 3 : 0);
   const [templatesOpen, setTemplatesOpen] = useState(false);
-  const [players, setPlayers] = useState<PlayerRow[]>(() =>
-    initial
-      ? initial.players.map((p) => ({
-          name: p.name,
-          handicap: p.handicap,
-          userId: p.userId,
-          team: p.team,
-        }))
-      : [
-          // Default to a foursome with 1 filled + 3 blanks. The Round
-          // step's "Round size" chip lets the user collapse this to
-          // Solo / 2-player / Threesome before editing names.
-          {
-            name: defaultPlayerName,
-            handicap: defaultPlayerHandicap,
-            userId: currentUserId,
-            team: 0,
-            handicapPending: userHandicapPending,
-          },
-          { name: "", handicap: "15", userId: null, team: 1 },
-          { name: "", handicap: "15", userId: null, team: 0 },
-          { name: "", handicap: "15", userId: null, team: 1 },
-        ],
-  );
+  const [players, setPlayers] = useState<PlayerRow[]>(() => {
+    if (initial) {
+      return initial.players.map((p) => ({
+        name: p.name,
+        handicap: p.handicap,
+        userId: p.userId,
+        team: p.team,
+      }));
+    }
+    if (prefilledPlayers && prefilledPlayers.length > 0) {
+      // Tournament round mode: seed the roster from the caller and
+      // alternate teams so a 4-player roster opens as a clean 2v2
+      // if someone flips the format to scramble.
+      return prefilledPlayers.map((p, i) => ({
+        name: p.name,
+        handicap: p.handicap,
+        userId: p.userId,
+        team: (i % 2) as 0 | 1,
+      }));
+    }
+    return [
+      // Default to a foursome with 1 filled + 3 blanks. The Round
+      // step's "Round size" chip lets the user collapse this to
+      // Solo / 2-player / Threesome before editing names.
+      {
+        name: defaultPlayerName,
+        handicap: defaultPlayerHandicap,
+        userId: currentUserId,
+        team: 0,
+        handicapPending: userHandicapPending,
+      },
+      { name: "", handicap: "15", userId: null, team: 1 },
+      { name: "", handicap: "15", userId: null, team: 0 },
+      { name: "", handicap: "15", userId: null, team: 1 },
+    ];
+  });
   const [sideGames, setSideGames] = useState<Set<SideGameKind>>(
     () => new Set(initial?.sideGames ?? []),
   );

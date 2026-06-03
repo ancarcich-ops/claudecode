@@ -32,6 +32,11 @@ export default async function TournamentDetailPage({
   const completedRounds = tournament.matches.filter(
     (m) => m.status === "COMPLETED",
   ).length;
+  const nextRoundNumber = tournament.matches.reduce(
+    (m, r) => Math.max(m, r.roundNumber ?? 0),
+    0,
+  ) + 1;
+  const canStartAnotherRound = tournament.status !== "COMPLETED";
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -81,13 +86,23 @@ export default async function TournamentDetailPage({
       </section>
 
       <section className="card p-5">
-        <h2 className="font-display text-base font-semibold text-ink mb-3">
-          Rounds
-        </h2>
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <h2 className="font-display text-base font-semibold text-ink">
+            Rounds
+          </h2>
+          {canStartAnotherRound && (
+            <Link
+              href={`/matches/new?tournament=${tournament.id}`}
+              className="btn btn-primary text-xs shrink-0"
+            >
+              Start round {nextRoundNumber} →
+            </Link>
+          )}
+        </div>
         {tournament.matches.length === 0 ? (
           <p className="text-sm text-mute">
-            No rounds yet. The &ldquo;Start round&rdquo; flow lands in the next
-            release.
+            No rounds yet. Tap &ldquo;Start round 1&rdquo; to pick a course and
+            kick the tournament off.
           </p>
         ) : (
           <ul className="space-y-2">
@@ -107,6 +122,22 @@ export default async function TournamentDetailPage({
                       hour: "numeric",
                       minute: "2-digit",
                     })}
+                    {" · "}
+                    <span
+                      className={
+                        m.status === "COMPLETED"
+                          ? "text-accent"
+                          : m.status === "IN_PROGRESS"
+                            ? "text-gold"
+                            : "text-mute"
+                      }
+                    >
+                      {m.status === "COMPLETED"
+                        ? "Final"
+                        : m.status === "IN_PROGRESS"
+                          ? "Live"
+                          : "Upcoming"}
+                    </span>
                   </div>
                 </div>
                 <Link
