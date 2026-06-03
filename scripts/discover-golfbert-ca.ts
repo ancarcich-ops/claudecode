@@ -71,94 +71,143 @@ function parseFlags(argv: string[]) {
   return flags;
 }
 
+// City lists per California region tag. Kept at module level so both
+// suggestRegionForCA() and collectKnownCACities() can use them.
+
+// Los Angeles County
+const CITIES_LA = [
+    "los angeles", "santa monica", "venice", "beverly hills", "westwood",
+    "pasadena", "glendale", "burbank", "long beach", "lakewood",
+    "torrance", "redondo beach", "hermosa beach", "manhattan beach",
+  "el segundo", "hawthorne", "inglewood", "lawndale", "san pedro",
+  "carson", "compton", "downey", "norwalk", "bellflower",
+  "whittier", "santa clarita", "valencia", "newhall", "sylmar",
+  "studio city", "sherman oaks", "encino", "tarzana", "woodland hills",
+  "calabasas", "agoura hills", "thousand oaks", "westlake village",
+  "palmdale", "lancaster", "north hollywood", "van nuys", "northridge",
+  "chatsworth", "san fernando", "monrovia", "arcadia", "duarte",
+  "san dimas", "covina", "west covina", "diamond bar", "rowland heights",
+  "city of industry", "el monte", "south el monte", "alhambra",
+  "monterey park", "rosemead", "san gabriel", "temple city",
+  "culver city", "marina del rey", "playa vista", "view park",
+  "rolling hills", "palos verdes", "rancho palos verdes",
+];
+
+// Orange County
+const CITIES_OC = [
+  "anaheim", "santa ana", "irvine", "huntington beach", "newport beach",
+  "newport coast", "costa mesa", "fountain valley", "garden grove",
+  "westminster", "stanton", "buena park", "fullerton", "la habra",
+  "yorba linda", "placentia", "brea", "tustin", "orange",
+  "mission viejo", "laguna hills", "laguna niguel", "laguna beach",
+  "aliso viejo", "lake forest", "rancho santa margarita", "coto de caza",
+  "ladera ranch", "san juan capistrano", "dana point", "san clemente",
+  "trabuco canyon", "silverado", "cypress", "los alamitos",
+  "seal beach", "sunset beach", "midway city",
+];
+
+// Inland Empire (Riverside / San Bernardino counties)
+const CITIES_IE = [
+  "riverside", "moreno valley", "corona", "norco", "perris", "menifee",
+  "murrieta", "temecula", "lake elsinore", "wildomar", "hemet",
+  "san jacinto", "beaumont", "banning", "calimesa",
+  "san bernardino", "fontana", "rancho cucamonga", "ontario",
+  "chino", "chino hills", "upland", "claremont", "pomona",
+  "rialto", "colton", "redlands", "loma linda", "highland",
+  "yucaipa", "victorville", "apple valley", "hesperia",
+  "twentynine palms", "yucca valley", "joshua tree", "morongo valley",
+  "barstow", "needles", "big bear lake", "big bear city",
+  "running springs", "lake arrowhead", "crestline",
+];
+
+// Coachella Valley
+const CITIES_CV = [
+  "palm springs", "palm desert", "rancho mirage", "indian wells",
+  "la quinta", "indio", "coachella", "cathedral city", "thousand palms",
+  "desert hot springs", "bermuda dunes", "thermal", "mecca",
+];
+
+// San Diego County
+const CITIES_SD = [
+  "san diego", "la jolla", "coronado", "del mar", "solana beach",
+  "encinitas", "carlsbad", "oceanside", "vista", "san marcos",
+  "escondido", "poway", "rancho santa fe", "rancho bernardo",
+  "rancho penasquitos", "mira mesa", "scripps ranch", "tierrasanta",
+  "chula vista", "national city", "imperial beach", "bonita",
+  "el cajon", "santee", "lakeside", "lemon grove", "spring valley",
+  "alpine", "ramona", "julian", "fallbrook", "valley center",
+  "borrego springs", "warner springs", "campo", "pine valley",
+];
+
+// Ventura County
+const CITIES_VC = [
+  "ventura", "oxnard", "camarillo", "moorpark", "simi valley",
+  "thousand oaks", "newbury park", "ojai", "santa paula", "fillmore",
+  "port hueneme", "somis", "santa rosa valley",
+];
+
+// Northern California (Bay Area + Central Valley + Wine Country + coast).
+// Big list -- per-city sweep covers it.
+const CITIES_NC = [
+  "san francisco", "oakland", "berkeley", "alameda", "emeryville",
+  "san leandro", "hayward", "fremont", "union city", "newark",
+  "palo alto", "menlo park", "redwood city", "san mateo", "burlingame",
+  "millbrae", "south san francisco", "daly city", "pacifica",
+  "half moon bay", "san bruno", "san carlos", "belmont", "foster city",
+  "santa clara", "san jose", "los gatos", "saratoga", "cupertino",
+  "sunnyvale", "mountain view", "campbell", "milpitas", "morgan hill",
+  "gilroy", "los altos", "santa cruz", "capitola", "aptos", "watsonville",
+  "monterey", "pebble beach", "carmel", "carmel valley", "salinas",
+  "marina", "seaside", "pacific grove", "big sur",
+  "napa", "yountville", "st helena", "calistoga", "rutherford",
+  "sonoma", "santa rosa", "petaluma", "novato", "san rafael",
+  "mill valley", "tiburon", "sausalito", "larkspur", "corte madera",
+  "windsor", "healdsburg", "geyserville", "sebastopol", "rohnert park",
+  "vallejo", "benicia", "martinez", "concord", "walnut creek",
+  "danville", "san ramon", "dublin", "pleasanton", "livermore",
+  "tracy", "manteca", "stockton", "modesto", "turlock", "merced",
+  "fresno", "clovis", "visalia", "tulare", "porterville", "bakersfield",
+  "sacramento", "elk grove", "folsom", "roseville", "rocklin",
+  "granite bay", "el dorado hills", "auburn", "placerville",
+  "lake tahoe", "south lake tahoe", "truckee", "tahoe city",
+  "incline village", "kings beach", "olympic valley",
+  "redding", "chico", "yuba city", "marysville",
+  "hidden valley lake", "clearlake", "lakeport", "kelseyville",
+  "ukiah", "willits", "fort bragg", "mendocino", "boonville",
+  "eureka", "arcata", "crescent city",
+];
+
 // Suggest a region tag from the city. Coarse but fine for triage --
 // the human reviewer can fix up edge cases. Falls back to "NC" for
 // California cities we don't recognize (Northern California).
 function suggestRegionForCA(city: string | undefined): CourseRegion {
   const c = (city ?? "").toLowerCase().trim();
   if (!c) return "NC";
-
-  // Los Angeles County
-  const LA = [
-    "los angeles", "santa monica", "venice", "beverly hills", "westwood",
-    "pasadena", "glendale", "burbank", "long beach", "lakewood",
-    "torrance", "redondo beach", "hermosa beach", "manhattan beach",
-    "el segundo", "hawthorne", "inglewood", "lawndale", "san pedro",
-    "carson", "compton", "downey", "norwalk", "bellflower",
-    "whittier", "santa clarita", "valencia", "newhall", "sylmar",
-    "studio city", "sherman oaks", "encino", "tarzana", "woodland hills",
-    "calabasas", "agoura hills", "thousand oaks", "westlake village",
-    "palmdale", "lancaster", "north hollywood", "van nuys", "northridge",
-    "chatsworth", "san fernando", "monrovia", "arcadia", "duarte",
-    "san dimas", "covina", "west covina", "diamond bar", "rowland heights",
-    "city of industry", "el monte", "south el monte", "alhambra",
-    "monterey park", "rosemead", "san gabriel", "temple city",
-    "culver city", "marina del rey", "playa vista", "view park",
-    "rolling hills", "palos verdes", "rancho palos verdes",
-  ];
-  if (LA.includes(c)) return "LA";
-
-  // Orange County
-  const OC = [
-    "anaheim", "santa ana", "irvine", "huntington beach", "newport beach",
-    "newport coast", "costa mesa", "fountain valley", "garden grove",
-    "westminster", "stanton", "buena park", "fullerton", "la habra",
-    "yorba linda", "placentia", "brea", "tustin", "orange",
-    "mission viejo", "laguna hills", "laguna niguel", "laguna beach",
-    "aliso viejo", "lake forest", "rancho santa margarita", "coto de caza",
-    "ladera ranch", "san juan capistrano", "dana point", "san clemente",
-    "trabuco canyon", "silverado", "cypress", "los alamitos",
-    "seal beach", "sunset beach", "midway city",
-  ];
-  if (OC.includes(c)) return "OC";
-
-  // Inland Empire (Riverside / San Bernardino counties)
-  const IE = [
-    "riverside", "moreno valley", "corona", "norco", "perris", "menifee",
-    "murrieta", "temecula", "lake elsinore", "wildomar", "hemet",
-    "san jacinto", "beaumont", "banning", "calimesa",
-    "san bernardino", "fontana", "rancho cucamonga", "ontario",
-    "chino", "chino hills", "upland", "claremont", "pomona",
-    "rialto", "colton", "redlands", "loma linda", "highland",
-    "yucaipa", "victorville", "apple valley", "hesperia",
-    "twentynine palms", "yucca valley", "joshua tree", "morongo valley",
-    "barstow", "needles", "big bear lake", "big bear city",
-    "running springs", "lake arrowhead", "crestline",
-  ];
-  if (IE.includes(c)) return "IE";
-
-  // Coachella Valley
-  const CV = [
-    "palm springs", "palm desert", "rancho mirage", "indian wells",
-    "la quinta", "indio", "coachella", "cathedral city", "thousand palms",
-    "desert hot springs", "bermuda dunes", "thermal", "mecca",
-  ];
-  if (CV.includes(c)) return "CV";
-
-  // San Diego County
-  const SD = [
-    "san diego", "la jolla", "coronado", "del mar", "solana beach",
-    "encinitas", "carlsbad", "oceanside", "vista", "san marcos",
-    "escondido", "poway", "rancho santa fe", "rancho bernardo",
-    "rancho penasquitos", "mira mesa", "scripps ranch", "tierrasanta",
-    "chula vista", "national city", "imperial beach", "bonita",
-    "el cajon", "santee", "lakeside", "lemon grove", "spring valley",
-    "alpine", "ramona", "julian", "fallbrook", "valley center",
-    "borrego springs", "warner springs", "campo", "pine valley",
-  ];
-  if (SD.includes(c)) return "SD";
-
-  // Ventura County
-  const VC = [
-    "ventura", "oxnard", "camarillo", "moorpark", "simi valley",
-    "thousand oaks", "newbury park", "ojai", "santa paula", "fillmore",
-    "port hueneme", "somis", "santa rosa valley",
-  ];
-  if (VC.includes(c)) return "VC";
-
-  // Fallback: Northern California. Could refine further (Bay Area,
-  // Central Valley, etc.) but NC works for the triage pass.
+  if (CITIES_LA.includes(c)) return "LA";
+  if (CITIES_OC.includes(c)) return "OC";
+  if (CITIES_IE.includes(c)) return "IE";
+  if (CITIES_CV.includes(c)) return "CV";
+  if (CITIES_SD.includes(c)) return "SD";
+  if (CITIES_VC.includes(c)) return "VC";
   return "NC";
+}
+
+// Union of every region's city list, deduped. Used by the per-city
+// fallback when state-only pagination short-circuits.
+function collectKnownCACities(): string[] {
+  const out = new Set<string>();
+  for (const list of [
+    CITIES_LA,
+    CITIES_OC,
+    CITIES_IE,
+    CITIES_CV,
+    CITIES_SD,
+    CITIES_VC,
+    CITIES_NC,
+  ]) {
+    for (const c of list) out.add(c);
+  }
+  return Array.from(out);
 }
 
 function normalizeName(name: string): string {
@@ -195,13 +244,24 @@ async function main() {
     `[discover] Loaded ${knownPresetNames.size} preset names (after normalization)`,
   );
 
-  // Paginate the state's full course list.
+  // Strategy A: try marker pagination first. GolfBert documented the
+  // marker cursor on /v1/courses/ but some callers (e.g. state=CA)
+  // appear to return one page with no marker -- if that happens we
+  // fall back to strategy B (per-city enumeration) automatically.
   console.log(
     `[discover] Listing GolfBert state=${flags.state}, limit=${flags.limit}, max-pages=${flags.maxPages}`,
   );
   const all: gb.GBCourse[] = [];
+  const seenGbIds = new Set<number>();
+  const pushCourse = (c: gb.GBCourse) => {
+    if (seenGbIds.has(c.id)) return;
+    seenGbIds.add(c.id);
+    all.push(c);
+  };
+
   let marker: string | undefined = undefined;
   let page = 0;
+  let lastResp: gb.GBListResponse<gb.GBCourse> | null = null;
   while (page < flags.maxPages) {
     page++;
     const resp = await gb.searchCourses({
@@ -209,15 +269,53 @@ async function main() {
       limit: flags.limit,
       marker,
     });
+    lastResp = resp;
     const got = resp.resources?.length ?? 0;
     console.log(
-      `[discover] page ${page}: +${got} courses (running total ${all.length + got})`,
+      `[discover] page ${page}: +${got} courses (running total ${all.length + got}), marker=${resp.marker ?? "<none>"}`,
     );
-    for (const c of resp.resources ?? []) all.push(c);
+    for (const c of resp.resources ?? []) pushCourse(c);
     if (!resp.marker) break;
     marker = resp.marker;
   }
-  console.log(`[discover] done paginating. ${all.length} total courses`);
+  // If we only got one page and GolfBert returned no marker, dump
+  // the raw envelope keys so we can see whether it lives under a
+  // different field name (e.g. "nextMarker", "next", "cursor").
+  if (page === 1 && lastResp && !lastResp.marker) {
+    const keys = Object.keys(lastResp as unknown as Record<string, unknown>);
+    console.log(`[discover] envelope keys on no-marker page: ${keys.join(", ")}`);
+  }
+
+  // Strategy B: per-city sweep when the state pagination short-circuits.
+  // We rotate through every city our region heuristic recognizes and
+  // ask GolfBert directly. Costs one call per city (cheap; ~250 calls
+  // total for the union of every region list).
+  if (page === 1 && (!lastResp || !lastResp.marker)) {
+    console.log(
+      "[discover] State pagination returned a single page -- sweeping per-city to catch the rest...",
+    );
+    const cities = collectKnownCACities();
+    console.log(`[discover] ${cities.length} candidate cities`);
+    let cityCalls = 0;
+    for (const city of cities) {
+      cityCalls++;
+      const resp = await gb.searchCourses({
+        state: flags.state,
+        city,
+        limit: flags.limit,
+      });
+      const got = resp.resources?.length ?? 0;
+      if (got > 0) {
+        console.log(
+          `[discover] city '${city}': +${got} (running total ${all.length + got})`,
+        );
+        for (const c of resp.resources ?? []) pushCourse(c);
+      }
+    }
+    console.log(`[discover] per-city sweep used ${cityCalls} calls`);
+  }
+
+  console.log(`[discover] done. ${all.length} total unique courses`);
 
   // Diff.
   const candidates: Candidate[] = [];
