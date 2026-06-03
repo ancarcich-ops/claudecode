@@ -545,22 +545,65 @@ export default function HoleMiniMapGL({
     }
   }, [aim, player, greenCenter]);
 
-  // Yardage pills as HTML markers. Rebuilt fresh on every change
-  // because the pill bodies are cheap and rebuilding is simpler than
-  // reconciling per-pill style.
+  // Yardage pills as HTML markers, with hazard-style pills declustered
+  // when they overlap on screen. Re-runs on landmark changes + on
+  // zoomend so the cluster threshold (measured in visual pixels)
+  // adapts as the user zooms. Pan doesn't change relative pixel
+  // distances between two lat/lng points so we don't need to listen
+  // to it.
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
+
     const apply = () => {
       // Clean up any landmark markers from a prior render.
       for (const [id, m] of markersRef.current.entries()) {
-        if (id.startsWith("lm-")) {
+        if (id.startsWith("lm-") || id.startsWith("cl-")) {
           m.remove();
           markersRef.current.delete(id);
         }
       }
-      if (!landmarks) return;
-      for (const l of landmarks) {
+      if (!landmarks || landmarks.length === 0) return;
+
+      // Hazard pills (id starts with hz- or variant === "tiny") cluster
+      // when their on-screen centers fall within ~85 visual pixels of
+      // each other. Pin/AIM/F/B (navigational) always render solo so
+      // the most important markers can't end up hidden in a cluster.
+      const VISUAL_OVERLAP_PX = 85;
+      const isHazard = (l: Landmark) =>
+        l.id.startsWith("hz-") || l.variant === "tiny";
+      const hazardItems = landmarks
+        .filter(isHazard)
+        .map((l) => ({ l, p: map.project([l.lng, l.lat]) }));
+      const navItems = landmarks.filter((l) => !isHazard(l));
+
+      type Cluster = {
+        members: { l: Landmark; p: mapboxgl.Point }[];
+      };
+      const clusters: Cluster[] = [];
+      const assigned = new Set<number>();
+      for (let i = 0; i < hazardItems.length; i++) {
+        if (assigned.has(i)) continue;
+        const seed = hazardItems[i];
+        const members = [seed];
+        assigned.add(i);
+        for (let j = i + 1; j < hazardItems.length; j++) {
+          if (assigned.has(j)) continue;
+          const other = hazardItems[j];
+          const d = Math.hypot(
+            seed.p.x - other.p.x,
+            seed.p.y - other.p.y,
+          );
+          if (d < VISUAL_OVERLAP_PX) {
+            members.push(other);
+            assigned.add(j);
+          }
+        }
+        clusters.push({ members });
+      }
+
+      // Navigational landmarks render solo.
+      for (const l of navItems) {
         const el = buildLandmarkEl(l);
         const m = new mapboxgl.Marker({
           element: el,
@@ -570,12 +613,81 @@ export default function HoleMiniMapGL({
           .addTo(map);
         markersRef.current.set(`lm-${l.id}`, m);
       }
+      // Hazard clusters: single -> solo, multi -> cluster chip.
+      for (const c of clusters) {
+        if (c.members.length === 1) {
+          const l = c.members[0].l;
+          const el = buildLandmarkEl(l);
+          const m = new mapboxgl.Marker({
+            element: el,
+            anchor: l.orientation === "below" ? "top" : "bottom",
+          })
+            .setLngLat([l.lng, l.lat])
+            .addTo(map);
+          markersRef.current.set(`lm-${l.id}`, m);
+          continue;
+        }
+        const sorted = [...c.members].sort(
+          (a, b) => a.l.yds - b.l.yds,
+        );
+        const nearest = sorted[0].l;
+        // Dominant prefix wins; default to nearest's prefix.
+        const counts = new Map<string, number>();
+        for (const { l } of c.members) {
+          const p = l.prefix ?? "";
+          counts.set(p, (counts.get(p) ?? 0) + 1);
+        }
+        let dominantPrefix = nearest.prefix ?? "";
+        let dominantCount = 0;
+        for (const [p, n] of counts.entries()) {
+          if (n > dominantCount) {
+            dominantPrefix = p;
+            dominantCount = n;
+          }
+        }
+        // Centroid lat/lng so the cluster pill lands in the middle
+        // of the pile rather than on one specific bunker.
+        const cx = c.members.reduce((s, m) => s + m.l.lng, 0) / c.members.length;
+        const cy = c.members.reduce((s, m) => s + m.l.lat, 0) / c.members.length;
+        const el = buildClusterEl({
+          prefix: dominantPrefix,
+          yds: nearest.yds,
+          extra: c.members.length - 1,
+          tone: nearest.tone ?? "white",
+          dim: c.members.every((m) => m.l.dim),
+        });
+        const m = new mapboxgl.Marker({
+          element: el,
+          anchor: "bottom",
+        })
+          .setLngLat([cx, cy])
+          .addTo(map);
+        markersRef.current.set(
+          `cl-${c.members.map((m) => m.l.id).join(":")}`,
+          m,
+        );
+      }
     };
-    if (map.isStyleLoaded()) {
+
+    const onReady = () => {
       apply();
+      // Re-cluster on zoom -- pan keeps relative pixel distances
+      // constant for short distances so it's safe to skip.
+      map.on("zoomend", apply);
+    };
+
+    if (map.isStyleLoaded()) {
+      onReady();
     } else {
-      map.once("style.load", apply);
+      map.once("style.load", onReady);
     }
+    return () => {
+      try {
+        map.off("zoomend", apply);
+      } catch {
+        // Map may already be torn down; safe to ignore.
+      }
+    };
   }, [landmarks]);
 
   return (
@@ -673,5 +785,83 @@ function buildLandmarkEl(l: Landmark): HTMLElement {
     wrap.appendChild(body);
   }
 
+  return wrap;
+}
+
+// Cluster pill rendered when multiple hazard pills overlap on screen.
+// Shows the closest distance and a "+N" badge so the user knows the
+// pile size at a glance. Same anchor convention as a single hazard
+// pill (tail-bottom, anchor "bottom").
+function buildClusterEl({
+  prefix,
+  yds,
+  extra,
+  tone,
+  dim,
+}: {
+  prefix: string;
+  yds: number;
+  extra: number;
+  tone: Landmark["tone"];
+  dim: boolean;
+}): HTMLElement {
+  const wrap = document.createElement("div");
+  wrap.style.cssText =
+    "filter:drop-shadow(0 4px 8px rgba(0,0,0,0.5));" +
+    "pointer-events:none;font-family:ui-monospace,monospace;" +
+    (dim ? "opacity:0.5;" : "");
+
+  const bodyBg =
+    tone === "sand"
+      ? "background:rgba(255,255,255,0.95);color:#3a2d10;"
+      : tone === "water"
+        ? "background:rgba(255,255,255,0.95);color:#0d2b48;"
+        : "background:#ffffff;color:#0b0f0c;";
+  const prefixColor =
+    tone === "sand"
+      ? "color:#8a7a4f;"
+      : tone === "water"
+        ? "color:#5d80a8;"
+        : "color:#6b7c75;";
+
+  const body = document.createElement("div");
+  body.style.cssText =
+    "display:inline-flex;align-items:center;gap:4px;" +
+    "font-variant-numeric:tabular-nums;font-weight:600;" +
+    "padding:3px 8px;font-size:12px;border-radius:8px;" +
+    bodyBg;
+
+  if (prefix) {
+    const px = document.createElement("span");
+    px.style.cssText =
+      "text-transform:uppercase;font-weight:500;" +
+      "letter-spacing:0.14em;font-size:8px;" +
+      prefixColor;
+    px.textContent = prefix;
+    body.appendChild(px);
+  }
+  body.appendChild(document.createTextNode(String(Math.round(yds))));
+  const unit = document.createElement("span");
+  unit.style.cssText = "font-weight:500;font-size:9px;" + prefixColor;
+  unit.textContent = "y";
+  body.appendChild(unit);
+  const badge = document.createElement("span");
+  badge.style.cssText =
+    "margin-left:2px;display:inline-flex;align-items:center;" +
+    "justify-content:center;border-radius:9999px;" +
+    "background:rgba(0,0,0,0.85);color:#ffffff;" +
+    "font-size:9px;font-weight:600;" +
+    "padding:1px 6px;min-width:18px;";
+  badge.textContent = `+${extra}`;
+  body.appendChild(badge);
+
+  const tail = document.createElement("div");
+  tail.style.cssText =
+    "margin:0 auto;width:0;height:0;" +
+    "border-left:4px solid transparent;border-right:4px solid transparent;" +
+    "border-top:5px solid #ffffff;margin-top:-1px;";
+
+  wrap.appendChild(body);
+  wrap.appendChild(tail);
   return wrap;
 }
