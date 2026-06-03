@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 
 // Reads the active map engine from URL (`?map=gl` or `?map=static`)
 // with a localStorage fallback so the choice sticks across reloads.
-// Defaults to "static" until the GL JS path has feature parity --
-// once it does, we'll flip the default and drop the static branch.
+// Default is "gl" (Mapbox GL JS): native pinch/pan/zoom, vector
+// tiles, declustering, preset-chip animations all live on this
+// path. The "static" engine remains as a tap-of-the-URL fallback
+// (?map=static) for one release in case anything regresses.
 export function useMapEngine(): "static" | "gl" {
-  const [engine, setEngine] = useState<"static" | "gl">("static");
+  const [engine, setEngine] = useState<"static" | "gl">("gl");
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -24,7 +26,7 @@ export function useMapEngine(): "static" | "gl" {
         return;
       }
       const lsOpt = localStorage.getItem("mapEngine");
-      if (lsOpt === "gl") setEngine("gl");
+      if (lsOpt === "static") setEngine("static");
     } catch {
       // private mode / SSR / sandboxed iframe -- stay on the default.
     }
