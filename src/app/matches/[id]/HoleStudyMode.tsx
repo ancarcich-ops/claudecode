@@ -8,6 +8,7 @@ import {
   type HoleGeo,
 } from "@/lib/course";
 import HoleMiniMap, { type Landmark } from "./HoleMiniMap";
+import { useMapEngine } from "./useMapEngine";
 import { HolePicker, WindDial } from "./OnCourseMode";
 
 // "Study mode": read-only hole preview before / between rounds. Mirrors
@@ -90,6 +91,11 @@ export default function HoleStudyMode({
   // Anchor: prefer tee; fall back to green so the canvas still has
   // something to project against on courses that only have green pins.
   const anchor = tee ?? greenCenter;
+
+  // Map engine toggle. URL `?map=gl` activates the Mapbox GL JS
+  // path; persists via localStorage. Default stays on the static
+  // tile path until GL has feature parity (aim, calibration, etc.).
+  const mapEngine = useMapEngine();
 
   // Distances FROM the anchor, mirroring OnCourseMode's derivation.
   const { front, center, back } = deriveGreenDistances(anchor, geo ?? null);
@@ -190,6 +196,7 @@ export default function HoleStudyMode({
       <div className="absolute inset-0 z-[10]">
         {anchor ? (
           <HoleMiniMap
+            engine={mapEngine}
             player={anchor}
             tee={tee}
             greenCenter={greenCenter}

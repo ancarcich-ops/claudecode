@@ -162,6 +162,10 @@ export function searchCourses(query: {
   state?: string;
   zipcode?: string;
   limit?: number;
+  // GolfBert paginates this endpoint with a `marker` cursor. Pass
+  // the value from the previous response's `marker` field to get
+  // the next page; leave undefined for the first call.
+  marker?: string;
 }) {
   const sp = new URLSearchParams();
   if (query.name) sp.set("name", query.name);
@@ -169,6 +173,7 @@ export function searchCourses(query: {
   if (query.state) sp.set("state", query.state);
   if (query.zipcode) sp.set("zipcode", query.zipcode);
   sp.set("limit", String(query.limit ?? 20));
+  if (query.marker) sp.set("marker", query.marker);
   const path = `/v1/courses/?${sp.toString()}`;
   return gbFetch<GBListResponse<GBCourse>>(path);
 }

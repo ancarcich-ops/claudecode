@@ -1,6 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  forwardRef,
+  useContext,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 
 // TODO(map-rewrite): This component CSS-scales the entire map view as a
 // quick way to get pinch zoom on a static Mapbox satellite image + SVG
@@ -10,10 +18,19 @@ import { useEffect, useRef, useState } from "react";
 // re-anchoring overlays), at which point this component can be
 // retired.
 
+// Published to children so things like yardage pills can stay at a
+// constant on-screen size: counter-scale by 1/scale so they don't
+// grow with the satellite when the user zooms in. HoleMiniMap also
+// uses it to decide when nearby hazard pills collapse into a cluster.
+export const ZoomContext = createContext<number>(1);
+export function useZoom(): number {
+  return useContext(ZoomContext);
+}
+
 type Props = {
   children: React.ReactNode;
-  // Min/max zoom factors. Default 1..3 -- past 3x the underlying
-  // static satellite image gets too pixelated to be useful.
+  // Min/max zoom factors. Past 4x the underlying static satellite
+  // image gets fuzzy enough that there's no benefit to zooming further.
   min?: number;
   max?: number;
   // Optional className for the outer container; pinch handlers live on
@@ -21,16 +38,32 @@ type Props = {
   className?: string;
 };
 
-export default function PinchZoom({
-  children,
-  min = 1,
-  max = 3,
-  className = "absolute inset-0 w-full h-full overflow-hidden touch-none",
-}: Props) {
+export type PinchZoomHandle = {
+  // Pan + zoom so the point at (fx, fy) -- fractions of the container's
+  // width/height in [0,1] -- ends up centered, at the requested scale.
+  // Used by HoleMiniMap's "Tee / Mid / Green" preset chips.
+  zoomToFraction: (fx: number, fy: number, targetScale: number) => void;
+  // Snap back to scale=1, tx=ty=0.
+  reset: () => void;
+};
+
+const PinchZoom = forwardRef<PinchZoomHandle, Props>(function PinchZoom(
+  {
+    children,
+    min = 1,
+    max = 4,
+    className = "absolute inset-0 w-full h-full overflow-hidden touch-none",
+  },
+  ref,
+) {
   const outerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [tx, setTx] = useState(0);
   const [ty, setTy] = useState(0);
+  // Animated transitions on button / double-tap / preset triggers
+  // (where we jump rather than drag). Set to false during in-flight
+  // touch gestures so finger drags stay 1:1.
+  const [animating, setAnimating] = useState(false);
 
   // Refs (not state) for in-flight gesture so we don't fight React
   // batching on every frame.
@@ -55,6 +88,10 @@ export default function PinchZoom({
       }
   >(null);
 
+  // Track the last tap so double-tap detection can fire. Stored as a
+  // ref to dodge re-renders for what's purely a gesture flag.
+  const lastTapRef = useRef<{ t: number; x: number; y: number } | null>(null);
+
   // Clamp the translate so the scaled content always covers the
   // viewport. With scale S, the content extends (S-1)*W/2 beyond
   // either edge from the center; that's the absolute pan budget on
@@ -72,6 +109,82 @@ export default function PinchZoom({
     };
   };
 
+  // Rubber-band clamp for in-flight single-finger drags: allow some
+  // overscroll past the hard clamp with resistance, so the map feels
+  // draggable even at base zoom (the user asked to "pan anywhere on
+  // the course" without first zooming in). On touchend we animate
+  // back into the hard clamp -- handled in onTouchEnd below.
+  const RUBBER_FRACTION = 0.3;
+  const rubberBand = (s: number, x: number, y: number) => {
+    const el = outerRef.current;
+    if (!el) return { x, y };
+    const w = el.clientWidth;
+    const h = el.clientHeight;
+    const maxX = ((s - 1) * w) / 2;
+    const maxY = ((s - 1) * h) / 2;
+    const overshootX = w * RUBBER_FRACTION;
+    const overshootY = h * RUBBER_FRACTION;
+    const apply = (v: number, max: number, overshoot: number) => {
+      if (v > max) {
+        const over = v - max;
+        return max + overshoot * (1 - Math.exp(-over / overshoot));
+      }
+      if (v < -max) {
+        const over = -max - v;
+        return -max - overshoot * (1 - Math.exp(-over / overshoot));
+      }
+      return v;
+    };
+    return {
+      x: apply(x, maxX, overshootX),
+      y: apply(y, maxY, overshootY),
+    };
+  };
+
+  // Zoom in/out anchored on a container-relative point (cx, cy)
+  // measured from the element's center. Used by both +/- buttons
+  // (cx=cy=0) and double-tap (cx, cy from the tap location).
+  const zoomTo = (target: number, cx: number, cy: number) => {
+    const next = Math.max(min, Math.min(max, target));
+    if (next === scale) return;
+    // Translate so the chosen anchor point stays under the user's
+    // finger / cursor: see math in onTouchMove pinch branch.
+    const k = next / scale - 1;
+    const c = clamp(next, tx - cx * k, ty - cy * k);
+    setAnimating(true);
+    setScale(next);
+    setTx(c.x);
+    setTy(c.y);
+  };
+
+  useImperativeHandle(ref, () => ({
+    zoomToFraction(fx, fy, target) {
+      const el = outerRef.current;
+      if (!el) return;
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      const next = Math.max(min, Math.min(max, target));
+      // (fx, fy) addresses a point in the unscaled content as a
+      // fraction of the container; we want that point centered after
+      // the scale lands. Container-center origin means the offset is
+      // (fx-0.5)*w from center; to bring it to (0,0) at scale `next`
+      // we translate by -next * offset.
+      const cx = (fx - 0.5) * w;
+      const cy = (fy - 0.5) * h;
+      const c = clamp(next, -next * cx, -next * cy);
+      setAnimating(true);
+      setScale(next);
+      setTx(c.x);
+      setTy(c.y);
+    },
+    reset() {
+      setAnimating(true);
+      setScale(1);
+      setTx(0);
+      setTy(0);
+    },
+  }));
+
   useEffect(() => {
     const el = outerRef.current;
     if (!el) return;
@@ -80,6 +193,10 @@ export default function PinchZoom({
       Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
 
     const onTouchStart = (e: TouchEvent) => {
+      // Any active touch kills an animation so the gesture feels
+      // immediate -- otherwise the in-flight transition fights the
+      // finger.
+      setAnimating(false);
       if (e.touches.length === 2) {
         const [t1, t2] = [e.touches[0], e.touches[1]];
         const rect = el.getBoundingClientRect();
@@ -96,11 +213,41 @@ export default function PinchZoom({
             (t1.clientY + t2.clientY) / 2 - (rect.top + rect.height / 2),
         };
         e.preventDefault();
-      } else if (e.touches.length === 1 && scale > 1) {
+      } else if (e.touches.length === 1) {
+        const t = e.touches[0];
+        const rect = el.getBoundingClientRect();
+        const cx = t.clientX - (rect.left + rect.width / 2);
+        const cy = t.clientY - (rect.top + rect.height / 2);
+        const now = Date.now();
+        const last = lastTapRef.current;
+        // Double-tap: a second touch within 300ms and ~24px of the
+        // previous one toggles zoom -- in to 2.5x at the tap point if
+        // currently at 1x, back to 1x otherwise.
+        if (
+          last &&
+          now - last.t < 300 &&
+          Math.hypot(cx - last.x, cy - last.y) < 24
+        ) {
+          lastTapRef.current = null;
+          if (scale > 1.05) {
+            setAnimating(true);
+            setScale(1);
+            setTx(0);
+            setTy(0);
+          } else {
+            zoomTo(2.5, cx, cy);
+          }
+          e.preventDefault();
+          return;
+        }
+        lastTapRef.current = { t: now, x: cx, y: cy };
+        // Single-finger drag = pan at any zoom, including 1x. At
+        // base zoom the rubber-band overscroll gives the user some
+        // "look around" room before the snap-back kicks in.
         gesture.current = {
           kind: "pan",
-          startX: e.touches[0].clientX,
-          startY: e.touches[0].clientY,
+          startX: t.clientX,
+          startY: t.clientY,
           startTx: tx,
           startTy: ty,
         };
@@ -130,7 +277,9 @@ export default function PinchZoom({
       } else if (g.kind === "pan" && e.touches.length === 1) {
         const dx = e.touches[0].clientX - g.startX;
         const dy = e.touches[0].clientY - g.startY;
-        const c = clamp(scale, g.startTx + dx, g.startTy + dy);
+        // Rubber-band so drags past the hard clamp feel resistant
+        // rather than dead. Snap-back happens in onTouchEnd.
+        const c = rubberBand(scale, g.startTx + dx, g.startTy + dy);
         setTx(c.x);
         setTy(c.y);
         e.preventDefault();
@@ -138,7 +287,19 @@ export default function PinchZoom({
     };
 
     const onTouchEnd = () => {
+      const wasPan = gesture.current?.kind === "pan";
       gesture.current = null;
+      if (wasPan) {
+        // If the drag ended outside the hard clamp (i.e. in the
+        // rubber-band zone), snap back to the nearest in-bounds
+        // point with an eased animation.
+        const c = clamp(scale, tx, ty);
+        if (c.x !== tx || c.y !== ty) {
+          setAnimating(true);
+          setTx(c.x);
+          setTy(c.y);
+        }
+      }
     };
 
     const onWheel = (e: WheelEvent) => {
@@ -153,9 +314,26 @@ export default function PinchZoom({
       if (next === scale) return;
       const k = next / scale - 1;
       const c = clamp(next, tx - px * k, ty - py * k);
+      setAnimating(false);
       setScale(next);
       setTx(c.x);
       setTy(c.y);
+      e.preventDefault();
+    };
+
+    // Desktop double-click mirrors the touch double-tap behavior.
+    const onDoubleClick = (e: MouseEvent) => {
+      const rect = el.getBoundingClientRect();
+      const cx = e.clientX - (rect.left + rect.width / 2);
+      const cy = e.clientY - (rect.top + rect.height / 2);
+      if (scale > 1.05) {
+        setAnimating(true);
+        setScale(1);
+        setTx(0);
+        setTy(0);
+      } else {
+        zoomTo(2.5, cx, cy);
+      }
       e.preventDefault();
     };
 
@@ -165,14 +343,34 @@ export default function PinchZoom({
     el.addEventListener("touchend", onTouchEnd);
     el.addEventListener("touchcancel", onTouchEnd);
     el.addEventListener("wheel", onWheel, { passive: false });
+    el.addEventListener("dblclick", onDoubleClick);
     return () => {
       el.removeEventListener("touchstart", onTouchStart);
       el.removeEventListener("touchmove", onTouchMove);
       el.removeEventListener("touchend", onTouchEnd);
       el.removeEventListener("touchcancel", onTouchEnd);
       el.removeEventListener("wheel", onWheel);
+      el.removeEventListener("dblclick", onDoubleClick);
     };
+    // zoomTo + clamp close over scale/tx/ty so this needs to refresh
+    // on every state change. Cheap -- handlers are tiny.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scale, tx, ty, min, max]);
+
+  const onPlusClick = () => zoomTo(scale * 1.5, 0, 0);
+  const onMinusClick = () => zoomTo(scale / 1.5, 0, 0);
+  const onResetClick = () => {
+    setAnimating(true);
+    setScale(1);
+    setTx(0);
+    setTy(0);
+  };
+
+  // Button is "active" (can take a tap) when the scale isn't already
+  // pinned to the bound. Lets us dim the icon so users don't bounce
+  // off a no-op button at the limits.
+  const canZoomIn = scale < max - 0.001;
+  const canZoomOut = scale > min + 0.001;
 
   return (
     <div ref={outerRef} className={className}>
@@ -180,25 +378,60 @@ export default function PinchZoom({
         className="w-full h-full origin-center will-change-transform"
         style={{
           transform: `translate(${tx}px, ${ty}px) scale(${scale})`,
-          transition: gesture.current ? "none" : "transform 120ms ease-out",
+          transition:
+            animating && !gesture.current
+              ? "transform 220ms cubic-bezier(0.22, 1, 0.36, 1)"
+              : "none",
         }}
+        onTransitionEnd={() => setAnimating(false)}
       >
-        {children}
+        <ZoomContext.Provider value={scale}>{children}</ZoomContext.Provider>
       </div>
-      {scale > 1 && (
+      {/* Zoom chrome: vertical stack of +, -, and a reset chip that
+          only appears when zoomed. Positioned where the old single
+          chip lived so on-course muscle memory carries over. */}
+      <div className="absolute top-2 right-2 z-10 flex flex-col items-end gap-1.5">
         <button
           type="button"
-          onClick={() => {
-            setScale(1);
-            setTx(0);
-            setTy(0);
-          }}
-          className="absolute top-2 right-2 z-10 rounded-full bg-black/70 text-white text-[11px] px-2.5 py-1 font-mono"
-          aria-label="Reset zoom"
+          onClick={onPlusClick}
+          disabled={!canZoomIn}
+          className={
+            "w-8 h-8 rounded-full bg-black/70 text-white text-base leading-none font-mono " +
+            "flex items-center justify-center backdrop-blur-sm " +
+            (canZoomIn ? "active:bg-black/85" : "opacity-40 cursor-not-allowed")
+          }
+          aria-label="Zoom in"
         >
-          {scale.toFixed(1)}×
+          +
         </button>
-      )}
+        <button
+          type="button"
+          onClick={onMinusClick}
+          disabled={!canZoomOut}
+          className={
+            "w-8 h-8 rounded-full bg-black/70 text-white text-lg leading-none font-mono " +
+            "flex items-center justify-center backdrop-blur-sm " +
+            (canZoomOut
+              ? "active:bg-black/85"
+              : "opacity-40 cursor-not-allowed")
+          }
+          aria-label="Zoom out"
+        >
+          −
+        </button>
+        {scale > 1.05 && (
+          <button
+            type="button"
+            onClick={onResetClick}
+            className="rounded-full bg-black/70 text-white text-[11px] px-2.5 py-1 font-mono backdrop-blur-sm active:bg-black/85"
+            aria-label="Reset zoom"
+          >
+            {scale.toFixed(1)}×
+          </button>
+        )}
+      </div>
     </div>
   );
-}
+});
+
+export default PinchZoom;
