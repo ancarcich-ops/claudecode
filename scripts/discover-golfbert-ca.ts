@@ -288,8 +288,15 @@ async function main() {
 
   // Strategy B: per-city sweep when the state pagination short-circuits.
   // We rotate through every city our region heuristic recognizes and
-  // ask GolfBert directly. Costs one call per city (cheap; ~250 calls
-  // total for the union of every region list).
+  // ask GolfBert directly. Throttled to ~5 calls/sec to stay under
+  // the 429 rate cap, with a retry-with-backoff on rate-limit so a
+  // single dropped call doesn't lose the whole batch. The script
+  // ALWAYS writes whatever it collected -- partial results are far
+  // more useful than an exception with nothing to triage.
+  const sleep = (ms: number) =>
+    new Promise<void>((r) => setTimeout(r, ms));
+  let stoppedEarly = false;
+  let stopReason = "";
   if (page === 1 && (!lastResp || !lastResp.marker)) {
     console.log(
       "[discover] State pagination returned a single page -- sweeping per-city to catch the rest...",
@@ -297,13 +304,42 @@ async function main() {
     const cities = collectKnownCACities();
     console.log(`[discover] ${cities.length} candidate cities`);
     let cityCalls = 0;
+    let consecutive429s = 0;
     for (const city of cities) {
       cityCalls++;
-      const resp = await gb.searchCourses({
-        state: flags.state,
-        city,
-        limit: flags.limit,
-      });
+      let resp: gb.GBListResponse<gb.GBCourse> | null = null;
+      // Retry loop on 429 with progressive backoff. After three
+      // failed attempts we bail out of the sweep entirely -- the
+      // candidates we already collected get written below.
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          resp = await gb.searchCourses({
+            state: flags.state,
+            city,
+            limit: flags.limit,
+          });
+          consecutive429s = 0;
+          break;
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          if (msg.includes("429")) {
+            consecutive429s++;
+            const waitMs = [5_000, 15_000, 45_000][attempt] ?? 60_000;
+            console.log(
+              `[discover] 429 on city '${city}', waiting ${waitMs / 1000}s (attempt ${attempt + 1}/3)...`,
+            );
+            await sleep(waitMs);
+            continue;
+          }
+          throw err;
+        }
+      }
+      if (!resp) {
+        stoppedEarly = true;
+        stopReason = `429 quota exhausted around city '${city}'`;
+        console.log(`[discover] stopping sweep: ${stopReason}`);
+        break;
+      }
       const got = resp.resources?.length ?? 0;
       if (got > 0) {
         console.log(
@@ -311,11 +347,26 @@ async function main() {
         );
         for (const c of resp.resources ?? []) pushCourse(c);
       }
+      // Quick polite delay between calls so we don't pin the rate
+      // limiter. ~200ms keeps us around 5 calls/sec.
+      await sleep(200);
+      // Safety valve: if every recent call has been hitting 429s,
+      // bail out so we don't loop on backoffs forever.
+      if (consecutive429s >= 3) {
+        stoppedEarly = true;
+        stopReason = "3 consecutive 429s with backoff -- bailing";
+        console.log(`[discover] stopping sweep: ${stopReason}`);
+        break;
+      }
     }
-    console.log(`[discover] per-city sweep used ${cityCalls} calls`);
+    console.log(
+      `[discover] per-city sweep used ${cityCalls} calls${stoppedEarly ? " (stopped early)" : ""}`,
+    );
   }
 
-  console.log(`[discover] done. ${all.length} total unique courses`);
+  console.log(
+    `[discover] done. ${all.length} total unique courses${stoppedEarly ? ` (partial: ${stopReason})` : ""}`,
+  );
 
   // Diff.
   const candidates: Candidate[] = [];
