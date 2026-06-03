@@ -14,6 +14,10 @@ const HoleMiniMapGL = dynamic(() => import("./HoleMiniMapGL"), {
   ssr: false,
 });
 
+// Type-only import: pulls Map's typing without dragging the runtime
+// bundle into the static path.
+import type { Map as MapboxMap } from "mapbox-gl";
+
 // Top-down hole map. When NEXT_PUBLIC_MAPBOX_TOKEN is set, the base
 // layer is a Mapbox satellite image of the bounding box of all known
 // features. Without a token we fall back to a flat schematic.
@@ -125,7 +129,7 @@ export default function HoleMiniMap({
   // so none of the static-path measurement or projection runs.
   if (engine === "gl") {
     return (
-      <HoleMiniMapGL
+      <GLBranch
         player={player}
         tee={tee}
         greenCenter={greenCenter}
@@ -1183,6 +1187,202 @@ function PresetChipsPortal({
         // Lands the chip row right above the FRONT/CENTER/BACK card
         // top edge. The card's own pb-safe-area handles the home
         // indicator -- this offset is just the visible card height.
+        bottom: "calc(env(safe-area-inset-bottom) + 120px)",
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => onTap("tee", tee)}
+        disabled={!tee}
+        className={chipCls(active === "tee", !tee)}
+        aria-pressed={active === "tee"}
+      >
+        Tee
+      </button>
+      <button
+        type="button"
+        onClick={() => onTap("mid", mid)}
+        disabled={!mid}
+        className={chipCls(active === "mid", !mid)}
+        aria-pressed={active === "mid"}
+      >
+        Mid
+      </button>
+      <button
+        type="button"
+        onClick={() => onTap("green", green)}
+        disabled={!green}
+        className={chipCls(active === "green", !green)}
+        aria-pressed={active === "green"}
+      >
+        Green
+      </button>
+      <button
+        type="button"
+        onClick={onHole}
+        className={chipCls(active === "hole", false)}
+        aria-pressed={active === "hole"}
+      >
+        Hole
+      </button>
+    </div>,
+    document.body,
+  );
+}
+
+// =====================================================================
+// GL BRANCH
+// =====================================================================
+//
+// Engine="gl" wraps HoleMiniMapGL with the GL-specific Preset chip
+// portal. The map ref is mirrored to a parent-owned ref so we can
+// drive map.flyTo / fitBounds from outside without converting
+// HoleMiniMapGL into a forwardRef.
+function GLBranch({
+  player,
+  tee,
+  greenCenter,
+  greenFront,
+  greenBack,
+  greenPolygon,
+  hazards,
+  landmarks,
+  aim,
+  onAim,
+}: {
+  player: { lat: number; lng: number } | null;
+  tee: { lat: number; lng: number } | null;
+  greenCenter: { lat: number; lng: number } | null;
+  greenFront: { lat: number; lng: number } | null;
+  greenBack: { lat: number; lng: number } | null;
+  greenPolygon: { lat: number; lng: number }[] | null;
+  hazards: Hazard[];
+  landmarks?: Landmark[];
+  aim?: { lat: number; lng: number } | null;
+  onAim?: (latLng: { lat: number; lng: number } | null) => void;
+}) {
+  const glMapRef = useRef<MapboxMap | null>(null);
+  return (
+    <>
+      <HoleMiniMapGL
+        player={player}
+        tee={tee}
+        greenCenter={greenCenter}
+        greenFront={greenFront}
+        greenBack={greenBack}
+        greenPolygon={greenPolygon}
+        hazards={hazards}
+        landmarks={landmarks}
+        aim={aim}
+        onAim={onAim}
+        mapRefProp={glMapRef}
+      />
+      {(tee || greenCenter) && (
+        <PresetChipsPortalGL
+          mapRef={glMapRef}
+          tee={tee}
+          green={greenCenter}
+        />
+      )}
+    </>
+  );
+}
+
+// GL flavor of PresetChipsPortal. Same DOM as the static one but
+// each chip drives map.flyTo / fitBounds against the underlying
+// GL JS instance instead of PinchZoom's imperative handle.
+function PresetChipsPortalGL({
+  mapRef,
+  tee,
+  green,
+}: {
+  mapRef: React.RefObject<MapboxMap | null>;
+  tee: { lat: number; lng: number } | null;
+  green: { lat: number; lng: number } | null;
+}) {
+  // Portals can't render server-side; defer until after mount.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  // Mid = geometric midpoint of tee->green. Hidden if either endpoint
+  // is missing rather than guessed.
+  const mid: { lat: number; lng: number } | null =
+    tee && green
+      ? {
+          lat: (tee.lat + green.lat) / 2,
+          lng: (tee.lng + green.lng) / 2,
+        }
+      : null;
+
+  const [active, setActive] = useState<"tee" | "mid" | "green" | "hole">(
+    "hole",
+  );
+
+  const onTap = (
+    label: "tee" | "mid" | "green",
+    target: { lat: number; lng: number } | null,
+  ) => {
+    const map = mapRef.current;
+    if (!target || !map) return;
+    if (active === label) {
+      // Tap-active toggles back to the fitted hole view. We re-fit
+      // to the current camera's bbox by triggering a resize, which
+      // re-runs HoleMiniMapGL's bbox effect; simpler than caching
+      // bbox here.
+      map.fitBounds(
+        [
+          [Math.min(tee?.lng ?? 0, green?.lng ?? 0) - 0.0005,
+           Math.min(tee?.lat ?? 0, green?.lat ?? 0) - 0.0005],
+          [Math.max(tee?.lng ?? 0, green?.lng ?? 0) + 0.0005,
+           Math.max(tee?.lat ?? 0, green?.lat ?? 0) + 0.0005],
+        ],
+        { padding: 40, duration: 600, maxZoom: 19 },
+      );
+      setActive("hole");
+      return;
+    }
+    // flyTo with a tighter zoom -- ~19 matches the "preset" feel of
+    // 2.5x on the static engine, comfortably scoped to the feature.
+    map.flyTo({
+      center: [target.lng, target.lat],
+      zoom: 19,
+      duration: 700,
+      essential: true,
+    });
+    setActive(label);
+  };
+
+  const onHole = () => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (tee && green) {
+      map.fitBounds(
+        [
+          [Math.min(tee.lng, green.lng) - 0.0005,
+           Math.min(tee.lat, green.lat) - 0.0005],
+          [Math.max(tee.lng, green.lng) + 0.0005,
+           Math.max(tee.lat, green.lat) + 0.0005],
+        ],
+        { padding: 40, duration: 600, maxZoom: 19 },
+      );
+    }
+    setActive("hole");
+  };
+
+  const chipCls = (on: boolean, disabled: boolean) =>
+    "px-3 py-1.5 text-[11px] font-mono font-medium tracking-[0.04em] uppercase " +
+    "rounded-full backdrop-blur-sm transition-colors " +
+    (disabled
+      ? "bg-black/40 text-white/40 cursor-not-allowed"
+      : on
+        ? "bg-accent text-bg shadow-[0_0_0_1px_rgb(var(--color-accent)/0.5)]"
+        : "bg-black/70 text-white active:bg-black/85");
+
+  if (!mounted) return null;
+  return createPortal(
+    <div
+      className="fixed left-1/2 -translate-x-1/2 z-[60] flex gap-1.5"
+      style={{
         bottom: "calc(env(safe-area-inset-bottom) + 120px)",
       }}
     >

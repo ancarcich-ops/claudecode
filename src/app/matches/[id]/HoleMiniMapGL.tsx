@@ -59,6 +59,7 @@ export default function HoleMiniMapGL({
   landmarks,
   aim,
   onAim,
+  mapRefProp,
 }: {
   player: Pt | null;
   tee: Pt | null;
@@ -73,6 +74,10 @@ export default function HoleMiniMapGL({
   // null = no aim, render a quiet player->pin reference line.
   aim?: Pt | null;
   onAim?: (latLng: Pt | null) => void;
+  // Optional caller-owned ref. Mirrors the internal map instance so
+  // the parent can drive things like flyTo (preset chips) without
+  // converting HoleMiniMapGL into a forwardRef.
+  mapRefProp?: React.MutableRefObject<mapboxgl.Map | null>;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -161,6 +166,7 @@ export default function HoleMiniMapGL({
     });
 
     mapRef.current = map;
+    if (mapRefProp) mapRefProp.current = map;
 
     return () => {
       // Drop any markers we own first so they don't leak references
@@ -169,6 +175,7 @@ export default function HoleMiniMapGL({
       markersRef.current.clear();
       map.remove();
       mapRef.current = null;
+      if (mapRefProp) mapRefProp.current = null;
     };
   }, []);
 
@@ -350,6 +357,27 @@ export default function HoleMiniMapGL({
         return el;
       });
 
+      // Front + back green dots. Smaller than the center pin since
+      // they're reference points, not the play target.
+      upsertMarker("green-front", greenFront, () => {
+        const el = document.createElement("div");
+        el.style.cssText =
+          "width:9px;height:9px;border-radius:50%;" +
+          "background:#34d399;border:1.5px solid #ffffff;" +
+          "box-shadow:0 1px 3px rgba(0,0,0,0.5);";
+        el.setAttribute("aria-label", "Green front");
+        return el;
+      });
+      upsertMarker("green-back", greenBack, () => {
+        const el = document.createElement("div");
+        el.style.cssText =
+          "width:9px;height:9px;border-radius:50%;" +
+          "background:#34d399;border:1.5px solid #ffffff;" +
+          "box-shadow:0 1px 3px rgba(0,0,0,0.5);";
+        el.setAttribute("aria-label", "Green back");
+        return el;
+      });
+
       upsertMarker("player", player, () => {
         const el = document.createElement("div");
         el.style.cssText =
@@ -365,7 +393,7 @@ export default function HoleMiniMapGL({
     } else {
       map.once("style.load", onReady);
     }
-  }, [tee, greenCenter, player, greenPolygon, hazards]);
+  }, [tee, greenCenter, greenFront, greenBack, player, greenPolygon, hazards]);
 
   // Aim layers: solid line player->aim, dashed line aim->pin, two
   // pixel-radius rings around the aim point, plus a quiet dashed
