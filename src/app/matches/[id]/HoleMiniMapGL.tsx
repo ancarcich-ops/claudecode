@@ -81,6 +81,14 @@ export default function HoleMiniMapGL({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
+  // SVG overlay we drive imperatively to render the bold player->aim
+  // play line. GL JS line layers were inconsistent on some devices --
+  // an SVG <line> drawn over the container with pixel coords from
+  // map.project() is dead reliable, updates 1:1 with the camera, and
+  // gives full styling control (width, halo, dashing).
+  const lineSvgRef = useRef<SVGSVGElement>(null);
+  const lineHaloRef = useRef<SVGLineElement>(null);
+  const lineSolidRef = useRef<SVGLineElement>(null);
   // HTML markers we own and need to clean up between renders. GL JS
   // doesn't track them, so we keep our own roster keyed by feature
   // id.
@@ -430,6 +438,43 @@ export default function HoleMiniMapGL({
     }
   }, [tee, greenCenter, greenFront, greenBack, player, greenPolygon, hazards, aim]);
 
+  // SVG overlay driver for the player->aim line. We keep the GL JS
+  // line layers below as a fallback, but the SVG line is what the
+  // user actually sees -- thick, halo'd, always paints.
+  useEffect(() => {
+    const map = mapRef.current;
+    const halo = lineHaloRef.current;
+    const solid = lineSolidRef.current;
+    if (!map || !halo || !solid) return;
+
+    const update = () => {
+      if (!aim || !player) {
+        halo.style.display = "none";
+        solid.style.display = "none";
+        return;
+      }
+      const a = map.project([player.lng, player.lat]);
+      const b = map.project([aim.lng, aim.lat]);
+      const set = (el: SVGLineElement) => {
+        el.setAttribute("x1", String(a.x));
+        el.setAttribute("y1", String(a.y));
+        el.setAttribute("x2", String(b.x));
+        el.setAttribute("y2", String(b.y));
+        el.style.display = "";
+      };
+      set(halo);
+      set(solid);
+    };
+
+    update();
+    map.on("move", update);
+    map.on("zoom", update);
+    return () => {
+      map.off("move", update);
+      map.off("zoom", update);
+    };
+  }, [aim, player]);
+
   // Aim layers: solid line player->aim, dashed line aim->pin, two
   // pixel-radius rings around the aim point, plus a quiet dashed
   // reference line player->pin when there's no aim yet. All managed
@@ -758,11 +803,38 @@ export default function HoleMiniMapGL({
   }, [landmarks]);
 
   return (
-    <div
-      ref={containerRef}
-      className="absolute inset-0 w-full h-full"
-      style={{ cursor: onAim ? "crosshair" : undefined }}
-    />
+    <>
+      <div
+        ref={containerRef}
+        className="absolute inset-0 w-full h-full"
+        style={{ cursor: onAim ? "crosshair" : undefined }}
+      />
+      {/* SVG overlay for the bold player->aim play line. Lives above
+          the map canvas but below the HTML markers (player, aim dot,
+          pills) since markers get appended to the container later by
+          GL JS. pointer-events:none so it doesn't eat taps. */}
+      <svg
+        ref={lineSvgRef}
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        style={{ zIndex: 1 }}
+      >
+        <line
+          ref={lineHaloRef}
+          stroke="#ffffff"
+          strokeOpacity="0.6"
+          strokeWidth="7"
+          strokeLinecap="round"
+          style={{ display: "none" }}
+        />
+        <line
+          ref={lineSolidRef}
+          stroke="#34d399"
+          strokeWidth="4"
+          strokeLinecap="round"
+          style={{ display: "none" }}
+        />
+      </svg>
+    </>
   );
 }
 
