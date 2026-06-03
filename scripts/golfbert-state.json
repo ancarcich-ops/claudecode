@@ -9870,5 +9870,14 @@
     "kind": "no-match",
     "presetId": "silverado-north",
     "query": "Silverado Resort - North Course | Napa, CA"
+  },
+  {
+    "kind": "matched",
+    "presetId": "hidden-valley-lake-gcc",
+    "gbId": 1749,
+    "gbName": "Hidden Valley Lake Golf & Country Club",
+    "gbCity": "Hidden Valley Lake",
+    "pars": null,
+    "dbImported": false
   }
 ]
