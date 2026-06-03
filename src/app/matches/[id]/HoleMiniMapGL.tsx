@@ -211,11 +211,12 @@ export default function HoleMiniMapGL({
         },
       );
     };
-    if (map.loaded()) {
-      apply();
-    } else {
-      map.once("load", apply);
-    }
+    // map.loaded() can return false during transient tile loads, in
+    // which case the once "load" listener never fires (load already
+    // happened once). The fitBounds call itself is safe to make
+    // whether or not loaded() is true -- GL JS just queues camera
+    // updates and applies them when the next frame paints.
+    apply();
   }, [bbox]);
 
   // Green polygon + tee/green markers + hazards. Re-runs whenever
