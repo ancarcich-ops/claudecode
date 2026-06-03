@@ -2465,3 +2465,105 @@ export async function listMyPasskeysAction(): Promise<
 
 // Admin: ping GolfBert + search wrappers above.
 export { getCurrentUser };
+
+// ---- Tournament actions -------------------------------------------
+
+// Create a multi-round tournament. The roster is captured up front so
+// each round can be created from it later -- the player names rotate
+// across every match without the creator having to re-enter them.
+// Sticks user accounts are linked when the displayName matches a
+// known user (server-side resolution by username + display name).
+export async function createTournamentAction(formData: FormData) {
+  const me = await requireUser();
+
+  const name = String(formData.get("name") ?? "").trim();
+  const scoringMode = (() => {
+    const raw = String(formData.get("scoringMode") ?? "NET");
+    return raw === "GROSS" ? "GROSS" : "NET";
+  })();
+  const roundsPlanned = (() => {
+    const raw = parseInt(String(formData.get("roundsPlanned") ?? "2"), 10);
+    if (!Number.isFinite(raw)) return 2;
+    return Math.max(1, Math.min(12, raw));
+  })();
+  const scheduledStartAtRaw = String(
+    formData.get("scheduledStartAt") ?? "",
+  ).trim();
+  const scheduledStartAt = scheduledStartAtRaw
+    ? new Date(scheduledStartAtRaw)
+    : null;
+  const notes = String(formData.get("notes") ?? "").trim() || null;
+  const groupIdRaw = String(formData.get("groupId") ?? "").trim();
+  const groupId = groupIdRaw && groupIdRaw !== "public" ? groupIdRaw : null;
+
+  if (!name) throw new Error("Tournament name required");
+
+  // Roster parsing matches createMatchAction's playerName / playerUserId
+  // / playerHandicap repeated fields. We strip blanks and dedupe by
+  // displayName so the unique index doesn't trip.
+  const playerNames = formData.getAll("playerName").map((v) => String(v));
+  const playerUserIds = formData
+    .getAll("playerUserId")
+    .map((v) => String(v));
+  const playerHcps = formData
+    .getAll("playerHandicap")
+    .map((v) => String(v));
+  const roster: {
+    displayName: string;
+    userId: string | null;
+    handicapAtStart: number | null;
+  }[] = [];
+  const seen = new Set<string>();
+  for (let i = 0; i < playerNames.length; i++) {
+    const displayName = playerNames[i]?.trim();
+    if (!displayName) continue;
+    const key = displayName.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const userId = playerUserIds[i]?.trim() || null;
+    const hcpRaw = playerHcps[i]?.trim();
+    const hcp = hcpRaw ? Number(hcpRaw) : null;
+    const handicapAtStart =
+      hcp != null && Number.isFinite(hcp) ? hcp : null;
+    roster.push({ displayName, userId, handicapAtStart });
+  }
+
+  // The creator is implicitly in the roster -- if their name isn't
+  // already present, prepend it so the leaderboard tracks them too.
+  const meName = me.displayName ?? me.username;
+  const meKey = meName.toLowerCase();
+  if (!seen.has(meKey)) {
+    roster.unshift({
+      displayName: meName,
+      userId: me.id,
+      handicapAtStart: null,
+    });
+  }
+
+  if (roster.length < 1) {
+    throw new Error("Add at least one player to the roster");
+  }
+
+  const tournament = await prisma.tournament.create({
+    data: {
+      name,
+      scoringMode,
+      roundsPlanned,
+      scheduledStartAt,
+      notes,
+      createdById: me.id,
+      groupId,
+      roster: {
+        create: roster.map((r) => ({
+          displayName: r.displayName,
+          userId: r.userId,
+          handicapAtStart: r.handicapAtStart,
+        })),
+      },
+    },
+  });
+
+  revalidatePath("/groups");
+  if (groupId) revalidatePath(`/groups/${groupId}`);
+  redirect(`/tournaments/${tournament.id}`);
+}

@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { leaveGroupAction } from "@/lib/actions";
 import { findGroupByIdOrSlug } from "@/lib/groups";
+import { listTournamentsForGroup } from "@/lib/tournaments";
 import CopyInvite from "@/components/CopyInvite";
 import PlayerAvatar from "@/components/Avatar";
 
@@ -40,6 +41,8 @@ export default async function GroupDetailPage({
   if (!me) notFound();
 
   const matchCount = group._count.matches;
+
+  const tournaments = await listTournamentsForGroup(group.id);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -132,6 +135,64 @@ export default async function GroupDetailPage({
             );
           })}
         </ul>
+      </section>
+
+      <section className="card p-5">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <h2 className="font-display text-base font-semibold text-ink">
+            Tournaments
+          </h2>
+          <Link
+            href={`/tournaments/new?group=${group.id}`}
+            className="btn btn-ghost text-xs whitespace-nowrap shrink-0"
+          >
+            + New tournament
+          </Link>
+        </div>
+        {tournaments.length === 0 ? (
+          <p className="text-xs text-mute">
+            No tournaments yet. Bundle a couple of matches into a multi-round
+            event with a cumulative leaderboard.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {tournaments.map((t) => {
+              const completed = t.matches.filter(
+                (m) => m.status === "COMPLETED",
+              ).length;
+              return (
+                <li
+                  key={t.id}
+                  className="rounded-md border border-border px-3 py-2"
+                >
+                  <Link
+                    href={`/tournaments/${t.id}`}
+                    className="flex items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium truncate">
+                        {t.name}
+                      </div>
+                      <div className="text-[11px] text-mute">
+                        {t.scoringMode === "GROSS" ? "Gross" : "Net"} ·{" "}
+                        {t.roster.length} player
+                        {t.roster.length === 1 ? "" : "s"} · {completed}/
+                        {t.roundsPlanned} rounds
+                      </div>
+                    </div>
+                    <span className="chip text-[10px] shrink-0">
+                      {t.status === "COMPLETED"
+                        ? "Final"
+                        : t.status === "IN_PROGRESS"
+                          ? "Live"
+                          : "Upcoming"}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </section>
 
       <section className="card p-5">
