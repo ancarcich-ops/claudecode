@@ -387,13 +387,48 @@ export default function HoleMiniMapGL({
         el.setAttribute("aria-label", "Your position");
         return el;
       });
+
+      // Aim point indicator. Rendered as an HTML marker so it's
+      // guaranteed visible regardless of any GL JS layer-stack
+      // quirks: a solid green dot with two concentric ring outlines
+      // for the dispersion guides. Replaces the aim-dot / aim-ring-*
+      // GL layers from PR #299 that some users reported missing
+      // entirely on certain devices.
+      upsertMarker("aim-dot", aim ?? null, () => {
+        const el = document.createElement("div");
+        el.style.cssText =
+          "position:relative;width:64px;height:64px;" +
+          "display:flex;align-items:center;justify-content:center;" +
+          "pointer-events:none;";
+        // Outer ring (faint, larger)
+        const outer = document.createElement("div");
+        outer.style.cssText =
+          "position:absolute;inset:6px;border-radius:50%;" +
+          "border:1.5px solid rgba(52,211,153,0.35);";
+        el.appendChild(outer);
+        // Inner ring (tighter, bolder)
+        const inner = document.createElement("div");
+        inner.style.cssText =
+          "position:absolute;inset:14px;border-radius:50%;" +
+          "border:2px solid rgba(52,211,153,0.7);";
+        el.appendChild(inner);
+        // Solid dot at the center -- this is the "aim point" anchor.
+        const dot = document.createElement("div");
+        dot.style.cssText =
+          "position:relative;width:14px;height:14px;border-radius:50%;" +
+          "background:#34d399;border:2px solid #ffffff;" +
+          "box-shadow:0 1px 4px rgba(0,0,0,0.5);";
+        el.appendChild(dot);
+        el.setAttribute("aria-label", "Aim point");
+        return el;
+      });
     };
     if (map.isStyleLoaded()) {
       onReady();
     } else {
       map.once("style.load", onReady);
     }
-  }, [tee, greenCenter, greenFront, greenBack, player, greenPolygon, hazards]);
+  }, [tee, greenCenter, greenFront, greenBack, player, greenPolygon, hazards, aim]);
 
   // Aim layers: solid line player->aim, dashed line aim->pin, two
   // pixel-radius rings around the aim point, plus a quiet dashed
