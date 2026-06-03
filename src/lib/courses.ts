@@ -820,7 +820,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
   { id: "san-francisco-golf-club", name: "San Francisco Golf Club", city: "San Francisco, CA", region: "NC", access: "private", holes: 18, pars: [5, 4, 4, 3, 4, 4, 3, 4, 5, 4, 3, 4, 4, 4, 3, 4, 4, 5] },
   { id: "presidio-golf-course", name: "Presidio Golf Course", city: "San Francisco, CA", region: "NC", access: "public", holes: 18, pars: [4, 5, 4, 3, 4, 4, 3, 4, 5, 5, 4, 4, 3, 4, 3, 4, 4, 5] },
   { id: "sharp-park", name: "Sharp Park Golf Course", city: "Pacifica, CA", region: "NC", access: "municipal", holes: 18, pars: [4, 4, 4, 5, 3, 4, 4, 3, 5, 4, 4, 3, 5, 4, 3, 4, 4, 5] },
-  { id: "hidden-valley-lake-gcc", name: "Hidden Valley Lake Golf & Country Club", city: "Hidden Valley Lake, CA", region: "NC", access: "public", holes: 18, pars: p(18, 72) },
+  { id: "hidden-valley-lake-gcc", name: "Hidden Valley Lake Golf & Country Club", city: "Hidden Valley Lake, CA", region: "NC", access: "public", holes: 18, pars: [4, 5, 4, 3, 4, 5, 4, 3, 4, 4, 3, 5, 4, 3, 4, 5, 4, 4] },
 
   // --- Phoenix / Scottsdale, AZ ---
   { id: "tpc-scottsdale-stadium", name: "TPC Scottsdale (Stadium course)", city: "Scottsdale, AZ", region: "AZ", access: "resort", holes: 18, pars: [4, 4, 5, 3, 4, 4, 3, 4, 4, 4, 4, 3, 5, 4, 4, 3, 4, 4] },
