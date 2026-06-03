@@ -693,12 +693,17 @@ export default function HoleMiniMapGL({
     if (!map) return;
 
     const apply = () => {
-      // Clean up any landmark markers from a prior render.
-      for (const [id, m] of markersRef.current.entries()) {
-        if (id.startsWith("lm-") || id.startsWith("cl-")) {
-          m.remove();
-          markersRef.current.delete(id);
-        }
+      // Clean up any landmark markers from a prior render. Materialize
+      // the keys first so we don't mutate the Map while iterating it
+      // (subtle but real cause of skipped deletes).
+      const staleKeys: string[] = [];
+      for (const id of markersRef.current.keys()) {
+        if (id.startsWith("lm-") || id.startsWith("cl-")) staleKeys.push(id);
+      }
+      for (const id of staleKeys) {
+        const m = markersRef.current.get(id);
+        if (m) m.remove();
+        markersRef.current.delete(id);
       }
       if (!landmarks || landmarks.length === 0) return;
 
@@ -813,11 +818,16 @@ export default function HoleMiniMapGL({
       map.on("zoomend", apply);
     };
 
-    if (map.isStyleLoaded()) {
-      onReady();
-    } else {
-      map.once("style.load", onReady);
-    }
+    // HTML markers don't depend on the GL style being loaded -- they
+    // get appended to the map's container as DOM nodes. Earlier we
+    // gated this on map.isStyleLoaded() and deferred to a once
+    // "style.load" listener when it wasn't ready, but that listener
+    // never fires on re-renders (style only loads once per map
+    // instance) so the cleanup + re-render of landmark markers was
+    // silently skipped on hole switches -- leaving the previous
+    // hole's BNK / PIN pills frozen on screen. Always call onReady
+    // directly; mapboxgl.Marker.addTo works regardless of style.
+    onReady();
     return () => {
       try {
         map.off("zoomend", apply);
