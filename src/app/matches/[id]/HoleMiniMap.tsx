@@ -81,6 +81,7 @@ export default function HoleMiniMap({
   calibration,
   emptyState,
   engine,
+  chipsBottomOffsetPx = 120,
 }: {
   player: Pt | null;
   tee: Pt | null;
@@ -124,6 +125,12 @@ export default function HoleMiniMap({
   // missing aim / calibration / empty-state features in v1, so
   // callers opt in per-surface.
   engine?: "static" | "gl";
+  // Vertical offset (px) the Tee/Mid/Green/Hole chip row uses to
+  // clear the caller's bottom chrome. Defaults to 120 (study mode's
+  // F/C/B card). On-course mode has a taller bottom card -- TO AIM /
+  // TO PIN / CARRY plus the ENTER SCORE button -- so it passes a
+  // bigger value to push the chips above all of it.
+  chipsBottomOffsetPx?: number;
 }) {
   // GL path: a thin wrapper component owns the map; bail out early
   // so none of the static-path measurement or projection runs.
@@ -140,6 +147,7 @@ export default function HoleMiniMap({
         landmarks={landmarks}
         aim={aim}
         onAim={onAim}
+        chipsBottomOffsetPx={chipsBottomOffsetPx}
       />
     );
   }
@@ -685,6 +693,7 @@ export default function HoleMiniMap({
           pinchRef={pinchRef}
           tee={pTee ? { fx: pTee.cx / Vw, fy: pTee.cy / Vh } : null}
           green={pGC ? { fx: pGC.cx / Vw, fy: pGC.cy / Vh } : null}
+          bottomOffsetPx={chipsBottomOffsetPx}
         />
       )}
     </div>
@@ -1119,10 +1128,12 @@ function PresetChipsPortal({
   pinchRef,
   tee,
   green,
+  bottomOffsetPx = 120,
 }: {
   pinchRef: React.RefObject<PinchZoomHandle>;
   tee: { fx: number; fy: number } | null;
   green: { fx: number; fy: number } | null;
+  bottomOffsetPx?: number;
 }) {
   // Portals can't render server-side; defer until after mount so
   // SSR doesn't reach for document.body.
@@ -1184,10 +1195,11 @@ function PresetChipsPortal({
       // is z-40, sheets are z-50).
       className="fixed left-1/2 -translate-x-1/2 z-[60] flex gap-1.5"
       style={{
-        // Lands the chip row right above the FRONT/CENTER/BACK card
-        // top edge. The card's own pb-safe-area handles the home
-        // indicator -- this offset is just the visible card height.
-        bottom: "calc(env(safe-area-inset-bottom) + 120px)",
+        // Lands the chip row just above the caller's bottom chrome.
+        // bottomOffsetPx comes from the parent so study mode (small
+        // F/C/B card) and on-course mode (taller TO AIM / TO PIN /
+        // CARRY + ENTER SCORE) can each set the right clearance.
+        bottom: `calc(env(safe-area-inset-bottom) + ${bottomOffsetPx}px)`,
       }}
     >
       <button
@@ -1249,6 +1261,7 @@ function GLBranch({
   landmarks,
   aim,
   onAim,
+  chipsBottomOffsetPx,
 }: {
   player: { lat: number; lng: number } | null;
   tee: { lat: number; lng: number } | null;
@@ -1260,6 +1273,7 @@ function GLBranch({
   landmarks?: Landmark[];
   aim?: { lat: number; lng: number } | null;
   onAim?: (latLng: { lat: number; lng: number } | null) => void;
+  chipsBottomOffsetPx?: number;
 }) {
   const glMapRef = useRef<MapboxMap | null>(null);
   return (
@@ -1282,6 +1296,7 @@ function GLBranch({
           mapRef={glMapRef}
           tee={tee}
           green={greenCenter}
+          bottomOffsetPx={chipsBottomOffsetPx}
         />
       )}
     </>
@@ -1295,10 +1310,12 @@ function PresetChipsPortalGL({
   mapRef,
   tee,
   green,
+  bottomOffsetPx = 120,
 }: {
   mapRef: React.RefObject<MapboxMap | null>;
   tee: { lat: number; lng: number } | null;
   green: { lat: number; lng: number } | null;
+  bottomOffsetPx?: number;
 }) {
   // Portals can't render server-side; defer until after mount.
   const [mounted, setMounted] = useState(false);
@@ -1383,7 +1400,7 @@ function PresetChipsPortalGL({
     <div
       className="fixed left-1/2 -translate-x-1/2 z-[60] flex gap-1.5"
       style={{
-        bottom: "calc(env(safe-area-inset-bottom) + 120px)",
+        bottom: `calc(env(safe-area-inset-bottom) + ${bottomOffsetPx}px)`,
       }}
     >
       <button
