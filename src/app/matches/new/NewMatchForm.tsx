@@ -125,6 +125,7 @@ export default function NewMatchForm({
   submitLabel,
   hiddenFields,
   prefilledPlayers,
+  availableRosterPlayers,
 }: {
   action: (formData: FormData) => Promise<void>;
   defaultPlayerName: string;
@@ -153,6 +154,16 @@ export default function NewMatchForm({
   // Honored only when `initial` isn't set (which is the create flow);
   // otherwise edit-mode takes precedence.
   prefilledPlayers?: {
+    name: string;
+    handicap: string;
+    userId: string | null;
+  }[];
+  // Tournament roster members the user can drop straight into the
+  // foursome with one tap. Filtered server-side to exclude the
+  // creator and anyone already booked for this round in another
+  // foursome. Surfaces a "+ From tournament roster" dropdown on the
+  // Players step.
+  availableRosterPlayers?: {
     name: string;
     handicap: string;
     userId: string | null;
@@ -1624,14 +1635,41 @@ export default function NewMatchForm({
                 </p>
               )}
           </div>
-          <button
-            type="button"
-            onClick={addPlayer}
-            className="btn btn-ghost text-xs shrink-0"
-            disabled={players.length >= 6}
-          >
-            + Add player
-          </button>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {availableRosterPlayers && availableRosterPlayers.length > 0 && (
+              <RosterPickerButton
+                roster={availableRosterPlayers}
+                pickedNames={new Set(
+                  players.map((p) => p.name.toLowerCase()),
+                )}
+                disabled={players.length >= 6}
+                onPick={(p) =>
+                  setPlayers((rows) => {
+                    if (rows.length >= 6) return rows;
+                    const team0 = rows.filter((r) => r.team === 0).length;
+                    const team1 = rows.filter((r) => r.team === 1).length;
+                    return [
+                      ...rows,
+                      {
+                        name: p.name,
+                        handicap: p.handicap || "15",
+                        userId: p.userId,
+                        team: team0 <= team1 ? 0 : 1,
+                      },
+                    ];
+                  })
+                }
+              />
+            )}
+            <button
+              type="button"
+              onClick={addPlayer}
+              className="btn btn-ghost text-xs shrink-0"
+              disabled={players.length >= 6}
+            >
+              + Add player
+            </button>
+          </div>
         </div>
         <div className="flex items-baseline gap-2 mb-1.5 px-1">
           <div className="flex-1" />
@@ -2149,6 +2187,79 @@ export default function NewMatchForm({
         )}
       </div>
     </form>
+  );
+}
+
+// Roster picker for tournament foursomes. Surfaces the players who are
+// in the tournament roster but not yet in this foursome's player list.
+// Tap once to open the dropdown, tap a name to add them. Hides itself
+// when no roster members are left to pick.
+function RosterPickerButton({
+  roster,
+  pickedNames,
+  disabled,
+  onPick,
+}: {
+  roster: { name: string; handicap: string; userId: string | null }[];
+  pickedNames: Set<string>;
+  disabled: boolean;
+  onPick: (p: { name: string; handicap: string; userId: string | null }) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onMouseDown(e: MouseEvent) {
+      if (!wrapperRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onMouseDown);
+    return () => document.removeEventListener("mousedown", onMouseDown);
+  }, []);
+
+  const remaining = roster.filter(
+    (p) => !pickedNames.has(p.name.toLowerCase()),
+  );
+  if (remaining.length === 0) return null;
+
+  return (
+    <div ref={wrapperRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        disabled={disabled}
+        className="btn btn-ghost text-xs shrink-0"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        + From roster ({remaining.length})
+      </button>
+      {open && (
+        <ul
+          className="absolute right-0 mt-1 z-30 rounded-md border border-border bg-panel max-h-64 overflow-y-auto shadow-lg min-w-[14rem]"
+          role="listbox"
+        >
+          {remaining.map((p) => (
+            <li key={(p.userId ?? "") + p.name}>
+              <button
+                type="button"
+                onClick={() => {
+                  onPick(p);
+                  setOpen(false);
+                }}
+                className="block w-full text-left px-3 py-2 text-sm hover:bg-panel2"
+              >
+                <span className="text-ink">{p.name}</span>
+                {p.handicap && (
+                  <span className="font-mono text-[10.5px] text-mute ml-2">
+                    HCP {p.handicap}
+                  </span>
+                )}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 

@@ -26,13 +26,15 @@ export type LeaderboardRow = {
 
 // Pull a tournament + its child matches (just the basics; player
 // detail is loaded in the round pages). Returns null if not found.
+// Pulls per-match players so the detail page can list each foursome's
+// participants without an N+1.
 export async function getTournamentById(id: string) {
   return prisma.tournament.findUnique({
     where: { id },
     include: {
       roster: { orderBy: { createdAt: "asc" } },
       matches: {
-        orderBy: { roundNumber: "asc" },
+        orderBy: [{ roundNumber: "asc" }, { scheduledAt: "asc" }],
         select: {
           id: true,
           courseName: true,
@@ -40,6 +42,14 @@ export async function getTournamentById(id: string) {
           status: true,
           roundNumber: true,
           completedAt: true,
+          players: {
+            orderBy: { seat: "asc" },
+            select: {
+              id: true,
+              displayName: true,
+              userId: true,
+            },
+          },
         },
       },
       group: { select: { id: true, name: true, slug: true } },
