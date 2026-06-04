@@ -13,31 +13,81 @@ export const dynamic = "force-dynamic";
 export default async function NewMatchPage({
   searchParams,
 }: {
-  searchParams: { tournament?: string };
+  searchParams: { tournament?: string; round?: string };
 }) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  // Tournament round mode. When ?tournament=<id> is in the URL we
-  // load the tournament + roster, lock the group dropdown to the
-  // tournament's group, and pre-fill the players. createMatchAction
-  // honors the hidden tournamentId field and binds the new match to
-  // round N (auto-computed if roundNumber isn't passed).
+  // Tournament foursome mode. When ?tournament=<id> is in the URL we
+  // load the tournament + roster + existing matches (with their
+  // players) so the form can surface a roster picker and avoid
+  // double-booking players across foursomes in the same round.
+  // ?round=N pins a specific round; otherwise we default to the
+  // highest round in flight (or 1 for a fresh tournament).
   const tournament = searchParams.tournament
     ? await prisma.tournament.findUnique({
         where: { id: searchParams.tournament },
         include: {
           roster: { orderBy: { createdAt: "asc" } },
-          matches: { select: { roundNumber: true } },
+          matches: {
+            select: {
+              id: true,
+              roundNumber: true,
+              players: {
+                select: { displayName: true, userId: true },
+              },
+            },
+          },
         },
       })
     : null;
-  const nextRoundNumber = tournament
-    ? tournament.matches.reduce(
-        (m, r) => Math.max(m, r.roundNumber ?? 0),
-        0,
-      ) + 1
+  const requestedRound = (() => {
+    const raw = parseInt(searchParams.round ?? "", 10);
+    return Number.isFinite(raw) && raw > 0 ? raw : null;
+  })();
+  const currentRoundNumber = tournament
+    ? requestedRound ??
+      Math.max(
+        1,
+        tournament.matches.reduce(
+          (m, r) => Math.max(m, r.roundNumber ?? 0),
+          0,
+        ),
+      )
     : null;
+
+  // Players already booked in another foursome for THIS round. We
+  // exclude them from the available-roster picker so two captains
+  // can't accidentally claim the same player.
+  const bookedInThisRound = new Set<string>();
+  if (tournament && currentRoundNumber != null) {
+    for (const m of tournament.matches) {
+      if (m.roundNumber !== currentRoundNumber) continue;
+      for (const p of m.players) {
+        bookedInThisRound.add(
+          p.userId ?? `name:${p.displayName.toLowerCase()}`,
+        );
+      }
+    }
+  }
+  // Available roster: anyone in the tournament who isn't the creator
+  // (creator gets the default first seat) and isn't already booked.
+  const availableRoster = tournament
+    ? tournament.roster
+        .filter((r) => r.userId !== user.id)
+        .filter(
+          (r) =>
+            !bookedInThisRound.has(
+              r.userId ?? `name:${r.displayName.toLowerCase()}`,
+            ),
+        )
+        .map((r) => ({
+          name: r.displayName,
+          userId: r.userId,
+          handicap:
+            r.handicapAtStart != null ? r.handicapAtStart.toFixed(1) : "",
+        }))
+    : undefined;
 
   const recent = await prisma.match.findMany({
     where: { createdById: user.id },
@@ -124,24 +174,25 @@ export default async function NewMatchPage({
       ? activeGroup
       : "public";
 
-  // When this is a tournament round, override the default group + roster
-  // and surface the tournament header so the user knows what they're
-  // creating.
+  // When the user is starting a tournament foursome, seed only their
+  // own seat (other roster members come in via the picker), and
+  // inject tournamentId + roundNumber as hidden fields.
   const resolvedDefaultGroupId = tournament
     ? tournament.groupId ?? "public"
     : defaultGroupId;
   const prefilledPlayers = tournament
-    ? tournament.roster.map((r) => ({
-        name: r.displayName,
-        handicap:
-          r.handicapAtStart != null ? r.handicapAtStart.toFixed(1) : "",
-        userId: r.userId,
-      }))
+    ? [
+        {
+          name: defaultName,
+          handicap: defaultHandicap,
+          userId: user.id,
+        },
+      ]
     : undefined;
   const hiddenFields = tournament
     ? {
         tournamentId: tournament.id,
-        roundNumber: String(nextRoundNumber ?? 1),
+        roundNumber: String(currentRoundNumber ?? 1),
       }
     : undefined;
 
@@ -150,11 +201,11 @@ export default async function NewMatchPage({
       {tournament ? (
         <>
           <h1 className="font-display text-2xl font-semibold tracking-tight mb-1">
-            Round {nextRoundNumber} · {tournament.name}
+            Round {currentRoundNumber} · {tournament.name}
           </h1>
           <p className="text-sm text-mute mb-6">
-            Same roster, your course pick. Score rolls into the cumulative
-            standings.
+            Pick your course and pull your foursome from the tournament
+            roster. Score rolls into the cumulative standings.
           </p>
         </>
       ) : (
@@ -180,8 +231,9 @@ export default async function NewMatchPage({
         templates={templates}
         prefilledPlayers={prefilledPlayers}
         hiddenFields={hiddenFields}
+        availableRosterPlayers={availableRoster}
         submitLabel={
-          tournament ? `Start round ${nextRoundNumber} →` : undefined
+          tournament ? `Start foursome →` : undefined
         }
       />
     </div>
