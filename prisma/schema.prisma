@@ -181,8 +181,13 @@ model Tournament {
   // added to an existing table without a destructive migration;
   // every newly-created tournament gets one via the action layer,
   // and a future migration can flip this to required once backfill
-  // is complete.
-  inviteCode       String?  @unique
+  // is complete. Uniqueness is enforced in the createTournamentAction
+  // generator (retry-on-collision against the index below) rather
+  // than via @unique, because `prisma db push` refuses to add a
+  // unique constraint to a populated column without --accept-data-loss.
+  // A follow-up SQL migration can promote this to a unique index
+  // once everything's clean.
+  inviteCode       String?
   // NET (handicap applied per round) or GROSS (raw stroke totals
   // summed). Same mode applied to every round; child matches still
   // carry their own scoringMode but the leaderboard rolls up using
@@ -210,6 +215,7 @@ model Tournament {
   roster           TournamentPlayer[]
 
   @@index([groupId, createdAt])
+  @@index([inviteCode])
 }
 
 // One entry in a tournament's roster. Same signup shape as

@@ -2603,8 +2603,11 @@ export async function createTournamentAction(formData: FormData) {
   // Tournament.inviteCode column is unique).
   let inviteCode = generateInviteCode();
   for (let attempt = 0; attempt < 5; attempt++) {
-    const existing = await prisma.tournament.findUnique({
+    // findFirst rather than findUnique because the column isn't
+    // @unique at the schema level (see comment in Tournament model).
+    const existing = await prisma.tournament.findFirst({
       where: { inviteCode },
+      select: { id: true },
     });
     if (!existing) break;
     inviteCode = generateInviteCode();
@@ -2653,7 +2656,7 @@ export async function joinTournamentAction(formData: FormData) {
   const handicapAtStart =
     handicap != null && Number.isFinite(handicap) ? handicap : null;
 
-  const tournament = await prisma.tournament.findUnique({
+  const tournament = await prisma.tournament.findFirst({
     where: { inviteCode: codeRaw },
     include: { roster: { select: { userId: true, displayName: true } } },
   });
