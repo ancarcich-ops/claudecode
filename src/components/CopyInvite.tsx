@@ -4,7 +4,15 @@ import { useEffect, useState } from "react";
 
 type Mode = "idle" | "copied" | "error";
 
-export default function CopyInvite({ code }: { code: string }) {
+export default function CopyInvite({
+  code,
+  joinPath = "/groups/join",
+}: {
+  code: string;
+  // Path on the app the shareable link points at. Defaults to the
+  // group join route; tournament invites pass "/tournaments/join".
+  joinPath?: string;
+}) {
   const [linkMode, setLinkMode] = useState<Mode>("idle");
   const [codeMode, setCodeMode] = useState<Mode>("idle");
   const [origin, setOrigin] = useState("");
@@ -13,7 +21,7 @@ export default function CopyInvite({ code }: { code: string }) {
     setOrigin(window.location.origin);
   }, []);
 
-  const inviteUrl = origin ? `${origin}/groups/join?code=${code}` : "";
+  const inviteUrl = origin ? `${origin}${joinPath}?code=${code}` : "";
 
   const copy = async (text: string, set: (m: Mode) => void) => {
     try {
