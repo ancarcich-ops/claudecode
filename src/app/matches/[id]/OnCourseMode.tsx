@@ -516,6 +516,11 @@ export default function OnCourseMode({
         {playerPos ? (
           <HoleMiniMap
             engine={mapEngine}
+            // On-course chrome is taller than study mode's F/C/B
+            // card: TO AIM / TO PIN / CARRY card + ENTER SCORE button
+            // run ~240px from the bottom edge. Push the chip row above
+            // both so the buttons aren't overlapping the distance card.
+            chipsBottomOffsetPx={240}
             player={playerPos}
             tee={
               geo?.teeLat != null && geo?.teeLng != null
