@@ -259,6 +259,13 @@ export default function OnCourseMode({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sheetOpen, hole]);
 
+  // Map engine toggle via ?map=gl. Must live up here (above the
+  // !active early return below) so the hook count is stable across
+  // renders -- otherwise tapping "Start on-course GPS" trips React
+  // error #310 ("Rendered more hooks than during the previous
+  // render") because the hook only ran in the active branch.
+  const mapEngine = useMapEngine();
+
   if (!active) {
     return (
       <button
@@ -291,8 +298,6 @@ export default function OnCourseMode({
   const playerPos = pos
     ? { lat: pos.coords.latitude, lng: pos.coords.longitude }
     : null;
-  // Map engine toggle via `?map=gl`. Default static until parity.
-  const mapEngine = useMapEngine();
   const { front, center, back } = deriveGreenDistances(playerPos, geo ?? null);
   const greenCenterLatLng =
     geo?.greenLat != null && geo?.greenLng != null
