@@ -2,53 +2,19 @@
 
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
-import PlayerNameInput from "@/components/PlayerNameInput";
 
 type ScoringMode = "NET" | "GROSS";
-type PlayerRow = {
-  name: string;
-  handicap: string;
-  userId: string | null;
-};
 
 export default function NewTournamentForm({
   action,
-  defaultPlayerName,
-  currentUserId,
-  groups,
-  defaultGroupId,
 }: {
   action: (formData: FormData) => Promise<void>;
-  defaultPlayerName: string;
-  currentUserId: string;
-  groups: { id: string; name: string }[];
-  defaultGroupId: string;
 }) {
   const [name, setName] = useState("");
   const [scoringMode, setScoringMode] = useState<ScoringMode>("NET");
   const [roundsPlanned, setRoundsPlanned] = useState(3);
-  const [players, setPlayers] = useState<PlayerRow[]>([
-    { name: defaultPlayerName, handicap: "", userId: currentUserId },
-    { name: "", handicap: "", userId: null },
-  ]);
-
-  const setPlayer = (i: number, patch: Partial<PlayerRow>) =>
-    setPlayers((rows) =>
-      rows.map((r, idx) => (idx === i ? { ...r, ...patch } : r)),
-    );
-  const addPlayer = () =>
-    players.length < 24 &&
-    setPlayers((rows) => [
-      ...rows,
-      { name: "", handicap: "", userId: null },
-    ]);
-  const removePlayer = (i: number) =>
-    setPlayers((rows) =>
-      rows.length > 1 ? rows.filter((_, idx) => idx !== i) : rows,
-    );
 
   // Defaults the start picker to "now + 1 day" rounded to the hour.
-  // Same format the new-match form uses.
   const defaultStart = (() => {
     const d = new Date();
     d.setDate(d.getDate() + 1);
@@ -112,7 +78,7 @@ export default function NewTournamentForm({
           </div>
           <p className="text-[11px] text-mute mt-1.5">
             Same mode applies to every round; the leaderboard rolls up the
-            per-round results in this units.
+            per-round results in these units.
           </p>
         </div>
 
@@ -130,7 +96,9 @@ export default function NewTournamentForm({
               step={1}
               value={roundsPlanned}
               onChange={(e) =>
-                setRoundsPlanned(Math.max(1, Math.min(12, Number(e.target.value))))
+                setRoundsPlanned(
+                  Math.max(1, Math.min(12, Number(e.target.value))),
+                )
               }
               className="input"
             />
@@ -156,29 +124,6 @@ export default function NewTournamentForm({
         </div>
 
         <div>
-          <label className="label" htmlFor="groupId">
-            Visible to
-          </label>
-          <select
-            id="groupId"
-            name="groupId"
-            className="input"
-            defaultValue={defaultGroupId}
-          >
-            <option value="public">Public — anyone signed in</option>
-            {groups.length > 0 && (
-              <optgroup label="My groups">
-                {groups.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    {g.name} (members only)
-                  </option>
-                ))}
-              </optgroup>
-            )}
-          </select>
-        </div>
-
-        <div>
           <label className="label" htmlFor="notes">
             Notes <span className="text-mute normal-case">(optional)</span>
           </label>
@@ -190,73 +135,11 @@ export default function NewTournamentForm({
             maxLength={120}
           />
         </div>
-      </div>
 
-      <div className="card p-5">
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div>
-            <h2 className="font-display text-base font-semibold text-ink">
-              Roster
-            </h2>
-            <p className="text-[11px] text-mute mt-0.5">
-              These names land in every round&apos;s match. Optional handicap
-              per player gets snapshot for the leaderboard.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={addPlayer}
-            disabled={players.length >= 24}
-            className="btn btn-ghost text-xs shrink-0"
-          >
-            + Add player
-          </button>
-        </div>
-        <div className="flex items-baseline gap-2 mb-1.5 px-1">
-          <div className="flex-1" />
-          <div className="w-20 shrink-0 text-center">
-            <span className="text-[10px] uppercase tracking-wider text-mute font-mono whitespace-nowrap">
-              Handicap
-            </span>
-          </div>
-          <div className="w-8 shrink-0" />
-        </div>
-        <div className="space-y-2">
-          {players.map((p, i) => (
-            <div key={i} className="flex gap-2 items-start">
-              <PlayerNameInput
-                value={p.name}
-                userId={p.userId}
-                onChange={(next) =>
-                  setPlayer(i, { name: next.name, userId: next.userId })
-                }
-                placeholder={`Player ${i + 1}`}
-              />
-              <input
-                name="playerHandicap"
-                type="number"
-                step="0.1"
-                min={0}
-                value={p.handicap}
-                onChange={(e) => setPlayer(i, { handicap: e.target.value })}
-                placeholder="Hcp"
-                className="input w-20 shrink-0 text-center px-2"
-              />
-              <button
-                type="button"
-                className="btn btn-ghost px-2 shrink-0"
-                onClick={() => removePlayer(i)}
-                disabled={players.length <= 1}
-                aria-label={`Remove player ${i + 1}`}
-              >
-                ×
-              </button>
-            </div>
-          ))}
-        </div>
-        <p className="text-xs text-mute mt-3">
-          You&apos;re already on the roster as the creator; the form just adds
-          you back if you remove yourself.
+        <p className="text-[11px] text-mute leading-snug">
+          You&apos;ll get an invite code on the next screen. Share it with
+          anyone you want to join the tournament &mdash; they don&apos;t need
+          to be in your group.
         </p>
       </div>
 
@@ -275,7 +158,11 @@ function SubmitButton({ disabled }: { disabled: boolean }) {
       disabled={pending || disabled}
       className="btn btn-primary w-full disabled:opacity-60 disabled:cursor-not-allowed"
     >
-      {pending ? "Creating…" : disabled ? "Name the tournament to continue" : "Create tournament →"}
+      {pending
+        ? "Creating…"
+        : disabled
+          ? "Name the tournament to continue"
+          : "Create tournament →"}
     </button>
   );
 }

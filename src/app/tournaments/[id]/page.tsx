@@ -5,6 +5,7 @@ import {
   computeTournamentLeaderboard,
   getTournamentById,
 } from "@/lib/tournaments";
+import CopyInvite from "@/components/CopyInvite";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,26 @@ export default async function TournamentDetailPage({
           <span>{scheduleLabel}</span>
         </p>
       </div>
+
+      {tournament.inviteCode && (
+        <section className="card p-5 space-y-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <h2 className="font-display text-base font-semibold text-ink">
+                Invite
+              </h2>
+              <p className="text-xs text-mute">
+                Anyone with this code can join. Share the link to skip the
+                manual code entry.
+              </p>
+            </div>
+            <CopyInvite
+              code={tournament.inviteCode}
+              joinPath="/tournaments/join"
+            />
+          </div>
+        </section>
+      )}
 
       <section className="card p-5">
         <h2 className="font-display text-base font-semibold text-ink mb-3">

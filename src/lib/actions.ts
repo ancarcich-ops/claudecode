@@ -2561,11 +2561,12 @@ export { getCurrentUser };
 
 // ---- Tournament actions -------------------------------------------
 
-// Create a multi-round tournament. The roster is captured up front so
-// each round can be created from it later -- the player names rotate
-// across every match without the creator having to re-enter them.
-// Sticks user accounts are linked when the displayName matches a
-// known user (server-side resolution by username + display name).
+// Create a multi-round tournament. Tournaments aren't tied to a group
+// any more -- anyone with the invite code can join, which lets a
+// creator pull players from across multiple foursomes (Saturday
+// scramble with 4 groups of 4) into one cumulative leaderboard.
+// The roster starts with just the creator; everyone else joins via
+// /tournaments/join with the code.
 export async function createTournamentAction(formData: FormData) {
   const me = await requireUser();
 
@@ -2586,77 +2587,95 @@ export async function createTournamentAction(formData: FormData) {
     ? new Date(scheduledStartAtRaw)
     : null;
   const notes = String(formData.get("notes") ?? "").trim() || null;
-  const groupIdRaw = String(formData.get("groupId") ?? "").trim();
-  const groupId = groupIdRaw && groupIdRaw !== "public" ? groupIdRaw : null;
 
   if (!name) throw new Error("Tournament name required");
 
-  // Roster parsing matches createMatchAction's playerName / playerUserId
-  // / playerHandicap repeated fields. We strip blanks and dedupe by
-  // displayName so the unique index doesn't trip.
-  const playerNames = formData.getAll("playerName").map((v) => String(v));
-  const playerUserIds = formData
-    .getAll("playerUserId")
-    .map((v) => String(v));
-  const playerHcps = formData
-    .getAll("playerHandicap")
-    .map((v) => String(v));
-  const roster: {
-    displayName: string;
-    userId: string | null;
-    handicapAtStart: number | null;
-  }[] = [];
-  const seen = new Set<string>();
-  for (let i = 0; i < playerNames.length; i++) {
-    const displayName = playerNames[i]?.trim();
-    if (!displayName) continue;
-    const key = displayName.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    const userId = playerUserIds[i]?.trim() || null;
-    const hcpRaw = playerHcps[i]?.trim();
-    const hcp = hcpRaw ? Number(hcpRaw) : null;
-    const handicapAtStart =
-      hcp != null && Number.isFinite(hcp) ? hcp : null;
-    roster.push({ displayName, userId, handicapAtStart });
-  }
-
-  // The creator is implicitly in the roster -- if their name isn't
-  // already present, prepend it so the leaderboard tracks them too.
-  const meName = me.displayName ?? me.username;
-  const meKey = meName.toLowerCase();
-  if (!seen.has(meKey)) {
-    roster.unshift({
-      displayName: meName,
-      userId: me.id,
-      handicapAtStart: null,
+  // Generate a 6-character invite code; retry on collision (the
+  // Tournament.inviteCode column is unique).
+  let inviteCode = generateInviteCode();
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const existing = await prisma.tournament.findUnique({
+      where: { inviteCode },
     });
+    if (!existing) break;
+    inviteCode = generateInviteCode();
   }
 
-  if (roster.length < 1) {
-    throw new Error("Add at least one player to the roster");
-  }
+  // Creator auto-joins the roster. Everyone else has to enter the
+  // code on /tournaments/join.
+  const meName = me.displayName ?? me.username;
 
   const tournament = await prisma.tournament.create({
     data: {
       name,
+      inviteCode,
       scoringMode,
       roundsPlanned,
       scheduledStartAt,
       notes,
       createdById: me.id,
-      groupId,
       roster: {
-        create: roster.map((r) => ({
-          displayName: r.displayName,
-          userId: r.userId,
-          handicapAtStart: r.handicapAtStart,
-        })),
+        create: [
+          {
+            displayName: meName,
+            userId: me.id,
+            handicapAtStart: null,
+          },
+        ],
       },
     },
   });
 
-  revalidatePath("/groups");
-  if (groupId) revalidatePath(`/groups/${groupId}`);
+  redirect(`/tournaments/${tournament.id}`);
+}
+
+// Add the current user to a tournament's roster via invite code.
+// Idempotent: rejoining is a no-op. The roster entry stores the
+// user's display name + the optional handicap input (Sticks index
+// when they have one). Mirrors joinGroupByCodeAction's shape.
+export async function joinTournamentAction(formData: FormData) {
+  const me = await requireUser();
+  const codeRaw = String(formData.get("code") ?? "")
+    .trim()
+    .toUpperCase();
+  if (!codeRaw) throw new Error("Invite code required");
+  const handicapRaw = String(formData.get("handicap") ?? "").trim();
+  const handicap = handicapRaw ? Number(handicapRaw) : null;
+  const handicapAtStart =
+    handicap != null && Number.isFinite(handicap) ? handicap : null;
+
+  const tournament = await prisma.tournament.findUnique({
+    where: { inviteCode: codeRaw },
+    include: { roster: { select: { userId: true, displayName: true } } },
+  });
+  if (!tournament) throw new Error("No tournament for that code");
+
+  const meName = me.displayName ?? me.username;
+  // Already in by userId? -> nothing to do.
+  if (tournament.roster.some((r) => r.userId === me.id)) {
+    redirect(`/tournaments/${tournament.id}`);
+  }
+  // Display-name collision (someone joined as a free-typed name
+  // matching the user's display name). Append a disambiguator so the
+  // unique index doesn't trip.
+  let finalName = meName;
+  const taken = new Set(
+    tournament.roster.map((r) => r.displayName.toLowerCase()),
+  );
+  if (taken.has(finalName.toLowerCase())) {
+    let n = 2;
+    while (taken.has(`${finalName} (${n})`.toLowerCase())) n++;
+    finalName = `${finalName} (${n})`;
+  }
+  await prisma.tournamentPlayer.create({
+    data: {
+      tournamentId: tournament.id,
+      displayName: finalName,
+      userId: me.id,
+      handicapAtStart,
+    },
+  });
+
+  revalidatePath(`/tournaments/${tournament.id}`);
   redirect(`/tournaments/${tournament.id}`);
 }
