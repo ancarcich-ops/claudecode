@@ -1136,10 +1136,11 @@ export async function completeMatchAction(formData: FormData) {
   // for historical matches.
   await computeAndPersistMatchWinners(matchId);
 
-  // Tournament auto-completion. If this match was the last planned
-  // round (or every planned round is now finished), flip the
-  // tournament's status to COMPLETED so the group page chip + detail
-  // page header read "Final" without the creator having to do anything.
+  // Tournament auto-completion. A round is "fully complete" when every
+  // foursome (match) in that round is COMPLETED. Once the count of
+  // fully-complete rounds reaches roundsPlanned, the tournament flips
+  // to COMPLETED. This handles the multi-foursome model correctly: a
+  // round with 4 foursomes only "counts" once everyone has signed off.
   if (completed.tournamentId) {
     const tournament = await prisma.tournament.findUnique({
       where: { id: completed.tournamentId },
@@ -1152,10 +1153,18 @@ export async function completeMatchAction(formData: FormData) {
       },
     });
     if (tournament && tournament.status !== "COMPLETED") {
-      const completedRounds = tournament.matches.filter(
-        (m) => m.status === "COMPLETED" && m.roundNumber != null,
+      const byRound = new Map<number, { total: number; done: number }>();
+      for (const m of tournament.matches) {
+        if (m.roundNumber == null) continue;
+        const cur = byRound.get(m.roundNumber) ?? { total: 0, done: 0 };
+        cur.total += 1;
+        if (m.status === "COMPLETED") cur.done += 1;
+        byRound.set(m.roundNumber, cur);
+      }
+      const fullyCompleteRounds = Array.from(byRound.values()).filter(
+        (r) => r.total > 0 && r.total === r.done,
       ).length;
-      if (completedRounds >= tournament.roundsPlanned) {
+      if (fullyCompleteRounds >= tournament.roundsPlanned) {
         await prisma.tournament.update({
           where: { id: completed.tournamentId },
           data: { status: "COMPLETED", completedAt: new Date() },

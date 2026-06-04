@@ -76,13 +76,16 @@ export async function listTournamentsForGroup(groupId: string) {
 // according to the tournament's scoringMode. Players who missed
 // rounds get null entries for those rounds and sink in the sort.
 //
-// MVP semantics:
+// Semantics:
 //   - NET: per-round net score = gross strokes - per-round handicap
 //   - GROSS: per-round score = gross strokes only
 //   - Skipped round (no MatchPlayer for that player in that match) =
 //     null entry, contributes 0 to the sort total but reduces
 //     playedRounds. Players with fewer playedRounds rank below
 //     players with more played, all else equal.
+//   - A round may contain multiple foursomes (matches sharing the
+//     same roundNumber). Each player is in exactly one foursome per
+//     round, so the column collapses to one cell per round.
 export async function computeTournamentLeaderboard(
   tournamentId: string,
 ): Promise<LeaderboardRow[]> {
@@ -156,7 +159,11 @@ export async function computeTournamentLeaderboard(
     }
   }
 
-  const roundNumbers = rounds.map((m) => m.roundNumber as number);
+  // Distinct round numbers in ascending order. Without the dedupe, a
+  // round with 4 foursomes would produce 4 identical R1 columns.
+  const roundNumbers = Array.from(
+    new Set(rounds.map((m) => m.roundNumber as number)),
+  ).sort((a, b) => a - b);
 
   const raw: LeaderboardRow[] = Array.from(byName.values()).map((w) => {
     const roundScores = roundNumbers.map(
