@@ -87,7 +87,9 @@ export async function listTournamentsForUser(userId: string) {
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     include: {
       roster: { select: { id: true } },
-      matches: { select: { id: true, status: true } },
+      // roundNumber pulled so callers (home page) can render distinct
+      // round columns without a second query per tournament.
+      matches: { select: { id: true, status: true, roundNumber: true } },
     },
   });
 }
