@@ -28,7 +28,7 @@ export default function Scorecard({
   players: Player[];
   locked: boolean;
 }) {
-  const [pending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const holeNumbers = Array.from(
     { length: holes },
     (_, i) => startingHole + i,
@@ -244,7 +244,16 @@ export default function Scorecard({
                         min={1}
                         max={20}
                         defaultValue={val ?? ""}
-                        disabled={locked || pending}
+                        // `locked` is the match's settled state. We
+                        // intentionally do NOT also gate on the
+                        // useTransition `pending` flag -- doing that
+                        // briefly disabled the next-cell target while
+                        // the server action was in flight, which made
+                        // focusNext() silently no-op (browsers refuse
+                        // to focus a disabled input). The submit is
+                        // optimistic enough that keeping the inputs
+                        // live throughout is fine.
+                        disabled={locked}
                         onFocus={(e) => {
                           // Select existing text so a fresh tap overwrites
                           // cleanly without needing to clear first.
