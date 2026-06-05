@@ -1851,6 +1851,25 @@ export async function updateGhinNumberAction(formData: FormData) {
   revalidatePath("/stats");
 }
 
+// Update the user's display name. Empty clears it -- the rest of the
+// app already falls back to `username` whenever displayName is null
+// (match cards, tournament roster, etc.), so an empty field reads as
+// "use my @handle".
+export async function updateDisplayNameAction(formData: FormData) {
+  const user = await requireUser();
+  const raw = String(formData.get("displayName") ?? "").trim();
+  if (raw.length > 40) {
+    throw new Error("Display name is capped at 40 characters");
+  }
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { displayName: raw || null },
+  });
+  revalidatePath("/settings");
+  revalidatePath("/");
+  revalidatePath("/stats");
+}
+
 export async function deleteMatchAction(formData: FormData) {
   const user = await requireUser();
   const matchId = String(formData.get("matchId"));

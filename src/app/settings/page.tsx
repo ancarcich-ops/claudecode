@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { computeUserStats } from "@/lib/userStats";
 import { listMyPasskeysAction } from "@/lib/actions";
 import AvatarEditor from "./AvatarEditor";
+import DisplayNameCard from "./DisplayNameCard";
 import HandicapCard from "./HandicapCard";
 import PasskeysCard from "./PasskeysCard";
 import ReplayOnboarding from "./ReplayOnboarding";
@@ -56,6 +57,11 @@ export default async function SettingsPage() {
         avatarVariant={user.avatarVariant}
         avatarUrl={user.avatarUrl}
         photoUploadEnabled={photoUploadConfigured}
+      />
+
+      <DisplayNameCard
+        username={user.username}
+        currentDisplayName={user.displayName}
       />
 
       <HandicapCard
