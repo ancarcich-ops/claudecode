@@ -94,6 +94,14 @@ export type MatchCardData = {
   isSolo: boolean;
   // Marquee items for the LIVE header ticker.
   tickerItems: string[];
+  // Set when this match is one foursome of a tournament round. The card
+  // header surfaces "Tournament: <name> · Round N" so home-feed readers
+  // know it's not a standalone round.
+  tournament: {
+    id: string;
+    name: string;
+    roundNumber: number | null;
+  } | null;
 };
 
 // ----- Public API -----
@@ -131,6 +139,9 @@ type RawMatch = {
   scrambleConfig?: string | null;
   players: RawPlayer[];
   _count: { wagers: number };
+  // Optional tournament context. Null/absent when standalone.
+  tournament?: { id: string; name: string } | null;
+  roundNumber?: number | null;
 };
 
 export function buildMatchCardData(
@@ -331,6 +342,13 @@ export function buildMatchCardData(
       m._count.wagers,
       players.length === 1,
     ),
+    tournament: m.tournament
+      ? {
+          id: m.tournament.id,
+          name: m.tournament.name,
+          roundNumber: m.roundNumber ?? null,
+        }
+      : null,
   };
 }
 

@@ -71,6 +71,27 @@ export async function listTournamentsForGroup(groupId: string) {
   });
 }
 
+// Tournaments the user is involved in, regardless of group: either
+// created or rostered. Used by the homepage Tournaments section so a
+// "send a code, anyone joins" tournament (no group) surfaces alongside
+// group-scoped ones. Sort orders UPCOMING/IN_PROGRESS before COMPLETED,
+// then freshest first.
+export async function listTournamentsForUser(userId: string) {
+  return prisma.tournament.findMany({
+    where: {
+      OR: [
+        { createdById: userId },
+        { roster: { some: { userId } } },
+      ],
+    },
+    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+    include: {
+      roster: { select: { id: true } },
+      matches: { select: { id: true, status: true } },
+    },
+  });
+}
+
 // Compute the cumulative leaderboard for a tournament. Pulls every
 // completed child match's per-player totals and rolls them up
 // according to the tournament's scoringMode. Players who missed
