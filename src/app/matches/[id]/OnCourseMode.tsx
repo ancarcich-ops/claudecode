@@ -516,11 +516,12 @@ export default function OnCourseMode({
         {playerPos ? (
           <HoleMiniMap
             engine={mapEngine}
-            // On-course chrome is taller than study mode's F/C/B
-            // card: TO AIM / TO PIN / CARRY card + ENTER SCORE button
-            // run ~240px from the bottom edge. Push the chip row above
-            // both so the buttons aren't overlapping the distance card.
-            chipsBottomOffsetPx={240}
+            // Chip row offset: AimCard sits at bottom-120 (~70px
+            // tall) when an aim is set, so chips need ~200 to sit
+            // just above it. Without an aim, only the ENTER SCORE
+            // button bar is at the bottom (~80px), so 100 keeps chips
+            // close to the button instead of floating mid-screen.
+            chipsBottomOffsetPx={aimPoint ? 200 : 100}
             player={playerPos}
             tee={
               geo?.teeLat != null && geo?.teeLng != null
@@ -535,12 +536,7 @@ export default function OnCourseMode({
                 : null
             }
             greenPolygon={geo?.greenPolygon ?? null}
-            hazards={holeHazards.map((h) => ({
-              id: h.id,
-              kind: h.kind,
-              lat: h.lat,
-              lng: h.lng,
-            }))}
+            hazards={[]}
             aim={aimPoint}
             onAim={(p) => setAimPoint(p)}
             landmarks={landmarks}
