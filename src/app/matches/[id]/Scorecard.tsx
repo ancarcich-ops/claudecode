@@ -232,6 +232,15 @@ export default function Scorecard({
                         }}
                         type="number"
                         inputMode="numeric"
+                        enterKeyHint="next"
+                        // DOM tab order is row-major by default, so the
+                        // mobile keyboard's Next arrow walks across the
+                        // row (next hole, same player) -- the opposite
+                        // of how a foursome enters scores. Force a
+                        // column-major order so Next jumps to the next
+                        // PLAYER on the SAME hole, mirroring the
+                        // Enter-key and debounce-based focusNext below.
+                        tabIndex={holeIdx * players.length + playerIdx + 1}
                         min={1}
                         max={20}
                         defaultValue={val ?? ""}
