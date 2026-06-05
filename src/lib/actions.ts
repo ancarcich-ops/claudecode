@@ -2691,3 +2691,27 @@ export async function joinTournamentAction(formData: FormData) {
   revalidatePath(`/tournaments/${tournament.id}`);
   redirect(`/tournaments/${tournament.id}`);
 }
+
+// Delete a tournament. Creator-only. Child Match rows are NOT deleted:
+// the schema relation is onDelete: SetNull on Match.tournamentId, so
+// the rounds detach back into standalone matches that still show up on
+// the home feed / group page. Roster cascades away with the tournament.
+export async function deleteTournamentAction(formData: FormData) {
+  const me = await requireUser();
+  const id = String(formData.get("tournamentId") ?? "");
+  if (!id) throw new Error("Missing tournamentId");
+  const tournament = await prisma.tournament.findUnique({
+    where: { id },
+    select: { id: true, createdById: true, groupId: true },
+  });
+  if (!tournament) return;
+  if (tournament.createdById !== me.id) {
+    throw new Error("Only the tournament creator can delete it");
+  }
+  await prisma.tournament.delete({ where: { id } });
+  revalidatePath("/");
+  if (tournament.groupId) {
+    revalidatePath(`/groups/${tournament.groupId}`);
+  }
+  redirect("/");
+}
