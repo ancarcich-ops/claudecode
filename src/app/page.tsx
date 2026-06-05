@@ -7,6 +7,7 @@ import AutoRefresh from "@/components/AutoRefresh";
 import LiveCardStats from "@/components/LiveCardStats";
 import MatchCard from "@/components/match-card/MatchCard";
 import { buildMatchCardData } from "@/lib/matchCard";
+import { listTournamentsForUser } from "@/lib/tournaments";
 import {
   parseScrambleConfig,
   teamHandicap as scrambleTeamHandicap,
@@ -52,6 +53,10 @@ async function loadMatches(where: any, orderBy: any, take?: number) {
       },
       _count: { select: { wagers: true } },
       sideGames: true,
+      // Tournament context surfaces a "Tournament: <name> · Round N"
+      // badge on the home feed card so foursomes inside a tournament
+      // are visually distinct from standalone rounds.
+      tournament: { select: { id: true, name: true } },
     },
   });
 }
@@ -88,6 +93,15 @@ export default async function HomePage() {
     myPicks.map((w) => [w.matchId, w.pickedPlayerId]),
   );
 
+  // User's tournaments (created or rostered). Surfaced as its own
+  // section so a "send a code, join from anywhere" tournament has a
+  // homepage entry point -- otherwise the only way to find it is via
+  // the group page or the direct URL.
+  const myTournaments = user ? await listTournamentsForUser(user.id) : [];
+  const activeTournaments = myTournaments.filter(
+    (t) => t.status !== "COMPLETED",
+  );
+
   return (
     <div className="space-y-10">
       <AutoRefresh endpoint="/api/markets/state" />
@@ -109,6 +123,50 @@ export default async function HomePage() {
             Open the line →
           </Link>
         </div>
+      )}
+
+      {user && activeTournaments.length > 0 && (
+        <section>
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <SectionHeader title="Tournaments" />
+            <Link
+              href="/tournaments/new"
+              className="btn btn-ghost text-xs whitespace-nowrap shrink-0"
+            >
+              + New tournament
+            </Link>
+          </div>
+          <ul className="space-y-2">
+            {activeTournaments.map((t) => {
+              const completed = t.matches.filter(
+                (m) => m.status === "COMPLETED",
+              ).length;
+              return (
+                <li key={t.id} className="card p-3">
+                  <Link
+                    href={`/tournaments/${t.id}`}
+                    className="flex items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium truncate">
+                        {t.name}
+                      </div>
+                      <div className="text-[11px] text-mute">
+                        {t.scoringMode === "GROSS" ? "Gross" : "Net"} ·{" "}
+                        {t.roster.length} player
+                        {t.roster.length === 1 ? "" : "s"} · {completed}/
+                        {t.roundsPlanned} rounds
+                      </div>
+                    </div>
+                    <span className="chip text-[10px] shrink-0">
+                      {t.status === "IN_PROGRESS" ? "Live" : "Upcoming"}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       )}
 
       {live.length > 0 && (

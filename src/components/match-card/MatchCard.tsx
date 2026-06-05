@@ -148,6 +148,19 @@ function Header({
   return (
     <div className="flex items-start justify-between gap-3">
       <div className="min-w-0">
+        {data.tournament && (
+          <div className="font-mono text-[10px] uppercase tracking-wider text-gold/80 mb-1 truncate">
+            <span className="opacity-70">Tournament</span>
+            <span className="mx-1.5 text-faint">·</span>
+            <span className="text-gold">{data.tournament.name}</span>
+            {data.tournament.roundNumber != null && (
+              <>
+                <span className="mx-1.5 text-faint">·</span>
+                <span>Round {data.tournament.roundNumber}</span>
+              </>
+            )}
+          </div>
+        )}
         <div className="font-display text-base sm:text-[17px] font-semibold tracking-tight text-ink truncate">
           {data.courseName}
           <span className="text-mute font-normal ml-1.5 text-sm">
