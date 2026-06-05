@@ -7,7 +7,11 @@ import AutoRefresh from "@/components/AutoRefresh";
 import LiveCardStats from "@/components/LiveCardStats";
 import MatchCard from "@/components/match-card/MatchCard";
 import { buildMatchCardData } from "@/lib/matchCard";
-import { listTournamentsForUser } from "@/lib/tournaments";
+import {
+  computeTournamentLeaderboard,
+  listTournamentsForUser,
+} from "@/lib/tournaments";
+import TournamentLeaderboardTable from "@/components/TournamentLeaderboardTable";
 import {
   parseScrambleConfig,
   teamHandicap as scrambleTeamHandicap,
@@ -101,6 +105,23 @@ export default async function HomePage() {
   const activeTournaments = myTournaments.filter(
     (t) => t.status !== "COMPLETED",
   );
+  // Compute leaderboards inline so the home feed can render the full
+  // cross-foursome standings without making the user tap into each
+  // tournament. Fan out in parallel; one query per tournament.
+  const tournamentLeaderboards = await Promise.all(
+    activeTournaments.map(async (t) => {
+      const rows = await computeTournamentLeaderboard(t.id);
+      const roundCount = new Set(
+        t.matches
+          .map((m) => m.roundNumber)
+          .filter((n): n is number => typeof n === "number"),
+      ).size;
+      return { tournamentId: t.id, rows, roundCount };
+    }),
+  );
+  const leaderboardByTournament = new Map(
+    tournamentLeaderboards.map((b) => [b.tournamentId, b]),
+  );
 
   return (
     <div className="space-y-10">
@@ -136,13 +157,14 @@ export default async function HomePage() {
               + New tournament
             </Link>
           </div>
-          <ul className="space-y-2">
+          <ul className="space-y-3">
             {activeTournaments.map((t) => {
               const completed = t.matches.filter(
                 (m) => m.status === "COMPLETED",
               ).length;
+              const board = leaderboardByTournament.get(t.id);
               return (
-                <li key={t.id} className="card p-3">
+                <li key={t.id} className="card p-4 space-y-3">
                   <Link
                     href={`/tournaments/${t.id}`}
                     className="flex items-center justify-between gap-3"
@@ -162,6 +184,13 @@ export default async function HomePage() {
                       {t.status === "IN_PROGRESS" ? "Live" : "Upcoming"}
                     </span>
                   </Link>
+                  {board && board.rows.length > 0 && (
+                    <TournamentLeaderboardTable
+                      rows={board.rows}
+                      roundCount={board.roundCount}
+                      scoringMode={t.scoringMode}
+                    />
+                  )}
                 </li>
               );
             })}
