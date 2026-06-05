@@ -5,6 +5,7 @@ import {
   computeTournamentLeaderboard,
   getTournamentById,
 } from "@/lib/tournaments";
+import { deleteTournamentAction } from "@/lib/actions";
 import CopyInvite from "@/components/CopyInvite";
 
 export const dynamic = "force-dynamic";
@@ -253,6 +254,24 @@ export default async function TournamentDetailPage({
           />
         )}
       </section>
+
+      {tournament.createdById === user.id && (
+        <section className="card p-5">
+          <h2 className="font-display text-base font-semibold text-ink mb-2">
+            Delete tournament
+          </h2>
+          <p className="text-xs text-mute mb-3">
+            Removes the tournament, roster, and leaderboard. Any rounds
+            that were played stay on the home feed as standalone matches.
+          </p>
+          <form action={deleteTournamentAction}>
+            <input type="hidden" name="tournamentId" value={tournament.id} />
+            <button type="submit" className="btn btn-danger text-xs">
+              Delete {tournament.name}
+            </button>
+          </form>
+        </section>
+      )}
     </div>
   );
 }
