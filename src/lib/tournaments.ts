@@ -170,13 +170,18 @@ export async function computeTournamentLeaderboard(
       } else {
         entry.latestHandicap = p.handicap;
       }
-      // Only score completed matches; in-progress rounds show as
-      // null so the leaderboard reflects "completed so far".
-      if (m.status !== "COMPLETED") {
+      // Live rollup: as soon as the player has any holes logged in
+      // this round, sum them so the home-page leaderboard reflects
+      // the round-in-progress instead of sitting at zero until the
+      // foursome finishes. A player with no scores yet in an
+      // unfinished match stays null. Net subtracts the full handicap
+      // (same as the final-round math) -- the value converges as the
+      // round wraps; early-round values can read negative.
+      const gross = p.scores.reduce((s, x) => s + x.strokes, 0);
+      if (p.scores.length === 0 && m.status !== "COMPLETED") {
         entry.perRound.set(roundNo, null);
         continue;
       }
-      const gross = p.scores.reduce((s, x) => s + x.strokes, 0);
       const value = useNet ? gross - p.handicap : gross;
       entry.perRound.set(roundNo, value);
     }
