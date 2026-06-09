@@ -181,6 +181,38 @@ const CITIES_NC = [
 // Suggest a region tag from the city. Coarse but fine for triage --
 // the human reviewer can fix up edge cases. Falls back to "NC" for
 // California cities we don't recognize (Northern California).
+// CA gets a per-region split (LA/OC/IE/CV/SD/VC/NC). Other states map
+// to a single region tag -- we don't have city-level granularity yet
+// outside California. PNW = WA/OR/ID; CAR (Carolinas) covers the
+// Southeast Atlantic; NE = Northeast; SE = Deep South; MW = Midwest.
+// "NC" here is the *Northern California* region tag, not North Carolina
+// (those go in CAR).
+function suggestRegion(state: string, city: string | undefined): CourseRegion {
+  const s = state.toUpperCase();
+  if (s === "CA") return suggestRegionForCA(city);
+  if (s === "TX") return "TX";
+  if (s === "FL") return "FL";
+  if (s === "AZ") return "AZ";
+  if (s === "NV") return "NV";
+  if (s === "UT") return "UT";
+  if (s === "CO") return "CO";
+  if (s === "HI") return "HI";
+  if (s === "WA" || s === "OR" || s === "ID") return "PNW";
+  if (["NC", "SC", "VA", "GA", "AL", "FL"].includes(s)) return "CAR";
+  if (
+    ["WI", "MN", "MI", "IL", "OH", "IN", "MO", "IA", "KS", "NE", "ND", "SD"].includes(s)
+  ) {
+    return "MW";
+  }
+  if (
+    ["NY", "NJ", "PA", "MA", "CT", "RI", "MD", "DE", "VT", "NH", "ME", "DC"].includes(s)
+  ) {
+    return "NE";
+  }
+  if (["KY", "TN", "AR", "MS", "LA", "WV", "OK"].includes(s)) return "SE";
+  return "NC";
+}
+
 function suggestRegionForCA(city: string | undefined): CourseRegion {
   const c = (city ?? "").toLowerCase().trim();
   if (!c) return "NC";
@@ -298,7 +330,13 @@ async function main() {
     new Promise<void>((r) => setTimeout(r, ms));
   let stoppedEarly = false;
   let stopReason = "";
-  if (page === 1 && (!lastResp || !lastResp.marker)) {
+  // The per-city sweep relies on the CA city lists -- harmless for
+  // other states (just wasted calls), but pointless. Gate it.
+  if (
+    flags.state.toUpperCase() === "CA" &&
+    page === 1 &&
+    (!lastResp || !lastResp.marker)
+  ) {
     console.log(
       "[discover] State pagination returned a single page -- sweeping per-city to catch the rest...",
     );
@@ -390,7 +428,7 @@ async function main() {
       city,
       state: c.address?.state ?? flags.state,
       zip: c.address?.zip,
-      suggestedRegion: suggestRegionForCA(city),
+      suggestedRegion: suggestRegion(flags.state, city),
       reason: "new-gbid-and-name",
     });
   }
