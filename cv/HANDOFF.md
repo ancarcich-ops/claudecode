@@ -1,10 +1,10 @@
 # Handoff — Logo Detection in Soccer Video
 
-Pick this up in a fresh Claude Code session connected to your **new repo**.
-This doc is self-contained: it has the goal, decisions, environment notes,
-verification results, full source, and next steps. If you also connect the
-`ancarcich-ops/claudecode` repo, the same code is backed up there under `cv/`
-on branch `claude/nice-archimedes-bpv90x`.
+Pick this up in a fresh Claude Code session connected to the **new repo
+`ancarcich-ops/computer-vision`**. This doc is self-contained: it has the goal,
+decisions, environment notes, verification results, full source, and next
+steps. The same code is also backed up in `ancarcich-ops/claudecode` under
+`cv/` on branch `claude/nice-archimedes-bpv90x`.
 
 ---
 
@@ -22,7 +22,7 @@ sponsor-exposure / brand-visibility analytics.
 | Input | **Video clips** |
 | Detection method | **Feature matching** (OpenCV ORB/SIFT + homography) — no training, no GPU |
 | Annotation/video I/O | **`supervision`** (v0.28.0) |
-| Project location | **Standalone repo** (the new repo you created). Backup copy in `claudecode/cv/`. |
+| Project location | **Standalone repo** `ancarcich-ops/computer-vision`. Backup copy in `ancarcich-ops/claudecode` at `cv/`. |
 | Language | Python 3.9+ (tested on 3.11). NOT TypeScript — independent of the Next.js app. |
 
 ## 3. Environment notes (from the build session)
@@ -120,12 +120,14 @@ numpy>=1.24
 
 ## 9. How to wire this into the new session
 
-1. Tell Claude: *"Connect my new repo `<owner>/<repo>` and continue the logo
-   detection project — see HANDOFF.md."* (Fill in the repo name; the build
-   session was scoped to `claudecode` only and couldn't see it.)
-2. If the new repo is empty, have Claude recreate the files from Section 10
-   (full source) or copy the `cv/` folder from `ancarcich-ops/claudecode`
-   (branch `claude/nice-archimedes-bpv90x`).
+1. Start a new Claude Code session **on the `ancarcich-ops/computer-vision`
+   repo**, and tell Claude: *"Continue the logo detection project — see
+   HANDOFF.md."* (The build session was scoped to `claudecode` only and
+   couldn't push here directly.)
+2. If `computer-vision` is empty, the fastest path is to **also add the
+   `ancarcich-ops/claudecode` repo** to that session and copy its `cv/` folder
+   (branch `claude/nice-archimedes-bpv90x`) into the new repo root. If you only
+   have this Markdown, Claude can recreate the files from Section 10.
 3. Run the Section 7 verification to confirm the environment, then start on the
    roadmap.
 
