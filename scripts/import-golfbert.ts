@@ -334,7 +334,11 @@ function rewriteCoursesFile(matched: Matched[]): number {
   let source = readFileSync(COURSES_PATH, "utf8");
   let count = 0;
   for (const m of matched) {
-    if (m.pars.length !== 18) continue;
+    // Skip entries Golfbert returned no scorecard for (or that have a
+    // non-18 hole count). Either way we have nothing useful to splice
+    // into courses.ts and the bare .length call would otherwise blow
+    // up on null pars.
+    if (!m.pars || m.pars.length !== 18) continue;
     const escapedId = m.presetId.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
     const re = new RegExp(
       `(\\{[^{}]*id:\\s*"${escapedId}"[^{}]*pars:\\s*)p\\(18,\\s*\\d+\\)`,
@@ -370,9 +374,14 @@ async function main() {
       const prior = state.get(p.id);
       // Re-attempt failures + multi-matches on rerun (multi-matches
       // because the user may have edited the catalog to disambiguate);
-      // skip the rest.
+      // skip the rest. Exception: "matched + !dbImported" -- e.g.
+      // entries the merge-discovery script stamped with a pre-found
+      // Golfbert id but no geometry yet. Those are precisely what
+      // --reuse-id is meant to finish, so let them through.
       if (!prior) return true;
-      return prior.kind === "failed" || prior.kind === "pending";
+      if (prior.kind === "failed" || prior.kind === "pending") return true;
+      if (prior.kind === "matched" && !prior.dbImported) return true;
+      return false;
     });
   } else {
     // --force or --ids-from: still skip presets that are flat-out done
