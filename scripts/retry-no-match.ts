@@ -31,6 +31,7 @@
 
 import { readFileSync } from "fs";
 import { resolve } from "path";
+import "./_load-env";
 import * as gb from "../src/lib/golfbert";
 import { COURSE_PRESETS } from "../src/lib/courses";
 

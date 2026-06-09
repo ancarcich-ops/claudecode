@@ -68,6 +68,7 @@
 // in git (pars) + Postgres (polygons + hazards).
 
 import { readFileSync, writeFileSync, existsSync } from "fs";
+import "./_load-env";
 import { COURSE_PRESETS } from "../src/lib/courses";
 import * as gb from "../src/lib/golfbert";
 import { findOrCreateCourseByName } from "../src/lib/course";

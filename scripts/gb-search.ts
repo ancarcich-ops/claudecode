@@ -10,6 +10,7 @@
 // Each query is one API call, so a dozen terms is cheap. Searching a
 // looser term than the catalog name (e.g. just "Costa Mesa") is the
 // trick for courses our exact-name search missed.
+import "./_load-env";
 import * as gb from "../src/lib/golfbert";
 
 async function main() {

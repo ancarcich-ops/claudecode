@@ -33,6 +33,7 @@
 
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { resolve } from "path";
+import "./_load-env";
 import * as gb from "../src/lib/golfbert";
 import { COURSE_PRESETS, type CourseRegion } from "../src/lib/courses";
 
