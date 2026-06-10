@@ -26,6 +26,16 @@ export default function MobileTabBar() {
       className="sm:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-panel"
       role="navigation"
       aria-label="Primary"
+      // iOS Safari quirk: as the address bar collapses on scroll, the
+      // visual viewport grows but `position: fixed` is layout-viewport
+      // based. The element appears to drift up mid-page. Forcing the
+      // bar onto its own compositor layer (translateZ + will-change)
+      // pins it to the visual viewport bottom across the URL-bar
+      // animation.
+      style={{
+        transform: "translateZ(0)",
+        willChange: "transform",
+      }}
     >
       <div className="grid grid-cols-4 mx-auto max-w-md">
         {TABS.map((t) => {
