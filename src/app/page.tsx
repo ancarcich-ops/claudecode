@@ -105,11 +105,18 @@ export default async function HomePage() {
   const activeTournaments = myTournaments.filter(
     (t) => t.status !== "COMPLETED",
   );
+  // Recently-settled tournaments get their own collapsed-by-default
+  // section below the match feed so the creator can still find them
+  // without scrolling through everything they've ever run.
+  const settledTournaments = myTournaments.filter(
+    (t) => t.status === "COMPLETED",
+  );
   // Compute leaderboards inline so the home feed can render the full
   // cross-foursome standings without making the user tap into each
-  // tournament. Fan out in parallel; one query per tournament.
+  // tournament. Fan out across active + settled in parallel; one query
+  // per tournament.
   const tournamentLeaderboards = await Promise.all(
-    activeTournaments.map(async (t) => {
+    [...activeTournaments, ...settledTournaments].map(async (t) => {
       const rows = await computeTournamentLeaderboard(t.id);
       const roundCount = new Set(
         t.matches
@@ -252,6 +259,50 @@ export default async function HomePage() {
           <MatchGridNew matches={completed} myPickByMatch={myPickByMatch} />
         )}
       </section>
+
+      {user && settledTournaments.length > 0 && (
+        <section>
+          <SectionHeader title="Settled tournaments" />
+          <ul className="space-y-3">
+            {settledTournaments.map((t) => {
+              const completedRounds = t.matches.filter(
+                (m) => m.status === "COMPLETED",
+              ).length;
+              const board = leaderboardByTournament.get(t.id);
+              return (
+                <li key={t.id} className="card p-4 space-y-3 opacity-95">
+                  <Link
+                    href={`/tournaments/${t.id}`}
+                    className="flex items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium truncate">
+                        {t.name}
+                      </div>
+                      <div className="text-[11px] text-mute">
+                        {t.scoringMode === "GROSS" ? "Gross" : "Net"} ·{" "}
+                        {t.roster.length} player
+                        {t.roster.length === 1 ? "" : "s"} ·{" "}
+                        {completedRounds}/{t.roundsPlanned} rounds
+                      </div>
+                    </div>
+                    <span className="chip text-[10px] shrink-0 text-gold border-gold/30">
+                      Final
+                    </span>
+                  </Link>
+                  {board && board.rows.length > 0 && (
+                    <TournamentLeaderboardTable
+                      rows={board.rows}
+                      roundCount={board.roundCount}
+                      scoringMode={t.scoringMode}
+                    />
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }

@@ -2734,3 +2734,34 @@ export async function deleteTournamentAction(formData: FormData) {
   }
   redirect("/");
 }
+
+// Manually mark a tournament COMPLETED. Creator-only. The auto-complete
+// in completeMatchAction only fires when every match in every planned
+// round is done; for a tournament where the creator only ever ran one
+// of three planned rounds, that path never trips. This is the explicit
+// "call it" button -- final leaderboard is whatever's been scored so
+// far, the tournament drops out of the active section on the home
+// page and into the settled section.
+export async function completeTournamentAction(formData: FormData) {
+  const me = await requireUser();
+  const id = String(formData.get("tournamentId") ?? "");
+  if (!id) throw new Error("Missing tournamentId");
+  const tournament = await prisma.tournament.findUnique({
+    where: { id },
+    select: { id: true, createdById: true, status: true, groupId: true },
+  });
+  if (!tournament) return;
+  if (tournament.createdById !== me.id) {
+    throw new Error("Only the tournament creator can finish it");
+  }
+  if (tournament.status === "COMPLETED") return;
+  await prisma.tournament.update({
+    where: { id },
+    data: { status: "COMPLETED", completedAt: new Date() },
+  });
+  revalidatePath(`/tournaments/${id}`);
+  revalidatePath("/");
+  if (tournament.groupId) {
+    revalidatePath(`/groups/${tournament.groupId}`);
+  }
+}

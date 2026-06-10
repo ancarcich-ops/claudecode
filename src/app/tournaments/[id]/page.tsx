@@ -5,7 +5,10 @@ import {
   computeTournamentLeaderboard,
   getTournamentById,
 } from "@/lib/tournaments";
-import { deleteTournamentAction } from "@/lib/actions";
+import {
+  completeTournamentAction,
+  deleteTournamentAction,
+} from "@/lib/actions";
 import CopyInvite from "@/components/CopyInvite";
 import TournamentLeaderboardTable from "@/components/TournamentLeaderboardTable";
 
@@ -255,6 +258,27 @@ export default async function TournamentDetailPage({
           />
         )}
       </section>
+
+      {tournament.createdById === user.id &&
+        tournament.status !== "COMPLETED" && (
+          <section className="card p-5">
+            <h2 className="font-display text-base font-semibold text-ink mb-2">
+              Finish tournament
+            </h2>
+            <p className="text-xs text-mute mb-3">
+              Marks the tournament settled with the current leaderboard
+              as the final standings. Use this when you&apos;re done early
+              (e.g. only played 1 of 3 planned rounds). Moves it out of
+              the active section on the home page.
+            </p>
+            <form action={completeTournamentAction}>
+              <input type="hidden" name="tournamentId" value={tournament.id} />
+              <button type="submit" className="btn btn-primary text-xs">
+                Finish {tournament.name}
+              </button>
+            </form>
+          </section>
+        )}
 
       {tournament.createdById === user.id && (
         <section className="card p-5">
