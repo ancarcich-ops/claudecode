@@ -161,20 +161,20 @@ export default function GroupSwitcher({
             Personal stats
           </Link>
           <Link
-            href="/settings"
-            onClick={() => setOpen(false)}
-            className="block w-full text-left px-3 py-2 text-sm text-ink hover:bg-panel2"
-            role="menuitem"
-          >
-            Settings
-          </Link>
-          <Link
             href="/groups"
             onClick={() => setOpen(false)}
             className="block w-full text-left px-3 py-2 text-sm text-ink hover:bg-panel2"
             role="menuitem"
           >
             Manage groups
+          </Link>
+          <Link
+            href="/settings"
+            onClick={() => setOpen(false)}
+            className="block w-full text-left px-3 py-2 text-sm text-ink hover:bg-panel2"
+            role="menuitem"
+          >
+            Settings
           </Link>
           <div className="border-t border-border" />
           <div className="px-3 pt-2 pb-1 text-[11px] text-mute truncate">
