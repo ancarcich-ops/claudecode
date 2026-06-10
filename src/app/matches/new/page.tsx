@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -213,8 +214,17 @@ export default async function NewMatchPage({
           <h1 className="font-display text-2xl font-semibold tracking-tight mb-1">
             Open the line.
           </h1>
-          <p className="text-sm text-mute mb-6">
+          <p className="text-sm text-mute mb-1">
             Course, tee time, players. Odds move the second you publish.
+          </p>
+          <p className="text-[11px] text-mute mb-6">
+            Stringing rounds together?{" "}
+            <Link
+              href="/tournaments/new"
+              className="text-accent hover:underline"
+            >
+              Start a tournament →
+            </Link>
           </p>
         </>
       )}
