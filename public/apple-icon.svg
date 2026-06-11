@@ -11,9 +11,9 @@
   </defs>
   <rect width="180" height="180" rx="40" fill="url(#bg)"/>
   <rect width="180" height="180" rx="40" fill="url(#glow)"/>
-  <g transform="translate(33, 33) scale(1.78)" fill="#34d399">
-    <rect x="13" y="14" width="8" height="40" rx="2.5"/>
-    <rect x="28" y="6" width="8" height="50" rx="2.5"/>
-    <rect x="43" y="22" width="8" height="28" rx="2.5"/>
+  <g transform="translate(33, 33) scale(1.78)">
+    <g transform="translate(0 68) scale(1 -1)"><path d="M 18.5 14.60 Q 18.5 14.00 17.90 14.00 L 16.10 14.00 Q 15.5 14.00 15.5 14.60 L 15.5 47.09 C 15.5 49.09, 11.51 47.39, 7.02 49.83 C 7.02 52.59, 7.52 54.00, 9.22 54.00 C 13.51 54.10, 17.30 53.80, 18.5 51.11 C 18.5 49.19, 18.5 48.09, 18.5 46.79 L 18.5 14.60 Z" fill="#34d399" stroke="#34d399" stroke-width="0.4" stroke-linejoin="round"/></g>
+    <g transform="translate(0 62) scale(1 -1)"><path d="M 33.5 6.60 Q 33.5 6.00 32.90 6.00 L 31.10 6.00 Q 30.5 6.00 30.5 6.60 L 30.5 48.14 C 30.5 50.14, 25.62 48.44, 20.40 51.22 C 20.40 54.38, 20.90 56.00, 22.60 56.00 C 27.94 56.10, 32.30 55.80, 33.5 52.69 C 33.5 50.48, 33.5 49.14, 33.5 47.84 L 33.5 6.60 Z" fill="#34d399" stroke="#34d399" stroke-width="0.4" stroke-linejoin="round"/></g>
+    <g transform="translate(0 72) scale(1 -1)"><path d="M 48.5 22.60 Q 48.5 22.00 47.90 22.00 L 46.10 22.00 Q 45.5 22.00 45.5 22.60 L 45.5 43.45 C 45.5 45.45, 42.23 43.75, 38.33 46.07 C 38.33 48.67, 38.83 50.00, 40.53 50.00 C 43.97 50.10, 47.30 49.80, 48.5 47.28 C 48.5 45.46, 48.5 44.45, 48.5 43.15 L 48.5 22.60 Z" fill="#34d399" stroke="#34d399" stroke-width="0.4" stroke-linejoin="round"/></g>
   </g>
 </svg>

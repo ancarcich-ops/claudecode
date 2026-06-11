@@ -7,6 +7,7 @@ import { GeistMono } from "geist/font/mono";
 import { getCurrentUser } from "@/lib/auth";
 import { getActiveGroupId, listUserGroups } from "@/lib/groups";
 import GroupSwitcher from "@/components/GroupSwitcher";
+import StickMark from "@/components/brand/StickMark";
 import MobileTabBar from "@/components/MobileTabBar";
 import Onboarding from "@/components/Onboarding";
 import Sounds from "@/components/Sounds";
@@ -75,18 +76,12 @@ export default async function RootLayout({
               href="/"
               className="flex items-center gap-2 min-w-0 shrink"
             >
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 64 64"
-                fill="currentColor"
-                aria-hidden
+              <StickMark
+                size={22}
+                color="currentColor"
+                title={null}
                 className="shrink-0 text-accent"
-              >
-                <rect x="13" y="14" width="8" height="40" rx="2.5" />
-                <rect x="28" y="6" width="8" height="50" rx="2.5" />
-                <rect x="43" y="22" width="8" height="28" rx="2.5" />
-              </svg>
+              />
               <span className="font-display font-semibold tracking-tight whitespace-nowrap text-base">
                 Sticks<span className="text-accent">.</span>
               </span>

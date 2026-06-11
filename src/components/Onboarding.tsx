@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Avatar, { VARIANTS, type AvatarVariant } from "@/components/Avatar";
+import StickMark from "@/components/brand/StickMark";
 import {
   createGroupAction,
   joinGroupAction,
@@ -861,18 +862,12 @@ function LaunchStep({
 
 function BrandLogo() {
   return (
-    <svg
-      width="60"
-      height="60"
-      viewBox="0 0 64 64"
-      fill="currentColor"
-      aria-hidden
+    <StickMark
+      size={60}
+      color="currentColor"
+      title={null}
       className="text-accent"
-    >
-      <rect x="13" y="14" width="8" height="40" rx="2.5" />
-      <rect x="28" y="6" width="8" height="50" rx="2.5" />
-      <rect x="43" y="22" width="8" height="28" rx="2.5" />
-    </svg>
+    />
   );
 }
 
