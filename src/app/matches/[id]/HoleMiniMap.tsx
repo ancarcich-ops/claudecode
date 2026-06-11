@@ -1394,11 +1394,14 @@ function PresetChipsPortalGL({
   ) => {
     const map = mapRef.current;
     if (!target || !map) return;
+    // Preserve the rotation we set on the initial hole-fit (tee at
+    // bottom, green at top). Without an explicit bearing param both
+    // fitBounds and flyTo snap back to north-up, which is what was
+    // making the orientation feel jumpy as users tapped through the
+    // preset chips.
+    const currentBearing = map.getBearing();
     if (active === label) {
-      // Tap-active toggles back to the fitted hole view. We re-fit
-      // to the current camera's bbox by triggering a resize, which
-      // re-runs HoleMiniMapGL's bbox effect; simpler than caching
-      // bbox here.
+      // Tap-active toggles back to the fitted hole view.
       map.fitBounds(
         [
           [Math.min(tee?.lng ?? 0, green?.lng ?? 0) - 0.0005,
@@ -1406,7 +1409,12 @@ function PresetChipsPortalGL({
           [Math.max(tee?.lng ?? 0, green?.lng ?? 0) + 0.0005,
            Math.max(tee?.lat ?? 0, green?.lat ?? 0) + 0.0005],
         ],
-        { padding: 40, duration: 600, maxZoom: 19 },
+        {
+          padding: 40,
+          duration: 600,
+          maxZoom: 19,
+          bearing: currentBearing,
+        },
       );
       setActive("hole");
       return;
@@ -1418,6 +1426,7 @@ function PresetChipsPortalGL({
       zoom: 19,
       duration: 700,
       essential: true,
+      bearing: currentBearing,
     });
     setActive(label);
   };
@@ -1426,6 +1435,9 @@ function PresetChipsPortalGL({
     const map = mapRef.current;
     if (!map) return;
     if (tee && green) {
+      // Re-fit always keeps the rotation that's already in play so the
+      // "Hole" preset snaps back to the same tee-down / green-up view
+      // it started in.
       map.fitBounds(
         [
           [Math.min(tee.lng, green.lng) - 0.0005,
@@ -1433,7 +1445,12 @@ function PresetChipsPortalGL({
           [Math.max(tee.lng, green.lng) + 0.0005,
            Math.max(tee.lat, green.lat) + 0.0005],
         ],
-        { padding: 40, duration: 600, maxZoom: 19 },
+        {
+          padding: 40,
+          duration: 600,
+          maxZoom: 19,
+          bearing: map.getBearing(),
+        },
       );
     }
     setActive("hole");
