@@ -5,12 +5,13 @@ import {
   computeTournamentLeaderboard,
   getTournamentById,
 } from "@/lib/tournaments";
+import { computeTournamentWinOdds } from "@/lib/tournamentOdds";
 import {
   completeTournamentAction,
   deleteTournamentAction,
 } from "@/lib/actions";
 import CopyInvite from "@/components/CopyInvite";
-import TournamentLeaderboardTable from "@/components/TournamentLeaderboardTable";
+import TournamentBoardTabs from "@/components/TournamentBoardTabs";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,10 @@ export default async function TournamentDetailPage({
 
   const tournament = await getTournamentById(params.id);
   if (!tournament) notFound();
-  const leaderboard = await computeTournamentLeaderboard(tournament.id);
+  const [leaderboard, odds] = await Promise.all([
+    computeTournamentLeaderboard(tournament.id),
+    computeTournamentWinOdds(tournament.id),
+  ]);
 
   const scheduleLabel = tournament.scheduledStartAt
     ? new Date(tournament.scheduledStartAt).toLocaleString(undefined, {
@@ -236,7 +240,7 @@ export default async function TournamentDetailPage({
       <section className="card p-5">
         <div className="flex items-baseline justify-between mb-3 gap-2">
           <h2 className="font-display text-base font-semibold text-ink">
-            Leaderboard
+            Standings
           </h2>
           <span className="text-[11px] text-mute">
             {tournament.scoringMode === "GROSS"
@@ -244,15 +248,16 @@ export default async function TournamentDetailPage({
               : "Sum of net (gross − handicap)"}
           </span>
         </div>
-        {completedRounds === 0 ? (
+        {completedRounds === 0 && odds.length === 0 ? (
           <p className="text-sm text-mute">
             Standings show up here once the first round wraps. Every roster
             player gets a row; players who miss rounds show DNP and sink to
             the bottom.
           </p>
         ) : (
-          <TournamentLeaderboardTable
-            rows={leaderboard}
+          <TournamentBoardTabs
+            leaderboardRows={leaderboard}
+            oddsRows={odds}
             roundCount={distinctRoundNumbers.length}
             scoringMode={tournament.scoringMode}
           />
