@@ -72,6 +72,27 @@ function pointInLatLngPolygon(
   return inside;
 }
 
+// Initial-bearing (degrees clockwise from north) for the great-circle
+// path from `from` to `to`. We use it to rotate the map so the hole
+// "plays up" -- the tee sits at the bottom of the screen and the
+// green is at the top regardless of which way the hole runs. Stable
+// enough for the ~400-yard distances we care about; no ellipsoidal
+// correction needed.
+function bearingDeg(
+  from: { lat: number; lng: number },
+  to: { lat: number; lng: number },
+): number {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const phi1 = toRad(from.lat);
+  const phi2 = toRad(to.lat);
+  const dLng = toRad(to.lng - from.lng);
+  const y = Math.sin(dLng) * Math.cos(phi2);
+  const x =
+    Math.cos(phi1) * Math.sin(phi2) -
+    Math.sin(phi1) * Math.cos(phi2) * Math.cos(dLng);
+  return (((Math.atan2(y, x) * 180) / Math.PI) + 360) % 360;
+}
+
 export default function HoleMiniMapGL({
   player,
   tee,
@@ -222,6 +243,14 @@ export default function HoleMiniMapGL({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !bbox) return;
+    // Rotate the map so the hole always "plays up": tee at the bottom
+    // of the screen, green toward the top. Falls back to north-up when
+    // we don't yet have both endpoints. fitBounds needs the bearing
+    // passed in or it resets to 0; passing it also makes the fit
+    // optimize against the rotated viewport so the camera lands tight
+    // to the hole.
+    const holeBearing =
+      tee && greenCenter ? bearingDeg(tee, greenCenter) : 0;
     const apply = () => {
       map.fitBounds(
         [
@@ -232,6 +261,7 @@ export default function HoleMiniMapGL({
           padding: 40,
           duration: 0,
           maxZoom: 19,
+          bearing: holeBearing,
         },
       );
     };
@@ -241,7 +271,11 @@ export default function HoleMiniMapGL({
     // whether or not loaded() is true -- GL JS just queues camera
     // updates and applies them when the next frame paints.
     apply();
-  }, [bbox]);
+    // tee + greenCenter must re-trigger the fit so the bearing snaps
+    // to the new hole-direction when the user switches holes (bbox
+    // alone re-triggers on any landmark change, but the bearing
+    // depends specifically on those two anchors).
+  }, [bbox, tee, greenCenter]);
 
   // Green polygon + tee/green markers + hazards. Re-runs whenever
   // those props change. We add sources/layers once the style is
