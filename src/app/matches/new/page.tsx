@@ -218,12 +218,12 @@ export default async function NewMatchPage({
             Course, tee time, players. Odds move the second you publish.
           </p>
           <p className="text-[11px] text-mute mb-6">
-            Stringing rounds together?{" "}
+            Stringing rounds together or playing with a large group?{" "}
             <Link
               href="/tournaments/new"
               className="text-accent hover:underline"
             >
-              Start a tournament →
+              Start a tournament here →
             </Link>
           </p>
         </>
