@@ -79,11 +79,12 @@ function resolvePars(holes: number, pars?: number[]): number[] {
 
 // Handicap prior: lower handicap = better. We model expected net-par strokes
 // for the round as -handicap, then convert to win probability via softmax over
-// the negative-handicap "skill" with a fairly flat temperature so a 5-stroke
-// gap is meaningful but not overwhelming pre-round.
+// the negative-handicap "skill". Temperature 4 (was 6): a 5-stroke gap reads
+// as ~78/22 and a 10-stroke gap ~92/8 so the favorite actually looks like
+// the favorite, without going fully deterministic on a 15-handicap gap.
 function modelProbabilities(players: PlayerInput[]): number[] {
   const skill = players.map((p) => -p.handicap);
-  return softmax(skill, 6);
+  return softmax(skill, 4);
 }
 
 // Crowd: Laplace-smoothed share of wagers. Smoothing keeps a fresh market
@@ -148,7 +149,10 @@ function liveProbabilities(
     const priorRate = p.handicap / totalHoles; // expected over-par per hole
     const observedRate =
       holesPlayed > 0 ? (strokesSoFar - parSoFar) / holesPlayed : priorRate;
-    const blend = holesPlayed / totalHoles;
+    // Convex blend (was linear) so the first few holes don't overweight
+    // small samples. At hole 3 of 18 observed pace counts ~7% instead
+    // of 17%; by the back nine the curves converge.
+    const blend = Math.pow(holesPlayed / totalHoles, 1.5);
     const blendedRate = (1 - blend) * priorRate + blend * observedRate;
 
     const projectedRemaining = remainingPar + holesRemaining * blendedRate;
@@ -226,7 +230,9 @@ export function computeOdds(input: OddsInput): OddsOutput {
       scoringMode,
       startingHole,
     );
-    const liveWeight = Math.min(0.95, holesPlayed / holes);
+    // Live channel weight ramps in convex too -- early holes shouldn't
+    // dictate the line even if the projection itself looks confident.
+    const liveWeight = Math.min(0.95, Math.pow(holesPlayed / holes, 1.5));
     const remaining = 1 - liveWeight;
     const crowdWeight =
       remaining * Math.min(0.7, totalWagers / (totalWagers + 4));
