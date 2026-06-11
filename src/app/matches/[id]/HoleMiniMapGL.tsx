@@ -48,6 +48,30 @@ const HAZARD_FILL: Record<Hazard["kind"], string> = {
   OTHER: "#8aa094",
 };
 
+// Standard ray-casting point-in-polygon over a lat/lng ring. Coords
+// are flat numbers, no projection needed at the scales we care about
+// (a single green ~30 yds across). Returns true when (lat, lng) is
+// inside the polygon, used to suppress hazard pills that would sit
+// on top of the green.
+function pointInLatLngPolygon(
+  lat: number,
+  lng: number,
+  ring: { lat: number; lng: number }[],
+): boolean {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i].lng;
+    const yi = ring[i].lat;
+    const xj = ring[j].lng;
+    const yj = ring[j].lat;
+    const intersects =
+      yi > lat !== yj > lat &&
+      lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi;
+    if (intersects) inside = !inside;
+  }
+  return inside;
+}
+
 export default function HoleMiniMapGL({
   player,
   tee,
@@ -719,6 +743,13 @@ export default function HoleMiniMapGL({
         .filter(isHazard)
         .map((l) => ({ l, p: map.project([l.lng, l.lat]) }));
       const navItems = landmarks.filter((l) => !isHazard(l));
+      // Project nav items once -- used both for rendering and for
+      // suppressing hazard pills that would collide with PIN / AIM /
+      // Front / Back labels.
+      const navProjected = navItems.map((l) => ({
+        l,
+        p: map.project([l.lng, l.lat]),
+      }));
 
       type Cluster = {
         members: { l: Landmark; p: mapboxgl.Point }[];
@@ -756,8 +787,30 @@ export default function HoleMiniMapGL({
           .addTo(map);
         markersRef.current.set(`lm-${l.id}`, m);
       }
+      // Drop any hazard cluster whose label would visually collide
+      // with a nav landmark (PIN / AIM / Front / Back / Center) OR
+      // sit on top of the green polygon. Nav labels carry shot-
+      // planning info; the bunker is still visible on the satellite
+      // + as a colored marker, the pill is just the distance
+      // annotation, and burying the green under a BNK label is
+      // worse than dropping the label.
+      const visibleClusters = clusters.filter((c) => {
+        const cx = c.members.reduce((s, m) => s + m.p.x, 0) / c.members.length;
+        const cy = c.members.reduce((s, m) => s + m.p.y, 0) / c.members.length;
+        for (const nav of navProjected) {
+          const d = Math.hypot(cx - nav.p.x, cy - nav.p.y);
+          if (d < VISUAL_OVERLAP_PX) return false;
+        }
+        if (greenPolygon && greenPolygon.length >= 3) {
+          const cLat = c.members.reduce((s, m) => s + m.l.lat, 0) / c.members.length;
+          const cLng = c.members.reduce((s, m) => s + m.l.lng, 0) / c.members.length;
+          if (pointInLatLngPolygon(cLat, cLng, greenPolygon)) return false;
+        }
+        return true;
+      });
+
       // Hazard clusters: single -> solo, multi -> cluster chip.
-      for (const c of clusters) {
+      for (const c of visibleClusters) {
         if (c.members.length === 1) {
           const l = c.members[0].l;
           const el = buildLandmarkEl(l);
@@ -836,7 +889,7 @@ export default function HoleMiniMapGL({
         // Map may already be torn down; safe to ignore.
       }
     };
-  }, [landmarks]);
+  }, [landmarks, greenPolygon]);
 
   return (
     <>
