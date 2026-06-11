@@ -604,6 +604,7 @@ export default function HoleMiniMap({
           into an illegible stack. */}
       {landmarks && landmarks.length > 0 && (
         <LandmarkLayer
+          greenPolygon={greenPolygon}
           items={landmarks.map((l) => {
             const pos = project({ lat: l.lat, lng: l.lng });
             return {
@@ -799,7 +800,34 @@ type LandmarkItem = {
   topPct: number;
 };
 
-function LandmarkLayer({ items }: { items: LandmarkItem[] }) {
+// Standard ray-casting point-in-polygon (lat/lng), used to drop
+// hazard pills that would sit on top of the green.
+function pointInLatLngPolygon(
+  lat: number,
+  lng: number,
+  ring: { lat: number; lng: number }[],
+): boolean {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i].lng;
+    const yi = ring[i].lat;
+    const xj = ring[j].lng;
+    const yj = ring[j].lat;
+    const intersects =
+      yi > lat !== yj > lat &&
+      lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi;
+    if (intersects) inside = !inside;
+  }
+  return inside;
+}
+
+function LandmarkLayer({
+  items,
+  greenPolygon,
+}: {
+  items: LandmarkItem[];
+  greenPolygon: Pt[] | null;
+}) {
   // Live zoom from the surrounding PinchZoom. Both the inverse-scale
   // and the clustering threshold are driven from this -- as the user
   // zooms in, pills stay the same size and the unscaled distance
@@ -847,6 +875,31 @@ function LandmarkLayer({ items }: { items: LandmarkItem[] }) {
 
   const navLandmarks = items.filter((it) => !isHazard(it.landmark));
 
+  // Drop any hazard cluster whose label would visually collide with a
+  // nav landmark (PIN / AIM / Front / Back / Center) OR sit on top of
+  // the green polygon. Nav labels carry shot-planning info you can't
+  // lose; the hazard's still visible on the satellite + as a colored
+  // marker, the pill is just the extra info, and burying the green
+  // under a BNK label is worse than dropping the label.
+  const filteredClusters = clusters.filter((c) => {
+    const cxPx =
+      c.members.reduce((s, m) => s + m.px, 0) / c.members.length;
+    const cyPx =
+      c.members.reduce((s, m) => s + m.py, 0) / c.members.length;
+    for (const nav of navLandmarks) {
+      const d = Math.hypot(cxPx - nav.px, cyPx - nav.py);
+      if (d < threshold) return false;
+    }
+    if (greenPolygon && greenPolygon.length >= 3) {
+      const cLat =
+        c.members.reduce((s, m) => s + m.landmark.lat, 0) / c.members.length;
+      const cLng =
+        c.members.reduce((s, m) => s + m.landmark.lng, 0) / c.members.length;
+      if (pointInLatLngPolygon(cLat, cLng, greenPolygon)) return false;
+    }
+    return true;
+  });
+
   return (
     <>
       {navLandmarks.map((it) => (
@@ -858,7 +911,7 @@ function LandmarkLayer({ items }: { items: LandmarkItem[] }) {
           zoom={zoom}
         />
       ))}
-      {clusters.map((c) => {
+      {filteredClusters.map((c) => {
         if (c.members.length === 1) {
           const it = c.members[0];
           return (
