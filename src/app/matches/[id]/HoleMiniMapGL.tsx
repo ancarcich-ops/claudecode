@@ -150,18 +150,20 @@ export default function HoleMiniMapGL({
     onAimRef.current = onAim;
   }, [onAim]);
 
-  // Bounding box of everything we want visible -- we fit to this on
-  // mount so the whole hole lands in view.
+  // Hole bbox -- static geometry of the hole itself. Player position
+  // and dynamic landmarks (AIM, distance pills) are intentionally
+  // EXCLUDED so the camera doesn't re-fit every time the GPS ticks
+  // or the user taps a new aim point. The fit happens once per hole
+  // (see the effect below); player + AIM render as their own markers
+  // and stay visible wherever they land within the fitted view.
   const bbox = useMemo(() => {
     const pts: Pt[] = [];
-    if (player) pts.push(player);
     if (tee) pts.push(tee);
     if (greenCenter) pts.push(greenCenter);
     if (greenFront) pts.push(greenFront);
     if (greenBack) pts.push(greenBack);
     if (greenPolygon) for (const p of greenPolygon) pts.push(p);
     for (const h of hazards) pts.push(h);
-    if (landmarks) for (const l of landmarks) pts.push({ lat: l.lat, lng: l.lng });
     if (pts.length === 0) return null;
     const lats = pts.map((p) => p.lat);
     const lngs = pts.map((p) => p.lng);
@@ -171,16 +173,7 @@ export default function HoleMiniMapGL({
       minLng: Math.min(...lngs),
       maxLng: Math.max(...lngs),
     };
-  }, [
-    player,
-    tee,
-    greenCenter,
-    greenFront,
-    greenBack,
-    greenPolygon,
-    hazards,
-    landmarks,
-  ]);
+  }, [tee, greenCenter, greenFront, greenBack, greenPolygon, hazards]);
 
   // One-time map init. We tear down on unmount; layers / markers
   // for a given hole are reconciled in the effects below.
@@ -236,45 +229,41 @@ export default function HoleMiniMapGL({
     };
   }, []);
 
-  // Fit to bbox whenever it changes (e.g. user switches holes). GL JS
-  // animates the camera by default -- a tight fitBounds with a small
-  // padding lands the hole comfortably in view with a sliver of
-  // surrounding context.
+  // Fit ONCE per hole. The previous version re-ran on every bbox
+  // change, but bbox depended on player + landmarks + aim, so every
+  // GPS tick and every aim tap snapped the camera back to the fit --
+  // a manual pinch-zoom got undone immediately and the view felt
+  // "stuck" zoomed in whenever the player marker drifted close to
+  // the tee/green anchors. Now we key the fit on the hole's static
+  // anchors (tee + green center) and skip the call if we've already
+  // fitted that exact hole.
+  const lastFitKeyRef = useRef<string>("");
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !bbox) return;
+    // Stable identifier for "this is the same hole as last time".
+    // tee + greenCenter alone are enough -- per-hole geometry below
+    // them (front/back/polygon/hazards) is keyed off the same hole.
+    const key = `${tee?.lat},${tee?.lng}|${greenCenter?.lat},${greenCenter?.lng}`;
+    if (key === lastFitKeyRef.current) return;
+    lastFitKeyRef.current = key;
     // Rotate the map so the hole always "plays up": tee at the bottom
-    // of the screen, green toward the top. Falls back to north-up when
-    // we don't yet have both endpoints. fitBounds needs the bearing
-    // passed in or it resets to 0; passing it also makes the fit
-    // optimize against the rotated viewport so the camera lands tight
-    // to the hole.
+    // of the screen, green toward the top. fitBounds resets bearing
+    // to 0 unless one is passed in.
     const holeBearing =
       tee && greenCenter ? bearingDeg(tee, greenCenter) : 0;
-    const apply = () => {
-      map.fitBounds(
-        [
-          [bbox.minLng, bbox.minLat],
-          [bbox.maxLng, bbox.maxLat],
-        ],
-        {
-          padding: 40,
-          duration: 0,
-          maxZoom: 19,
-          bearing: holeBearing,
-        },
-      );
-    };
-    // map.loaded() can return false during transient tile loads, in
-    // which case the once "load" listener never fires (load already
-    // happened once). The fitBounds call itself is safe to make
-    // whether or not loaded() is true -- GL JS just queues camera
-    // updates and applies them when the next frame paints.
-    apply();
-    // tee + greenCenter must re-trigger the fit so the bearing snaps
-    // to the new hole-direction when the user switches holes (bbox
-    // alone re-triggers on any landmark change, but the bearing
-    // depends specifically on those two anchors).
+    map.fitBounds(
+      [
+        [bbox.minLng, bbox.minLat],
+        [bbox.maxLng, bbox.maxLat],
+      ],
+      {
+        padding: 40,
+        duration: 0,
+        maxZoom: 19,
+        bearing: holeBearing,
+      },
+    );
   }, [bbox, tee, greenCenter]);
 
   // Green polygon + tee/green markers + hazards. Re-runs whenever
