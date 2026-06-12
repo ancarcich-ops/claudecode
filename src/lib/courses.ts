@@ -514,7 +514,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
     region: "OC",
     access: "municipal",
     holes: 18,
-    pars: [5, 4, 4, 3, 4, 5, 3, 4, 4, 4, 3, 4, 4, 5, 3, 4, 3, 5],
+    pars: [5, 5, 4, 3, 4, 5, 3, 4, 4, 4, 3, 4, 4, 5, 3, 4, 3, 5],
   },
   {
     id: "monarch-beach",
