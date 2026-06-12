@@ -9,25 +9,27 @@ import styles from "./SticksSplash.module.css";
 // in an additional <g> whose transform-origin is the shaft tip
 // (rendered bottom of the club) so the club appears to grow up out
 // of the baseline rather than from the SVG centroid.
+// originX/Y are in the inner coordinate system (before the +4.5
+// optical-center nudge applied by the wrapping <g> in the render).
+// The rise animation pivots around each club's rendered shaft tip.
 const CLUBS = [
-  // iron (left) -- shaft tip lands at y ~54 in the rendered 64-grid
-  // after the flip
+  // iron (left) -- shaft tip ~54 in the rendered 64-grid after flip
   {
-    d: "M 19.1 14.60 Q 19.1 14.00 18.50 14.00 L 15.50 14.00 Q 14.9 14.00 14.9 14.60 L 14.9 47.19 C 14.9 49.19, 11.60 47.49, 7.18 49.90 C 7.18 52.61, 7.68 54.00, 9.38 54.00 C 13.56 54.10, 17.30 53.80, 19.1 51.16 C 19.1 49.27, 19.1 48.19, 19.1 46.89 L 19.1 14.60 Z",
+    d: "M 19.57 14.60 Q 19.57 14.00 18.97 14.00 L 15.03 14.00 Q 14.43 14.00 14.43 14.60 L 14.43 46.10 C 14.43 48.10, 10.68 46.40, 5.50 49.19 C 5.50 52.37, 6.00 54.00, 7.70 54.00 C 12.98 54.10, 17.30 53.80, 19.57 50.67 C 19.57 48.45, 19.57 47.10, 19.57 45.80 L 19.57 14.60 Z",
     flipY: 68,
     originX: 17,
     originY: 54,
   },
   // driver (center, tallest) -- shaft tip ~56
   {
-    d: "M 34.1 6.60 Q 34.1 6.00 33.50 6.00 L 30.50 6.00 Q 29.9 6.00 29.9 6.60 L 29.9 48.26 C 29.9 50.26, 25.73 48.56, 20.60 51.29 C 20.60 54.41, 21.10 56.00, 22.80 56.00 C 28.01 56.10, 32.30 55.80, 34.1 52.74 C 34.1 50.57, 34.1 49.26, 34.1 47.96 L 34.1 6.60 Z",
+    d: "M 34.57 6.60 Q 34.57 6.00 33.97 6.00 L 30.03 6.00 Q 29.43 6.00 29.43 6.60 L 29.43 47.00 C 29.43 49.00, 24.57 47.30, 18.50 50.48 C 18.50 54.13, 19.00 56.00, 20.70 56.00 C 27.27 56.10, 32.30 55.80, 34.57 52.17 C 34.57 49.63, 34.57 48.00, 34.57 46.70 L 34.57 6.60 Z",
     flipY: 62,
     originX: 32,
     originY: 56,
   },
   // wedge (right, shortest) -- shaft tip ~50
   {
-    d: "M 49.1 22.60 Q 49.1 22.00 48.50 22.00 L 45.50 22.00 Q 44.9 22.00 44.9 22.60 L 44.9 43.55 C 44.9 45.55, 42.31 43.85, 38.47 46.13 C 38.47 48.69, 38.97 50.00, 40.67 50.00 C 44.01 50.10, 47.30 49.80, 49.1 47.32 C 49.1 45.54, 49.1 44.55, 49.1 43.25 L 49.1 22.60 Z",
+    d: "M 49.57 22.60 Q 49.57 22.00 48.97 22.00 L 45.03 22.00 Q 44.43 22.00 44.43 22.60 L 44.43 42.50 C 44.43 44.50, 41.50 42.80, 37.00 45.45 C 37.00 48.46, 37.50 50.00, 39.20 50.00 C 43.50 50.10, 47.30 49.80, 49.57 46.85 C 49.57 44.75, 49.57 43.50, 49.57 42.20 L 49.57 22.60 Z",
     flipY: 72,
     originX: 47,
     originY: 50,
@@ -95,25 +97,29 @@ export default function SticksSplash() {
         viewBox="0 0 64 64"
         aria-label="Sticks"
       >
-        {CLUBS.map((c, i) => (
-          <g
-            key={i}
-            style={{
-              transformOrigin: `${c.originX}px ${c.originY}px`,
-              animation: `sticksRise 1.4s ${i * 0.14}s cubic-bezier(.2,.7,.3,1) both`,
-            }}
-          >
-            <g transform={`translate(0 ${c.flipY}) scale(1 -1)`}>
-              <path
-                d={c.d}
-                fill="#34d399"
-                stroke="#34d399"
-                strokeWidth={0.4}
-                strokeLinejoin="round"
-              />
+        {/* +4.5 X nudge from the brand kit -- left-facing heads
+            otherwise crowd the left edge of the viewBox. */}
+        <g transform="translate(4.5 0)">
+          {CLUBS.map((c, i) => (
+            <g
+              key={i}
+              style={{
+                transformOrigin: `${c.originX}px ${c.originY}px`,
+                animation: `sticksRise 1.4s ${i * 0.14}s cubic-bezier(.2,.7,.3,1) both`,
+              }}
+            >
+              <g transform={`translate(0 ${c.flipY}) scale(1 -1)`}>
+                <path
+                  d={c.d}
+                  fill="#34d399"
+                  stroke="#34d399"
+                  strokeWidth={0.4}
+                  strokeLinejoin="round"
+                />
+              </g>
             </g>
-          </g>
-        ))}
+          ))}
+        </g>
       </svg>
 
       <div className={styles.wordmark}>
