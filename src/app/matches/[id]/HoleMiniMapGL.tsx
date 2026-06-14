@@ -194,16 +194,24 @@ export default function HoleMiniMapGL({
       // actual hole the first time bbox is available.
       center: [-118, 34],
       zoom: 14,
-      // Killing the rotate/pitch controls keeps the view top-down
-      // like the old SVG. Easy to enable later if we want a 3D mode.
+      // Pitch stays locked at 0 -- a tilted satellite view is mostly
+      // glamour, not useful for shot-planning. Bearing (rotation) IS
+      // user-controllable: the bbox-fit effect initially rotates the
+      // hole "tee down, green up", but the player can two-finger twist
+      // to override for awkward holes where the auto-bearing isn't
+      // ideal (e.g. doglegs, holes where the DB has no tee marker so
+      // bearing falls back to north-up).
       pitch: 0,
       bearing: 0,
-      dragRotate: false,
+      dragRotate: true,
       pitchWithRotate: false,
       touchPitch: false,
       attributionControl: false,
     });
-    map.touchZoomRotate.disableRotation();
+    // touchZoomRotate stays fully enabled (two-finger twist rotates).
+    // Previous build called .disableRotation() here; removed so the
+    // user can override the auto-bearing on the on-course view.
+
 
     // Tap-to-aim. The map gives us lngLat directly -- no projection
     // math like the static path needed -- so we just hand the coord
