@@ -77,11 +77,33 @@ export default async function HomePage() {
   const live = open.filter((m) => m.status === "IN_PROGRESS");
   const upcoming = open.filter((m) => m.status === "UPCOMING");
 
+  // Bubble matches the signed-in user is actually PLAYING IN to the top
+  // of each feed band (Live / Upcoming / Settled). Watching or wagering
+  // doesn't count -- those still sort by the existing scheduledAt /
+  // completedAt order. Partition is stable so the per-band sort is
+  // preserved within each side.
+  const playerInMatch = (m: GridMatch): boolean =>
+    !!user && m.players.some((p) => p.userId === user.id);
+  const reorderMine = (rows: GridMatch[]): GridMatch[] => {
+    if (!user) return rows;
+    const mine: GridMatch[] = [];
+    const others: GridMatch[] = [];
+    for (const m of rows) {
+      if (playerInMatch(m)) mine.push(m);
+      else others.push(m);
+    }
+    return [...mine, ...others];
+  };
+
+  const liveOrdered = reorderMine(live);
+  const upcomingOrdered = reorderMine(upcoming);
+
   const completed = await loadMatches(
     { ...groupWhere, status: "COMPLETED" },
     { completedAt: "desc" },
     6,
   );
+  const completedOrdered = reorderMine(completed);
 
   // Pull the current viewer's existing wagers across every match in view
   // in a single query so the QuickWagerButton can highlight the player
@@ -213,7 +235,7 @@ export default async function HomePage() {
             count={live.length}
           />
           <StaggerGroup className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {live.map((m) => (
+            {liveOrdered.map((m) => (
               <StaggerItem key={m.id}>
                 <RenderedMatchCard
                   match={m}
@@ -247,7 +269,7 @@ export default async function HomePage() {
         ) : upcoming.length === 0 ? (
           <EmptyCard>Nothing on the tee. Open the next line.</EmptyCard>
         ) : (
-          <MatchGridNew matches={upcoming} myPickByMatch={myPickByMatch} />
+          <MatchGridNew matches={upcomingOrdered} myPickByMatch={myPickByMatch} />
         )}
       </section>
 
@@ -256,7 +278,7 @@ export default async function HomePage() {
         {completed.length === 0 ? (
           <EmptyCard>No closed lines yet.</EmptyCard>
         ) : (
-          <MatchGridNew matches={completed} myPickByMatch={myPickByMatch} />
+          <MatchGridNew matches={completedOrdered} myPickByMatch={myPickByMatch} />
         )}
       </section>
 
