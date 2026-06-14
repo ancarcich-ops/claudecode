@@ -92,6 +92,12 @@ const CITIES_LA = [
   "monterey park", "rosemead", "san gabriel", "temple city",
   "culver city", "marina del rey", "playa vista", "view park",
   "rolling hills", "palos verdes", "rancho palos verdes",
+  // Foothill suburbs that earlier sweeps missed. Adding here surfaces
+  // La Cañada Country Club, Glendora CC, etc. on the next discovery
+  // run.
+  "la canada flintridge", "la cañada flintridge",
+  "altadena", "sierra madre", "south pasadena",
+  "la verne", "san marino",
 ];
 
 // Orange County
