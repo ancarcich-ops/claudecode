@@ -705,12 +705,10 @@ export const COURSE_PRESETS: CoursePreset[] = [
   { id: "el-caballero-cc", name: "El Caballero Country Club", city: "Tarzana, CA", region: "LA", access: "private", holes: 18, pars: [5, 4, 4, 4, 4, 3, 5, 3, 4, 3, 4, 5, 4, 4, 4, 3, 4, 4] },
   { id: "hacienda-gc", name: "Hacienda Golf Club", city: "La Habra Heights, CA", region: "LA", access: "private", holes: 18, pars: [4, 4, 4, 3, 4, 3, 5, 4, 4, 5, 4, 3, 4, 4, 4, 3, 5, 4] },
   { id: "annandale-gc", name: "Annandale Golf Club", city: "Pasadena, CA", region: "LA", access: "private", holes: 18, pars: [4, 4, 4, 4, 3, 5, 4, 4, 3, 4, 4, 3, 5, 4, 3, 4, 3, 5] },
-  // Par 70, ~5800 yds. Pars are an estimate from public scorecard
-  // sources -- replace via PR if the on-course scorecard shows a
-  // different layout. Tomorrow's CA discovery sweep (now includes
-  // "la canada flintridge") should also surface the Golfbert gbId so
-  // we can pull real geometry.
-  { id: "la-canada-cc", name: "La Cañada Country Club", city: "La Cañada Flintridge, CA", region: "LA", access: "private", holes: 18, pars: [4, 4, 3, 4, 4, 5, 3, 4, 4, 4, 4, 4, 3, 5, 4, 3, 4, 4] },
+  // Par 70, ~5800 yds. Real pars from the on-course scorecard photo
+  // (Mar 2026): front 34 + back 36 = 70. Hole 2 is a par 3, par 5s
+  // are at holes 6 and 12.
+  { id: "la-canada-cc", name: "La Cañada Country Club", city: "La Cañada Flintridge, CA", region: "LA", access: "private", holes: 18, pars: [4, 3, 4, 4, 4, 3, 4, 4, 4, 4, 4, 5, 3, 4, 4, 4, 4, 4] },
   { id: "mountaingate-cc", name: "Mountaingate Country Club", city: "Los Angeles, CA", region: "LA", access: "private", holes: 18, pars: [5, 4, 3, 4, 5, 3, 4, 3, 4, 4, 3, 4, 4, 5, 4, 3, 4, 4] },
   // Braemar has 27 holes (Trails/Vista/Tigertail nines); seeded as a
   // single par-72 18 from the Trails/Vista combo.
