@@ -23104,5 +23104,32 @@
     "gbCity": "Warner Springs",
     "pars": null,
     "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "la-canada-cc",
+    "gbId": 1651,
+    "gbName": "La Cañada Country Club",
+    "pars": [
+      3,
+      4,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4,
+      3,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   }
 ]
