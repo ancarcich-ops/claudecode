@@ -789,8 +789,13 @@ export const COURSE_PRESETS: CoursePreset[] = [
   { id: "wood-ranch-gc", name: "Wood Ranch Golf Club", city: "Simi Valley, CA", region: "VC", access: "private", holes: 18, pars: [4, 5, 3, 4, 4, 5, 3, 4, 4, 4, 4, 4, 3, 4, 5, 4, 3, 5] },
   { id: "spanish-hills-cc", name: "Spanish Hills Country Club", city: "Camarillo, CA", region: "VC", access: "private", holes: 18, pars: [4, 5, 4, 3, 4, 3, 4, 4, 4, 4, 3, 4, 3, 5, 5, 4, 4, 4] },
   { id: "las-posas-cc", name: "Las Posas Country Club", city: "Camarillo, CA", region: "VC", access: "private", holes: 18, pars: [4, 3, 4, 5, 4, 3, 5, 4, 3, 5, 3, 5, 3, 4, 4, 4, 4, 4] },
-  // Moorpark CC is 27 holes; seeded as a single par-72 18 entry.
-  { id: "moorpark-cc", name: "Moorpark Country Club", city: "Moorpark, CA", region: "VC", access: "private", holes: 18, pars: [5, 3, 4, 4, 4, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4] },
+  // Moorpark CC has three nines: Creekside, Canyon Crest, Ridgeline.
+  // Three 18-hole combos as separate presets -- per-hole pars are
+  // placeholder par 72 layouts; replace from the scorecard when
+  // available (same pattern Sand Canyon CC uses just above).
+  { id: "moorpark-cc-creekside-canyon-crest", name: "Moorpark CC - Creekside/Canyon Crest", city: "Moorpark, CA", region: "VC", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "moorpark-cc-creekside-ridgeline", name: "Moorpark CC - Creekside/Ridgeline", city: "Moorpark, CA", region: "VC", access: "private", holes: 18, pars: p(18, 72) },
+  { id: "moorpark-cc-canyon-crest-ridgeline", name: "Moorpark CC - Canyon Crest/Ridgeline", city: "Moorpark, CA", region: "VC", access: "private", holes: 18, pars: p(18, 72) },
 
   // --- Austin, TX ---
   { id: "austin-cc", name: "Austin Country Club", city: "Austin, TX", region: "TX", access: "private", holes: 18, pars: [4, 3, 5, 4, 4, 4, 5, 3, 4, 4, 4, 4, 3, 4, 5, 3, 5, 4] },
@@ -2352,7 +2357,9 @@ export const COURSE_PRESET_COORDS: Record<string, { lat: number; lng: number }> 
   "wood-ranch-gc": { lat: 34.2522, lng: -118.7295 },
   "spanish-hills-cc": { lat: 34.2342, lng: -119.0500 },
   "las-posas-cc": { lat: 34.2197, lng: -119.0464 },
-  "moorpark-cc": { lat: 34.2731, lng: -118.8753 },
+  "moorpark-cc-creekside-canyon-crest": { lat: 34.2731, lng: -118.8753 },
+  "moorpark-cc-creekside-ridgeline": { lat: 34.2731, lng: -118.8753 },
+  "moorpark-cc-canyon-crest-ridgeline": { lat: 34.2731, lng: -118.8753 },
 
   // --- Austin, TX ---
   // Barton Creek Resort - Fazio Foothills / Fazio Canyons / Crenshaw
