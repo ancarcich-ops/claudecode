@@ -9,6 +9,8 @@
 //  Seat 4 · Ember    -- distinct hue; no other system color sits here
 //  Seat 5 · Cyan     -- cool counter to ember, clean at 2px
 //  Seat 6 · Rose     -- mixed-group guardrail; reads at small sizes
+//  Seat 7 · Violet   -- added for the 7-8 player (two-foursome) case
+//  Seat 8 · Lime     -- added for the 7-8 player (two-foursome) case
 export const PLAYER_COLORS = [
   "#34d399", // emerald
   "#60a5fa", // sky
@@ -16,6 +18,8 @@ export const PLAYER_COLORS = [
   "#fb923c", // ember
   "#22d3ee", // cyan
   "#f472b6", // rose
+  "#a78bfa", // violet
+  "#a3e635", // lime
 ];
 
 export function colorForSeat(seat: number) {
