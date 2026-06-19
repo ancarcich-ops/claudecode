@@ -8,8 +8,10 @@ import {
   parseSixesConfig,
   parseSkinsConfig,
   parseTargetsConfig,
+  parseTeamVsTeamConfig,
   parseWolfConfig,
   type SideGameKind,
+  type TeamVsTeamRule,
 } from "@/lib/sideGames";
 import SideGamesEditor from "./SideGamesEditor";
 
@@ -31,8 +33,6 @@ export default async function EditSideGamesPage({
     },
   });
   if (!match) notFound();
-  // Creator-only, and side games can't be edited on a final match
-  // (everything's already settled). UPCOMING + IN_PROGRESS pass.
   if (match.createdById !== user.id) redirect(`/matches/${match.id}`);
   if (match.status === "COMPLETED") redirect(`/matches/${match.id}`);
 
@@ -52,9 +52,32 @@ export default async function EditSideGamesPage({
   const sixesCfg = parseSixesConfig(
     match.sideGames.find((sg) => sg.kind === "SIXES")?.config,
   );
+  const tvt = parseTeamVsTeamConfig(
+    match.sideGames.find((sg) => sg.kind === "TEAM_VS_TEAM")?.config,
+  );
 
   const format: "INDIVIDUAL" | "SCRAMBLE" =
     match.format === "SCRAMBLE" ? "SCRAMBLE" : "INDIVIDUAL";
+
+  // Per-seat team assignment for the TVT picker. Seed from the stored
+  // TVT roster when present; otherwise default to alternating A/B so
+  // the user only has to flip a couple of chips.
+  const teamById = new Map<string, 0 | 1>();
+  if (tvt) {
+    for (const id of tvt.teams[0]) teamById.set(id, 0);
+    for (const id of tvt.teams[1]) teamById.set(id, 1);
+  }
+  const seatPlayers = match.players.map((p, i) => ({
+    id: p.id,
+    displayName: p.displayName,
+    team:
+      teamById.get(p.id) ??
+      (match.format === "SCRAMBLE"
+        ? ((p.team === 1 ? 1 : 0) as 0 | 1)
+        : ((i % 2) as 0 | 1)),
+  }));
+
+  const tvtRules: TeamVsTeamRule[] = tvt ? tvt.rules.map((r) => r.rule) : [];
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -75,7 +98,7 @@ export default async function EditSideGamesPage({
         <SideGamesEditor
           matchId={match.id}
           holes={match.holes}
-          playerCount={match.players.length}
+          players={seatPlayers}
           format={format}
           matchStatus={
             match.status === "IN_PROGRESS"
@@ -84,7 +107,6 @@ export default async function EditSideGamesPage({
                 ? "COMPLETED"
                 : "UPCOMING"
           }
-          hasTeamVsTeam={sideGameKinds.includes("TEAM_VS_TEAM")}
           initial={{
             sideGames: sideGameKinds,
             skinsPushRule: skinsCfg.pushRule ?? "CARRYOVER",
@@ -93,6 +115,7 @@ export default async function EditSideGamesPage({
             targetsTarget: targetsCfg ? String(targetsCfg.target) : "10",
             targetsAnte: targetsCfg?.ante ? String(targetsCfg.ante) : "",
             sixesStake: sixesCfg?.stake ? String(sixesCfg.stake) : "",
+            tvtRules,
           }}
         />
       </form>
