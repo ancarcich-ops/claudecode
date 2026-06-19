@@ -118,8 +118,11 @@ function HoleStrip({
   breakdown: TeamVsTeamHoleBreakdown[];
   teamLabels: { A: string; B: string };
 }) {
-  // Horizontal scroll on narrow screens so 18 columns don't squeeze
-  // the cells unreadably small.
+  // Player rosters are stable across holes -- pull from the first
+  // breakdown entry so the rows always render in roster order.
+  const teamARoster = breakdown[0]?.teamAPlayers ?? [];
+  const teamBRoster = breakdown[0]?.teamBPlayers ?? [];
+
   return (
     <div className="mt-2 overflow-x-auto -mx-1 px-1">
       <table className="text-[10.5px] font-mono tabular-nums w-full min-w-max">
@@ -152,15 +155,49 @@ function HoleStrip({
           </tr>
         </thead>
         <tbody>
-          <ScoreRow
-            label={teamLabels.A}
+          {/* TEAM A header + per-player rows + team total */}
+          <tr className="text-faint">
+            <td
+              colSpan={breakdown.length + 1}
+              className="pt-2 pb-0.5 text-[9px] uppercase tracking-wider sticky left-0 bg-panel"
+            >
+              {teamLabels.A}
+            </td>
+          </tr>
+          {teamARoster.map((p, idx) => (
+            <PlayerRow
+              key={`A-${p.playerId}`}
+              displayName={p.displayName}
+              breakdown={breakdown}
+              pick={(b) => b.teamAPlayers[idx] ?? null}
+            />
+          ))}
+          <TeamTotalRow
+            label="Total"
             breakdown={breakdown}
             pick={(b) => b.teamA}
             isWinner={(b) => b.winner === "A"}
             isTie={(b) => b.winner === "TIE"}
           />
-          <ScoreRow
-            label={teamLabels.B}
+          {/* TEAM B */}
+          <tr className="text-faint">
+            <td
+              colSpan={breakdown.length + 1}
+              className="pt-2 pb-0.5 text-[9px] uppercase tracking-wider sticky left-0 bg-panel"
+            >
+              {teamLabels.B}
+            </td>
+          </tr>
+          {teamBRoster.map((p, idx) => (
+            <PlayerRow
+              key={`B-${p.playerId}`}
+              displayName={p.displayName}
+              breakdown={breakdown}
+              pick={(b) => b.teamBPlayers[idx] ?? null}
+            />
+          ))}
+          <TeamTotalRow
+            label="Total"
             breakdown={breakdown}
             pick={(b) => b.teamB}
             isWinner={(b) => b.winner === "B"}
@@ -172,7 +209,48 @@ function HoleStrip({
   );
 }
 
-function ScoreRow({
+function PlayerRow({
+  displayName,
+  breakdown,
+  pick,
+}: {
+  displayName: string;
+  breakdown: TeamVsTeamHoleBreakdown[];
+  pick: (b: TeamVsTeamHoleBreakdown) => {
+    score: number | null;
+    contributed: boolean;
+  } | null;
+}) {
+  return (
+    <tr>
+      <td className="text-left pr-2 text-mute sticky left-0 bg-panel truncate max-w-[6rem]">
+        {displayName}
+      </td>
+      {breakdown.map((b) => {
+        const cell = pick(b);
+        const score = cell?.score ?? null;
+        const contributed = cell?.contributed ?? false;
+        return (
+          <td
+            key={`pc-${displayName}-${b.hole}`}
+            className={
+              "px-1 text-center " +
+              (score == null
+                ? "text-faint"
+                : contributed
+                  ? "text-accent font-semibold"
+                  : "text-mute")
+            }
+          >
+            {score == null ? "·" : score}
+          </td>
+        );
+      })}
+    </tr>
+  );
+}
+
+function TeamTotalRow({
   label,
   breakdown,
   pick,
@@ -186,8 +264,8 @@ function ScoreRow({
   isTie: (b: TeamVsTeamHoleBreakdown) => boolean;
 }) {
   return (
-    <tr>
-      <td className="text-left pr-2 text-mute sticky left-0 bg-panel truncate max-w-[5rem]">
+    <tr className="border-t border-border/40">
+      <td className="text-left pr-2 text-[9px] uppercase tracking-wider text-faint sticky left-0 bg-panel">
         {label}
       </td>
       {breakdown.map((b) => {
@@ -196,13 +274,13 @@ function ScoreRow({
         const tie = isTie(b);
         return (
           <td
-            key={`s-${label}-${b.hole}`}
+            key={`tt-${label}-${b.hole}`}
             className={
               "px-1 text-center " +
               (v == null
                 ? "text-faint"
                 : win
-                  ? "text-accent font-semibold"
+                  ? "text-ink font-semibold bg-accent/10 rounded"
                   : tie
                     ? "text-mute"
                     : "text-mute")
