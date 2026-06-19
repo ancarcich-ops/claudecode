@@ -1153,19 +1153,22 @@ export async function editMatchSideGamesAction(formData: FormData) {
     new Set(
       sideGameRaw
         .filter(isSideGameKind)
-        .filter((k) => !(k === "NASSAU" && existing.holes !== 18))
-        // TEAM_VS_TEAM stays locked to the original format choice --
-        // adding teams mid-round needs the team picker the full edit
-        // form provides. The slim editor doesn't expose it.
-        .filter((k): k is Exclude<SideGameKind, "TEAM_VS_TEAM"> =>
-          k !== "TEAM_VS_TEAM",
-        ),
+        .filter((k) => !(k === "NASSAU" && existing.holes !== 18)),
     ),
   );
 
-  // Preserve any existing TVT row -- we don't touch it from this form.
-  const preservedTvt = existing.sideGames.find((sg) => sg.kind === "TEAM_VS_TEAM");
-  if (preservedTvt) sideGameKinds.push("TEAM_VS_TEAM");
+  // SCRAMBLE matches lock TVT to whatever the original config was --
+  // the slim editor hides the TVT toggle in scramble (teams live on
+  // the player rows in the full editor). Force the existing row to
+  // survive so saving the slim editor doesn't strip it.
+  if (existing.format === "SCRAMBLE") {
+    const hasTvtRow = existing.sideGames.some(
+      (sg) => sg.kind === "TEAM_VS_TEAM",
+    );
+    if (hasTvtRow && !sideGameKinds.includes("TEAM_VS_TEAM")) {
+      sideGameKinds.push("TEAM_VS_TEAM");
+    }
+  }
 
   // Drop de-selected games (cascades their events), ensure selected ones exist.
   for (const sg of existing.sideGames) {
@@ -1245,6 +1248,54 @@ export async function editMatchSideGamesAction(formData: FormData) {
       where: { matchId_kind: { matchId, kind: "SIXES" } },
       data: { config },
     });
+  }
+
+  // TEAM_VS_TEAM: only the INDIVIDUAL-format flow drives this from the
+  // slim editor. The form posts a tvtConfig (rules) + per-seat
+  // playerId/playerTeam pairs; we rebuild the full teams config from
+  // those. SCRAMBLE matches leave the original config alone.
+  if (
+    sideGameKinds.includes("TEAM_VS_TEAM") &&
+    existing.format !== "SCRAMBLE"
+  ) {
+    const {
+      TEAM_VS_TEAM_RULES,
+      stringifyTeamVsTeamConfig,
+      parseTeamVsTeamConfig,
+    } = await import("./sideGames");
+    type TvtRule = (typeof TEAM_VS_TEAM_RULES)[number];
+    const playerIds = formData.getAll("playerId").map((v) => String(v));
+    const playerTeams = formData
+      .getAll("playerTeam")
+      .map((v) => (Number(v) === 1 ? 1 : 0) as 0 | 1);
+    const teams: { 0: string[]; 1: string[] } = { 0: [], 1: [] };
+    for (let i = 0; i < playerIds.length; i++) {
+      const pid = playerIds[i];
+      // Only seats that survive on the match
+      if (existing.players.some((p) => p.id === pid)) {
+        teams[playerTeams[i] ?? 0].push(pid);
+      }
+    }
+    if (teams[0].length > 0 && teams[1].length > 0) {
+      const rawTvt = String(formData.get("tvtConfig") ?? "");
+      let parsedRules: { rule: TvtRule; stake?: number; vegas?: unknown }[] = [];
+      if (rawTvt) {
+        const parsed = parseTeamVsTeamConfig(
+          JSON.stringify({ teams, ...JSON.parse(rawTvt) }),
+        );
+        if (parsed && parsed.rules.length > 0) parsedRules = parsed.rules;
+      }
+      if (parsedRules.length === 0) parsedRules = [{ rule: "BEST_BALL" }];
+      await prisma.sideGame.update({
+        where: { matchId_kind: { matchId, kind: "TEAM_VS_TEAM" } },
+        data: {
+          config: stringifyTeamVsTeamConfig({
+            teams,
+            rules: parsedRules as never,
+          }),
+        },
+      });
+    }
   }
 
   await recordOddsSnapshot(matchId);

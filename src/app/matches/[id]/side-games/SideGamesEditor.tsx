@@ -5,25 +5,35 @@ import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import {
   ALL_SIDE_GAMES,
+  TEAM_VS_TEAM_RULES,
+  teamVsTeamRuleBlurb,
+  teamVsTeamRuleLabel,
   type SideGameKind,
   type SkinsPushRule,
+  type TeamVsTeamRule,
   type WolfPushRule,
 } from "@/lib/sideGames";
 
 // Slim editor reachable from the scorecard CTA. Covers add/remove of
 // the common side games plus their inline config (push rules, target
-// counts, sixes stake). Course / players / format aren't editable
-// here -- this is intentionally the safe-mid-round subset.
+// counts, sixes stake, team-vs-team teams + rules). Course / players /
+// format aren't editable here -- this is intentionally the safe-mid-
+// round subset.
 
 type TargetsStat = "PAR_OR_BETTER" | "BIRDIE_OR_BETTER";
+
+export type PlayerSeat = {
+  id: string;
+  displayName: string;
+  team: 0 | 1;
+};
 
 export type SideGamesEditorProps = {
   matchId: string;
   holes: number;
-  playerCount: number;
+  players: PlayerSeat[];
   format: "INDIVIDUAL" | "SCRAMBLE";
   matchStatus: "UPCOMING" | "IN_PROGRESS" | "COMPLETED";
-  hasTeamVsTeam: boolean;
   initial: {
     sideGames: SideGameKind[];
     skinsPushRule: SkinsPushRule;
@@ -32,16 +42,16 @@ export type SideGamesEditorProps = {
     targetsTarget: string;
     targetsAnte: string;
     sixesStake: string;
+    tvtRules: TeamVsTeamRule[];
   };
 };
 
 export default function SideGamesEditor({
   matchId,
   holes,
-  playerCount,
+  players: initialPlayers,
   format,
   matchStatus,
-  hasTeamVsTeam,
   initial,
 }: SideGamesEditorProps) {
   const [sideGames, setSideGames] = useState<Set<SideGameKind>>(
@@ -59,6 +69,18 @@ export default function SideGamesEditor({
   const [targetsTarget, setTargetsTarget] = useState(initial.targetsTarget);
   const [targetsAnte, setTargetsAnte] = useState(initial.targetsAnte);
   const [sixesStake, setSixesStake] = useState(initial.sixesStake);
+  const [tvtRules, setTvtRules] = useState<Set<TeamVsTeamRule>>(
+    () =>
+      new Set(
+        initial.tvtRules.length > 0 ? initial.tvtRules : ["BEST_BALL"],
+      ),
+  );
+  // Per-seat team assignment for TVT. SCRAMBLE keeps its own team
+  // column on the player rows, so this editor doesn't touch teams
+  // there -- only INDIVIDUAL+TVT uses these chips.
+  const [seatTeams, setSeatTeams] = useState<(0 | 1)[]>(() =>
+    initialPlayers.map((p) => p.team),
+  );
 
   function toggle(kind: SideGameKind) {
     setSideGames((prev) => {
@@ -67,6 +89,17 @@ export default function SideGamesEditor({
       else next.add(kind);
       return next;
     });
+  }
+  function toggleTvtRule(r: TeamVsTeamRule) {
+    setTvtRules((prev) => {
+      const next = new Set(prev);
+      if (next.has(r)) next.delete(r);
+      else next.add(r);
+      return next;
+    });
+  }
+  function setSeatTeam(i: number, team: 0 | 1) {
+    setSeatTeams((prev) => prev.map((t, idx) => (idx === i ? team : t)));
   }
 
   const skinsConfigJson = JSON.stringify({ pushRule: skinsPushRule });
@@ -86,6 +119,18 @@ export default function SideGamesEditor({
       ? { stake: sixesStakeNum }
       : {}),
   });
+  // teams payload mirrors the new-match form: just the rules + per-
+  // rule stake (no Vegas options here -- keep the slim editor focused).
+  const tvtConfigJson = JSON.stringify({
+    rules: Array.from(tvtRules).map((r) => ({ rule: r })),
+  });
+
+  const tvtActive = sideGames.has("TEAM_VS_TEAM");
+  const tvtAvailable = format === "INDIVIDUAL";
+  const teamACount = seatTeams.filter((t) => t === 0).length;
+  const teamBCount = seatTeams.filter((t) => t === 1).length;
+  const tvtNeedsTeams =
+    tvtActive && tvtAvailable && (teamACount === 0 || teamBCount === 0);
 
   return (
     <>
@@ -102,6 +147,27 @@ export default function SideGamesEditor({
       {sideGames.has("SIXES") && (
         <input type="hidden" name="sixesConfig" value={sixesConfigJson} />
       )}
+      {tvtActive && tvtAvailable && (
+        <>
+          <input type="hidden" name="tvtConfig" value={tvtConfigJson} />
+          {initialPlayers.map((p, i) => (
+            <input
+              key={p.id}
+              type="hidden"
+              name="playerTeam"
+              value={String(seatTeams[i] ?? 0)}
+            />
+          ))}
+          {initialPlayers.map((p) => (
+            <input
+              key={`pid-${p.id}`}
+              type="hidden"
+              name="playerId"
+              value={p.id}
+            />
+          ))}
+        </>
+      )}
 
       <div className="card p-5 space-y-3">
         <div className="flex items-center justify-between">
@@ -117,29 +183,18 @@ export default function SideGamesEditor({
           </p>
         )}
 
-        {hasTeamVsTeam && (
-          <div className="rounded-md border border-border bg-panel2/40 px-3 py-2 text-[11px] text-mute">
-            Team vs Team is on for this match (set via the round&apos;s format).
-            Edit it from the{" "}
-            <Link
-              href={`/matches/${matchId}/edit?step=side-games`}
-              className="text-accent hover:underline"
-            >
-              full match editor
-            </Link>{" "}
-            when the round hasn&apos;t started yet.
-          </div>
-        )}
-
         <div className="space-y-2">
           {ALL_SIDE_GAMES.filter((g) => {
-            if (g.kind === "TEAM_VS_TEAM") return false;
+            // TVT only available on INDIVIDUAL matches here; SCRAMBLE
+            // already plays as teams and exposes the rule picker via
+            // the full edit form.
+            if (g.kind === "TEAM_VS_TEAM" && !tvtAvailable) return false;
             if (format === "SCRAMBLE" && g.kind !== "SNAKE") return false;
             return true;
           }).map((g) => {
             const disabledByHoles = g.requires18 && holes !== 18;
             const disabledByPlayers =
-              g.requires4Players && playerCount !== 4;
+              g.requires4Players && initialPlayers.length !== 4;
             const disabled = disabledByHoles || disabledByPlayers;
             const active = sideGames.has(g.kind);
             const disabledReason = disabledByHoles
@@ -213,6 +268,99 @@ export default function SideGamesEditor({
                     onChange={(v) => setWolfPushRule(v as WolfPushRule)}
                   />
                 )}
+                {g.kind === "TEAM_VS_TEAM" && active && !disabled && (
+                  <div className="mt-2 ml-7 mr-1 rounded-md border border-border bg-panel2/40 p-3 space-y-3">
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wider text-mute mb-2">
+                        Teams
+                      </div>
+                      <div className="space-y-1.5">
+                        {initialPlayers.map((p, i) => (
+                          <div
+                            key={p.id}
+                            className="flex items-center justify-between gap-2"
+                          >
+                            <span className="text-[12px] truncate">
+                              {p.displayName}
+                            </span>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {([0, 1] as const).map((t) => {
+                                const isActive = seatTeams[i] === t;
+                                return (
+                                  <button
+                                    key={t}
+                                    type="button"
+                                    onClick={() => setSeatTeam(i, t)}
+                                    aria-pressed={isActive}
+                                    className={
+                                      "h-6 px-2.5 rounded-full text-[11px] font-medium border transition " +
+                                      (isActive
+                                        ? "border-accent bg-accent/10 text-ink"
+                                        : "border-border text-mute hover:text-ink")
+                                    }
+                                  >
+                                    {t === 0 ? "A" : "B"}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      {tvtNeedsTeams && (
+                        <p className="text-[11px] text-red-400 mt-2">
+                          Each team needs at least one player.
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wider text-mute mb-2">
+                        Team rules
+                      </div>
+                      <div className="space-y-1.5">
+                        {TEAM_VS_TEAM_RULES.filter((r) => r !== "VEGAS").map(
+                          (r) => {
+                            const ruleActive = tvtRules.has(r);
+                            return (
+                              <button
+                                key={r}
+                                type="button"
+                                onClick={() => toggleTvtRule(r)}
+                                aria-pressed={ruleActive}
+                                className={
+                                  "w-full flex items-start gap-2.5 rounded-md border px-2.5 py-1.5 text-left transition " +
+                                  (ruleActive
+                                    ? "border-accent/60 bg-accent/5"
+                                    : "border-border hover:border-accent/30")
+                                }
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={ruleActive}
+                                  readOnly
+                                  className="mt-0.5 shrink-0 accent-accent pointer-events-none"
+                                />
+                                <span className="min-w-0">
+                                  <span className="block text-[12px] font-medium">
+                                    {teamVsTeamRuleLabel(r)}
+                                  </span>
+                                  <span className="block text-[10px] text-mute leading-tight mt-0.5">
+                                    {teamVsTeamRuleBlurb(r)}
+                                  </span>
+                                </span>
+                              </button>
+                            );
+                          },
+                        )}
+                      </div>
+                      <p className="text-[10.5px] text-mute mt-2">
+                        Vegas needs its own options + exactly 2v2 &mdash;
+                        configure it via the full match editor before the
+                        round starts.
+                      </p>
+                    </div>
+                  </div>
+                )}
                 {g.kind === "TARGETS" && active && !disabled && (
                   <div className="mt-2 ml-7 mr-1 rounded-md border border-border bg-panel2/40 p-2 space-y-2">
                     <div className="text-[10px] uppercase tracking-wider text-mute">
@@ -285,7 +433,7 @@ export default function SideGamesEditor({
       </div>
 
       <div className="flex items-center gap-2 mt-4">
-        <SaveButton />
+        <SaveButton disabled={tvtNeedsTeams} />
         <Link href={`/matches/${matchId}`} className="btn btn-ghost text-sm">
           Cancel
         </Link>
@@ -294,10 +442,14 @@ export default function SideGamesEditor({
   );
 }
 
-function SaveButton() {
+function SaveButton({ disabled }: { disabled: boolean }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" disabled={pending} className="btn btn-primary text-sm">
+    <button
+      type="submit"
+      disabled={pending || disabled}
+      className="btn btn-primary text-sm"
+    >
       {pending ? "Saving…" : "Save side games"}
     </button>
   );
