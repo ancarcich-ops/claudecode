@@ -111,6 +111,10 @@ export type MatchCardData = {
     leader: string;
     value: string;
     tieCount: number;
+    // For Team-vs-Team we surface BOTH teams so the home card shows
+    // the head-to-head, not just the leader. Trailing team is null on
+    // individual side games (Stableford, Skins, ...).
+    trailing?: { label: string; value: string } | null;
   }[];
   // Set when this match is one foursome of a tournament round. The card
   // header surfaces "Tournament: <name> · Round N" so home-feed readers
@@ -429,22 +433,26 @@ function buildSideGameLeaders(
       );
       const headline = boards[0];
       if (!headline) continue;
-      const headLeaders = headline.rows.filter((r) => r.isLeader);
-      if (headLeaders.length === 0) continue;
-      const top = headLeaders[0];
+      if (headline.rows.length === 0) continue;
       // The compute engine packs "Team A — Seuss & BigPeas & ..." into
       // the player field for the standings panel. On the home card
       // there's no room for the roster, just the team name -- so split
       // at the em-dash and keep the prefix.
-      const shortLeader = top.player.split(" — ")[0] || top.player;
+      const shortName = (full: string) => full.split(" — ")[0] || full;
+      const top = headline.rows[0];
+      const rival = headline.rows[1] ?? null;
+      const tieCount = headline.rows.filter((r) => r.isLeader).length - 1;
       out.push({
         kind: sg.kind,
         // Headline title is the rule label ("Best Ball", "Total
         // Team", etc) -- avoids "TEAM_VS_TEAM" leaking into the UI.
         title: headline.title,
-        leader: shortLeader,
+        leader: shortName(top.player),
         value: top.value,
-        tieCount: headLeaders.length - 1,
+        tieCount: Math.max(0, tieCount),
+        trailing: rival
+          ? { label: shortName(rival.player), value: rival.value }
+          : null,
       });
       continue;
     }
