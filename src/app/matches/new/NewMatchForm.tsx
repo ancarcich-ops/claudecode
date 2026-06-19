@@ -18,6 +18,15 @@ import {
 
 type NearbyCourse = { name: string; yards: number };
 
+// Max players that can join one scorecard. Raised from 6 -> 8 so two
+// foursomes can play together on a single match (a common Saturday
+// "two carts, one card" setup).
+const MAX_PLAYERS = 8;
+
+// localStorage key for the in-progress new-match draft. Bumped if the
+// shape ever changes incompatibly.
+const NEW_MATCH_DRAFT_KEY = "sticks-new-match-draft-v1";
+
 type PlayerRow = {
   name: string;
   handicap: string;
@@ -523,7 +532,7 @@ export default function NewMatchForm({
     );
 
   const addPlayer = () =>
-    players.length < 6 &&
+    players.length < MAX_PLAYERS &&
     setPlayers((rows) => [
       ...rows,
       {
@@ -677,9 +686,115 @@ export default function NewMatchForm({
     if (step > 0) setStep(step - 1);
   };
 
+  // Draft persistence -- if the user starts a match and navigates
+  // away (Home, a group page, etc), we save the wizard's core state
+  // to localStorage so they pick up where they left off when they
+  // come back. Only the high-signal fields are persisted; deep
+  // side-game configs (Wolf rotation, Targets stat, etc) reset --
+  // those are quick to re-pick if you got that far.
+  //
+  // The draft is cleared as the form is submitted (in the action
+  // wrapper below). Edit mode (initial != null) skips persistence
+  // entirely so editing a real match doesn't trample the new-match
+  // draft or vice versa.
+  const isEditMode = !!initial;
+  useEffect(() => {
+    if (isEditMode) return;
+    try {
+      const draft = {
+        v: 1,
+        savedAt: Date.now(),
+        step,
+        courseName,
+        holes,
+        startingHole,
+        scoringMode,
+        format,
+        players,
+        sideGames: Array.from(sideGames),
+        scheduledAt,
+      };
+      window.localStorage.setItem(NEW_MATCH_DRAFT_KEY, JSON.stringify(draft));
+    } catch {
+      // Quota errors / disabled storage -- silent fail, the draft
+      // just doesn't persist.
+    }
+  }, [
+    isEditMode,
+    step,
+    courseName,
+    holes,
+    startingHole,
+    scoringMode,
+    format,
+    players,
+    sideGames,
+    scheduledAt,
+  ]);
+
+  // Restore on first mount (skip edit mode). Drafts older than 7 days
+  // are dropped so a forgotten one doesn't quietly clobber a fresh
+  // intentional start later.
+  const restoredOnceRef = useRef(false);
+  useEffect(() => {
+    if (isEditMode) return;
+    if (restoredOnceRef.current) return;
+    restoredOnceRef.current = true;
+    try {
+      const raw = window.localStorage.getItem(NEW_MATCH_DRAFT_KEY);
+      if (!raw) return;
+      const draft = JSON.parse(raw) as {
+        v?: number;
+        savedAt?: number;
+        step?: number;
+        courseName?: string;
+        holes?: 9 | 18;
+        startingHole?: 1 | 10;
+        scoringMode?: ScoringMode;
+        format?: "INDIVIDUAL" | "SCRAMBLE" | "BOTH";
+        players?: PlayerRow[];
+        sideGames?: SideGameKind[];
+        scheduledAt?: string;
+      };
+      if (draft.v !== 1) return;
+      if (draft.savedAt && Date.now() - draft.savedAt > 7 * 24 * 60 * 60 * 1000) {
+        window.localStorage.removeItem(NEW_MATCH_DRAFT_KEY);
+        return;
+      }
+      if (typeof draft.step === "number") setStep(draft.step);
+      if (typeof draft.courseName === "string") setCourseName(draft.courseName);
+      if (draft.holes === 9 || draft.holes === 18) setHoles(draft.holes);
+      if (draft.startingHole === 1 || draft.startingHole === 10) {
+        setStartingHole(draft.startingHole);
+      }
+      if (draft.scoringMode) setScoringMode(draft.scoringMode);
+      if (draft.format) setFormat(draft.format);
+      if (Array.isArray(draft.players) && draft.players.length > 0) {
+        setPlayers(draft.players);
+      }
+      if (Array.isArray(draft.sideGames)) {
+        setSideGames(new Set(draft.sideGames));
+      }
+      if (typeof draft.scheduledAt === "string") setScheduledAt(draft.scheduledAt);
+    } catch {
+      // Bad JSON -- silently drop, fresh start is fine.
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <form
-      action={action}
+      action={async (fd) => {
+        // Clear the saved draft before handing off to the server
+        // action -- on success the server action redirects (and this
+        // page unmounts), on failure the user lands back here and can
+        // restart fresh rather than seeing a stale draft restore on
+        // top of their corrected fields.
+        try {
+          window.localStorage.removeItem(NEW_MATCH_DRAFT_KEY);
+        } catch {}
+        return action(fd);
+      }}
       className="space-y-4"
       onSubmit={(e) => {
         // Belt-and-suspenders: even if a stray Enter / replay-click on
@@ -1642,10 +1757,10 @@ export default function NewMatchForm({
                 pickedNames={new Set(
                   players.map((p) => p.name.toLowerCase()),
                 )}
-                disabled={players.length >= 6}
+                disabled={players.length >= MAX_PLAYERS}
                 onPick={(p) =>
                   setPlayers((rows) => {
-                    if (rows.length >= 6) return rows;
+                    if (rows.length >= MAX_PLAYERS) return rows;
                     const team0 = rows.filter((r) => r.team === 0).length;
                     const team1 = rows.filter((r) => r.team === 1).length;
                     return [
@@ -1665,7 +1780,7 @@ export default function NewMatchForm({
               type="button"
               onClick={addPlayer}
               className="btn btn-ghost text-xs shrink-0"
-              disabled={players.length >= 6}
+              disabled={players.length >= MAX_PLAYERS}
             >
               + Add player
             </button>
@@ -1748,8 +1863,17 @@ export default function NewMatchForm({
                       ? `Strokes given to ${p.name || `player ${i + 1}`}`
                       : modeCopy.field
                   }
+                  aria-invalid={
+                    Number.isNaN(parseFloat(p.handicap)) ? true : undefined
+                  }
                   className={
                     "input w-20 shrink-0 text-center px-2 " +
+                    (Number.isNaN(parseFloat(p.handicap))
+                      ? // Empty / non-numeric handicap blocks the Next
+                        // button; red ring makes it obvious which
+                        // row still needs attention.
+                        "border-danger ring-1 ring-danger/40 "
+                      : "") +
                     (p.handicapPending
                       ? "italic placeholder:italic text-mute placeholder:text-mute border-dashed"
                       : "")
