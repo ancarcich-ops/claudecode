@@ -32,6 +32,7 @@ import {
   runningSixes,
   shapeWolfHoles,
   parseWolfConfig,
+  parseSkinsConfig,
   type SideGameKind,
   type BbbEvent,
   type SnakeEvent,
@@ -351,6 +352,8 @@ export default async function MatchPage({
       matchPlayerId: e.matchPlayerId as string,
     }));
   const wolfGame = (match.sideGames ?? []).find((sg) => sg.kind === "WOLF");
+  const skinsGame = (match.sideGames ?? []).find((sg) => sg.kind === "SKINS");
+  const skinsConfig = parseSkinsConfig(skinsGame?.config ?? null);
   const wolfEvents: WolfEvent[] = (wolfGame?.events ?? [])
     .filter((e) => isWolfEventKind(e.kind))
     .map((e) => ({
@@ -439,6 +442,7 @@ export default async function MatchPage({
     matchConfig,
     matchEvents,
     sixesConfig,
+    skinsConfig,
   });
   const sideGameLabel: Record<SideGameKind, string> = Object.fromEntries(
     ALL_SIDE_GAMES.map((g) => [g.kind, g.label]),

@@ -675,6 +675,36 @@ export async function createMatchAction(formData: FormData) {
     }
   }
 
+  // Skins + Wolf push-rule configs. Always persist when the game is
+  // enabled, even with the default rule -- makes recap pages reflect
+  // exactly what the players agreed to and is cheap.
+  if (sideGameKinds.includes("SKINS")) {
+    const raw = String(formData.get("skinsConfig") ?? "");
+    if (raw) {
+      const { parseSkinsConfig, stringifySkinsConfig } = await import(
+        "./sideGames"
+      );
+      const parsed = parseSkinsConfig(raw);
+      await prisma.sideGame.update({
+        where: { matchId_kind: { matchId: match.id, kind: "SKINS" } },
+        data: { config: stringifySkinsConfig(parsed) },
+      });
+    }
+  }
+  if (sideGameKinds.includes("WOLF")) {
+    const raw = String(formData.get("wolfConfig") ?? "");
+    if (raw) {
+      const { parseWolfConfig, stringifyWolfConfig } = await import(
+        "./sideGames"
+      );
+      const parsed = parseWolfConfig(raw);
+      await prisma.sideGame.update({
+        where: { matchId_kind: { matchId: match.id, kind: "WOLF" } },
+        data: { config: stringifyWolfConfig(parsed) },
+      });
+    }
+  }
+
   await recordOddsSnapshot(match.id);
 
   // Bump the tournament status when its first round lands so the
@@ -1051,6 +1081,39 @@ export async function editMatchAction(formData: FormData) {
     }
     await prisma.sideGame.update({
       where: { matchId_kind: { matchId, kind: "TARGETS" } },
+      data: { config },
+    });
+  }
+
+  // Skins + Wolf push-rule persistence on edit, same shape as the
+  // create flow above.
+  if (sideGameKinds.includes("SKINS")) {
+    const raw = String(formData.get("skinsConfig") ?? "");
+    const { parseSkinsConfig, stringifySkinsConfig } = await import(
+      "./sideGames"
+    );
+    let config: string | null = null;
+    if (raw) {
+      const parsed = parseSkinsConfig(raw);
+      config = stringifySkinsConfig(parsed);
+    }
+    await prisma.sideGame.update({
+      where: { matchId_kind: { matchId, kind: "SKINS" } },
+      data: { config },
+    });
+  }
+  if (sideGameKinds.includes("WOLF")) {
+    const raw = String(formData.get("wolfConfig") ?? "");
+    const { parseWolfConfig, stringifyWolfConfig } = await import(
+      "./sideGames"
+    );
+    let config: string | null = null;
+    if (raw) {
+      const parsed = parseWolfConfig(raw);
+      config = stringifyWolfConfig(parsed);
+    }
+    await prisma.sideGame.update({
+      where: { matchId_kind: { matchId, kind: "WOLF" } },
       data: { config },
     });
   }
