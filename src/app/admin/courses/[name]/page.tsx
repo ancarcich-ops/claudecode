@@ -24,15 +24,47 @@ export default async function AdminCoursePage({
   const holes = preset?.holes ?? 18;
 
   // Compose a uniform per-hole geometry array for the editor.
+  type TeeAlternative = {
+    color: string;
+    teeboxtype: string | null;
+    lat: number;
+    lng: number;
+    yds: number | null;
+  };
   type HoleRecord = {
     hole: number;
     teeLat: number | null;
     teeLng: number | null;
     greenLat: number | null;
     greenLng: number | null;
+    teeAlternativesJson?: string | null;
   };
   const byHole = new Map<number, HoleRecord>();
-  for (const h of course?.holes ?? []) byHole.set(h.hole, h);
+  for (const h of (course?.holes ?? []) as HoleRecord[]) byHole.set(h.hole, h);
+  const parseAlternates = (json: string | null | undefined): TeeAlternative[] => {
+    if (!json) return [];
+    try {
+      const v = JSON.parse(json);
+      if (!Array.isArray(v)) return [];
+      return v
+        .filter(
+          (a: unknown): a is TeeAlternative =>
+            !!a &&
+            typeof a === "object" &&
+            typeof (a as { lat?: unknown }).lat === "number" &&
+            typeof (a as { lng?: unknown }).lng === "number",
+        )
+        .map((a) => ({
+          color: String(a.color ?? ""),
+          teeboxtype: a.teeboxtype ?? null,
+          lat: a.lat,
+          lng: a.lng,
+          yds: typeof a.yds === "number" ? a.yds : null,
+        }));
+    } catch {
+      return [];
+    }
+  };
   const holeRows = Array.from({ length: holes }, (_, i) => {
     const n = i + 1;
     const h = byHole.get(n);
@@ -42,6 +74,7 @@ export default async function AdminCoursePage({
       teeLng: h?.teeLng ?? null,
       greenLat: h?.greenLat ?? null,
       greenLng: h?.greenLng ?? null,
+      teeAlternatives: parseAlternates(h?.teeAlternativesJson),
     };
   });
 

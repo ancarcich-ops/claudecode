@@ -367,6 +367,7 @@ model CourseHole {
   greenBackLng   Float?
   teeLat    Float?
   teeLng    Float?
+  teeAlternativesJson String?
   greenPolygonJson   String?
   fairwayPolygonJson String?
   distanceYds Int?

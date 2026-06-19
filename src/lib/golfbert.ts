@@ -190,6 +190,10 @@ export type ImportedHole = {
   fairwayPolygon: { lat: number; lng: number }[] | null;
   teeLat: number | null;
   teeLng: number | null;
+  // All teebox colours / positions Golfbert returned for this hole.
+  // Stored as JSON on CourseHole.teeAlternativesJson so the admin can
+  // swap to any of them later without a re-import.
+  teeAlternatives: TeeAlternative[];
   hazards: {
     kind: "WATER" | "SAND" | "OOB" | "OTHER";
     lat: number;
@@ -207,20 +211,74 @@ export type ImportedCourse = {
 };
 
 // Picks the most representative teebox per hole. GolfBert returns
-// multiple per hole (one per color). We prefer "White" / "Member" /
-// "Regular"-ish tees, falling back to the first one we get.
+// multiple per hole (one per color). We prefer everyday "regular
+// member" tees and only fall back to championship/forward boxes when
+// nothing in the priority list matches. The old behaviour fell
+// straight to boxes[0] when no color matched, which is often the
+// Championship/Tips box (sits 20-40 yds back from the actual
+// member tee) -- so the rendered tee marker visually landed off
+// the obvious tee in satellite. Now we (a) cover a much wider set
+// of common everyday color labels and (b) fall back to the
+// MEDIAN-yardage box rather than the API's first-in-list one.
+const TEE_PRIORITY = [
+  "white",
+  "member",
+  "members",
+  "regular",
+  "men",
+  "mens",
+  "blue",
+  "gold",
+  "yellow",
+  "silver",
+  "green",
+  "combo",
+  "hybrid",
+];
 function pickTeebox(boxes: GBHoleTeebox[]): GBHoleTeebox | null {
   if (boxes.length === 0) return null;
-  const PRIORITY = ["white", "member", "regular", "men", "blue", "gold"];
-  for (const want of PRIORITY) {
+  for (const want of TEE_PRIORITY) {
     const m = boxes.find(
       (b) =>
         (b.color ?? "").toLowerCase() === want ||
         (b.teeboxtype ?? "").toLowerCase() === want,
     );
-    if (m) return m;
+    if (m && m.coordinates?.lat != null) return m;
   }
-  return boxes[0];
+  // Final fallback: pick the median-yardage box among those with
+  // coordinates. This is much closer to the "everyday tee" than
+  // boxes[0] (often the championship/tips tee). Boxes without a
+  // length tag sink to the end of the sort.
+  const withCoords = boxes.filter((b) => b.coordinates?.lat != null);
+  if (withCoords.length === 0) return boxes[0];
+  const sorted = [...withCoords].sort((a, b) => {
+    const al = typeof a.length === "number" ? a.length : Number.POSITIVE_INFINITY;
+    const bl = typeof b.length === "number" ? b.length : Number.POSITIVE_INFINITY;
+    return al - bl;
+  });
+  return sorted[Math.floor(sorted.length / 2)];
+}
+
+// Compact serializable form of every teebox we got back for a hole.
+// Stored on CourseHole.teeAlternativesJson so the admin can swap to
+// any of them without re-fetching from Golfbert.
+export type TeeAlternative = {
+  color: string;
+  teeboxtype: string | null;
+  lat: number;
+  lng: number;
+  yds: number | null;
+};
+function teeAlternatives(boxes: GBHoleTeebox[]): TeeAlternative[] {
+  return boxes
+    .filter((b) => b.coordinates?.lat != null && b.coordinates?.long != null)
+    .map((b) => ({
+      color: b.color ?? "",
+      teeboxtype: b.teeboxtype ?? null,
+      lat: b.coordinates!.lat,
+      lng: b.coordinates!.long,
+      yds: typeof b.length === "number" ? b.length : null,
+    }));
 }
 
 // Pick a canonical par for a hole. We've seen GolfBert teeboxes carry
@@ -400,6 +458,7 @@ export async function importCourseFromGolfBert(
         : null,
       teeLat: resolvedTee?.lat ?? null,
       teeLng: resolvedTee?.lng ?? null,
+      teeAlternatives: teeAlternatives(teeboxes),
       hazards,
     });
   }

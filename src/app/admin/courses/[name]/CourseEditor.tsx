@@ -22,12 +22,21 @@ import GolfBertPanel from "./GolfBertPanel";
 // Pan: arrow buttons (or drag). Zoom: +/- buttons. The state is held
 // client-side; saves happen via server action.
 
+type TeeAlternative = {
+  color: string;
+  teeboxtype: string | null;
+  lat: number;
+  lng: number;
+  yds: number | null;
+};
+
 type HoleRow = {
   hole: number;
   teeLat: number | null;
   teeLng: number | null;
   greenLat: number | null;
   greenLng: number | null;
+  teeAlternatives: TeeAlternative[];
 };
 
 type Hazard = {
@@ -335,6 +344,37 @@ export default function CourseEditor({
       try {
         await adminClearHoleGeoAction(fd);
         toast.success(`Cleared ${kind} for hole ${hole}`);
+        router.refresh();
+      } catch (err) {
+        toast.error((err as Error).message);
+      }
+    });
+  };
+
+  // Swap the active tee on a hole to one of the alternate teeboxes
+  // Golfbert returned at import time. No Golfbert call -- the
+  // coordinates are already stored on CourseHole.teeAlternativesJson;
+  // we just re-write teeLat/teeLng via the same admin save action
+  // that the click-to-move flow uses.
+  const pickAltTee = (hole: number, a: TeeAlternative) => {
+    setHoles((cur) =>
+      cur.map((h) =>
+        h.hole === hole ? { ...h, teeLat: a.lat, teeLng: a.lng } : h,
+      ),
+    );
+    const fd = new FormData();
+    fd.set("courseName", courseName);
+    fd.set("hole", String(hole));
+    fd.set("kind", "tee");
+    fd.set("lat", String(a.lat));
+    fd.set("lng", String(a.lng));
+    startTransition(async () => {
+      try {
+        await adminSaveHoleGeoAction(fd);
+        toast.success(
+          `Hole ${hole} tee → ${a.color || a.teeboxtype || "alt"}` +
+            (a.yds != null ? ` (${a.yds}y)` : ""),
+        );
         router.refresh();
       } catch (err) {
         toast.error((err as Error).message);
@@ -686,6 +726,15 @@ export default function CourseEditor({
                       </button>
                     )}
                   </div>
+                  {h.teeAlternatives.length > 1 && (
+                    <AltTeeStrip
+                      alternates={h.teeAlternatives}
+                      teeLat={h.teeLat}
+                      teeLng={h.teeLng}
+                      pending={pending}
+                      onPick={(a) => pickAltTee(h.hole, a)}
+                    />
+                  )}
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
@@ -768,6 +817,73 @@ export default function CourseEditor({
 
 // First-time prompt: ask the admin to provide the course's center
 // lat/lng or use the browser's current location. Saves on submit and
+// Per-hole tee-color picker. Renders one chip per alternate that
+// Golfbert sent for the hole, with the active one highlighted.
+// Tapping a chip snaps the saved tee to that box without re-fetching
+// from Golfbert.
+function AltTeeStrip({
+  alternates,
+  teeLat,
+  teeLng,
+  pending,
+  onPick,
+}: {
+  alternates: TeeAlternative[];
+  teeLat: number | null;
+  teeLng: number | null;
+  pending: boolean;
+  onPick: (a: TeeAlternative) => void;
+}) {
+  // Sort by yardage so the picker reads tip-to-forward.
+  const sorted = [...alternates].sort(
+    (a, b) =>
+      (b.yds ?? Number.NEGATIVE_INFINITY) -
+      (a.yds ?? Number.NEGATIVE_INFINITY),
+  );
+  // Match the active alternate by lat/lng equality (~1e-6 tolerance).
+  const isActive = (a: TeeAlternative) =>
+    teeLat != null &&
+    teeLng != null &&
+    Math.abs(a.lat - teeLat) < 1e-6 &&
+    Math.abs(a.lng - teeLng) < 1e-6;
+  return (
+    <div className="mt-1 flex flex-wrap items-center gap-1">
+      <span className="text-[9px] uppercase tracking-wider text-mute pr-1">
+        Tees
+      </span>
+      {sorted.map((a, i) => {
+        const active = isActive(a);
+        const label =
+          (a.color || a.teeboxtype || `t${i + 1}`).toLowerCase();
+        return (
+          <button
+            key={`${a.lat},${a.lng},${i}`}
+            type="button"
+            onClick={() => onPick(a)}
+            disabled={pending || active}
+            title={
+              active
+                ? "Currently selected"
+                : `Switch to ${label}${a.yds != null ? ` (${a.yds}y)` : ""}`
+            }
+            className={
+              "px-1.5 py-0.5 rounded text-[10px] font-mono border " +
+              (active
+                ? "border-accent text-accent bg-accent/10"
+                : "border-border text-mute hover:text-ink hover:border-mute")
+            }
+          >
+            {label}
+            {a.yds != null && (
+              <span className="ml-1 text-[9px] opacity-70">{a.yds}y</span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 // the editor reloads with the center set.
 function NoCenterPrompt({
   courseName,
