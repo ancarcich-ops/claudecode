@@ -6,6 +6,7 @@
 import Avatar from "@/components/Avatar";
 import { isVariant } from "@/components/Avatar";
 import HoleDotRow from "./HoleDotRow";
+import ScoreSubtotalsChip from "./ScoreSubtotalsChip";
 import Sparkline from "./Sparkline";
 import type { PlayerCard } from "@/lib/matchCard";
 
@@ -85,6 +86,7 @@ export default function PlayerRowSettled({
       </div>
 
       <div className="mt-2 flex items-center gap-2 flex-wrap">
+        <ScoreSubtotalsChip player={player} totalHoles={totalHoles} />
         {totalHoles === 18 && (
           <span className="inline-flex items-center gap-2 rounded-full bg-panel2 border border-border px-2 py-0.5">
             <span className="font-mono text-[10px] uppercase tracking-wider text-mute">
