@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { useSearchParams } from "next/navigation";
 import { useFormStatus } from "react-dom";
 import { toast } from "sonner";
 import type { CoursePreset } from "@/lib/courses";
@@ -185,15 +184,17 @@ export default function NewMatchForm({
     userId: string | null;
   }[];
 }) {
-  // Allow a deep link like /matches/[id]/edit?step=side-games (or
-  // ?step=2) to drop the user straight on the side-games step. Used
-  // by the "Add side games" CTA on the match detail page so the
-  // creator doesn't have to walk back through Round + Players.
-  const searchParams = useSearchParams();
-  const initialStep = (() => {
-    if (!initial) return 0;
-    const raw = searchParams?.get("step");
-    if (!raw) return 0;
+  // Edit mode + ?step=side-games deep link from the match detail page.
+  // We resolve the param in a post-mount effect rather than via
+  // useSearchParams() to stay clear of Next.js's Suspense-boundary
+  // requirement for that hook (which caused the edit page to throw
+  // when the CTA dropped users in here).
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    if (!initial) return;
+    if (typeof window === "undefined") return;
+    const raw = new URLSearchParams(window.location.search).get("step");
+    if (!raw) return;
     const named: Record<string, number> = {
       round: 0,
       players: 1,
@@ -201,12 +202,17 @@ export default function NewMatchForm({
       "side-games": 2,
       sidegames: 2,
     };
-    if (named[raw] != null) return named[raw];
-    const num = parseInt(raw, 10);
-    if (Number.isFinite(num) && num >= 0 && num <= 2) return num;
-    return 0;
-  })();
-  const [step, setStep] = useState(initialStep);
+    const target =
+      named[raw] != null
+        ? named[raw]
+        : Number.isFinite(parseInt(raw, 10))
+          ? Math.max(0, Math.min(2, parseInt(raw, 10)))
+          : 0;
+    setStep(target);
+    // Only fire on first mount -- subsequent step changes are driven
+    // by Next / Back buttons.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // Guided progressive reveal for the Round step. The user is walked
   // through one decision at a time -- 0: course, 1: tee + holes, 2:
   // format + scoring, 3: details (everything revealed). Completed
