@@ -1255,6 +1255,153 @@ export function computeNassau(
 // single Leaderboard with 2 rows -- one per team. Lower team total wins;
 // the per-hole team score is computed via the configured rule. Returns
 // null if the config is missing or refers to no playable team.
+
+// Per-hole TVT breakdown used by the match-detail page to render a
+// hole-by-hole table with the per-hole winner highlighted. Returns one
+// entry per hole; teamA/teamB are null until every team member has
+// logged a stroke (or for points-based rules, until both teams have).
+export type TeamVsTeamHoleBreakdown = {
+  hole: number;
+  par: number;
+  teamA: number | null;
+  teamB: number | null;
+  // "A" or "B" wins outright. "TIE" = scored but equal. null = not yet
+  // scored.
+  winner: "A" | "B" | "TIE" | null;
+  // Hint for the renderer: stroke rules show per-team totals; points
+  // rules show points awarded (out of 2); vegas shows the 2-digit value.
+  scale: "STROKES" | "POINTS" | "VEGAS";
+};
+
+export function teamVsTeamHoleBreakdown(
+  rule: TeamVsTeamRule,
+  teamA: LiveScorePlayer[],
+  teamB: LiveScorePlayer[],
+  pars: number[],
+  holes: number,
+  scoringMode: ScoringMode,
+  startingHole: number,
+): TeamVsTeamHoleBreakdown[] {
+  const out: TeamVsTeamHoleBreakdown[] = [];
+  const scale: TeamVsTeamHoleBreakdown["scale"] =
+    rule === "VEGAS"
+      ? "VEGAS"
+      : rule === "HIGH_LOW" || rule === "HIGH_LOW_BALL"
+        ? "POINTS"
+        : "STROKES";
+
+  const teamStrokeFor = (
+    team: LiveScorePlayer[],
+    holeIndex0: number,
+  ): number | null => {
+    const hole = startingHole + holeIndex0;
+    const strokes: number[] = [];
+    for (const p of team) {
+      const gross = p.scoresByHole[hole];
+      if (typeof gross !== "number") return null;
+      const v =
+        rule === "AGGREGATE_NET"
+          ? netStrokesForHole(gross, p.handicap, holeIndex0, holes, scoringMode)
+          : gross;
+      strokes.push(v);
+    }
+    if (strokes.length === 0) return null;
+    switch (rule) {
+      case "BEST_BALL":
+        return Math.min(...strokes);
+      case "WORST_BALL":
+        return Math.max(...strokes);
+      case "SUM":
+      case "AGGREGATE_NET":
+        return strokes.reduce((a, b) => a + b, 0);
+    }
+    return null;
+  };
+
+  for (let i = 0; i < holes; i++) {
+    const hole = startingHole + i;
+    const par = pars[i] ?? 4;
+
+    if (rule === "VEGAS") {
+      if (teamA.length !== 2 || teamB.length !== 2) {
+        out.push({ hole, par, teamA: null, teamB: null, winner: null, scale });
+        continue;
+      }
+      const aS = teamA.map((p) => p.scoresByHole[hole]);
+      const bS = teamB.map((p) => p.scoresByHole[hole]);
+      if (
+        aS.some((s) => typeof s !== "number") ||
+        bS.some((s) => typeof s !== "number")
+      ) {
+        out.push({ hole, par, teamA: null, teamB: null, winner: null, scale });
+        continue;
+      }
+      const a = aS as number[];
+      const b = bS as number[];
+      const aVal = Math.min(...a) * 10 + Math.max(...a);
+      const bVal = Math.min(...b) * 10 + Math.max(...b);
+      const winner: "A" | "B" | "TIE" =
+        aVal < bVal ? "A" : bVal < aVal ? "B" : "TIE";
+      out.push({ hole, par, teamA: aVal, teamB: bVal, winner, scale });
+      continue;
+    }
+
+    if (rule === "HIGH_LOW" || rule === "HIGH_LOW_BALL") {
+      const collect = (team: LiveScorePlayer[]): number[] | null => {
+        const strokes: number[] = [];
+        for (const p of team) {
+          const g = p.scoresByHole[hole];
+          if (typeof g !== "number") return null;
+          strokes.push(g);
+        }
+        return strokes.length > 0 ? strokes : null;
+      };
+      const aStrokes = collect(teamA);
+      const bStrokes = collect(teamB);
+      if (!aStrokes || !bStrokes) {
+        out.push({ hole, par, teamA: null, teamB: null, winner: null, scale });
+        continue;
+      }
+      let aPts = 0;
+      let bPts = 0;
+      if (rule === "HIGH_LOW") {
+        const aMin = Math.min(...aStrokes);
+        const bMin = Math.min(...bStrokes);
+        if (aMin < bMin) aPts++;
+        else if (bMin < aMin) bPts++;
+        const aSum = aStrokes.reduce((x, y) => x + y, 0);
+        const bSum = bStrokes.reduce((x, y) => x + y, 0);
+        if (aSum < bSum) aPts++;
+        else if (bSum < aSum) bPts++;
+      } else {
+        const aMin = Math.min(...aStrokes);
+        const bMin = Math.min(...bStrokes);
+        if (aMin < bMin) aPts++;
+        else if (bMin < aMin) bPts++;
+        const aMax = Math.max(...aStrokes);
+        const bMax = Math.max(...bStrokes);
+        if (aMax < bMax) aPts++;
+        else if (bMax < aMax) bPts++;
+      }
+      const winner: "A" | "B" | "TIE" =
+        aPts > bPts ? "A" : bPts > aPts ? "B" : "TIE";
+      out.push({ hole, par, teamA: aPts, teamB: bPts, winner, scale });
+      continue;
+    }
+
+    const a = teamStrokeFor(teamA, i);
+    const b = teamStrokeFor(teamB, i);
+    if (a == null || b == null) {
+      out.push({ hole, par, teamA: a, teamB: b, winner: null, scale });
+      continue;
+    }
+    const winner: "A" | "B" | "TIE" =
+      a < b ? "A" : b < a ? "B" : "TIE";
+    out.push({ hole, par, teamA: a, teamB: b, winner, scale });
+  }
+  return out;
+}
+
 export function computeTeamVsTeam(
   players: LiveScorePlayer[],
   pars: number[],
