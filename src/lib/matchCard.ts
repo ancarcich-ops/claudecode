@@ -61,6 +61,15 @@ export type PlayerCard = {
   // For SETTLED: per-nine net (only meaningful for 18-hole rounds).
   outNet: number;
   inNet: number;
+  // Per-nine GROSS strokes + how many holes the player has scored on
+  // each nine. Drives the Out / In / Total chip on the home card so
+  // viewers can read off the scorecard at a glance. outGross / inGross
+  // are 0 when nothing's been logged for that nine yet.
+  outGross: number;
+  inGross: number;
+  outHolesPlayed: number;
+  inHolesPlayed: number;
+  grossTotal: number;
   // 1-based rank used by SETTLED rows. 0 means "still in progress".
   rank: number;
   // Optional badge surfaced next to the thru chip; null when nothing
@@ -284,6 +293,11 @@ export function buildMatchCardData(
     const playedDiffs: { hole: number; diff: number }[] = [];
     let outNet = 0;
     let inNet = 0;
+    let outGross = 0;
+    let inGross = 0;
+    let outHolesPlayed = 0;
+    let inHolesPlayed = 0;
+    let grossTotal = 0;
     let netToPar = 0;
     let holesPlayed = 0;
     for (let i = 0; i < totalHoles; i++) {
@@ -293,8 +307,16 @@ export function buildMatchCardData(
       if (typeof strokes === "number") {
         const diff = strokes - par;
         netToPar += diff;
-        if (hole <= 9) outNet += diff;
-        else inNet += diff;
+        grossTotal += strokes;
+        if (hole <= 9) {
+          outNet += diff;
+          outGross += strokes;
+          outHolesPlayed++;
+        } else {
+          inNet += diff;
+          inGross += strokes;
+          inHolesPlayed++;
+        }
         holesPlayed++;
         dots.push({ kind: dotKindFor(diff), strokes, rel: diff });
         playedDiffs.push({ hole, diff });
@@ -337,6 +359,11 @@ export function buildMatchCardData(
       dots,
       outNet,
       inNet,
+      outGross,
+      inGross,
+      outHolesPlayed,
+      inHolesPlayed,
+      grossTotal,
       rank: rankFor(p.id),
       momentum,
       cumulativeNet,

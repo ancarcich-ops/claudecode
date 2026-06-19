@@ -10,6 +10,7 @@ import ProbabilityTick, { useRowFlash } from "./ProbabilityTick";
 import HoleDotRow from "./HoleDotRow";
 import MomentumChip from "./MomentumChip";
 import QuickWagerButton from "./QuickWagerButton";
+import ScoreSubtotalsChip from "./ScoreSubtotalsChip";
 import Sparkline from "./Sparkline";
 import type { PlayerCard } from "@/lib/matchCard";
 
@@ -114,6 +115,7 @@ export default function PlayerRowLive({
               thru {player.holesPlayed} of {totalHoles}
             </span>
           </span>
+          <ScoreSubtotalsChip player={player} totalHoles={totalHoles} />
           {player.momentum && <MomentumChip m={player.momentum} />}
         </div>
       )}
