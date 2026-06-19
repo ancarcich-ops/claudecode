@@ -365,6 +365,12 @@ model CourseHole {
   greenBackLng   Float?
   teeLat    Float?
   teeLng    Float?
+  // Per-hole alternate tee boxes from Golfbert -- JSON array of
+  // { color, lat, lng, yds? } so the admin Course Editor can let
+  // someone swap the active tee marker to a different colour
+  // without re-importing the whole course. Populated during the
+  // initial import; null on holes mapped by hand.
+  teeAlternativesJson String?
   greenPolygonJson   String?
   fairwayPolygonJson String?
   distanceYds Int?

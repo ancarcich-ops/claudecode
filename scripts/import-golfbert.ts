@@ -286,6 +286,10 @@ async function writeCourseToDb(
       update: {
         teeLat: h.teeLat,
         teeLng: h.teeLng,
+        teeAlternativesJson:
+          h.teeAlternatives.length > 0
+            ? JSON.stringify(h.teeAlternatives)
+            : null,
         greenLat: h.greenLat,
         greenLng: h.greenLng,
         greenPolygonJson: h.greenPolygon
@@ -302,6 +306,10 @@ async function writeCourseToDb(
         hole: h.number,
         teeLat: h.teeLat,
         teeLng: h.teeLng,
+        teeAlternativesJson:
+          h.teeAlternatives.length > 0
+            ? JSON.stringify(h.teeAlternatives)
+            : null,
         greenLat: h.greenLat,
         greenLng: h.greenLng,
         greenPolygonJson: h.greenPolygon
