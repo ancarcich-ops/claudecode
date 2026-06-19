@@ -61,6 +61,14 @@ export default function MatchCard({ data }: { data: MatchCardData }) {
               <span className="text-faint">{sg.title}:</span>{" "}
               <span className="text-ink">{sg.leader}</span>{" "}
               <span className="text-accent">{sg.value}</span>
+              {sg.trailing && (
+                <>
+                  {" "}
+                  <span className="text-faint">vs</span>{" "}
+                  <span className="text-mute">{sg.trailing.label}</span>{" "}
+                  <span className="text-mute">{sg.trailing.value}</span>
+                </>
+              )}
               {sg.tieCount > 0 && (
                 <span className="text-mute"> +{sg.tieCount}</span>
               )}
