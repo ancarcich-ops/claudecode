@@ -8,8 +8,10 @@ import {
   isSideGameKind,
   parseMatchConfig,
   parseSixesConfig,
+  parseSkinsConfig,
   parseTargetsConfig,
   parseTeamVsTeamConfig,
+  parseWolfConfig,
   type SideGameKind,
   type TeamVsTeamRule,
 } from "@/lib/sideGames";
@@ -56,6 +58,12 @@ export default async function EditMatchPage({
   );
   const targetsCfg = parseTargetsConfig(
     match.sideGames.find((sg) => sg.kind === "TARGETS")?.config,
+  );
+  const skinsCfg = parseSkinsConfig(
+    match.sideGames.find((sg) => sg.kind === "SKINS")?.config,
+  );
+  const wolfCfg = parseWolfConfig(
+    match.sideGames.find((sg) => sg.kind === "WOLF")?.config,
   );
 
   // Format: SCRAMBLE stays scramble; an individual match carrying a
@@ -152,6 +160,8 @@ export default async function EditMatchPage({
       : "2",
     matchStake: matchCfg?.stake ? String(matchCfg.stake) : "",
     sixesStake: sixesCfg?.stake ? String(sixesCfg.stake) : "",
+    skinsPushRule: skinsCfg.pushRule ?? "CARRYOVER",
+    wolfPushRule: wolfCfg.pushRule ?? "NO_POINTS",
     notes: match.notes ?? "",
     groupId: match.groupId ?? "public",
   };

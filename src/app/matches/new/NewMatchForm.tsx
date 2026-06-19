@@ -115,6 +115,12 @@ export type MatchEditInitial = {
   matchAutoPressThreshold: string;
   matchStake: string;
   sixesStake: string;
+  // Tie-handling for the games where ties actually decide payouts.
+  // Skins: CARRYOVER (skin rolls to next hole) vs NO_CARRY (pushed
+  // hole pays no skin, next hole resets). Wolf: ROLLOVER (push
+  // multiplier carries) vs NO_POINTS (pushed hole = 0 points).
+  skinsPushRule: "CARRYOVER" | "NO_CARRY";
+  wolfPushRule: "NO_POINTS" | "ROLLOVER";
   notes: string;
   groupId: string;
 };
@@ -362,6 +368,17 @@ export default function NewMatchForm({
   );
   // Match dollar wager per dot. Blank/zero = no $ math.
   const [matchStake, setMatchStake] = useState(initial?.matchStake ?? "");
+  // Tie-handling rule for Skins. CARRYOVER (the long-standing default)
+  // rolls a pushed hole's skin into the next; NO_CARRY pays nothing
+  // on a tie and resets the pot to 1 next hole.
+  const [skinsPushRule, setSkinsPushRule] = useState<
+    "CARRYOVER" | "NO_CARRY"
+  >(initial?.skinsPushRule ?? "CARRYOVER");
+  // Tie-handling rule for Wolf. NO_POINTS (default) drops pushed
+  // holes; ROLLOVER carries a multiplier into the next resolved hole.
+  const [wolfPushRule, setWolfPushRule] = useState<
+    "NO_POINTS" | "ROLLOVER"
+  >(initial?.wolfPushRule ?? "NO_POINTS");
   // Sixes dollar wager per dot.
   const [sixesStake, setSixesStake] = useState(initial?.sixesStake ?? "");
   // Vegas dollar wager per Vegas point.
@@ -713,6 +730,8 @@ export default function NewMatchForm({
         players,
         sideGames: Array.from(sideGames),
         scheduledAt,
+        skinsPushRule,
+        wolfPushRule,
       };
       window.localStorage.setItem(NEW_MATCH_DRAFT_KEY, JSON.stringify(draft));
     } catch {
@@ -730,6 +749,8 @@ export default function NewMatchForm({
     players,
     sideGames,
     scheduledAt,
+    skinsPushRule,
+    wolfPushRule,
   ]);
 
   // Restore on first mount (skip edit mode). Drafts older than 7 days
@@ -755,6 +776,8 @@ export default function NewMatchForm({
         players?: PlayerRow[];
         sideGames?: SideGameKind[];
         scheduledAt?: string;
+        skinsPushRule?: "CARRYOVER" | "NO_CARRY";
+        wolfPushRule?: "NO_POINTS" | "ROLLOVER";
       };
       if (draft.v !== 1) return;
       if (draft.savedAt && Date.now() - draft.savedAt > 7 * 24 * 60 * 60 * 1000) {
@@ -776,6 +799,12 @@ export default function NewMatchForm({
         setSideGames(new Set(draft.sideGames));
       }
       if (typeof draft.scheduledAt === "string") setScheduledAt(draft.scheduledAt);
+      if (draft.skinsPushRule === "CARRYOVER" || draft.skinsPushRule === "NO_CARRY") {
+        setSkinsPushRule(draft.skinsPushRule);
+      }
+      if (draft.wolfPushRule === "NO_POINTS" || draft.wolfPushRule === "ROLLOVER") {
+        setWolfPushRule(draft.wolfPushRule);
+      }
     } catch {
       // Bad JSON -- silently drop, fresh start is fine.
     }
@@ -1264,6 +1293,28 @@ export default function NewMatchForm({
                     target: Number(targetsTarget) || 0,
                     ante: Number(targetsAnte) || 0,
                   })
+                : ""
+            }
+          />
+          {/* Skins + Wolf push rules. Empty value when the game isn't
+              enabled so the action ignores it; otherwise a JSON blob
+              with the chosen pushRule that gets persisted to
+              SideGame.config. */}
+          <input
+            type="hidden"
+            name="skinsConfig"
+            value={
+              sideGames.has("SKINS")
+                ? JSON.stringify({ pushRule: skinsPushRule })
+                : ""
+            }
+          />
+          <input
+            type="hidden"
+            name="wolfConfig"
+            value={
+              sideGames.has("WOLF")
+                ? JSON.stringify({ pushRule: wolfPushRule })
                 : ""
             }
           />
@@ -2012,6 +2063,48 @@ export default function NewMatchForm({
                   </label>
                   {/* Match inline config: stroke-giving mode + per-
                       player manual strokes when MANUAL is picked. */}
+                  {g.kind === "SKINS" && active && !disabled && (
+                    <PushRuleConfig
+                      title="On tied holes"
+                      value={skinsPushRule}
+                      options={[
+                        {
+                          value: "CARRYOVER",
+                          label: "Carry over",
+                          help: "Skin rolls to the next hole. The next non-tied hole pays out the carry.",
+                        },
+                        {
+                          value: "NO_CARRY",
+                          label: "No carry",
+                          help: "Tied hole pays no skin. Next hole starts fresh at 1.",
+                        },
+                      ]}
+                      onChange={(v) =>
+                        setSkinsPushRule(v as "CARRYOVER" | "NO_CARRY")
+                      }
+                    />
+                  )}
+                  {g.kind === "WOLF" && active && !disabled && (
+                    <PushRuleConfig
+                      title="On tied / pushed holes"
+                      value={wolfPushRule}
+                      options={[
+                        {
+                          value: "NO_POINTS",
+                          label: "No points",
+                          help: "Pushed hole pays nothing, next hole reset to 1x.",
+                        },
+                        {
+                          value: "ROLLOVER",
+                          label: "Roll over",
+                          help: "Push raises a multiplier; the next resolved hole pays double (or more).",
+                        },
+                      ]}
+                      onChange={(v) =>
+                        setWolfPushRule(v as "NO_POINTS" | "ROLLOVER")
+                      }
+                    />
+                  )}
                   {g.kind === "MATCH" && active && !disabled && (
                     <div className="mt-2 ml-7 mr-1 rounded-md border border-border bg-panel2/40 p-2 space-y-2">
                       <div>
@@ -2316,6 +2409,54 @@ export default function NewMatchForm({
 
 // Roster picker for tournament foursomes. Surfaces the players who are
 // in the tournament roster but not yet in this foursome's player list.
+// Two-option radio-style picker for the Skins / Wolf push rule. Lives
+// inside the side-game card's inline config strip; reuses the same
+// rounded-md card the Match config uses so the visual rhythm is the
+// same regardless of which game is being configured.
+function PushRuleConfig({
+  title,
+  value,
+  options,
+  onChange,
+}: {
+  title: string;
+  value: string;
+  options: { value: string; label: string; help: string }[];
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="mt-2 ml-7 mr-1 rounded-md border border-border bg-panel2/40 p-2 space-y-2">
+      <div className="text-[10px] uppercase tracking-wider text-mute">
+        {title}
+      </div>
+      <div className="grid grid-cols-2 gap-1.5">
+        {options.map((o) => {
+          const isActive = value === o.value;
+          return (
+            <button
+              key={o.value}
+              type="button"
+              onClick={() => onChange(o.value)}
+              className={
+                "rounded-md border px-2 py-1.5 text-left " +
+                (isActive
+                  ? "border-accent bg-accent/10 text-ink"
+                  : "border-border text-mute hover:text-ink")
+              }
+              aria-pressed={isActive}
+            >
+              <div className="text-[12px] font-medium">{o.label}</div>
+              <div className="text-[10px] leading-snug text-mute mt-0.5">
+                {o.help}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // Tap once to open the dropdown, tap a name to add them. Hides itself
 // when no roster members are left to pick.
 function RosterPickerButton({

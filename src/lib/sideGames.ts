@@ -102,6 +102,36 @@ export function stringifyWolfConfig(c: WolfConfig): string {
   return JSON.stringify(c);
 }
 
+// Per-match Skins configuration. Default behavior (no config row) is
+// CARRYOVER: a tied hole increments the carry counter, the next
+// resolved hole pays out 1 + carry skins to its winner. NO_CARRY
+// flips that to "tied hole = nobody scores, next hole starts fresh
+// at 1 skin" -- common house rule when you want a clean pot per
+// hole instead of betting that the carry pays out.
+export type SkinsPushRule = "CARRYOVER" | "NO_CARRY";
+export type SkinsConfig = {
+  pushRule?: SkinsPushRule;
+};
+
+export function parseSkinsConfig(s: string | null | undefined): SkinsConfig {
+  if (!s) return {};
+  try {
+    const v = JSON.parse(s);
+    if (typeof v !== "object" || v === null) return {};
+    const out: SkinsConfig = {};
+    if (v.pushRule === "CARRYOVER" || v.pushRule === "NO_CARRY") {
+      out.pushRule = v.pushRule;
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+export function stringifySkinsConfig(c: SkinsConfig): string {
+  return JSON.stringify(c);
+}
+
 // ---- Team-vs-Team side game --------------------------------------------
 // Runs on top of any match (INDIVIDUAL or SCRAMBLE). Splits players into
 // 2 teams (assignment stored in TeamVsTeamConfig.teams as arrays of
@@ -642,7 +672,11 @@ export function computeSkins(
   holes: number,
   scoringMode: ScoringMode,
   startingHole: number = 1,
+  config?: SkinsConfig | null,
 ): Leaderboard {
+  // Default is CARRYOVER -- preserves the long-running behavior of
+  // the engine. NO_CARRY pays nothing on ties and resets each hole.
+  const pushRule: SkinsPushRule = config?.pushRule ?? "CARRYOVER";
   const skinsByPlayer = new Map<string, number>();
   for (const p of players) skinsByPlayer.set(p.id, 0);
 
@@ -671,8 +705,12 @@ export function computeSkins(
       const id = winners[0].id;
       skinsByPlayer.set(id, (skinsByPlayer.get(id) ?? 0) + carryover);
       carryover = 1;
-    } else {
+    } else if (pushRule === "CARRYOVER") {
       carryover += 1;
+    } else {
+      // NO_CARRY: pushed hole pays nothing, next hole starts fresh
+      // at 1 skin instead of growing the pot.
+      carryover = 1;
     }
     openHole = h;
   }
@@ -689,7 +727,7 @@ export function computeSkins(
   const subtitle =
     openHole === 0
       ? "No holes scored yet"
-      : carryover > 1
+      : pushRule === "CARRYOVER" && carryover > 1
         ? `Thru ${openHole} · ${carryover - 1} carrying`
         : `Thru ${openHole}`;
   return {
@@ -2026,6 +2064,8 @@ export function computeAllSideGames(input: {
   matchEvents?: MatchEvent[];
   // Sixes stake (per dot). Null = no $ values shown.
   sixesConfig?: SixesConfig | null;
+  // Skins tie-handling rule. Null = CARRYOVER (default behavior).
+  skinsConfig?: SkinsConfig | null;
 }): { kind: SideGameKind; leaderboards: Leaderboard[] }[] {
   const {
     enabled,
@@ -2044,6 +2084,7 @@ export function computeAllSideGames(input: {
     matchConfig = null,
     matchEvents = [],
     sixesConfig = null,
+    skinsConfig = null,
   } = input;
   const out: { kind: SideGameKind; leaderboards: Leaderboard[] }[] = [];
   for (const kind of enabled) {
@@ -2058,7 +2099,14 @@ export function computeAllSideGames(input: {
       out.push({
         kind,
         leaderboards: [
-          computeSkins(players, pars, holes, scoringMode, startingHole),
+          computeSkins(
+            players,
+            pars,
+            holes,
+            scoringMode,
+            startingHole,
+            skinsConfig,
+          ),
         ],
       });
     } else if (kind === "NASSAU") {
