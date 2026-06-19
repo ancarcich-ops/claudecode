@@ -6,6 +6,11 @@
 import { parseParData } from "./odds";
 import { colorForSeat } from "./colors";
 import { parseScrambleConfig, teamHandicap as scrambleTeamHandicap } from "./scramble";
+import {
+  computeStableford,
+  computeSkins,
+  isSideGameKind,
+} from "./sideGames";
 
 // ----- Public types -----
 
@@ -94,6 +99,17 @@ export type MatchCardData = {
   isSolo: boolean;
   // Marquee items for the LIVE header ticker.
   tickerItems: string[];
+  // Compact side-game leaderboard strip for the LIVE card. One entry
+  // per active game (Stableford / Skins for now); each shows the
+  // leader's name + value. Empty when the match has no side games
+  // enabled or no scores yet.
+  sideGameLeaders: {
+    kind: string;
+    title: string;
+    leader: string;
+    value: string;
+    tieCount: number;
+  }[];
   // Set when this match is one foursome of a tournament round. The card
   // header surfaces "Tournament: <name> · Round N" so home-feed readers
   // know it's not a standalone round.
@@ -142,6 +158,10 @@ type RawMatch = {
   // Optional tournament context. Null/absent when standalone.
   tournament?: { id: string; name: string } | null;
   roundNumber?: number | null;
+  // Enabled side games. We only render leaderboards for the ones
+  // computable from scores alone (Stableford, Skins) on the home
+  // card; richer games (Wolf, BBB, Snake) live on the detail page.
+  sideGames?: { kind: string }[];
 };
 
 export function buildMatchCardData(
@@ -349,7 +369,78 @@ export function buildMatchCardData(
           roundNumber: m.roundNumber ?? null,
         }
       : null,
+    sideGameLeaders: buildSideGameLeaders(
+      m.sideGames ?? [],
+      cardPlayers,
+      pars,
+      totalHoles,
+      m.scoringMode as "NET" | "GROSS" | "CUSTOM",
+      startingHole,
+    ),
   };
+}
+
+// Compact "Stableford: Brett 28" style strip for the home-feed live
+// card. Only renders games computable from scores alone (Stableford,
+// Skins) -- richer games that need event tracking (Wolf, BBB, Snake)
+// stay on the match detail page. Returns [] for matches with no
+// scores yet so the strip just hides.
+function buildSideGameLeaders(
+  sideGames: { kind: string }[],
+  cardPlayers: RawPlayer[],
+  pars: number[],
+  totalHoles: number,
+  scoringMode: "NET" | "GROSS" | "CUSTOM",
+  startingHole: number,
+): MatchCardData["sideGameLeaders"] {
+  if (sideGames.length === 0 || cardPlayers.length === 0) return [];
+  const anyScored = cardPlayers.some((p) => p.scores.length > 0);
+  if (!anyScored) return [];
+
+  const liveInputs = cardPlayers.map((p) => ({
+    id: p.id,
+    displayName: p.displayName,
+    handicap: p.handicap,
+    scoresByHole: Object.fromEntries(
+      p.scores.map((s) => [s.hole, s.strokes]),
+    ),
+  }));
+
+  const out: MatchCardData["sideGameLeaders"] = [];
+  for (const sg of sideGames) {
+    if (!isSideGameKind(sg.kind)) continue;
+    let board;
+    if (sg.kind === "STABLEFORD") {
+      board = computeStableford(
+        liveInputs,
+        pars,
+        totalHoles,
+        scoringMode,
+        startingHole,
+      );
+    } else if (sg.kind === "SKINS") {
+      board = computeSkins(
+        liveInputs,
+        pars,
+        totalHoles,
+        scoringMode,
+        startingHole,
+      );
+    } else {
+      continue;
+    }
+    const leaders = board.rows.filter((r) => r.isLeader);
+    if (leaders.length === 0) continue;
+    const top = leaders[0];
+    out.push({
+      kind: sg.kind,
+      title: board.title,
+      leader: top.player,
+      value: top.value,
+      tieCount: leaders.length - 1,
+    });
+  }
+  return out;
 }
 
 // ----- Helpers -----

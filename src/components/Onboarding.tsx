@@ -348,7 +348,7 @@ function WelcomeStep() {
         />
         <FeatureRow
           icon={<GpsIcon />}
-          title="Satellite GPS, 350+ courses"
+          title="Satellite GPS, 1000+ courses"
           body="Live distances to the green plus a pre-round preview of every hole — for every course we've mapped."
         />
       </div>

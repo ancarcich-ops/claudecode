@@ -54,6 +54,21 @@ export default function MatchCard({ data }: { data: MatchCardData }) {
         </div>
       )}
 
+      {isLive && data.sideGameLeaders.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10.5px] font-mono uppercase tracking-wider text-mute">
+          {data.sideGameLeaders.map((sg) => (
+            <span key={sg.kind} className="whitespace-nowrap">
+              <span className="text-faint">{sg.title}:</span>{" "}
+              <span className="text-ink">{sg.leader}</span>{" "}
+              <span className="text-accent">{sg.value}</span>
+              {sg.tieCount > 0 && (
+                <span className="text-mute"> +{sg.tieCount}</span>
+              )}
+            </span>
+          ))}
+        </div>
+      )}
+
       {isSettled && winner && !data.isSolo && (
         <ResultBand winner={winner} />
       )}
