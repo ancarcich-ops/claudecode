@@ -1260,6 +1260,18 @@ export function computeNassau(
 // hole-by-hole table with the per-hole winner highlighted. Returns one
 // entry per hole; teamA/teamB are null until every team member has
 // logged a stroke (or for points-based rules, until both teams have).
+export type TeamPlayerHole = {
+  playerId: string;
+  displayName: string;
+  score: number | null;
+  // True when this player's score is the one the rule "used" for the
+  // team total on this hole. BEST_BALL = the lowest scorer; WORST_BALL
+  // = the highest; SUM / AGGREGATE_NET = every player (all true).
+  // HIGH_LOW / HIGH_LOW_BALL highlight the team's low (and high for
+  // _BALL). VEGAS highlights the lo (tens-digit) score.
+  contributed: boolean;
+};
+
 export type TeamVsTeamHoleBreakdown = {
   hole: number;
   par: number;
@@ -1271,6 +1283,11 @@ export type TeamVsTeamHoleBreakdown = {
   // Hint for the renderer: stroke rules show per-team totals; points
   // rules show points awarded (out of 2); vegas shows the 2-digit value.
   scale: "STROKES" | "POINTS" | "VEGAS";
+  // Per-player scores + a flag for which one(s) "won the hole" for
+  // their team under the active rule. Drives the per-player display
+  // on the panel so users can see who carried the team.
+  teamAPlayers: TeamPlayerHole[];
+  teamBPlayers: TeamPlayerHole[];
 };
 
 export function teamVsTeamHoleBreakdown(
@@ -1318,50 +1335,144 @@ export function teamVsTeamHoleBreakdown(
     return null;
   };
 
+  // Build the per-player row template for one team on a given hole.
+  // The score field is what to display: for BEST_BALL / WORST_BALL /
+  // SUM that's the gross stroke; for AGGREGATE_NET that's the net
+  // stroke. `contributed` is filled in later per rule.
+  const playerRowsFor = (
+    team: LiveScorePlayer[],
+    holeIndex0: number,
+  ): TeamPlayerHole[] => {
+    const hole = startingHole + holeIndex0;
+    return team.map((p) => {
+      const gross = p.scoresByHole[hole];
+      if (typeof gross !== "number") {
+        return {
+          playerId: p.id,
+          displayName: p.displayName,
+          score: null,
+          contributed: false,
+        };
+      }
+      const v =
+        rule === "AGGREGATE_NET"
+          ? netStrokesForHole(gross, p.handicap, holeIndex0, holes, scoringMode)
+          : gross;
+      return {
+        playerId: p.id,
+        displayName: p.displayName,
+        score: v,
+        contributed: false,
+      };
+    });
+  };
+
+  const markContributors = (rows: TeamPlayerHole[]) => {
+    const scored = rows.filter((r) => r.score != null) as (TeamPlayerHole & {
+      score: number;
+    })[];
+    if (scored.length === 0) return;
+    switch (rule) {
+      case "BEST_BALL":
+      case "HIGH_LOW":
+      case "VEGAS": {
+        const min = Math.min(...scored.map((r) => r.score));
+        for (const r of scored) if (r.score === min) r.contributed = true;
+        break;
+      }
+      case "WORST_BALL": {
+        const max = Math.max(...scored.map((r) => r.score));
+        for (const r of scored) if (r.score === max) r.contributed = true;
+        break;
+      }
+      case "HIGH_LOW_BALL": {
+        const min = Math.min(...scored.map((r) => r.score));
+        const max = Math.max(...scored.map((r) => r.score));
+        for (const r of scored) {
+          if (r.score === min || r.score === max) r.contributed = true;
+        }
+        break;
+      }
+      case "SUM":
+      case "AGGREGATE_NET": {
+        for (const r of scored) r.contributed = true;
+        break;
+      }
+    }
+  };
+
   for (let i = 0; i < holes; i++) {
     const hole = startingHole + i;
     const par = pars[i] ?? 4;
+    const teamAPlayers = playerRowsFor(teamA, i);
+    const teamBPlayers = playerRowsFor(teamB, i);
+    const teamAFullyScored = teamAPlayers.every((r) => r.score != null);
+    const teamBFullyScored = teamBPlayers.every((r) => r.score != null);
+    if (teamAFullyScored) markContributors(teamAPlayers);
+    if (teamBFullyScored) markContributors(teamBPlayers);
 
     if (rule === "VEGAS") {
       if (teamA.length !== 2 || teamB.length !== 2) {
-        out.push({ hole, par, teamA: null, teamB: null, winner: null, scale });
+        out.push({
+          hole,
+          par,
+          teamA: null,
+          teamB: null,
+          winner: null,
+          scale,
+          teamAPlayers,
+          teamBPlayers,
+        });
         continue;
       }
-      const aS = teamA.map((p) => p.scoresByHole[hole]);
-      const bS = teamB.map((p) => p.scoresByHole[hole]);
-      if (
-        aS.some((s) => typeof s !== "number") ||
-        bS.some((s) => typeof s !== "number")
-      ) {
-        out.push({ hole, par, teamA: null, teamB: null, winner: null, scale });
+      if (!teamAFullyScored || !teamBFullyScored) {
+        out.push({
+          hole,
+          par,
+          teamA: null,
+          teamB: null,
+          winner: null,
+          scale,
+          teamAPlayers,
+          teamBPlayers,
+        });
         continue;
       }
-      const a = aS as number[];
-      const b = bS as number[];
+      const a = teamAPlayers.map((r) => r.score as number);
+      const b = teamBPlayers.map((r) => r.score as number);
       const aVal = Math.min(...a) * 10 + Math.max(...a);
       const bVal = Math.min(...b) * 10 + Math.max(...b);
       const winner: "A" | "B" | "TIE" =
         aVal < bVal ? "A" : bVal < aVal ? "B" : "TIE";
-      out.push({ hole, par, teamA: aVal, teamB: bVal, winner, scale });
+      out.push({
+        hole,
+        par,
+        teamA: aVal,
+        teamB: bVal,
+        winner,
+        scale,
+        teamAPlayers,
+        teamBPlayers,
+      });
       continue;
     }
 
     if (rule === "HIGH_LOW" || rule === "HIGH_LOW_BALL") {
-      const collect = (team: LiveScorePlayer[]): number[] | null => {
-        const strokes: number[] = [];
-        for (const p of team) {
-          const g = p.scoresByHole[hole];
-          if (typeof g !== "number") return null;
-          strokes.push(g);
-        }
-        return strokes.length > 0 ? strokes : null;
-      };
-      const aStrokes = collect(teamA);
-      const bStrokes = collect(teamB);
-      if (!aStrokes || !bStrokes) {
-        out.push({ hole, par, teamA: null, teamB: null, winner: null, scale });
+      if (!teamAFullyScored || !teamBFullyScored) {
+        out.push({
+          hole,
+          par,
+          teamA: null,
+          teamB: null,
+          winner: null,
+          scale,
+          teamAPlayers,
+          teamBPlayers,
+        });
         continue;
       }
+      const aStrokes = teamAPlayers.map((r) => r.score as number);
+      const bStrokes = teamBPlayers.map((r) => r.score as number);
       let aPts = 0;
       let bPts = 0;
       if (rule === "HIGH_LOW") {
@@ -1385,19 +1496,45 @@ export function teamVsTeamHoleBreakdown(
       }
       const winner: "A" | "B" | "TIE" =
         aPts > bPts ? "A" : bPts > aPts ? "B" : "TIE";
-      out.push({ hole, par, teamA: aPts, teamB: bPts, winner, scale });
+      out.push({
+        hole,
+        par,
+        teamA: aPts,
+        teamB: bPts,
+        winner,
+        scale,
+        teamAPlayers,
+        teamBPlayers,
+      });
       continue;
     }
 
-    const a = teamStrokeFor(teamA, i);
-    const b = teamStrokeFor(teamB, i);
+    const a = teamAFullyScored ? teamStrokeFor(teamA, i) : null;
+    const b = teamBFullyScored ? teamStrokeFor(teamB, i) : null;
     if (a == null || b == null) {
-      out.push({ hole, par, teamA: a, teamB: b, winner: null, scale });
+      out.push({
+        hole,
+        par,
+        teamA: a,
+        teamB: b,
+        winner: null,
+        scale,
+        teamAPlayers,
+        teamBPlayers,
+      });
       continue;
     }
-    const winner: "A" | "B" | "TIE" =
-      a < b ? "A" : b < a ? "B" : "TIE";
-    out.push({ hole, par, teamA: a, teamB: b, winner, scale });
+    const winner: "A" | "B" | "TIE" = a < b ? "A" : b < a ? "B" : "TIE";
+    out.push({
+      hole,
+      par,
+      teamA: a,
+      teamB: b,
+      winner,
+      scale,
+      teamAPlayers,
+      teamBPlayers,
+    });
   }
   return out;
 }
