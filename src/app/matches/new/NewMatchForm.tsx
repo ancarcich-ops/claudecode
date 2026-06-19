@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
 import { useFormStatus } from "react-dom";
 import { toast } from "sonner";
 import type { CoursePreset } from "@/lib/courses";
@@ -184,7 +185,28 @@ export default function NewMatchForm({
     userId: string | null;
   }[];
 }) {
-  const [step, setStep] = useState(0);
+  // Allow a deep link like /matches/[id]/edit?step=side-games (or
+  // ?step=2) to drop the user straight on the side-games step. Used
+  // by the "Add side games" CTA on the match detail page so the
+  // creator doesn't have to walk back through Round + Players.
+  const searchParams = useSearchParams();
+  const initialStep = (() => {
+    if (!initial) return 0;
+    const raw = searchParams?.get("step");
+    if (!raw) return 0;
+    const named: Record<string, number> = {
+      round: 0,
+      players: 1,
+      extras: 2,
+      "side-games": 2,
+      sidegames: 2,
+    };
+    if (named[raw] != null) return named[raw];
+    const num = parseInt(raw, 10);
+    if (Number.isFinite(num) && num >= 0 && num <= 2) return num;
+    return 0;
+  })();
+  const [step, setStep] = useState(initialStep);
   // Guided progressive reveal for the Round step. The user is walked
   // through one decision at a time -- 0: course, 1: tee + holes, 2:
   // format + scoring, 3: details (everything revealed). Completed

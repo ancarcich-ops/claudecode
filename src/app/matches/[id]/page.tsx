@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { loadMatchWithOdds } from "@/lib/match";
@@ -1060,6 +1061,11 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
     </div>
   );
 
+  // Computed up here (rather than between scorecardContent and
+  // sideGamesContent) so the scorecard CTA can read it.
+  const hasSideGames =
+    !!bbbGame || !!snakeGame || !!wolfGame || sideGameSections.length > 0;
+
   const scorecardContent = (
     <div className="space-y-6">
       <section className="card p-4">
@@ -1100,6 +1106,21 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
           </>
         )}
       </section>
+      {/* Creator-only nudge: when the round has no side games enabled,
+          surface a one-line CTA so we don't bury the option inside
+          Edit > step 3. Hidden once any side game is active (the
+          Side games tab takes over discovery). */}
+      {isCreator && !hasSideGames && (
+        <div className="text-[12px] text-mute text-center">
+          No side games on this round.{" "}
+          <Link
+            href={`/matches/${match.id}/edit?step=side-games`}
+            className="text-accent hover:underline"
+          >
+            Add Skins / Stableford / Teams →
+          </Link>
+        </div>
+      )}
       {/* Creator-only configuration lives here instead of its own tab --
           pars + Wolf rotation are tied directly to scoring, so they
           read naturally as a continuation of the scorecard. */}
@@ -1220,9 +1241,6 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
       </section>
     </div>
   );
-
-  const hasSideGames =
-    !!bbbGame || !!snakeGame || !!wolfGame || sideGameSections.length > 0;
 
   const sideGamesContent = (
     <div className="space-y-6">
