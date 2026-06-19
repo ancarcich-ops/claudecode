@@ -30,6 +30,7 @@ import {
   isWolfEventKind,
   parseWolfConfig,
   stringifyWolfConfig,
+  type SideGameKind,
   type WolfConfig,
   type WolfPushRule,
 } from "./sideGames";
@@ -1114,6 +1115,134 @@ export async function editMatchAction(formData: FormData) {
     }
     await prisma.sideGame.update({
       where: { matchId_kind: { matchId, kind: "WOLF" } },
+      data: { config },
+    });
+  }
+
+  await recordOddsSnapshot(matchId);
+  revalidatePath(`/matches/${matchId}`);
+  revalidatePath("/");
+  redirect(`/matches/${matchId}`);
+}
+
+// Slim side-games-only editor. Lets the creator add / remove / re-
+// configure side games for matches that are UPCOMING or IN_PROGRESS,
+// without exposing the destructive course/players/format fields the
+// full editMatchAction would let through. Side game scores recompute
+// from existing strokes, so changing them mid-round is safe.
+export async function editMatchSideGamesAction(formData: FormData) {
+  const user = await requireUser();
+  const matchId = String(formData.get("matchId") ?? "").trim();
+  if (!matchId) throw new Error("Match id required");
+
+  const existing = await prisma.match.findUnique({
+    where: { id: matchId },
+    include: {
+      players: { orderBy: { seat: "asc" } },
+      sideGames: true,
+    },
+  });
+  if (!existing) throw new Error("Match not found");
+  if (existing.createdById !== user.id) throw new Error("Not your match");
+  if (existing.status === "COMPLETED") {
+    throw new Error("Match is final -- side games can't be edited");
+  }
+
+  const sideGameRaw = formData.getAll("sideGame").map((v) => String(v));
+  const sideGameKinds: SideGameKind[] = Array.from(
+    new Set(
+      sideGameRaw
+        .filter(isSideGameKind)
+        .filter((k) => !(k === "NASSAU" && existing.holes !== 18))
+        // TEAM_VS_TEAM stays locked to the original format choice --
+        // adding teams mid-round needs the team picker the full edit
+        // form provides. The slim editor doesn't expose it.
+        .filter((k): k is Exclude<SideGameKind, "TEAM_VS_TEAM"> =>
+          k !== "TEAM_VS_TEAM",
+        ),
+    ),
+  );
+
+  // Preserve any existing TVT row -- we don't touch it from this form.
+  const preservedTvt = existing.sideGames.find((sg) => sg.kind === "TEAM_VS_TEAM");
+  if (preservedTvt) sideGameKinds.push("TEAM_VS_TEAM");
+
+  // Drop de-selected games (cascades their events), ensure selected ones exist.
+  for (const sg of existing.sideGames) {
+    if (!sideGameKinds.includes(sg.kind as never)) {
+      await prisma.sideGame.delete({ where: { id: sg.id } });
+    }
+  }
+  for (const kind of sideGameKinds) {
+    await prisma.sideGame.upsert({
+      where: { matchId_kind: { matchId, kind } },
+      update: {},
+      create: { matchId, kind },
+    });
+  }
+
+  if (sideGameKinds.includes("SKINS")) {
+    const raw = String(formData.get("skinsConfig") ?? "");
+    const { parseSkinsConfig, stringifySkinsConfig } = await import(
+      "./sideGames"
+    );
+    let config: string | null = null;
+    if (raw) {
+      const parsed = parseSkinsConfig(raw);
+      config = stringifySkinsConfig(parsed);
+    }
+    await prisma.sideGame.update({
+      where: { matchId_kind: { matchId, kind: "SKINS" } },
+      data: { config },
+    });
+  }
+  if (sideGameKinds.includes("WOLF")) {
+    const raw = String(formData.get("wolfConfig") ?? "");
+    const { parseWolfConfig, stringifyWolfConfig } = await import(
+      "./sideGames"
+    );
+    let config: string | null = null;
+    if (raw) {
+      const parsed = parseWolfConfig(raw);
+      config = stringifyWolfConfig(parsed);
+    }
+    await prisma.sideGame.update({
+      where: { matchId_kind: { matchId, kind: "WOLF" } },
+      data: { config },
+    });
+  }
+  if (sideGameKinds.includes("TARGETS")) {
+    const raw = String(formData.get("targetsConfig") ?? "");
+    const { parseTargetsConfig, stringifyTargetsConfig } = await import(
+      "./sideGames"
+    );
+    let config: string | null = null;
+    if (raw) {
+      const parsed = parseTargetsConfig(raw);
+      if (parsed && parsed.target > 0) config = stringifyTargetsConfig(parsed);
+    }
+    await prisma.sideGame.update({
+      where: { matchId_kind: { matchId, kind: "TARGETS" } },
+      data: { config },
+    });
+  }
+  if (sideGameKinds.includes("SIXES")) {
+    const raw = String(formData.get("sixesConfig") ?? "");
+    const { stringifySixesConfig } = await import("./sideGames");
+    let config: string | null = null;
+    if (raw) {
+      try {
+        const obj = JSON.parse(raw);
+        const stakeNum = Number(obj?.stake);
+        const stake =
+          Number.isFinite(stakeNum) && stakeNum > 0 ? stakeNum : undefined;
+        if (stake) config = stringifySixesConfig({ stake });
+      } catch {
+        config = null;
+      }
+    }
+    await prisma.sideGame.update({
+      where: { matchId_kind: { matchId, kind: "SIXES" } },
       data: { config },
     });
   }

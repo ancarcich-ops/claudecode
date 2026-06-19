@@ -1114,7 +1114,7 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
         <div className="text-[12px] text-mute text-center">
           No side games on this round.{" "}
           <Link
-            href={`/matches/${match.id}/edit?step=side-games`}
+            href={`/matches/${match.id}/side-games`}
             className="text-accent hover:underline"
           >
             Add Skins / Stableford / Teams →
