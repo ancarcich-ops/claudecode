@@ -9,7 +9,9 @@ import { parseScrambleConfig, teamHandicap as scrambleTeamHandicap } from "./scr
 import {
   computeStableford,
   computeSkins,
+  computeTeamVsTeam,
   isSideGameKind,
+  parseTeamVsTeamConfig,
 } from "./sideGames";
 
 // ----- Public types -----
@@ -161,7 +163,7 @@ type RawMatch = {
   // Enabled side games. We only render leaderboards for the ones
   // computable from scores alone (Stableford, Skins) on the home
   // card; richer games (Wolf, BBB, Snake) live on the detail page.
-  sideGames?: { kind: string }[];
+  sideGames?: { kind: string; config?: string | null }[];
 };
 
 export function buildMatchCardData(
@@ -386,7 +388,7 @@ export function buildMatchCardData(
 // stay on the match detail page. Returns [] for matches with no
 // scores yet so the strip just hides.
 function buildSideGameLeaders(
-  sideGames: { kind: string }[],
+  sideGames: { kind: string; config?: string | null }[],
   cardPlayers: RawPlayer[],
   pars: number[],
   totalHoles: number,
@@ -409,6 +411,38 @@ function buildSideGameLeaders(
   const out: MatchCardData["sideGameLeaders"] = [];
   for (const sg of sideGames) {
     if (!isSideGameKind(sg.kind)) continue;
+    // Team-vs-Team is handled specially: it returns one Leaderboard
+    // per configured rule (Best Ball, Total Team, etc), and the rows
+    // are TEAMS, not individuals. We surface the first rule's
+    // standings so the home card shows the headline "Best ball:
+    // Eagles 3 up" rather than a wall of per-rule lines.
+    if (sg.kind === "TEAM_VS_TEAM") {
+      const cfg = parseTeamVsTeamConfig(sg.config ?? null);
+      if (!cfg || cfg.rules.length === 0) continue;
+      const boards = computeTeamVsTeam(
+        liveInputs,
+        pars,
+        totalHoles,
+        scoringMode,
+        cfg,
+        startingHole,
+      );
+      const headline = boards[0];
+      if (!headline) continue;
+      const headLeaders = headline.rows.filter((r) => r.isLeader);
+      if (headLeaders.length === 0) continue;
+      const top = headLeaders[0];
+      out.push({
+        kind: sg.kind,
+        // Headline title is the rule label ("Best Ball", "Total
+        // Team", etc) -- avoids "TEAM_VS_TEAM" leaking into the UI.
+        title: headline.title,
+        leader: top.player,
+        value: top.value,
+        tieCount: headLeaders.length - 1,
+      });
+      continue;
+    }
     let board;
     if (sg.kind === "STABLEFORD") {
       board = computeStableford(
