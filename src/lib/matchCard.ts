@@ -432,12 +432,17 @@ function buildSideGameLeaders(
       const headLeaders = headline.rows.filter((r) => r.isLeader);
       if (headLeaders.length === 0) continue;
       const top = headLeaders[0];
+      // The compute engine packs "Team A — Seuss & BigPeas & ..." into
+      // the player field for the standings panel. On the home card
+      // there's no room for the roster, just the team name -- so split
+      // at the em-dash and keep the prefix.
+      const shortLeader = top.player.split(" — ")[0] || top.player;
       out.push({
         kind: sg.kind,
         // Headline title is the rule label ("Best Ball", "Total
         // Team", etc) -- avoids "TEAM_VS_TEAM" leaking into the UI.
         title: headline.title,
-        leader: top.player,
+        leader: shortLeader,
         value: top.value,
         tieCount: headLeaders.length - 1,
       });

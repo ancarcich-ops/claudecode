@@ -34,10 +34,12 @@ import {
   shapeWolfHoles,
   parseWolfConfig,
   parseSkinsConfig,
+  teamVsTeamHoleBreakdown,
   type SideGameKind,
   type BbbEvent,
   type SnakeEvent,
   type WolfEvent,
+  type TeamVsTeamRule,
 } from "@/lib/sideGames";
 import MatchChartTabs, {
   type SideGameSeries,
@@ -60,6 +62,9 @@ import Scorecard from "./Scorecard";
 import WagerForm from "./WagerForm";
 import ParsEditor from "./ParsEditor";
 import HandicapInput from "./HandicapInput";
+import TeamVsTeamPanel, {
+  type TvtBoardPanel,
+} from "@/components/match-detail/TeamVsTeamPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -687,10 +692,59 @@ export default async function MatchPage({
 
       {/* Inline Team-vs-Team standings. For a "Both" match the team
           competition IS the point, so we surface its leaderboards
-          right above the tabs instead of burying them in Side games. */}
+          right above the tabs instead of burying them in Side games.
+          Each rule panel collapses a hole-by-hole strip so users can
+          see exactly which team won each hole. */}
       {(() => {
         const tvt = sideGameSections.find((sg) => sg.kind === "TEAM_VS_TEAM");
         if (!tvt || tvt.leaderboards.length === 0) return null;
+        if (!teamVsTeamConfig) return null;
+        const byId = new Map(match.players.map((p) => [p.id, p]));
+        const liveInputs = match.players.map((p) => ({
+          id: p.id,
+          displayName: p.displayName,
+          handicap: p.handicap,
+          scoresByHole: Object.fromEntries(
+            p.scores.map((s) => [s.hole, s.strokes]),
+          ),
+        }));
+        const liveById = new Map(liveInputs.map((p) => [p.id, p]));
+        const teamA = teamVsTeamConfig.teams[0]
+          .map((id) => liveById.get(id))
+          .filter((p): p is (typeof liveInputs)[number] => p != null);
+        const teamB = teamVsTeamConfig.teams[1]
+          .map((id) => liveById.get(id))
+          .filter((p): p is (typeof liveInputs)[number] => p != null);
+        const teamNameA = teamVsTeamConfig.teamNames?.[0] ?? "Team A";
+        const teamNameB = teamVsTeamConfig.teamNames?.[1] ?? "Team B";
+
+        const panels: TvtBoardPanel[] = tvt.leaderboards.map((lb) => {
+          // Recover the rule from the key ("TEAM_BEST_BALL" -> "BEST_BALL")
+          const rule = lb.key.replace(/^TEAM_/, "") as TeamVsTeamRule;
+          const breakdown = teamVsTeamHoleBreakdown(
+            rule,
+            teamA,
+            teamB,
+            pars,
+            match.holes,
+            scoringMode,
+            matchStart,
+          );
+          return {
+            key: lb.key,
+            title: lb.title,
+            subtitle: lb.subtitle,
+            rows: lb.rows.map((r) => ({
+              playerId: r.playerId,
+              player: r.player,
+              value: r.value,
+              isLeader: r.isLeader,
+            })),
+            breakdown,
+            teamLabels: { A: teamNameA, B: teamNameB },
+          };
+        });
+
         return (
           <section className="card p-4">
             <div className="flex items-center justify-between gap-2 mb-3">
@@ -704,45 +758,8 @@ export default async function MatchPage({
               </span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {tvt.leaderboards.map((lb) => (
-                <div
-                  key={lb.key}
-                  className="border border-border rounded-md p-3"
-                >
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <div className="text-xs uppercase tracking-wider text-accent font-medium">
-                      {lb.title}
-                    </div>
-                    {lb.subtitle && (
-                      <div className="text-[10px] text-mute">{lb.subtitle}</div>
-                    )}
-                  </div>
-                  <ul className="space-y-1.5">
-                    {lb.rows.map((r, i) => (
-                      <li
-                        key={r.playerId}
-                        className="flex items-center justify-between text-sm"
-                      >
-                        <span
-                          className={
-                            "truncate " +
-                            (r.isLeader ? "text-ink font-medium" : "text-mute")
-                          }
-                        >
-                          {i + 1}. {r.player}
-                        </span>
-                        <span
-                          className={
-                            "font-mono tabular-nums shrink-0 " +
-                            (r.isLeader ? "text-accent" : "text-mute")
-                          }
-                        >
-                          {r.value}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+              {panels.map((panel) => (
+                <TeamVsTeamPanel key={panel.key} panel={panel} />
               ))}
             </div>
           </section>
