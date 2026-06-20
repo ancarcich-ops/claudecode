@@ -3,7 +3,15 @@
 @tailwind utilities;
 
 /* Theme tokens. Values are RGB triples so Tailwind's <alpha-value>
-   substitution still works (bg-panel/70 etc.). */
+   substitution still works (bg-panel/70 etc.).
+
+   Fairway (default, no data-theme) is the original green-tinted dark
+   skin. Three more themes (Caddie's Notebook / Blueprint / Back Nine)
+   are switchable via `<html data-theme="...">`, set by the in-app
+   ThemeToggle and a pre-paint script in layout.tsx. Font swaps go
+   through --font-display / --font-sans / --font-mono, which Tailwind
+   reads from tailwind.config.ts -- each theme just points those at a
+   different next/font variable. */
 :root {
   color-scheme: dark;
   --color-bg: 11 15 12;
@@ -20,24 +28,81 @@
   --color-gold: 251 191 36;
   --skeleton-base: 255 255 255;
   --recharts-axis: 138 160 148;
+  /* Fairway font aliases (next/font variables are wired in layout.tsx). */
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
 }
 
-[data-theme="light"] {
+/* Caddie's Notebook -- warm cream paper, clay-red accent, navy "ink"
+   for over-par. The light-mode option; replaces the old data-theme="light"
+   inverted-Fairway skin. */
+[data-theme="caddie"] {
   color-scheme: light;
-  --color-bg: 247 250 248;
-  --color-panel: 255 255 255;
-  --color-panel2: 240 244 241;
-  --color-border: 216 225 218;
-  --color-borderSoft: 226 233 228;
-  --color-ink: 11 31 21;
-  --color-mute: 94 110 99;
-  --color-faint: 130 146 134;
-  --color-accent: 5 150 105;
-  --color-accentDim: 4 120 87;
-  --color-danger: 220 38 38;
-  --color-gold: 180 83 9;
+  --color-bg: 233 225 207;
+  --color-panel: 245 239 224;
+  --color-panel2: 237 229 211;
+  --color-border: 216 205 180;
+  --color-borderSoft: 226 217 196;
+  --color-ink: 33 29 22;
+  --color-mute: 110 101 82;
+  --color-faint: 138 124 98;
+  --color-accent: 180 56 43;
+  --color-accentDim: 156 46 35;
+  --color-danger: 50 74 99;
+  --color-gold: 169 118 42;
   --skeleton-base: 0 0 0;
-  --recharts-axis: 94 110 99;
+  --recharts-axis: 110 101 82;
+  --font-display: var(--font-spectral);
+  --font-sans: var(--font-karla);
+  --font-mono: var(--font-dm-mono);
+}
+
+/* Blueprint -- architect's cyanotype: deep drafting blue + electric
+   cyan accent, hairline borders. */
+[data-theme="blueprint"] {
+  color-scheme: dark;
+  --color-bg: 8 35 61;
+  --color-panel: 12 44 76;
+  --color-panel2: 16 52 88;
+  --color-border: 32 78 122;
+  --color-borderSoft: 26 65 102;
+  --color-ink: 234 242 251;
+  --color-mute: 157 184 212;
+  --color-faint: 130 156 190;
+  --color-accent: 59 201 240;
+  --color-accentDim: 38 174 214;
+  --color-danger: 255 122 110;
+  --color-gold: 244 201 93;
+  --skeleton-base: 255 255 255;
+  --recharts-axis: 157 184 212;
+  --font-display: var(--font-space-grotesk);
+  --font-sans: var(--font-hanken-grotesk);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+/* Back Nine -- lush real-green surfaces, bentgrass-bright accent.
+   Commits to green instead of green-tinted near-black. */
+[data-theme="backnine"] {
+  color-scheme: dark;
+  --color-bg: 12 32 22;
+  --color-panel: 18 48 34;
+  --color-panel2: 23 59 42;
+  --color-border: 36 90 63;
+  --color-borderSoft: 28 72 50;
+  --color-ink: 234 243 232;
+  --color-mute: 157 192 168;
+  --color-faint: 120 152 129;
+  --color-accent: 69 216 122;
+  --color-accentDim: 50 188 100;
+  --color-danger: 226 103 76;
+  --color-gold: 242 193 78;
+  --skeleton-base: 255 255 255;
+  --recharts-axis: 157 192 168;
+  --font-display: var(--font-archivo);
+  --font-sans: var(--font-figtree);
+  /* Back Nine keeps Geist Mono -- it pairs well with Archivo + Figtree
+     and avoids adding a fourth mono. */
+  --font-mono: var(--font-geist-mono);
 }
 
 html, body {
@@ -46,7 +111,7 @@ html, body {
 }
 
 body {
-  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
+  font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-feature-settings: "cv02", "cv11";
 }

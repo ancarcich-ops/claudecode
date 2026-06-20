@@ -22,17 +22,19 @@ const config: Config = {
         gold: "rgb(var(--color-gold) / <alpha-value>)",
       },
       fontFamily: {
-        // Bricolage Grotesque -- wordmark + headlines
+        // Theme-aware font roles. Each theme (Fairway / Caddie's Notebook /
+        // Blueprint / Back Nine) re-points --font-display / --font-sans /
+        // --font-mono in globals.css to a different next/font variable.
+        // Display = wordmark + headlines, sans = body / UI, mono = scores
+        // and tabular numerics (charts, scorecards, chips).
         display: [
           "var(--font-display)",
           "ui-sans-serif",
           "system-ui",
           "sans-serif",
         ],
-        // Geist -- body / UI default. globals.css applies font-sans on body
-        // so the whole app picks it up. Variables come from `geist` npm pkg.
         sans: [
-          "var(--font-geist-sans)",
+          "var(--font-sans)",
           "ui-sans-serif",
           "system-ui",
           "-apple-system",
@@ -40,9 +42,8 @@ const config: Config = {
           "Roboto",
           "sans-serif",
         ],
-        // Geist Mono -- tabular numerics across charts, scorecards, chips
         mono: [
-          "var(--font-geist-mono)",
+          "var(--font-mono)",
           "ui-monospace",
           "SFMono-Regular",
           "Menlo",

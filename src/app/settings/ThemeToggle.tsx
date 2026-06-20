@@ -2,45 +2,90 @@
 
 import { useEffect, useState } from "react";
 
-type Theme = "dark" | "light";
+// Four switchable visual themes. Fairway is the original Sticks skin and
+// the default (no data-theme attribute on <html>); the other three are
+// applied via `data-theme="<id>"`. globals.css drives every token --
+// palette + font roles -- off that attribute.
+type ThemeId = "fairway" | "caddie" | "blueprint" | "backnine";
 
 const STORAGE_KEY = "sticks-theme";
 
-function applyTheme(theme: Theme) {
+const THEMES: {
+  id: ThemeId;
+  label: string;
+  sub: string;
+  // Three swatch colors painted as a tiny preview in the picker:
+  // panel background, accent, and ink text. They mirror the actual
+  // CSS variables so the chip always matches the live skin.
+  swatch: { bg: string; accent: string; ink: string };
+}[] = [
+  {
+    id: "fairway",
+    label: "Fairway",
+    sub: "Default · dark",
+    swatch: { bg: "#111815", accent: "#34D399", ink: "#E8EFE9" },
+  },
+  {
+    id: "caddie",
+    label: "Caddie's Notebook",
+    sub: "Light · paper",
+    swatch: { bg: "#F5EFE0", accent: "#B4382B", ink: "#211D16" },
+  },
+  {
+    id: "blueprint",
+    label: "Blueprint",
+    sub: "Dark · cyanotype",
+    swatch: { bg: "#0C2C4C", accent: "#3BC9F0", ink: "#EAF2FB" },
+  },
+  {
+    id: "backnine",
+    label: "Back Nine",
+    sub: "Dark · turf",
+    swatch: { bg: "#123022", accent: "#45D87A", ink: "#EAF3E8" },
+  },
+];
+
+function applyTheme(theme: ThemeId) {
   if (typeof document === "undefined") return;
-  if (theme === "light") {
-    document.documentElement.dataset.theme = "light";
-  } else {
+  if (theme === "fairway") {
     delete document.documentElement.dataset.theme;
+  } else {
+    document.documentElement.dataset.theme = theme;
   }
 }
 
-// In-page theme switcher. Persists to localStorage, applies the data-theme
-// attribute immediately. The matching pre-paint script in layout.tsx reads
-// the same key so reloads land on the right palette without a flash.
+// In-page theme switcher. Persists the chosen theme id to localStorage
+// (key `sticks-theme`); the pre-paint script in layout.tsx reads the
+// same key so reloads land on the right palette without a flash.
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>("dark");
+  const [theme, setTheme] = useState<ThemeId>("fairway");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored === "light") setTheme("light");
+      if (
+        stored === "caddie" ||
+        stored === "blueprint" ||
+        stored === "backnine"
+      ) {
+        setTheme(stored);
+      }
     } catch {}
   }, []);
 
-  const choose = (next: Theme) => {
+  const choose = (next: ThemeId) => {
     setTheme(next);
     applyTheme(next);
     try {
-      if (next === "dark") localStorage.removeItem(STORAGE_KEY);
+      if (next === "fairway") localStorage.removeItem(STORAGE_KEY);
       else localStorage.setItem(STORAGE_KEY, next);
     } catch {}
   };
 
-  // Render the dark state until mounted so SSR markup matches the default.
-  const active: Theme = mounted ? theme : "dark";
+  // Render Fairway as active until mounted so SSR markup matches the default.
+  const active: ThemeId = mounted ? theme : "fairway";
 
   return (
     <div className="card p-5">
@@ -54,21 +99,17 @@ export default function ThemeToggle() {
           </p>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        <ThemeButton
-          label="Dark"
-          sub="Default"
-          active={active === "dark"}
-          onClick={() => choose("dark")}
-          icon={<MoonIcon />}
-        />
-        <ThemeButton
-          label="Light"
-          sub="Daytime"
-          active={active === "light"}
-          onClick={() => choose("light")}
-          icon={<SunIcon />}
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {THEMES.map((t) => (
+          <ThemeButton
+            key={t.id}
+            label={t.label}
+            sub={t.sub}
+            swatch={t.swatch}
+            active={active === t.id}
+            onClick={() => choose(t.id)}
+          />
+        ))}
       </div>
     </div>
   );
@@ -77,15 +118,15 @@ export default function ThemeToggle() {
 function ThemeButton({
   label,
   sub,
+  swatch,
   active,
   onClick,
-  icon,
 }: {
   label: string;
   sub: string;
+  swatch: { bg: string; accent: string; ink: string };
   active: boolean;
   onClick: () => void;
-  icon: React.ReactNode;
 }) {
   return (
     <button
@@ -99,7 +140,23 @@ function ThemeButton({
           : "border-border bg-panel2 text-mute hover:text-ink")
       }
     >
-      <span className={active ? "text-accent" : "text-mute"}>{icon}</span>
+      <span
+        className="inline-flex items-center justify-center rounded-md shrink-0 border"
+        style={{
+          width: 36,
+          height: 36,
+          background: swatch.bg,
+          borderColor: swatch.accent,
+        }}
+        aria-hidden
+      >
+        <span
+          className="font-mono text-[11px] font-semibold"
+          style={{ color: swatch.accent }}
+        >
+          18
+        </span>
+      </span>
       <span className="flex flex-col min-w-0">
         <span className="text-sm font-medium leading-tight">{label}</span>
         <span className="text-[10px] uppercase tracking-wider opacity-70 leading-tight mt-0.5">
@@ -107,42 +164,5 @@ function ThemeButton({
         </span>
       </span>
     </button>
-  );
-}
-
-function MoonIcon() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-    </svg>
-  );
-}
-
-function SunIcon() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
-    </svg>
   );
 }
