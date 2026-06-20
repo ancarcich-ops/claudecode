@@ -227,7 +227,7 @@ function ReviewSheet({
             parSum={frontPar}
             players={enriched}
             strokesSlice={(p) => p.orderedStrokes.slice(0, 9)}
-            sumLabel="Out"
+            sumLabel="Front 9"
             sumValue={(p) => p.out}
           />
 
@@ -239,7 +239,7 @@ function ReviewSheet({
               parSum={backPar}
               players={enriched}
               strokesSlice={(p) => p.orderedStrokes.slice(9)}
-              sumLabel="In"
+              sumLabel="Back 9"
               sumValue={(p) => p.inn}
             />
           )}

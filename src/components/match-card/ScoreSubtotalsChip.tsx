@@ -1,8 +1,8 @@
-// Out / In / Total gross-stroke chip rendered on the home-feed player
-// rows. For 18-hole rounds it shows OUT + IN + TOT; for 9-hole rounds
-// it just shows TOT. Hidden entirely when nothing's been scored yet so
-// upcoming rows don't pick up an empty pill. Partial nines show
-// "OUT 32 (8h)" so the running count is obvious.
+// Front 9 / Back 9 / Total gross-stroke chip rendered on the home-feed
+// player rows. For 18-hole rounds it shows all three; for 9-hole rounds
+// it just shows Total. Hidden entirely when nothing's been scored yet
+// so upcoming rows don't pick up an empty pill. Partial nines show
+// "Front 9 32 (8h)" so the running count is obvious.
 
 import type { PlayerCard } from "@/lib/matchCard";
 
@@ -21,14 +21,14 @@ export default function ScoreSubtotalsChip({
       {showSplit && (
         <>
           <ChipPart
-            label="Out"
+            label="Front 9"
             value={player.outGross}
             played={player.outHolesPlayed}
             of={9}
           />
           <span className="text-faint text-[10px]">·</span>
           <ChipPart
-            label="In"
+            label="Back 9"
             value={player.inGross}
             played={player.inHolesPlayed}
             of={9}
@@ -37,7 +37,7 @@ export default function ScoreSubtotalsChip({
         </>
       )}
       <ChipPart
-        label="Tot"
+        label="Total"
         value={player.grossTotal}
         played={player.holesPlayed}
         of={totalHoles}
