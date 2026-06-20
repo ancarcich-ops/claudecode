@@ -1,7 +1,17 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
-import { Bricolage_Grotesque } from "next/font/google";
+import {
+  Archivo,
+  Bricolage_Grotesque,
+  DM_Mono,
+  Figtree,
+  Hanken_Grotesk,
+  JetBrains_Mono,
+  Karla,
+  Space_Grotesk,
+  Spectral,
+} from "next/font/google";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { getCurrentUser } from "@/lib/auth";
@@ -14,14 +24,57 @@ import Sounds from "@/components/Sounds";
 import SticksSplash from "@/components/SticksSplash";
 import { Toaster } from "sonner";
 
-// Per the brand kit: Bricolage = display + wordmark, Geist = body,
-// Geist Mono = tabular numerics. Bricolage via next/font/google;
-// Geist via the official `geist` npm package (Vercel's house sans,
-// already preconfigured with --font-geist-sans / --font-geist-mono
-// CSS variables, which we re-alias to --font-sans / --font-mono below).
+// Fairway baseline -- Bricolage = display + wordmark, Geist (loaded via the
+// `geist` npm package) = body, Geist Mono = tabular numerics. Each theme
+// (Caddie's Notebook / Blueprint / Back Nine) layers in its own
+// display+sans+mono trio below; globals.css points --font-display /
+// --font-sans / --font-mono at the right pair per theme. All fonts use
+// display:swap so the fallback paints first and the swap is invisible.
 const display = Bricolage_Grotesque({
   subsets: ["latin"],
   variable: "--font-display",
+  display: "swap",
+});
+const spectral = Spectral({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-spectral",
+  display: "swap",
+});
+const karla = Karla({
+  subsets: ["latin"],
+  variable: "--font-karla",
+  display: "swap",
+});
+const dmMono = DM_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-dm-mono",
+  display: "swap",
+});
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
+  display: "swap",
+});
+const hankenGrotesk = Hanken_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-hanken-grotesk",
+  display: "swap",
+});
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
+});
+const archivo = Archivo({
+  subsets: ["latin"],
+  variable: "--font-archivo",
+  display: "swap",
+});
+const figtree = Figtree({
+  subsets: ["latin"],
+  variable: "--font-figtree",
   display: "swap",
 });
 
@@ -54,18 +107,30 @@ export default async function RootLayout({
   const user = await getCurrentUser();
   const groups = user ? await listUserGroups(user.id) : [];
   const activeGroupId = getActiveGroupId();
+  const fontVars = [
+    display.variable,
+    GeistSans.variable,
+    GeistMono.variable,
+    spectral.variable,
+    karla.variable,
+    dmMono.variable,
+    spaceGrotesk.variable,
+    hankenGrotesk.variable,
+    jetbrainsMono.variable,
+    archivo.variable,
+    figtree.variable,
+  ].join(" ");
   return (
-    <html
-      lang="en"
-      className={`${display.variable} ${GeistSans.variable} ${GeistMono.variable}`}
-    >
+    <html lang="en" className={fontVars}>
       <head>
-        {/* Apply the saved theme before paint so users on light mode don't
-            flash dark first. The script is intentionally tiny and runs
-            synchronously in <head>. */}
+        {/* Apply the saved theme before paint so users on a non-default
+            theme don't flash Fairway first. Script is intentionally tiny
+            and runs synchronously in <head>. Valid stored values are
+            "caddie" | "blueprint" | "backnine"; anything else (or unset)
+            falls through to Fairway on :root. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{var t=localStorage.getItem("sticks-theme");if(t==="light")document.documentElement.dataset.theme="light";}catch(e){}`,
+            __html: `try{var t=localStorage.getItem("sticks-theme");if(t==="caddie"||t==="blueprint"||t==="backnine")document.documentElement.dataset.theme=t;}catch(e){}`,
           }}
         />
       </head>
