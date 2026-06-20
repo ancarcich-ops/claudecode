@@ -1,17 +1,32 @@
-// Merge candidates from scripts/discover-ca-candidates.json into
-// src/lib/courses.ts as new presets, and pre-stamp their gbIds in
-// scripts/golfbert-state.json so the next import script run can pull
-// real geometry via --reuse-id without searching.
+// Merge candidates from a discovery JSON into src/lib/courses.ts as new
+// presets, and pre-stamp their gbIds in scripts/golfbert-state.json so
+// the next import script run can pull real geometry via --reuse-id
+// without searching.
 //
 // Run:
+//   # CA sub-regions (LA, OC, IE, ...) read from discover-ca-candidates.json
 //   npx tsx scripts/merge-discovery-candidates.ts --region=LA
 //   npx tsx scripts/merge-discovery-candidates.ts --region=SD --limit=30
 //
+//   # Per-state discovery files (discover-{state}-candidates.json)
+//   npx tsx scripts/merge-discovery-candidates.ts --state=AZ
+//   npx tsx scripts/merge-discovery-candidates.ts --state=OR  # mapped to PNW
+//
 // Flags:
-//   --region=LA|OC|IE|CV|SD|VC|NC|all   (required; "all" merges every region)
+//   --region=LA|OC|IE|CV|SD|VC|NC|AZ|NV|UT|PNW|TX|FL|...   the CourseRegion
+//                                        the new presets land under in
+//                                        courses.ts. Required unless --state
+//                                        is set (which maps for you).
+//   --state=AZ|NV|UT|OR|WA|ID|TX|...     2-letter state code; auto-picks
+//                                        scripts/discover-{state}-candidates.json
+//                                        and maps the state to its CourseRegion
+//                                        (e.g. OR -> PNW). Skips the in-file
+//                                        region filter since per-state files
+//                                        are already single-region.
 //   --limit=N                            cap the batch size (default 999)
 //   --in=path.json                       discovery JSON path
-//                                        (default scripts/discover-ca-candidates.json)
+//                                        (default scripts/discover-ca-candidates.json
+//                                        when --region is set without --state)
 //   --dry-run                            print what would change, don't write
 //
 // Filters out driving ranges, par-3 / executive layouts, putting
@@ -33,31 +48,69 @@ type Candidate = {
   reason: string;
 };
 
+// Per-state discovery files live next to this script. The state's
+// 2-letter code maps to the CourseRegion the new presets fall under
+// (most states match 1:1; the PNW lump-region covers OR / WA / ID).
+const STATE_TO_REGION: Record<string, CourseRegion> = {
+  AZ: "AZ",
+  NV: "NV",
+  UT: "UT",
+  OR: "PNW",
+  WA: "PNW",
+  ID: "PNW",
+  TX: "TX",
+  FL: "FL",
+  CO: "CO",
+};
+
 function parseFlags(argv: string[]) {
   const flags: {
     region: string;
+    state: string;
     limit: number;
     in: string;
+    inExplicit: boolean;
     dryRun: boolean;
   } = {
     region: "",
+    state: "",
     limit: 999,
-    in: "scripts/discover-ca-candidates.json",
+    in: "",
+    inExplicit: false,
     dryRun: false,
   };
   for (const a of argv.slice(2)) {
     if (a.startsWith("--region=")) flags.region = a.slice("--region=".length);
+    else if (a.startsWith("--state="))
+      flags.state = a.slice("--state=".length).toUpperCase();
     else if (a.startsWith("--limit="))
       flags.limit = parseInt(a.slice("--limit=".length), 10);
-    else if (a.startsWith("--in=")) flags.in = a.slice("--in=".length);
-    else if (a === "--dry-run") flags.dryRun = true;
+    else if (a.startsWith("--in=")) {
+      flags.in = a.slice("--in=".length);
+      flags.inExplicit = true;
+    } else if (a === "--dry-run") flags.dryRun = true;
+  }
+  // --state shorthand: resolves the region + auto-picks the per-state
+  // candidate file. Skips the in-file region filter since per-state
+  // files are already single-region by construction.
+  if (flags.state) {
+    const mappedRegion = STATE_TO_REGION[flags.state];
+    if (!mappedRegion) {
+      console.error(
+        `Unknown --state=${flags.state}. Add it to STATE_TO_REGION at the top of merge-discovery-candidates.ts.`,
+      );
+      process.exit(1);
+    }
+    if (!flags.region) flags.region = mappedRegion;
+    if (!flags.in) flags.in = `scripts/discover-${flags.state.toLowerCase()}-candidates.json`;
   }
   if (!flags.region) {
     console.error(
-      "Pass --region=LA|OC|IE|CV|SD|VC|NC|all (required).",
+      "Pass --region=LA|OC|IE|CV|SD|VC|NC|all (or --state=AZ|NV|UT|OR|TX|... for per-state files).",
     );
     process.exit(1);
   }
+  if (!flags.in) flags.in = "scripts/discover-ca-candidates.json";
   return flags;
 }
 
@@ -148,11 +201,19 @@ function main() {
   console.log(`[merge] Loaded ${all.length} candidates from ${flags.in}`);
 
   const wantRegion = flags.region === "all" ? null : flags.region as CourseRegion;
-  const inRegion = all.filter((c) =>
-    wantRegion ? c.suggestedRegion === wantRegion : true,
-  );
+  // Per-state discovery files (--state shorthand) are already single-
+  // region by construction; skip the suggestedRegion filter so we don't
+  // drop entries that lack the field or use a slightly different label.
+  // Explicit --in or --region against the multi-region CA file still
+  // gets the filter.
+  const skipRegionFilter = !!flags.state;
+  const inRegion = skipRegionFilter
+    ? all
+    : all.filter((c) => (wantRegion ? c.suggestedRegion === wantRegion : true));
   console.log(
-    `[merge] ${inRegion.length} candidates match region=${flags.region}`,
+    skipRegionFilter
+      ? `[merge] ${inRegion.length} candidates loaded (per-state file, no in-file filter)`
+      : `[merge] ${inRegion.length} candidates match region=${flags.region}`,
   );
 
   // Apply junk filter.
@@ -230,8 +291,14 @@ function main() {
   }
 
   // Generate the TypeScript snippet we'll splice into courses.ts.
+  // When --state is set, pin the header to the state name so PNW-grouped
+  // states (OR/WA/ID) still get distinguishable section comments.
   const PAR_18_72_LITERAL = "p(18, 72)";
-  const header = `\n  // --- ${REGION_LABELS[wantRegion ?? "NC"] ?? "Discovered"} ---\n`;
+  const baseLabel = REGION_LABELS[wantRegion ?? "NC"] ?? "Discovered";
+  const headerLabel = flags.state
+    ? `${flags.state} (discovered)`
+    : baseLabel;
+  const header = `\n  // --- ${headerLabel} ---\n`;
   const lines = plan.map(
     (p) =>
       `  { id: ${JSON.stringify(p.preset.id)}, name: ${JSON.stringify(p.preset.name)}, city: ${JSON.stringify(p.preset.city)}, region: "${p.preset.region}", access: "${p.preset.access}", holes: 18, pars: ${PAR_18_72_LITERAL} },`,
