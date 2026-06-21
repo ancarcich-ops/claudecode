@@ -229,6 +229,17 @@ export default function HoleStudyMode({
             aim={aimPoint}
             onAim={(p) => setAimPoint(p)}
             landmarks={landmarks}
+            // 3D mode switcher lives in the preset-chip row. Only
+            // supplied when the same guards used by the old
+            // standalone pill hold (tee + green coords + API key);
+            // when absent the row renders 3 chips instead of 4.
+            onToggle3D={
+              tee &&
+              greenCenter &&
+              process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+                ? () => setMode3d(true)
+                : undefined
+            }
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-mute text-sm px-6 text-center">
@@ -237,31 +248,13 @@ export default function HoleStudyMode({
         )}
       </div>
 
-      {/* 2D / 3D toggle pill. Three guards keep it from showing in the
-          wrong context:
-            - !mode3d (the 2D component shows its own toggle when in 3D)
-            - tee + greenCenter (3D camera path needs both endpoints)
-            - NEXT_PUBLIC_GOOGLE_MAPS_API_KEY (no key = no 3D, hide UI) */}
-      {tee &&
-        greenCenter &&
-        !mode3d &&
-        process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY && (
-          <button
-            type="button"
-            onClick={() => setMode3d(true)}
-            // Aligned with the Tee/Mid/Green/Hole chip row in
-            // HoleMiniMap (PresetChipsPortal): same vertical
-            // anchor (env(safe-area-inset-bottom) + 120px, the
-            // default chipsBottomOffsetPx), same pill styling
-            // (px-3 py-1.5 / rounded-full / bg-black/70 /
-            // tracking-[0.04em] font-medium font-mono uppercase).
-            // Sits at the right edge so the centered chip group
-            // reads as a single HUD row.
-            className="absolute right-3 bottom-[calc(env(safe-area-inset-bottom)+120px)] z-[40] rounded-full bg-black/70 backdrop-blur-sm active:bg-black/85 text-white text-[11px] font-mono font-medium uppercase tracking-[0.04em] px-3 py-1.5"
-          >
-            3D
-          </button>
-        )}
+      {/* The 3D mode switch is now the fourth chip in the
+          Tee/Green/Hole/3D row that HoleMiniMap renders -- see the
+          onToggle3D prop passed in the HoleMiniMap call above.
+          That callback is only supplied when the same three guards
+          hold (tee + greenCenter coords AND
+          NEXT_PUBLIC_GOOGLE_MAPS_API_KEY set), so when 3D isn't
+          available the row just renders 3 chips. */}
 
       {/* Top scrim + hole picker + sub-header */}
       <div
