@@ -72,10 +72,14 @@ function lerpLatLng(
 //   1. Establishing shot from above the tee, looking down the fairway.
 //   2. Descend to camera height ~80m behind the tee.
 //   3. Glide along the fairway centerline to the green.
-//   4. Settle behind the green, looking back at the tee.
+//   4. Settle just short of the green, still facing it (no 180° flip
+//      back toward the tee). The earlier behind-the-green / look-back
+//      keyframe spun the camera around and lost users mid-flight; this
+//      cleaner final frame puts the green in the center of the shot.
 //
 // The renderer plays these keyframes in order, then hands gestures to
-// the user.
+// the user (and cancels remaining keyframes the moment a user gesture
+// arrives so the camera never fights touch input).
 export function flightPathFor(hole: HoleEndpoints): CameraKeyframe[] {
   const teeToGreen = bearingDegrees(
     hole.teeLat,
@@ -83,25 +87,31 @@ export function flightPathFor(hole: HoleEndpoints): CameraKeyframe[] {
     hole.greenLat,
     hole.greenLng,
   );
-  const greenToTee = (teeToGreen + 180) % 360;
 
   const tee = { lat: hole.teeLat, lng: hole.teeLng };
   const green = { lat: hole.greenLat, lng: hole.greenLng };
   const mid = lerpLatLng(tee.lat, tee.lng, green.lat, green.lng, 0.5);
 
-  // Anchor the establishing shot slightly behind the tee so the whole
-  // hole is visible in frame.
+  // Establishing shot: just behind the tee, looking down the fairway.
+  // The slight 1.04× anchors the camera ~4% of the hole length past
+  // the tee in the green→tee direction, so the tee box itself fills
+  // the middle of the frame instead of crowding the bottom edge.
   const behindTee = lerpLatLng(green.lat, green.lng, tee.lat, tee.lng, 1.04);
-  // Anchor the settle shot slightly past the green for the same reason.
-  const pastGreen = lerpLatLng(tee.lat, tee.lng, green.lat, green.lng, 1.04);
+  // Final frame: short of the green so the green sits center-frame
+  // (not behind the camera). 0.88 = 12% before the green along the
+  // tee→green vector.
+  const nearGreen = lerpLatLng(tee.lat, tee.lng, green.lat, green.lng, 0.88);
 
   return [
-    // 1. Establishing shot, high tilt, looking down the hole.
+    // 1. Establishing shot, moderate tilt, tighter zoom than the old
+    //    16.5 -- the wider zoom made the tee feel small/distant on
+    //    long holes. 17.5 fills the frame with just the tee box +
+    //    opening of the fairway.
     {
       longitude: behindTee.lng,
       latitude: behindTee.lat,
-      zoom: 16.5,
-      pitch: 45,
+      zoom: 17.5,
+      pitch: 50,
       bearing: teeToGreen,
       transitionDuration: 0, // starting pose
     },
@@ -109,29 +119,30 @@ export function flightPathFor(hole: HoleEndpoints): CameraKeyframe[] {
     {
       longitude: behindTee.lng,
       latitude: behindTee.lat,
-      zoom: 18.4,
+      zoom: 18.6,
       pitch: 70,
       bearing: teeToGreen,
-      transitionDuration: 2600,
+      transitionDuration: 2400,
     },
-    // 3. Glide to mid-fairway, slightly higher angle (sees more of green).
+    // 3. Glide to mid-fairway, slightly higher angle (sees more of the green).
     {
       longitude: mid.lng,
       latitude: mid.lat,
       zoom: 18.2,
       pitch: 68,
       bearing: teeToGreen,
-      transitionDuration: 3800,
+      transitionDuration: 3600,
     },
-    // 4. Past the green, looking back. Pitch a touch lower so the tee
-    //    and fairway both stay in frame.
+    // 4. Settle just short of the green, looking at it. Same bearing
+    //    as frame 3, so deck.gl interpolates a pure forward glide --
+    //    no rotation to spin the wrong direction.
     {
-      longitude: pastGreen.lng,
-      latitude: pastGreen.lat,
-      zoom: 17.8,
-      pitch: 62,
-      bearing: greenToTee,
-      transitionDuration: 3000,
+      longitude: nearGreen.lng,
+      latitude: nearGreen.lat,
+      zoom: 18.4,
+      pitch: 64,
+      bearing: teeToGreen,
+      transitionDuration: 2400,
     },
   ];
 }

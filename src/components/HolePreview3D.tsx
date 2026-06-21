@@ -103,20 +103,22 @@ export default function HolePreview3D({
   }, [hole]);
 
   // Cinematic intro -- gated on first-tile arrival so the camera
-  // doesn't animate through empty space before mesh exists. The
-  // user-controlled gestures (pan / pinch / rotate) feed into the
-  // same viewState via handleViewStateChange, so any gesture during
-  // the flyover seamlessly overrides it (deck.gl's interpolation
-  // honors the most recent setViewState call).
+  // doesn't animate through empty space before mesh exists. WARMUP_MS
+  // lets a few extra tiles stream in around the establishing pose
+  // before the camera moves. MAX_WAIT_MS is the fallback: if no tile
+  // arrives the flyover plays anyway after 6s -- better than freezing
+  // forever on a silent network failure.
   //
-  // WARMUP_MS lets a few extra tiles stream in around the
-  // establishing pose before the camera moves. MAX_WAIT_MS is the
-  // fallback: if no tile arrives the flyover plays anyway after
-  // 6s -- better than freezing forever on a silent network
-  // failure (which the error scrim would also catch, but defense
-  // in depth).
+  // cancelFlyoverRef holds a cancel function the gesture handler can
+  // call to drop all remaining keyframe timers the moment the user
+  // touches the camera. Previously scheduled keyframes kept firing
+  // after a user grabbed the camera, which made the flyover "fight"
+  // the gesture -- yanking the pose back, sometimes spinning the
+  // bearing the long way around the compass, and giving the impression
+  // the camera never reached the green.
   const WARMUP_MS = 400;
   const MAX_WAIT_MS = 6000;
+  const cancelFlyoverRef = useRef<(() => void) | null>(null);
   useEffect(() => {
     if (errorMsg) return;
     const frames = path.current;
@@ -150,16 +152,45 @@ export default function HolePreview3D({
     );
     timers.push(kickoff);
 
-    return () => {
+    function cancelAll() {
       cancelled = true;
       for (const t of timers) clearTimeout(t);
+    }
+    cancelFlyoverRef.current = cancelAll;
+
+    return () => {
+      cancelAll();
+      cancelFlyoverRef.current = null;
     };
     // Re-run whenever the hole changes (the reset effect above
     // flips hasFirstTile back to false, which retriggers this).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hole, hasFirstTile, errorMsg]);
 
-  function handleViewStateChange({ viewState: vs }: { viewState: ViewState }) {
+  function handleViewStateChange({
+    viewState: vs,
+    interactionState,
+  }: {
+    viewState: ViewState;
+    // deck.gl populates this on view-state changes driven by user
+    // gestures -- programmatic setViewState calls (i.e. our own
+    // keyframe scheduler) pass it as undefined.
+    interactionState?: {
+      isDragging?: boolean;
+      isPanning?: boolean;
+      isRotating?: boolean;
+      isZooming?: boolean;
+    };
+  }) {
+    if (
+      interactionState &&
+      (interactionState.isDragging ||
+        interactionState.isPanning ||
+        interactionState.isRotating ||
+        interactionState.isZooming)
+    ) {
+      cancelFlyoverRef.current?.();
+    }
     setViewState(vs);
   }
 
