@@ -1,30 +1,34 @@
-/* Sticks brand splash. Dark fairway-at-5am surface; three emerald
-   bars rise like a closing candlestick chart; wordmark + tagline
-   fade in beneath. Used as a top-level overlay during the first
-   cold load of a session (see SticksSplash.tsx). */
+/* Sticks brand splash. Three vertical bars rise like a closing
+   candlestick; wordmark + tagline fade in beneath; the dot keeps
+   breathing forever. Used as a top-level overlay during the first
+   cold load of a session (see SticksSplash.tsx).
+
+   Every color reads from the active theme's CSS variables -- the
+   splash recolors with Caddie / Fairway / Blueprint / Back Nine
+   automatically. The base state is the visible end-state; the
+   entrance animations are an enhancement gated behind
+   prefers-reduced-motion, so reduced-motion users (and any context
+   where the animation doesn't run) always see the finished splash,
+   never a blank. */
 
 .splash {
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: #0b0f0c;
-  color: #e8efe9;
+  background: rgb(var(--color-bg));
+  color: rgb(var(--color-ink));
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 56px;
-  /* Re-use the existing app-wide --font-display token (Bricolage
-     Grotesque, set in layout.tsx). Falls back to system-ui if the
-     variable isn't available so the splash never hangs on a font
-     fetch. */
+  gap: 38px;
   font-family: var(--font-display), system-ui, sans-serif;
   overflow: hidden;
   opacity: 1;
   transition: opacity 240ms ease-out;
   /* Critical: clicks should never reach the underlying app while
-     the splash is up. pointer-events: none in the fading state so
-     the user can tap through immediately. */
+     the splash is up. pointer-events flips to none in the fading
+     state so users can tap through immediately. */
   pointer-events: auto;
 }
 
@@ -33,15 +37,15 @@
   pointer-events: none;
 }
 
-/* Faint emerald grid, mostly hidden by a radial mask centered just
-   above the wordmark so it reads as "darkness with a hint of
-   structure" rather than a wallpaper pattern. */
+/* Faint accent grid, masked to a soft radial centered just above
+   the wordmark so it reads as "depth with a hint of structure"
+   rather than wallpaper. */
 .grid {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(0deg, rgba(52, 211, 153, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(52, 211, 153, 0.04) 1px, transparent 1px);
+    linear-gradient(0deg, rgb(var(--color-accent) / 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--color-accent) / 0.05) 1px, transparent 1px);
   background-size: 32px 32px;
   -webkit-mask-image: radial-gradient(
     circle at 50% 45%,
@@ -63,6 +67,12 @@
   height: 135px;
 }
 
+/* Bars start at the visible end-state; the rise animation only
+   plays under prefers-reduced-motion: no-preference (see below). */
+.bar {
+  fill: rgb(var(--color-accent));
+}
+
 .wordmark {
   display: inline-flex;
   align-items: baseline;
@@ -71,12 +81,8 @@
   font-size: 56px;
   letter-spacing: -0.04em;
   line-height: 1;
-  /* Tightens the visual gap with the mark to ~24px (they read as a
-     single lockup). The flex container's 56px gap then carries
-     down to the tagline. */
-  margin-top: -32px;
-  opacity: 0;
-  animation: sticksFadeUp 0.55s 0.55s both;
+  margin-top: -18px;
+  color: rgb(var(--color-ink));
 }
 
 .dot {
@@ -84,11 +90,10 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #34d399;
-  /* Pulse starts after the entry animation has settled. Infinite so
-     the live signal keeps breathing for as long as the splash is
-     visible. */
-  animation: sticksPulse 2.4s 1.6s ease-out infinite;
+  background: rgb(var(--color-accent));
+  /* Infinite from the moment the splash mounts -- it's the
+     "still alive" signal that holds when the app shell is slow. */
+  animation: sticksPulse 2.4s ease-out infinite;
 }
 
 .tagline {
@@ -97,12 +102,25 @@
   font-size: 22px;
   letter-spacing: -0.02em;
   line-height: 1.25;
-  opacity: 0;
-  animation: sticksFadeUp 0.55s 0.95s both;
+  color: rgb(var(--color-ink));
 }
 
 .taglineEm {
-  color: #34d399;
+  color: rgb(var(--color-accent));
+}
+
+/* Entrance animations -- enhancement only, never the source of
+   visibility. Reduced-motion users get the static end-state above. */
+@media (prefers-reduced-motion: no-preference) {
+  .bar {
+    animation: sticksRise 1.4s cubic-bezier(.2, .7, .3, 1) backwards;
+  }
+  .wordmark {
+    animation: sticksFadeUp 0.55s 0.55s backwards;
+  }
+  .tagline {
+    animation: sticksFadeUp 0.55s 0.95s backwards;
+  }
 }
 
 @keyframes sticksRise {
@@ -133,26 +151,12 @@
 
 @keyframes sticksPulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.55);
+    box-shadow: 0 0 0 0 rgb(var(--color-accent) / 0.55);
   }
   70% {
-    box-shadow: 0 0 0 12px rgba(52, 211, 153, 0);
+    box-shadow: 0 0 0 12px rgb(var(--color-accent) / 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0);
-  }
-}
-
-/* prefers-reduced-motion: skip the rise + fade-up. Bars appear at
-   final size; wordmark + tagline appear without sliding. Pulse dot
-   keeps breathing because it conveys the "live" status, not motion
-   for its own sake. */
-@media (prefers-reduced-motion: reduce) {
-  .splash rect,
-  .wordmark,
-  .tagline {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
+    box-shadow: 0 0 0 0 rgb(var(--color-accent) / 0);
   }
 }

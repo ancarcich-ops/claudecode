@@ -17,6 +17,7 @@ const TABS: Tab[] = [
   { href: "/groups", label: "Groups", icon: GroupsIcon },
   { href: "/settings", label: "Settings", icon: SettingsIcon },
   { href: "/stats", label: "Stats", icon: StatsIcon },
+  { href: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 
 export default function MobileTabBar() {
