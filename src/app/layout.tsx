@@ -9,8 +9,8 @@ import {
   Hanken_Grotesk,
   JetBrains_Mono,
   Karla,
+  Newsreader,
   Space_Grotesk,
-  Spectral,
 } from "next/font/google";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
@@ -24,21 +24,25 @@ import Sounds from "@/components/Sounds";
 import SticksSplash from "@/components/SticksSplash";
 import { Toaster } from "sonner";
 
-// Fairway baseline -- Bricolage = display + wordmark, Geist (loaded via the
-// `geist` npm package) = body, Geist Mono = tabular numerics. Each theme
-// (Caddie's Notebook / Blueprint / Back Nine) layers in its own
-// display+sans+mono trio below; globals.css points --font-display /
-// --font-sans / --font-mono at the right pair per theme. All fonts use
-// display:swap so the fallback paints first and the swap is invisible.
-const display = Bricolage_Grotesque({
+// Caddie's Notebook is the default skin: Newsreader = display + wordmark,
+// Karla = body, DM Mono = numerics. The other three skins (Fairway /
+// Blueprint / Back Nine) layer in their own display+sans+mono trio
+// below; globals.css points --font-display / --font-sans / --font-mono
+// at the right pair per theme. All fonts use display:swap so the
+// fallback paints first and the swap is invisible.
+//
+// Every family is registered under a unique --font-* variable (not
+// --font-display directly) so the theme-selection rules in globals.css
+// can pick among them without colliding with the next/font className
+// assignment.
+const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
-  variable: "--font-display",
+  variable: "--font-bricolage",
   display: "swap",
 });
-const spectral = Spectral({
+const newsreader = Newsreader({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-spectral",
+  variable: "--font-newsreader",
   display: "swap",
 });
 const karla = Karla({
@@ -94,7 +98,11 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0b0f0c",
+  // Bone paper -- the Caddie's Notebook bg, which is the default skin.
+  // iOS status-bar tint shows briefly on first paint; users on a
+  // non-default theme accept a one-tick mismatch (Safari only allows
+  // a single static themeColor here, no media-query swap).
+  themeColor: "#EDE7DB",
   width: "device-width",
   initialScale: 1,
 };
@@ -108,10 +116,10 @@ export default async function RootLayout({
   const groups = user ? await listUserGroups(user.id) : [];
   const activeGroupId = getActiveGroupId();
   const fontVars = [
-    display.variable,
+    bricolage.variable,
     GeistSans.variable,
     GeistMono.variable,
-    spectral.variable,
+    newsreader.variable,
     karla.variable,
     dmMono.variable,
     spaceGrotesk.variable,
@@ -124,13 +132,13 @@ export default async function RootLayout({
     <html lang="en" className={fontVars}>
       <head>
         {/* Apply the saved theme before paint so users on a non-default
-            theme don't flash Fairway first. Script is intentionally tiny
+            skin don't flash Caddie's first. Script is intentionally tiny
             and runs synchronously in <head>. Valid stored values are
-            "caddie" | "blueprint" | "backnine"; anything else (or unset)
-            falls through to Fairway on :root. */}
+            "fairway" | "blueprint" | "backnine"; anything else (or
+            unset) falls through to Caddie's Notebook on :root. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{var t=localStorage.getItem("sticks-theme");if(t==="caddie"||t==="blueprint"||t==="backnine")document.documentElement.dataset.theme=t;}catch(e){}`,
+            __html: `try{var t=localStorage.getItem("sticks-theme");if(t==="fairway"||t==="blueprint"||t==="backnine")document.documentElement.dataset.theme=t;}catch(e){}`,
           }}
         />
       </head>
