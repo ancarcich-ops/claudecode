@@ -105,6 +105,13 @@ export default async function GroupsPage({
                   </div>
                 </Link>
                 <div className="flex items-center gap-2 shrink-0">
+                  <Link
+                    href={`/groups/${g.slug ?? g.id}/leaderboard`}
+                    className="btn btn-ghost text-xs px-2.5 py-1.5 whitespace-nowrap"
+                    aria-label={`${g.name} leaderboard`}
+                  >
+                    Leaderboard →
+                  </Link>
                   <CopyInvite code={g.inviteCode} />
                 </div>
               </li>
