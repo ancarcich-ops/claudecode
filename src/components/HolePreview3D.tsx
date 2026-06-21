@@ -20,7 +20,7 @@
 // resume" pill in the corner resets the counter so power users aren't
 // permanently stuck.
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DeckGL } from "@deck.gl/react";
 import { Tile3DLayer } from "@deck.gl/geo-layers";
 import { Tiles3DLoader } from "@loaders.gl/3d-tiles";
@@ -31,7 +31,14 @@ import {
 } from "@/lib/holeFlightPath";
 
 const TILESET_URL = "https://tile.googleapis.com/v1/3dtiles/root.json";
-const MAX_TILE_LOADS = 400;
+// Raised from 400 -- normal panning + zooming chews through tiles
+// faster than 400 anticipated, and the cap was crashing the view
+// because hitting it unmounted the layer (taking already-loaded
+// tiles with it). 5000 covers a long exploration session per hole
+// while still defending against a runaway loop. Even a power user
+// would need ~40 sessions/month to brush Google's 200k free-tier
+// limit; budget alert on the GCP side is the real backstop.
+const MAX_TILE_LOADS = 5000;
 
 export type HolePreview3DProps = {
   hole: HoleEndpoints & {
@@ -135,44 +142,58 @@ export default function HolePreview3D({
     );
   }
 
-  // Pass the loader explicitly. Without it, deck.gl fetches root.json
-  // but can't parse the tileset (the result was a blank canvas before).
-  // onTileError surfaces fetch failures up to the React UI so users
-  // see a real reason instead of a silent blank screen.
-  const tile3d = capped
-    ? null
-    : new Tile3DLayer({
-        id: "google-3d-tiles",
-        data: `${TILESET_URL}?key=${apiKey}`,
-        loader: Tiles3DLoader,
-        onTileLoad: () => {
-          tileLoadCount.current += 1;
-          if (!hasFirstTile) setHasFirstTile(true);
-          if (tileLoadCount.current >= MAX_TILE_LOADS && !capped) {
-            setCapped(true);
-          }
-        },
-        // deck.gl's typings overload onTileError two ways (one tile +
-        // url + message, one bare Error). We treat both as a generic
-        // "tile fetch failed" and lift the human-readable text out
-        // of whichever shape arrived.
-        onTileError: ((...args: unknown[]) => {
-          const arg = args[0];
-          const message =
-            typeof args[2] === "string"
-              ? (args[2] as string)
-              : arg instanceof Error
-                ? arg.message
-                : "3D tile load failed.";
-          if (!errorMsg) {
-            setErrorMsg(
-              message.includes("403")
-                ? "Google denied the tile request. Check the key's referrer restrictions + that Map Tiles API is enabled."
-                : message,
-            );
-          }
-        }) as never,
-      });
+  // Memoize the Tile3DLayer so it isn't recreated on every viewState
+  // change. Deck.gl diffs layers by id, but a fresh instance every
+  // render gives onTileLoad / onTileError new closure identities,
+  // which can reset traverser state during user gestures and was
+  // contributing to mid-pan blackouts. Stable dep list = [apiKey]
+  // because that's the only thing that changes the layer URL; the
+  // tileset itself is global, not per-hole.
+  //
+  // The cap NEVER nulls out the layer (that was the crash: removing
+  // the layer unmounted every already-loaded tile from the GPU).
+  // Instead we just stop bumping the counter once it's hit and let
+  // the layer keep rendering whatever it has cached; the "Tap to
+  // resume" pill is now a soft reset that lets new tile fetches
+  // resume but doesn't gate the layer being mounted.
+  const tile3d = useMemo(() => {
+    if (!apiKey) return null;
+    return new Tile3DLayer({
+      id: "google-3d-tiles",
+      data: `${TILESET_URL}?key=${apiKey}`,
+      loader: Tiles3DLoader,
+      onTileLoad: () => {
+        tileLoadCount.current += 1;
+        // Use the functional setter so this closure doesn't capture
+        // a stale hasFirstTile value (the layer is memoized, so its
+        // initial closure persists until apiKey changes).
+        setHasFirstTile((prev) => prev || true);
+        if (tileLoadCount.current >= MAX_TILE_LOADS) {
+          setCapped((prev) => prev || true);
+        }
+      },
+      // deck.gl's typings overload onTileError two ways (one tile +
+      // url + message, one bare Error). We treat both as a generic
+      // "tile fetch failed" and lift the human-readable text out
+      // of whichever shape arrived.
+      onTileError: ((...args: unknown[]) => {
+        const arg = args[0];
+        const message =
+          typeof args[2] === "string"
+            ? (args[2] as string)
+            : arg instanceof Error
+              ? arg.message
+              : "3D tile load failed.";
+        setErrorMsg((prev) =>
+          prev
+            ? prev
+            : message.includes("403")
+              ? "Google denied the tile request. Check the key's referrer restrictions + that Map Tiles API is enabled."
+              : message,
+        );
+      }) as never,
+    });
+  }, [apiKey]);
 
   return (
     <div
@@ -180,7 +201,6 @@ export default function HolePreview3D({
       className="rounded-md"
     >
       <DeckGL
-        initialViewState={viewState}
         viewState={viewState}
         onViewStateChange={handleViewStateChange as never}
         // Enable tilt + rotate gestures so the user can orbit the
