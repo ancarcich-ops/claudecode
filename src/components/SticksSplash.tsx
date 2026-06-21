@@ -3,44 +3,28 @@
 import { useEffect, useState } from "react";
 import styles from "./SticksSplash.module.css";
 
-// Three-club geometry from the brand kit. Each path is rendered with
-// the inner translate+flip from the source SVG so the heads sit at
-// the TOP of each shaft. For the splash rise animation we wrap each
-// in an additional <g> whose transform-origin is the shaft tip
-// (rendered bottom of the club) so the club appears to grow up out
-// of the baseline rather than from the SVG centroid.
-// originX/Y are in the inner coordinate system (before the +4.5
-// optical-center nudge applied by the wrapping <g> in the render).
-// The rise animation pivots around each club's rendered shaft tip.
-const CLUBS = [
-  // iron (left) -- shaft tip ~54 in the rendered 64-grid after flip
-  {
-    d: "M 19.57 14.60 Q 19.57 14.00 18.97 14.00 L 15.03 14.00 Q 14.43 14.00 14.43 14.60 L 14.43 46.10 C 14.43 48.10, 10.68 46.40, 5.50 49.19 C 5.50 52.37, 6.00 54.00, 7.70 54.00 C 12.98 54.10, 17.30 53.80, 19.57 50.67 C 19.57 48.45, 19.57 47.10, 19.57 45.80 L 19.57 14.60 Z",
-    flipY: 68,
-    originX: 17,
-    originY: 54,
-  },
-  // driver (center, tallest) -- shaft tip ~56
-  {
-    d: "M 34.57 6.60 Q 34.57 6.00 33.97 6.00 L 30.03 6.00 Q 29.43 6.00 29.43 6.60 L 29.43 47.00 C 29.43 49.00, 24.57 47.30, 18.50 50.48 C 18.50 54.13, 19.00 56.00, 20.70 56.00 C 27.27 56.10, 32.30 55.80, 34.57 52.17 C 34.57 49.63, 34.57 48.00, 34.57 46.70 L 34.57 6.60 Z",
-    flipY: 62,
-    originX: 32,
-    originY: 56,
-  },
-  // wedge (right, shortest) -- shaft tip ~50
-  {
-    d: "M 49.57 22.60 Q 49.57 22.00 48.97 22.00 L 45.03 22.00 Q 44.43 22.00 44.43 22.60 L 44.43 42.50 C 44.43 44.50, 41.50 42.80, 37.00 45.45 C 37.00 48.46, 37.50 50.00, 39.20 50.00 C 43.50 50.10, 47.30 49.80, 49.57 46.85 C 49.57 44.75, 49.57 43.50, 49.57 42.20 L 49.57 22.60 Z",
-    flipY: 72,
-    originX: 47,
-    originY: 50,
-  },
+// Three-bar candlestick mark from the loading-screen spec. Each bar
+// rises from its own bottom-center as if a candle's closing tick is
+// finishing. transform-origin is set inline (not in CSS) because the
+// origin is unique per bar; the keyframe + stagger come from the
+// shared sticksRise animation in the module CSS.
+const BARS = [
+  // left -- shortest
+  { x: 10, y: 26, height: 32, originX: 16, delay: "0s" },
+  // middle -- tallest
+  { x: 26, y: 10, height: 48, originX: 32, delay: ".14s" },
+  // right -- mid
+  { x: 42, y: 20, height: 38, originX: 48, delay: ".28s" },
 ];
+const BAR_BOTTOM = 58;
+const BAR_WIDTH = 12;
+const BAR_RADIUS = 2.5;
 
 // Once shown per browser session -- a returning visitor on a client-
 // side navigation shouldn't re-see the splash for every nav. Key is
 // bumped if we ever re-cut the timing / branding so a returning
 // session re-sees the new mark.
-const SESSION_KEY = "sticks-splash-shown-v1";
+const SESSION_KEY = "sticks-splash-shown-v2";
 
 // Total time we hold the splash before fading. Long enough for the
 // bars to finish rising and the wordmark + tagline to read; trimmed
@@ -97,29 +81,21 @@ export default function SticksSplash() {
         viewBox="0 0 64 64"
         aria-label="Sticks"
       >
-        {/* +4.5 X nudge from the brand kit -- left-facing heads
-            otherwise crowd the left edge of the viewBox. */}
-        <g transform="translate(4.5 0)">
-          {CLUBS.map((c, i) => (
-            <g
-              key={i}
-              style={{
-                transformOrigin: `${c.originX}px ${c.originY}px`,
-                animation: `sticksRise 1.4s ${i * 0.14}s cubic-bezier(.2,.7,.3,1) both`,
-              }}
-            >
-              <g transform={`translate(0 ${c.flipY}) scale(1 -1)`}>
-                <path
-                  d={c.d}
-                  fill="#34d399"
-                  stroke="#34d399"
-                  strokeWidth={0.4}
-                  strokeLinejoin="round"
-                />
-              </g>
-            </g>
-          ))}
-        </g>
+        {BARS.map((b, i) => (
+          <rect
+            key={i}
+            className={styles.bar}
+            x={b.x}
+            y={b.y}
+            width={BAR_WIDTH}
+            height={b.height}
+            rx={BAR_RADIUS}
+            style={{
+              transformOrigin: `${b.originX}px ${BAR_BOTTOM}px`,
+              animationDelay: b.delay,
+            }}
+          />
+        ))}
       </svg>
 
       <div className={styles.wordmark}>
@@ -129,7 +105,7 @@ export default function SticksSplash() {
 
       <div className={styles.tagline}>
         <div>All your games.</div>
-        <div className={styles.taglineEm}>One place.</div>
+        <div className={styles.taglineEm}>One app.</div>
       </div>
     </div>
   );
