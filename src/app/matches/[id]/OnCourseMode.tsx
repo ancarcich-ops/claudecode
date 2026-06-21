@@ -869,7 +869,11 @@ function SetPinFab({
     <button
       type="button"
       onClick={onClick}
-      className="absolute z-[25] right-4 top-[174px] w-16 h-20 rounded-[14px] bg-bg/78 backdrop-blur-md border border-white/8 shadow-[0_8px_24px_-6px_rgba(0,0,0,0.55)] flex flex-col items-center justify-center gap-1.5 pt-2 pb-1.5"
+      // Solid panel + theme-aware text -- previous bg-bg/78 +
+      // text-white/92 made the label invisible on light themes
+      // (Caddie default). Bumped the chip width + label size
+      // slightly so it reads from arm's length.
+      className="absolute z-[25] right-4 top-[182px] w-[68px] h-[84px] rounded-[14px] bg-panel/90 backdrop-blur-md border border-border shadow-[0_8px_24px_-6px_rgba(0,0,0,0.55)] flex flex-col items-center justify-center gap-1.5 pt-2 pb-1.5"
       aria-label={label}
     >
       <span className="w-[30px] h-[30px] rounded-lg bg-accent flex items-center justify-center">
@@ -886,7 +890,7 @@ function SetPinFab({
           <path d="M4 3 L13 5 L4 8 Z" fill="rgb(var(--ink-on-accent))" />
         </svg>
       </span>
-      <span className="font-mono text-[9.5px] tracking-[0.12em] uppercase text-white/92 font-semibold">
+      <span className="font-mono text-[10.5px] tracking-[0.12em] uppercase text-ink font-semibold">
         {label}
       </span>
     </button>
@@ -904,31 +908,37 @@ export function WindDial({
 }) {
   return (
     <div
-      className="absolute z-[24] right-[22px] top-[114px] w-[52px] h-[52px] rounded-[14px] bg-bg/55 backdrop-blur-[14px] border border-white/7 shadow-[0_4px_12px_-4px_rgba(0,0,0,0.4)] flex flex-col items-center justify-center pt-1 pb-1.5"
+      // bg-panel (instead of bg-bg/55) gives the card a solid surface
+      // that doesn't bleed satellite imagery through behind the text.
+      // text-ink / text-mute swap from text-white so contrast holds on
+      // light themes (Caddie default) and dark themes (Fairway, etc).
+      // Slight size bump (52 -> 60) so the number reads at a glance
+      // from the cart.
+      className="absolute z-[24] right-[22px] top-[114px] w-[60px] h-[60px] rounded-[14px] bg-panel/90 backdrop-blur-[14px] border border-border shadow-[0_4px_12px_-4px_rgba(0,0,0,0.4)] flex flex-col items-center justify-center pt-1 pb-1.5"
       aria-label={`Wind ${speedMph} mph`}
     >
       <svg
-        width="11"
-        height="15"
+        width="12"
+        height="16"
         viewBox="0 0 11 15"
         style={{ transform: `rotate(${fromDeg}deg)`, transformOrigin: "50% 50%" }}
       >
         <path
           d="M5.5 0.5 L10 13 L5.5 10 L1 13 Z"
-          fill={breeze ? "#34d399" : "#ffffff"}
+          fill={breeze ? "rgb(var(--color-accent))" : "rgb(var(--color-ink))"}
           fillOpacity={breeze ? 0.9 : 0.92}
         />
       </svg>
       <div className="inline-flex items-baseline gap-[2px] mt-px">
         <span
           className={
-            "font-mono font-semibold text-[12px] tabular-nums tracking-[-0.01em] " +
-            (breeze ? "text-accent" : "text-white")
+            "font-mono font-semibold text-[14px] tabular-nums tracking-[-0.01em] " +
+            (breeze ? "text-accent" : "text-ink")
           }
         >
           {Math.round(speedMph)}
         </span>
-        <span className="text-[7.5px] uppercase tracking-[0.08em] text-white/50">
+        <span className="text-[8.5px] uppercase tracking-[0.08em] text-mute">
           mph
         </span>
       </div>
@@ -971,19 +981,24 @@ function AimCol({
 }) {
   return (
     <div className="flex-1 flex flex-col items-start gap-[6px]">
-      <span className="font-mono text-[9px] tracking-[0.14em] uppercase text-white/55">
+      {/* Theme-aware text tokens -- this card's bg-bg/80 is light
+          bone paper on Caddie's (the default), so the previous
+          text-white / text-white/55 disappeared against the
+          background. text-ink / text-mute / text-faint read on
+          every skin. */}
+      <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-mute">
         {label}
       </span>
       <div className="flex items-baseline gap-[3px]">
         <span
           className={
-            "font-mono font-semibold text-[26px] tabular-nums leading-none " +
-            (accent ? "text-accent" : "text-white")
+            "font-mono font-semibold text-[28px] tabular-nums leading-none " +
+            (accent ? "text-accent" : "text-ink")
           }
         >
           {value}
         </span>
-        <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-white/40">
+        <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-faint">
           {unit}
         </span>
       </div>
