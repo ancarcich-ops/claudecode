@@ -23,6 +23,7 @@
 import { useEffect, useRef, useState } from "react";
 import { DeckGL } from "@deck.gl/react";
 import { Tile3DLayer } from "@deck.gl/geo-layers";
+import { Tiles3DLoader } from "@loaders.gl/3d-tiles";
 import {
   flightPathFor,
   type CameraKeyframe,
@@ -69,19 +70,38 @@ export default function HolePreview3D({
     ...path.current[0],
     transitionDuration: 0,
   }));
-  const [tileLoads, setTileLoads] = useState(0);
+  // Three render-phase flags: hasFirstTile flips when the first tile
+  // arrives (lets us drop the "Loading 3D mesh" overlay); errorMsg
+  // surfaces a friendly message when the tileset endpoint fails (bad
+  // key, referrer mismatch, quota, network); capped freezes new
+  // fetches once we hit the session cost cap.
+  const [hasFirstTile, setHasFirstTile] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const tileLoadCount = useRef(0);
   const [capped, setCapped] = useState(false);
+
+  // Reset render-state flags when the hole changes so the spinner +
+  // tile counter restart cleanly for the new hole.
+  useEffect(() => {
+    setHasFirstTile(false);
+    setErrorMsg(null);
+    setCapped(false);
+    tileLoadCount.current = 0;
+  }, [hole.teeLat, hole.teeLng, hole.greenLat, hole.greenLng]);
 
   // Cinematic intro: walk through the keyframes after mount. Each
   // step's transitionDuration drives deck.gl's smooth interpolation;
   // we schedule the NEXT setViewState with a setTimeout matching the
   // CURRENT step's duration so the keyframes land in order.
   useEffect(() => {
+    path.current = flightPathFor(hole);
+    // Reset to the starting pose for the new hole so the next intro
+    // begins from the establishing shot.
+    setViewState({ ...path.current[0], transitionDuration: 0 });
     const frames = path.current;
     let cancelled = false;
     let cumulativeMs = 0;
     const timers: ReturnType<typeof setTimeout>[] = [];
-    // Skip frame 0 (it's the starting pose); transition into 1..N.
     for (let i = 1; i < frames.length; i++) {
       const frame = frames[i];
       const t = setTimeout(() => {
@@ -102,21 +122,14 @@ export default function HolePreview3D({
       cancelled = true;
       for (const t of timers) clearTimeout(t);
     };
-    // Intentionally fire once per hole change. flightPathFor is pure
-    // so deriving path from the hole inside this effect would just
-    // recompute the same array.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hole.teeLat, hole.teeLng, hole.greenLat, hole.greenLng]);
+  }, [hole]);
 
-  // When user grabs the camera, deck.gl emits view state updates with
-  // no transitionDuration -- we just record them so the next render
-  // doesn't reset to the last keyframe.
   function handleViewStateChange({ viewState: vs }: { viewState: ViewState }) {
     setViewState(vs);
   }
 
   function resumeFromCap() {
-    setTileLoads(0);
+    tileLoadCount.current = 0;
     setCapped(false);
   }
 
@@ -146,29 +159,43 @@ export default function HolePreview3D({
     );
   }
 
-  // The Tile3DLayer issues fetches as the camera moves. We tally them
-  // and switch onTilesetLoad to a no-op data source once the cap hits.
-  // Already-rendered tiles stay visible (deck.gl caches them in GPU).
+  // Pass the loader explicitly. Without it, deck.gl fetches root.json
+  // but can't parse the tileset (the result was a blank canvas before).
+  // onTileError surfaces fetch failures up to the React UI so users
+  // see a real reason instead of a silent blank screen.
   const tile3d = capped
     ? null
     : new Tile3DLayer({
         id: "google-3d-tiles",
         data: `${TILESET_URL}?key=${apiKey}`,
-        loadOptions: {
-          fetch: {
-            headers: {
-              // Google requires the standard Map Tiles header.
-              "X-Goog-Maps-Api-Key": apiKey,
-            },
-          },
-        },
+        loader: Tiles3DLoader,
         onTileLoad: () => {
-          setTileLoads((n) => {
-            const next = n + 1;
-            if (next >= MAX_TILE_LOADS) setCapped(true);
-            return next;
-          });
+          tileLoadCount.current += 1;
+          if (!hasFirstTile) setHasFirstTile(true);
+          if (tileLoadCount.current >= MAX_TILE_LOADS && !capped) {
+            setCapped(true);
+          }
         },
+        // deck.gl's typings overload onTileError two ways (one tile +
+        // url + message, one bare Error). We treat both as a generic
+        // "tile fetch failed" and lift the human-readable text out
+        // of whichever shape arrived.
+        onTileError: ((...args: unknown[]) => {
+          const arg = args[0];
+          const message =
+            typeof args[2] === "string"
+              ? (args[2] as string)
+              : arg instanceof Error
+                ? arg.message
+                : "3D tile load failed.";
+          if (!errorMsg) {
+            setErrorMsg(
+              message.includes("403")
+                ? "Google denied the tile request. Check the key's referrer restrictions + that Map Tiles API is enabled."
+                : message,
+            );
+          }
+        }) as never,
       });
 
   return (
@@ -184,6 +211,40 @@ export default function HolePreview3D({
         layers={tile3d ? [tile3d] : []}
         style={{ background: "rgb(var(--color-bg))" }}
       />
+
+      {/* Loading scrim -- shows until the first tile arrives so the
+          user sees something other than the page-bg color while the
+          mesh streams in. */}
+      {!hasFirstTile && !errorMsg && (
+        <div className="absolute inset-0 flex items-center justify-center bg-bg/60 backdrop-blur-sm pointer-events-none">
+          <div className="flex items-center gap-2 rounded-full bg-black/70 text-white text-[11px] font-mono uppercase tracking-wider px-3 py-1.5">
+            <span className="inline-block w-2 h-2 rounded-full bg-accent animate-pulse" />
+            Loading 3D mesh
+          </div>
+        </div>
+      )}
+
+      {/* Error scrim -- friendly explanation when Google refuses the
+          tileset (most common: key restricted to the wrong referrer
+          or Map Tiles API not enabled). */}
+      {errorMsg && (
+        <div className="absolute inset-0 flex items-center justify-center bg-bg/80 text-center px-6">
+          <div className="space-y-2 max-w-sm">
+            <p className="text-sm text-ink font-medium">3D preview failed</p>
+            <p className="text-[11px] text-mute leading-snug">{errorMsg}</p>
+            {onRequest2D && (
+              <button
+                type="button"
+                onClick={onRequest2D}
+                className="btn btn-ghost text-xs"
+              >
+                Use 2D
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Bottom-left HUD: hole label + 2D toggle, mirroring the IG ref. */}
       <div className="absolute left-3 bottom-3 flex items-center gap-2">
         {onRequest2D && (
@@ -213,6 +274,7 @@ export default function HolePreview3D({
           </div>
         )}
       </div>
+
       {capped && (
         <button
           type="button"
@@ -225,4 +287,3 @@ export default function HolePreview3D({
     </div>
   );
 }
-
