@@ -274,7 +274,7 @@ export default async function HomePage() {
       </section>
 
       <section>
-        <SectionHeader title="Settled" />
+        <SectionHeader title="Past rounds" />
         {completed.length === 0 ? (
           <EmptyCard>No closed lines yet.</EmptyCard>
         ) : (

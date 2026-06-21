@@ -6,7 +6,7 @@ export default function HomeLoading() {
     <div className="space-y-10">
       <SectionSkeleton title="Live now" accent />
       <SectionSkeleton title="Upcoming" />
-      <SectionSkeleton title="Settled" />
+      <SectionSkeleton title="Past rounds" />
     </div>
   );
 }
