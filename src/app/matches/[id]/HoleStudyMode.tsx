@@ -8,6 +8,7 @@ import {
   type HoleGeo,
 } from "@/lib/course";
 import HoleMiniMap, { type Landmark } from "./HoleMiniMap";
+import HolePreview3D from "@/components/HolePreview3D";
 import { useMapEngine } from "./useMapEngine";
 import { HolePicker, WindDial } from "./OnCourseMode";
 
@@ -37,6 +38,11 @@ export default function HoleStudyMode({
   wind?: { speedMph: number; fromDeg: number } | null;
 }) {
   const [active, setActive] = useState(false);
+  // 2D (existing satellite mini-map) vs 3D (Google photorealistic mesh
+  // + cinematic camera). Defaults to 2D so existing users see no
+  // change; opt-in via the pill in the bottom-right HUD. Reset when
+  // the user switches holes so each tap re-plays the 3D intro.
+  const [mode3d, setMode3d] = useState(false);
   const firstHole = matchStartingHole;
   const lastHole = matchStartingHole + holes - 1;
   const [hole, setHole] = useState<number>(
@@ -190,11 +196,27 @@ export default function HoleStudyMode({
 
   return (
     <div className="fixed inset-0 z-50 bg-bg flex flex-col overflow-hidden overscroll-contain text-ink">
-      {/* Map (full background). Player marker anchored at the tee --
-          so the GPS dot sits on the tee box and every distance reads
-          tee-to-target. */}
+      {/* Map (full background). 2D = the satellite mini-map with hazard
+          pills + tap-to-aim. 3D = Google's photorealistic mesh with a
+          cinematic intro flyover (terrain, tree height, slope). The
+          3D view needs both tee + green coords to compute the camera
+          path, so it's only offered when the hole is fully mapped. */}
       <div className="absolute inset-0 z-[10]">
-        {anchor ? (
+        {mode3d && tee && greenCenter ? (
+          <HolePreview3D
+            hole={{
+              teeLat: tee.lat,
+              teeLng: tee.lng,
+              greenLat: greenCenter.lat,
+              greenLng: greenCenter.lng,
+              number: hole,
+              par,
+              yards: headlineYds != null ? Math.round(headlineYds) : undefined,
+            }}
+            height="100%"
+            onRequest2D={() => setMode3d(false)}
+          />
+        ) : anchor ? (
           <HoleMiniMap
             engine={mapEngine}
             player={anchor}
@@ -214,6 +236,24 @@ export default function HoleStudyMode({
           </div>
         )}
       </div>
+
+      {/* 2D / 3D toggle pill. Three guards keep it from showing in the
+          wrong context:
+            - !mode3d (the 2D component shows its own toggle when in 3D)
+            - tee + greenCenter (3D camera path needs both endpoints)
+            - NEXT_PUBLIC_GOOGLE_MAPS_API_KEY (no key = no 3D, hide UI) */}
+      {tee &&
+        greenCenter &&
+        !mode3d &&
+        process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY && (
+          <button
+            type="button"
+            onClick={() => setMode3d(true)}
+            className="absolute right-3 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-[40] rounded-full bg-black/70 backdrop-blur text-white text-[11px] font-mono uppercase tracking-wider px-3 py-1.5 hover:bg-black/85"
+          >
+            3D
+          </button>
+        )}
 
       {/* Top scrim + hole picker + sub-header */}
       <div
