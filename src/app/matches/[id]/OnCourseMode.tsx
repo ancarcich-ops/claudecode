@@ -522,6 +522,10 @@ export default function OnCourseMode({
             // button bar is at the bottom (~80px), so 100 keeps chips
             // close to the button instead of floating mid-screen.
             chipsBottomOffsetPx={aimPoint ? 200 : 100}
+            // Hide the Tee/Mid/Green/Hole portal while the score sheet
+            // is open -- the portal mounts on document.body at z-[60]
+            // so it would otherwise float on top of the sheet (z-50).
+            hidePresets={sheetOpen}
             player={playerPos}
             tee={
               geo?.teeLat != null && geo?.teeLng != null

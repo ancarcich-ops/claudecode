@@ -183,7 +183,22 @@ export default function HolePreview3D({
         initialViewState={viewState}
         viewState={viewState}
         onViewStateChange={handleViewStateChange as never}
-        controller={{ doubleClickZoom: false }}
+        // Enable tilt + rotate gestures so the user can orbit the
+        // hole:
+        //   - touchRotate: two-finger rotate AND two-finger drag to
+        //     tilt the camera (off by default on mobile -- deck.gl's
+        //     conservative touch baseline).
+        //   - dragRotate: hold + drag with right-click / shift+drag
+        //     on desktop also rotates / tilts (kept on for laptop
+        //     users; harmless on touch since touchRotate already
+        //     covers them).
+        //   - doubleClickZoom off so tapping doesn't accidentally
+        //     zoom past the establishing pose.
+        controller={{
+          doubleClickZoom: false,
+          touchRotate: true,
+          dragRotate: true,
+        }}
         layers={tile3d ? [tile3d] : []}
         style={{ background: "rgb(var(--color-bg))" }}
       />

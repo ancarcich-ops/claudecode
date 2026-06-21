@@ -82,6 +82,7 @@ export default function HoleMiniMap({
   emptyState,
   engine,
   chipsBottomOffsetPx = 120,
+  hidePresets = false,
 }: {
   player: Pt | null;
   tee: Pt | null;
@@ -131,6 +132,11 @@ export default function HoleMiniMap({
   // TO PIN / CARRY plus the ENTER SCORE button -- so it passes a
   // bigger value to push the chips above all of it.
   chipsBottomOffsetPx?: number;
+  // Suppresses the Tee/Mid/Green/Hole chip row -- e.g. when the
+  // score-entry sheet is open, the chips would otherwise float on
+  // top of the sheet because they're rendered in a body-level
+  // portal at z-[60] (the sheet sits at z-50).
+  hidePresets?: boolean;
 }) {
   // GL path: a thin wrapper component owns the map; bail out early
   // so none of the static-path measurement or projection runs.
@@ -148,6 +154,7 @@ export default function HoleMiniMap({
         aim={aim}
         onAim={onAim}
         chipsBottomOffsetPx={chipsBottomOffsetPx}
+        hidePresets={hidePresets}
       />
     );
   }
@@ -701,7 +708,7 @@ export default function HoleMiniMap({
           study views both stack a higher-z bottom card over the map,
           which used to bury the chips). Mounted only when there's a
           tee or green to fly to. */}
-      {(pTee || pGC) && (
+      {(pTee || pGC) && !hidePresets && (
         <PresetChipsPortal
           pinchRef={pinchRef}
           tee={pTee ? { fx: pTee.cx / Vw, fy: pTee.cy / Vh } : null}
@@ -1327,6 +1334,7 @@ function GLBranch({
   aim,
   onAim,
   chipsBottomOffsetPx,
+  hidePresets,
 }: {
   player: { lat: number; lng: number } | null;
   tee: { lat: number; lng: number } | null;
@@ -1339,6 +1347,7 @@ function GLBranch({
   aim?: { lat: number; lng: number } | null;
   onAim?: (latLng: { lat: number; lng: number } | null) => void;
   chipsBottomOffsetPx?: number;
+  hidePresets?: boolean;
 }) {
   const glMapRef = useRef<MapboxMap | null>(null);
   return (
@@ -1356,7 +1365,7 @@ function GLBranch({
         onAim={onAim}
         mapRefProp={glMapRef}
       />
-      {(tee || greenCenter) && (
+      {(tee || greenCenter) && !hidePresets && (
         <PresetChipsPortalGL
           mapRef={glMapRef}
           tee={tee}
