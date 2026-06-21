@@ -1,7 +1,8 @@
-/* Sticks brand splash. Three vertical bars rise like a closing
-   candlestick; wordmark + tagline fade in beneath; the dot keeps
-   breathing forever. Used as a top-level overlay during the first
-   cold load of a session (see SticksSplash.tsx).
+/* Sticks brand splash. Three left-facing golf-club silhouettes pop
+   in with a slight overshoot bounce; wordmark + tagline fade in
+   beneath; the dot keeps breathing forever. Used as a top-level
+   overlay during the first cold load of a session (see
+   SticksSplash.tsx).
 
    Every color reads from the active theme's CSS variables -- the
    splash recolors with Caddie / Fairway / Blueprint / Back Nine
@@ -67,10 +68,25 @@
   height: 135px;
 }
 
-/* Bars start at the visible end-state; the rise animation only
-   plays under prefers-reduced-motion: no-preference (see below). */
-.bar {
+/* Club path fill: theme accent. Stroke shipped from the brand kit
+   keeps the silhouette crisp at small sizes against accent-tinted
+   backgrounds. Visible by default (entrance animation below is
+   enhancement only). */
+.club {
   fill: rgb(var(--color-accent));
+  stroke: rgb(var(--color-accent));
+  stroke-width: 0.4;
+  stroke-linejoin: round;
+}
+
+/* Each .club-anim group is the OUTER wrapper that carries the
+   entrance pop; transform-box: fill-box pins the pop origin to
+   each club's own bottom-center so the rise feels like the club
+   is dropping onto the baseline. The flip lives on the INNER
+   group, so the two transforms never fight. */
+.clubAnim {
+  transform-box: fill-box;
+  transform-origin: center bottom;
 }
 
 .wordmark {
@@ -112,29 +128,32 @@
 /* Entrance animations -- enhancement only, never the source of
    visibility. Reduced-motion users get the static end-state above. */
 @media (prefers-reduced-motion: no-preference) {
-  .bar {
-    animation: sticksRise 1.4s cubic-bezier(.2, .7, .3, 1) backwards;
+  .clubAnim {
+    animation: sticksPop 0.82s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+    animation-delay: var(--d, 0s);
   }
   .wordmark {
-    animation: sticksFadeUp 0.55s 0.55s backwards;
+    animation: sticksFadeUp 0.6s 0.64s backwards;
   }
   .tagline {
-    animation: sticksFadeUp 0.55s 0.95s backwards;
+    animation: sticksFadeUp 0.6s 1.02s backwards;
   }
 }
 
-@keyframes sticksRise {
+/* Pop: fade in while rising 18px and overshooting from 82% scale
+   -- the cubic-bezier above gives the bounce. The clubs land
+   squarely on the baseline thanks to fill-box / bottom origin. */
+@keyframes sticksPop {
   0% {
-    transform: scaleY(0.04);
     opacity: 0;
+    transform: translateY(18px) scale(0.82);
   }
-  60% {
-    transform: scaleY(1.08);
+  62% {
     opacity: 1;
   }
   100% {
-    transform: scaleY(1);
     opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
