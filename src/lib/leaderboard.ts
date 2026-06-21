@@ -1,5 +1,6 @@
 import { prisma } from "./db";
 import { parseParData } from "./odds";
+import { computeTournamentLeaderboard } from "./tournaments";
 import {
   computeStableford,
   computeSkins,
@@ -290,8 +291,13 @@ export async function computeGroupLeaderboard(
         }
       }
 
-      // Phase 2: main-game champion (latest match's winners overwrites)
-      if (mainWinnerUserIds.size > 0) {
+      // Phase 2: main-game champion (latest match's winners overwrites).
+      // Skip the per-foursome MAIN champion when this match belongs to
+      // a tournament -- a tournament-day match's "winner" is the
+      // tournament's overall winner, not whoever shot the lowest in
+      // their foursome. We post the tournament-level champion in a
+      // second pass below, using each completed tournament's leaderboard.
+      if (mainWinnerUserIds.size > 0 && !match.tournamentId) {
         const winners = Array.from(mainWinnerUserIds)
           .filter((uid) => memberUserIds.has(uid))
           .map((uid) => {
@@ -521,6 +527,67 @@ export async function computeGroupLeaderboard(
   const courseRecords = Array.from(courseBest.values()).sort((a, b) =>
     a.courseName.localeCompare(b.courseName),
   );
+
+  // Promote the MAIN champion to the tournament-level winner when the
+  // most-recent completed activity in the group is a tournament. The
+  // per-foursome MAIN winner is skipped above for tournament matches,
+  // so without this pass MAIN would point at an older standalone
+  // round (or be empty). We compare scheduledAt with the existing
+  // MAIN entry's date so a standalone round AFTER a tournament's
+  // completion still takes the belt.
+  const completedTournaments = await prisma.tournament.findMany({
+    where: { groupId, status: "COMPLETED" },
+    select: {
+      id: true,
+      name: true,
+      completedAt: true,
+      matches: {
+        select: { id: true, courseName: true, scheduledAt: true },
+        orderBy: { roundNumber: "desc" },
+        take: 1,
+      },
+    },
+  });
+  for (const t of completedTournaments) {
+    if (!t.completedAt) continue;
+    const finalRound = t.matches[0];
+    const tDate = t.completedAt;
+    const existingMain = championByKind.get("MAIN");
+    if (existingMain && existingMain.scheduledAt > tDate) continue;
+    const lb = await computeTournamentLeaderboard(t.id);
+    if (lb.length === 0) continue;
+    const topRank = lb[0].rank;
+    const winners = lb
+      .filter((r) => r.rank === topRank)
+      .map((r) => {
+        // The tournament leaderboard keys by display name; map back
+        // to a Sticks user via the stats Map (built by username) so
+        // we can stamp a real userId on the champion entry.
+        const match = Array.from(stats.values()).find(
+          (s) =>
+            s.displayName === r.displayName ||
+            s.username === r.displayName.toLowerCase(),
+        );
+        return {
+          userId: match?.userId ?? "",
+          displayName: r.displayName,
+          username: match?.username ?? "",
+        };
+      })
+      // Only count winners who are members of this group (tournament
+      // rosters can include non-members; they don't hold the belt).
+      .filter((w) => !w.userId || memberUserIds.has(w.userId));
+    if (winners.length === 0) continue;
+    championByKind.set("MAIN", {
+      kind: "MAIN",
+      label: "Main game",
+      winners,
+      matchId: finalRound?.id ?? t.id,
+      courseName: finalRound?.courseName ?? t.name,
+      scheduledAt: tDate,
+    });
+  }
+
   const champions = Array.from(championByKind.values());
 
   const streakRows: StreakRow[] = members
