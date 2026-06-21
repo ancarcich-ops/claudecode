@@ -339,7 +339,7 @@ function WelcomeStep() {
         <FeatureRow
           icon={<TrophyIcon />}
           title="Group leaderboard"
-          body="Claim bragging rights — most wins, reigning champion, head-to-head records, and current streaks across your foursome."
+          body="Reigning champion across every game, head-to-head records, win streaks, and course records — promoted to the top so you can read the standings at a glance."
         />
         <FeatureRow
           icon={<ChartIcon />}
@@ -348,8 +348,13 @@ function WelcomeStep() {
         />
         <FeatureRow
           icon={<GpsIcon />}
-          title="Satellite GPS, 1000+ courses"
-          body="Live distances to the green plus a pre-round preview of every hole — for every course we've mapped."
+          title="On-course GPS, 1000+ courses"
+          body="Live distances to the green from your phone's GPS, plus pin-anywhere aim distances. Front / center / back yardages for every mapped hole."
+        />
+        <FeatureRow
+          icon={<FlyoverIcon />}
+          title="3D course preview + flyover"
+          body="Photorealistic 3D mesh of every hole — see real terrain, tree height, slopes, and bunker shapes. Camera flies tee → fairway → green so you can pre-round the line."
         />
       </div>
     </div>
@@ -662,10 +667,10 @@ function CardGuideStep() {
         <Legend
           icon={
             <div className="flex items-center gap-0.5">
-              <Dot tone="birdie" />
-              <Dot tone="par" />
-              <Dot tone="bogey" />
-              <Dot tone="double" />
+              <Dot tone="birdie" strokes={3} />
+              <Dot tone="par" strokes={4} />
+              <Dot tone="bogey" strokes={5} />
+              <Dot tone="double" strokes={6} />
               <Dot tone="current" />
               <Dot tone="unplayed" />
             </div>
@@ -673,8 +678,8 @@ function CardGuideStep() {
           label="Hole dot row"
           body={
             <>
-              Each played box shows your raw <span className="text-ink">strokes</span> for the hole. Color hints at par:{" "}
-              <span className="text-accent">solid emerald</span> = birdie · <span className="text-gold">gold</span> = eagle ·{" "}
+              The number in each box is your raw <span className="text-ink">strokes</span> for that hole. Color encodes par:{" "}
+              <span className="text-accent">solid pine</span> = birdie · <span className="text-gold">gold</span> = eagle ·{" "}
               <span className="text-accent">soft green</span> = par ·{" "}
               <span className="text-danger">muted red</span> = bogey ·{" "}
               <span className="text-danger">bright red + halo</span> = double or worse. Dashed border = current hole, empty = unplayed.
@@ -717,12 +722,6 @@ function CardGuideStep() {
         />
 
         <Legend
-          icon={<SparklineIcon />}
-          label="Sparkline"
-          body="Tiny chart of running net-to-par across the holes a player has scored. Higher line = better stretch."
-        />
-
-        <Legend
           icon={
             <span className="font-mono text-[9px] uppercase tracking-wider text-mute">
               … LEADER &minus;2 THRU 12 · 1 WAGER …
@@ -762,50 +761,63 @@ function Legend({
 
 function Dot({
   tone,
+  strokes,
 }: {
   tone: "birdie" | "par" | "bogey" | "double" | "current" | "unplayed";
+  // Stroke count rendered inside the box. Mirrors the real HoleDotRow
+  // behavior (raw score inside the colored square) -- the legend used
+  // to draw blank chips, which made the row read like a generic key
+  // instead of an actual scorecard fragment.
+  strokes?: number;
 }) {
   const cls = (() => {
     switch (tone) {
       case "birdie":
-        return "bg-accent";
+        return "bg-accent text-ink-on-accent";
       case "par":
-        return "bg-mute/30 border border-mute/30";
+        return "bg-accent/15 border border-accent/30 text-ink";
       case "bogey":
-        return "bg-danger/70";
+        return "bg-danger/55 text-white";
       case "double":
-        return "bg-danger";
+        return "bg-danger shadow-[0_0_0_1.5px_rgb(var(--color-danger)/0.5)] text-white";
       case "current":
         return "border border-dashed border-accent bg-accent/10";
       default:
         return "border border-border";
     }
   })();
-  return <span className={"w-3 h-3 rounded-[2px] " + cls} aria-hidden />;
+  return (
+    <span
+      className={
+        "flex items-center justify-center w-4 h-4 rounded-[2px] font-mono font-semibold text-[8px] leading-none " +
+        cls
+      }
+      aria-hidden
+    >
+      {strokes ?? ""}
+    </span>
+  );
 }
 
-function SparklineIcon() {
+// FlyoverIcon: a small camera + path glyph that suggests the 3D
+// preview's "tee -> green" cinematic. Pairs with the new welcome
+// feature row.
+function FlyoverIcon() {
   return (
-    <svg width="56" height="16" viewBox="0 0 56 16" aria-hidden>
-      <defs>
-        <linearGradient id="ob-spark" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="rgb(var(--color-accent))" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="rgb(var(--color-accent))" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <polygon
-        points="2,14 2,8 12,6 22,9 32,5 42,7 54,4 54,14"
-        fill="url(#ob-spark)"
-      />
-      <polyline
-        points="2,8 12,6 22,9 32,5 42,7 54,4"
-        fill="none"
-        stroke="rgb(var(--color-accent))"
-        strokeWidth="1.25"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx="54" cy="4" r="1.4" fill="rgb(var(--color-accent))" />
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M3 20 C 8 14, 14 14, 21 6" />
+      <circle cx="3" cy="20" r="1.5" fill="currentColor" />
+      <path d="M18 3 L21 6 L18 9" />
     </svg>
   );
 }
