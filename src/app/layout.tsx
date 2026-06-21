@@ -86,14 +86,27 @@ export const metadata: Metadata = {
   title: "Sticks",
   description: "All your games. One round.",
   icons: {
-    icon: "/icon.svg",
-    apple: "/apple-icon.svg",
+    // Bone-on-pine app icon (Caddie's Notebook default). SVG is the
+    // primary source; the 180px / 1024px PNG fallbacks ship for iOS
+    // PWA install + Android adaptive lists. Pine variant lives at
+    // /icon-pine.svg for any future alt-skin badging.
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/icon-1024.png", type: "image/png", sizes: "1024x1024" },
+    ],
+    apple: [
+      { url: "/apple-icon.svg", type: "image/svg+xml" },
+      { url: "/apple-icon-180.png", type: "image/png", sizes: "180x180" },
+    ],
   },
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     title: "Sticks",
-    statusBarStyle: "black-translucent",
+    // Bone-on-pine icon pairs with a light status bar over the
+    // Caddie default; "default" gives dark text on the system bar,
+    // which reads correctly against bone paper.
+    statusBarStyle: "default",
   },
 };
 
