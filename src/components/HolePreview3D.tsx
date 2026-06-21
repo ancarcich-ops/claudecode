@@ -90,14 +90,9 @@ export default function HolePreview3D({
   // Reset render-state flags when the hole changes so the spinner +
   // tile counter restart cleanly for the new hole. Also snap the
   // camera back to the establishing pose (behind the tee, looking
-  // down the fairway) so the user starts from a sensible frame and
-  // takes the camera from there with pinch / drag / rotate.
-  //
-  // The cinematic flyover lived here previously but was removed --
-  // tiles streaming in mid-flight made the intro feel broken on
-  // anything but a fast warm cache. flightPathFor is still used
-  // for the establishing pose; the keyframes after [0] are reserved
-  // for a future "play tour" affordance.
+  // down the fairway) -- the flyover scheduler below picks it up
+  // and animates the rest of the keyframes after the first tile
+  // arrives.
   useEffect(() => {
     setHasFirstTile(false);
     setErrorMsg(null);
@@ -106,6 +101,63 @@ export default function HolePreview3D({
     path.current = flightPathFor(hole);
     setViewState({ ...path.current[0], transitionDuration: 0 });
   }, [hole]);
+
+  // Cinematic intro -- gated on first-tile arrival so the camera
+  // doesn't animate through empty space before mesh exists. The
+  // user-controlled gestures (pan / pinch / rotate) feed into the
+  // same viewState via handleViewStateChange, so any gesture during
+  // the flyover seamlessly overrides it (deck.gl's interpolation
+  // honors the most recent setViewState call).
+  //
+  // WARMUP_MS lets a few extra tiles stream in around the
+  // establishing pose before the camera moves. MAX_WAIT_MS is the
+  // fallback: if no tile arrives the flyover plays anyway after
+  // 6s -- better than freezing forever on a silent network
+  // failure (which the error scrim would also catch, but defense
+  // in depth).
+  const WARMUP_MS = 400;
+  const MAX_WAIT_MS = 6000;
+  useEffect(() => {
+    if (errorMsg) return;
+    const frames = path.current;
+    let cancelled = false;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    function startFlyover() {
+      if (cancelled) return;
+      let cumulativeMs = 0;
+      for (let i = 1; i < frames.length; i++) {
+        const frame = frames[i];
+        const t = setTimeout(() => {
+          if (cancelled) return;
+          setViewState({
+            longitude: frame.longitude,
+            latitude: frame.latitude,
+            zoom: frame.zoom,
+            pitch: frame.pitch,
+            bearing: frame.bearing,
+            transitionDuration: frame.transitionDuration,
+          });
+        }, cumulativeMs);
+        timers.push(t);
+        cumulativeMs += frame.transitionDuration;
+      }
+    }
+
+    const kickoff = setTimeout(
+      startFlyover,
+      hasFirstTile ? WARMUP_MS : MAX_WAIT_MS,
+    );
+    timers.push(kickoff);
+
+    return () => {
+      cancelled = true;
+      for (const t of timers) clearTimeout(t);
+    };
+    // Re-run whenever the hole changes (the reset effect above
+    // flips hasFirstTile back to false, which retriggers this).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hole, hasFirstTile, errorMsg]);
 
   function handleViewStateChange({ viewState: vs }: { viewState: ViewState }) {
     setViewState(vs);

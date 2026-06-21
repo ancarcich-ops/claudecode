@@ -713,6 +713,7 @@ export default function HoleMiniMap({
           pinchRef={pinchRef}
           tee={pTee ? { fx: pTee.cx / Vw, fy: pTee.cy / Vh } : null}
           green={pGC ? { fx: pGC.cx / Vw, fy: pGC.cy / Vh } : null}
+          gps={pPlayer ? { fx: pPlayer.cx / Vw, fy: pPlayer.cy / Vh } : null}
           bottomOffsetPx={chipsBottomOffsetPx}
         />
       )}
@@ -1200,35 +1201,35 @@ function PresetChipsPortal({
   pinchRef,
   tee,
   green,
+  gps,
   bottomOffsetPx = 120,
 }: {
   pinchRef: React.RefObject<PinchZoomHandle>;
   tee: { fx: number; fy: number } | null;
   green: { fx: number; fy: number } | null;
+  // GPS = player marker position. In on-course mode it's the live
+  // device GPS; in study mode it's anchored at the tee (so tapping
+  // GPS lands the same spot as Tee, which is fine). Null hides the
+  // chip entirely when no marker is on the map.
+  gps: { fx: number; fy: number } | null;
   bottomOffsetPx?: number;
 }) {
   // Portals can't render server-side; defer until after mount so
   // SSR doesn't reach for document.body.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  // Mid = geometric midpoint of tee->green. Hidden if either
-  // endpoint is missing rather than guessed.
-  const mid =
-    tee && green
-      ? { fx: (tee.fx + green.fx) / 2, fy: (tee.fy + green.fy) / 2 }
-      : null;
 
   // Tracks which preset is active so the user can see at a glance
   // where they were sent. v1 doesn't observe ad-hoc pinches, so the
   // chip stays highlighted until another preset is tapped or the
   // user hits Hole; acceptable tradeoff vs. wiring an onZoomChange
   // callback through PinchZoom.
-  const [active, setActive] = useState<"tee" | "mid" | "green" | "hole">(
+  const [active, setActive] = useState<"tee" | "green" | "hole" | "gps">(
     "hole",
   );
 
   const onTap = (
-    label: "tee" | "mid" | "green",
+    label: "tee" | "green" | "gps",
     target: { fx: number; fy: number } | null,
   ) => {
     if (!target || !pinchRef.current) return;
@@ -1248,8 +1249,11 @@ function PresetChipsPortal({
     setActive("hole");
   };
 
+  // Fixed width on every chip so the row reads as a balanced 4-up
+  // strip regardless of label length (Tee=3 / Green=5 / Hole=4 /
+  // GPS=3 chars). w-16 + text-center keeps the visual rhythm steady.
   const chipCls = (on: boolean, disabled: boolean) =>
-    "px-3 py-1.5 text-[11px] font-mono font-medium tracking-[0.04em] uppercase " +
+    "w-16 py-1.5 text-[11px] font-mono font-medium tracking-[0.04em] uppercase text-center " +
     "rounded-full backdrop-blur-sm transition-colors " +
     (disabled
       ? "bg-black/40 text-white/40 cursor-not-allowed"
@@ -1285,15 +1289,6 @@ function PresetChipsPortal({
       </button>
       <button
         type="button"
-        onClick={() => onTap("mid", mid)}
-        disabled={!mid}
-        className={chipCls(active === "mid", !mid)}
-        aria-pressed={active === "mid"}
-      >
-        Mid
-      </button>
-      <button
-        type="button"
         onClick={() => onTap("green", green)}
         disabled={!green}
         className={chipCls(active === "green", !green)}
@@ -1308,6 +1303,15 @@ function PresetChipsPortal({
         aria-pressed={active === "hole"}
       >
         Hole
+      </button>
+      <button
+        type="button"
+        onClick={() => onTap("gps", gps)}
+        disabled={!gps}
+        className={chipCls(active === "gps", !gps)}
+        aria-pressed={active === "gps"}
+      >
+        GPS
       </button>
     </div>,
     document.body,
@@ -1370,6 +1374,7 @@ function GLBranch({
           mapRef={glMapRef}
           tee={tee}
           green={greenCenter}
+          gps={player}
           bottomOffsetPx={chipsBottomOffsetPx}
         />
       )}
@@ -1384,33 +1389,28 @@ function PresetChipsPortalGL({
   mapRef,
   tee,
   green,
+  gps,
   bottomOffsetPx = 120,
 }: {
   mapRef: React.RefObject<MapboxMap | null>;
   tee: { lat: number; lng: number } | null;
   green: { lat: number; lng: number } | null;
+  // GPS = player marker position (on-course live GPS in OnCourseMode,
+  // anchored at tee in study mode). Null hides the chip when no
+  // marker exists.
+  gps: { lat: number; lng: number } | null;
   bottomOffsetPx?: number;
 }) {
   // Portals can't render server-side; defer until after mount.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  // Mid = geometric midpoint of tee->green. Hidden if either endpoint
-  // is missing rather than guessed.
-  const mid: { lat: number; lng: number } | null =
-    tee && green
-      ? {
-          lat: (tee.lat + green.lat) / 2,
-          lng: (tee.lng + green.lng) / 2,
-        }
-      : null;
-
-  const [active, setActive] = useState<"tee" | "mid" | "green" | "hole">(
+  const [active, setActive] = useState<"tee" | "green" | "hole" | "gps">(
     "hole",
   );
 
   const onTap = (
-    label: "tee" | "mid" | "green",
+    label: "tee" | "green" | "gps",
     target: { lat: number; lng: number } | null,
   ) => {
     const map = mapRef.current;
@@ -1477,8 +1477,10 @@ function PresetChipsPortalGL({
     setActive("hole");
   };
 
+  // Fixed-width chips so the 4-up strip stays balanced regardless of
+  // label length (Tee=3 / Green=5 / Hole=4 / GPS=3 chars).
   const chipCls = (on: boolean, disabled: boolean) =>
-    "px-3 py-1.5 text-[11px] font-mono font-medium tracking-[0.04em] uppercase " +
+    "w-16 py-1.5 text-[11px] font-mono font-medium tracking-[0.04em] uppercase text-center " +
     "rounded-full backdrop-blur-sm transition-colors " +
     (disabled
       ? "bg-black/40 text-white/40 cursor-not-allowed"
@@ -1505,15 +1507,6 @@ function PresetChipsPortalGL({
       </button>
       <button
         type="button"
-        onClick={() => onTap("mid", mid)}
-        disabled={!mid}
-        className={chipCls(active === "mid", !mid)}
-        aria-pressed={active === "mid"}
-      >
-        Mid
-      </button>
-      <button
-        type="button"
         onClick={() => onTap("green", green)}
         disabled={!green}
         className={chipCls(active === "green", !green)}
@@ -1528,6 +1521,15 @@ function PresetChipsPortalGL({
         aria-pressed={active === "hole"}
       >
         Hole
+      </button>
+      <button
+        type="button"
+        onClick={() => onTap("gps", gps)}
+        disabled={!gps}
+        className={chipCls(active === "gps", !gps)}
+        aria-pressed={active === "gps"}
+      >
+        GPS
       </button>
     </div>,
     document.body,
