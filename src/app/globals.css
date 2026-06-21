@@ -85,33 +85,33 @@
   --font-display: var(--font-space-grotesk);
   --font-sans: var(--font-hanken-grotesk);
   --font-mono: var(--font-jetbrains-mono);
-  --card-radius: 6px;
+  --card-radius: 12px;
 }
 
 /* Back Nine -- lush real-green surfaces, bentgrass-bright accent.
    Commits to green instead of green-tinted near-black. */
 [data-theme="backnine"] {
   color-scheme: dark;
-  --color-bg: 12 32 22;
-  --color-panel: 18 48 34;
-  --color-panel2: 23 59 42;
-  --color-border: 36 90 63;
-  --color-borderSoft: 28 72 50;
-  --color-ink: 234 243 232;
-  --color-mute: 157 192 168;
-  --color-faint: 120 152 129;
-  --color-accent: 69 216 122;
-  --color-accentDim: 50 188 100;
+  --color-bg: 9 26 18;
+  --color-panel: 14 40 28;
+  --color-panel2: 19 50 35;
+  --color-border: 30 78 54;
+  --color-borderSoft: 22 60 42;
+  --color-ink: 230 240 230;
+  --color-mute: 150 184 162;
+  --color-faint: 112 144 122;
+  --color-accent: 111 208 106;
+  --color-accentDim: 92 188 88;
   --color-danger: 226 103 76;
   --color-gold: 242 193 78;
   --skeleton-base: 255 255 255;
-  --recharts-axis: 157 192 168;
-  --font-display: var(--font-archivo);
+  --recharts-axis: 150 184 162;
+  --font-display: var(--font-outfit);
   --font-sans: var(--font-figtree);
-  /* Back Nine keeps Geist Mono -- it pairs well with Archivo + Figtree
+  /* Back Nine keeps Geist Mono -- pairs well with Outfit + Figtree
      and avoids adding a fourth mono. */
   --font-mono: var(--font-geist-mono);
-  --card-radius: 8px;
+  --card-radius: 12px;
 }
 
 html, body {

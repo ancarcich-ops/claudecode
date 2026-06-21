@@ -2,7 +2,6 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import {
-  Archivo,
   Bricolage_Grotesque,
   DM_Mono,
   Figtree,
@@ -10,6 +9,7 @@ import {
   JetBrains_Mono,
   Karla,
   Newsreader,
+  Outfit,
   Space_Grotesk,
 } from "next/font/google";
 import { GeistSans } from "geist/font/sans";
@@ -71,9 +71,9 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   display: "swap",
 });
-const archivo = Archivo({
+const outfit = Outfit({
   subsets: ["latin"],
-  variable: "--font-archivo",
+  variable: "--font-outfit",
   display: "swap",
 });
 const figtree = Figtree({
@@ -125,7 +125,7 @@ export default async function RootLayout({
     spaceGrotesk.variable,
     hankenGrotesk.variable,
     jetbrainsMono.variable,
-    archivo.variable,
+    outfit.variable,
     figtree.variable,
   ].join(" ");
   return (
