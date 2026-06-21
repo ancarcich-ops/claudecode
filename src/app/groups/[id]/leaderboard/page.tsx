@@ -100,34 +100,10 @@ export default async function GroupLeaderboardPage({
         </p>
       </div>
 
-      {!anyWinsLogged ? (
-        <EmptyIllustration
-          kind="noLeaderboard"
-          title="No closed lines yet."
-          body="Once a match in this group wraps up, wins start posting here."
-        />
-      ) : (
-        <LeaderboardTable
-          rows={lb.rows}
-          meUserId={user.id}
-          columns={visible.map((c) => ({
-            key: c.key as
-              | "mainWins"
-              | "stablefordWins"
-              | "skinsWins"
-              | "nassauWins"
-              | "bbbWins"
-              | "snakeWins"
-              | "wolfWins",
-            label: c.label,
-            hint: c.hint,
-            numeric: true,
-            show: c.show,
-          }))}
-        />
-      )}
-
-      {/* Current champions per game type */}
+      {/* Current champions per game type. Promoted above the wins
+          table because "who's holding the belts right now" is the
+          first thing group members come here to read; the totals
+          table sits below for the longer-arc story. */}
       {lb.champions.length > 0 && (
         <section className="card p-5">
           <h2 className="font-display text-base font-semibold text-ink mb-3">
@@ -160,6 +136,33 @@ export default async function GroupLeaderboardPage({
             ))}
           </ul>
         </section>
+      )}
+
+      {!anyWinsLogged ? (
+        <EmptyIllustration
+          kind="noLeaderboard"
+          title="No closed lines yet."
+          body="Once a match in this group wraps up, wins start posting here."
+        />
+      ) : (
+        <LeaderboardTable
+          rows={lb.rows}
+          meUserId={user.id}
+          columns={visible.map((c) => ({
+            key: c.key as
+              | "mainWins"
+              | "stablefordWins"
+              | "skinsWins"
+              | "nassauWins"
+              | "bbbWins"
+              | "snakeWins"
+              | "wolfWins",
+            label: c.label,
+            hint: c.hint,
+            numeric: true,
+            show: c.show,
+          }))}
+        />
       )}
 
       {/* Head-to-head matrix */}
@@ -253,7 +256,11 @@ export default async function GroupLeaderboardPage({
         </section>
       )}
 
-      {/* Course records */}
+      {/* Course records. 3-column grid (course name | score stack |
+          holder) so the gross numbers line up vertically across rows
+          regardless of name length -- the previous one-cell "90 ·
+          Brett" / "91 · HonMond" packing drifted the gross digit
+          left and right depending on how long the holder name was. */}
       {lb.courseRecords.length > 0 && (
         <section className="card p-5">
           <h2 className="font-display text-base font-semibold text-ink mb-3">
@@ -263,17 +270,17 @@ export default async function GroupLeaderboardPage({
             {lb.courseRecords.map((c) => (
               <li
                 key={c.courseName}
-                className="flex items-center justify-between gap-3 text-sm py-1 border-b border-border last:border-b-0"
+                className="grid grid-cols-[1fr_3.25rem_5.5rem] items-baseline gap-3 text-sm py-1.5 border-b border-border last:border-b-0"
               >
                 <span className="truncate min-w-0">{c.courseName}</span>
-                <span className="font-mono tabular-nums shrink-0 text-right">
-                  <div>
-                    <span className="text-ink">{c.gross}</span>
-                    <span className="text-mute"> · {c.bestDisplayName}</span>
-                  </div>
-                  <div className="text-[10px] text-mute">
+                <span className="font-mono tabular-nums text-right">
+                  <span className="text-ink">{c.gross}</span>
+                  <span className="block text-[10px] text-mute leading-tight mt-0.5">
                     net {c.net.toFixed(1)}
-                  </div>
+                  </span>
+                </span>
+                <span className="text-mute text-xs text-right truncate">
+                  {c.bestDisplayName}
                 </span>
               </li>
             ))}
