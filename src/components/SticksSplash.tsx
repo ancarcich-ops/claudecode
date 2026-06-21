@@ -36,8 +36,12 @@ const CLUBS = [
 const SESSION_KEY = "sticks-splash-shown-v3";
 
 // Total time we hold the splash before fading. Covers the staggered
-// club pop-in (final club at ~1.08s) + the wordmark + tagline landing.
-const HOLD_MS = 1600;
+// club pop-in (final club lands ~1.08s) + the wordmark + tagline
+// landing + one full visible pulse cycle on the dot. Pulse starts
+// at 0.64s (sync'd to the wordmark fade-up), runs 2.4s, so the
+// minimum hold to see one cycle is 0.64 + 2.4 = ~3.04s; we add a
+// small buffer so the pulse doesn't get cut off by the fade-out.
+const HOLD_MS = 3100;
 const FADE_MS = 240;
 
 export default function SticksSplash() {

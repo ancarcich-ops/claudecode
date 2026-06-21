@@ -107,9 +107,12 @@
   height: 10px;
   border-radius: 50%;
   background: rgb(var(--color-accent));
-  /* Infinite from the moment the splash mounts -- it's the
-     "still alive" signal that holds when the app shell is slow. */
-  animation: sticksPulse 2.4s ease-out infinite;
+  /* Pulse delay matches the wordmark fade-up (.64s) so the first
+     cycle begins at the same instant the dot becomes visible --
+     otherwise the pulse is partway through its cycle by the time
+     the user sees it. Infinite from there: it's the "still alive"
+     signal that holds when the app shell is slow. */
+  animation: sticksPulse 2.4s 0.64s ease-out infinite;
 }
 
 .tagline {
