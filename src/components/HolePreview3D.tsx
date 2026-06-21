@@ -81,48 +81,75 @@ export default function HolePreview3D({
   const [capped, setCapped] = useState(false);
 
   // Reset render-state flags when the hole changes so the spinner +
-  // tile counter restart cleanly for the new hole.
+  // tile counter restart cleanly for the new hole. Also snap the
+  // camera back to the establishing pose so the flyover (gated on
+  // first-tile arrival, below) starts from a known frame.
   useEffect(() => {
     setHasFirstTile(false);
     setErrorMsg(null);
     setCapped(false);
     tileLoadCount.current = 0;
-  }, [hole.teeLat, hole.teeLng, hole.greenLat, hole.greenLng]);
-
-  // Cinematic intro: walk through the keyframes after mount. Each
-  // step's transitionDuration drives deck.gl's smooth interpolation;
-  // we schedule the NEXT setViewState with a setTimeout matching the
-  // CURRENT step's duration so the keyframes land in order.
-  useEffect(() => {
     path.current = flightPathFor(hole);
-    // Reset to the starting pose for the new hole so the next intro
-    // begins from the establishing shot.
     setViewState({ ...path.current[0], transitionDuration: 0 });
+  }, [hole]);
+
+  // Cinematic intro -- gated on first-tile arrival so the camera
+  // doesn't animate through empty cream / black before any mesh
+  // exists. WARMUP_MS gives a few extra tiles time to stream in
+  // around the establishing pose before the camera starts moving.
+  // MAX_WAIT_MS is a fallback: if no tile arrives at all (slow
+  // network or silent 4xx that didn't trip onTileError), we
+  // eventually start the flyover anyway -- better to show a moving
+  // empty canvas than to be permanently frozen.
+  const WARMUP_MS = 400;
+  const MAX_WAIT_MS = 6000;
+  useEffect(() => {
+    if (errorMsg) return; // skip flyover entirely on hard failure
     const frames = path.current;
     let cancelled = false;
-    let cumulativeMs = 0;
     const timers: ReturnType<typeof setTimeout>[] = [];
-    for (let i = 1; i < frames.length; i++) {
-      const frame = frames[i];
-      const t = setTimeout(() => {
-        if (cancelled) return;
-        setViewState({
-          longitude: frame.longitude,
-          latitude: frame.latitude,
-          zoom: frame.zoom,
-          pitch: frame.pitch,
-          bearing: frame.bearing,
-          transitionDuration: frame.transitionDuration,
-        });
-      }, cumulativeMs);
-      timers.push(t);
-      cumulativeMs += frame.transitionDuration;
+
+    function startFlyover() {
+      if (cancelled) return;
+      let cumulativeMs = 0;
+      for (let i = 1; i < frames.length; i++) {
+        const frame = frames[i];
+        const t = setTimeout(() => {
+          if (cancelled) return;
+          setViewState({
+            longitude: frame.longitude,
+            latitude: frame.latitude,
+            zoom: frame.zoom,
+            pitch: frame.pitch,
+            bearing: frame.bearing,
+            transitionDuration: frame.transitionDuration,
+          });
+        }, cumulativeMs);
+        timers.push(t);
+        cumulativeMs += frame.transitionDuration;
+      }
     }
+
+    if (hasFirstTile) {
+      // Tiles arriving -- short warmup, then move.
+      const warmup = setTimeout(startFlyover, WARMUP_MS);
+      timers.push(warmup);
+    } else {
+      // No tile yet -- wait, but not forever.
+      const fallback = setTimeout(startFlyover, MAX_WAIT_MS);
+      timers.push(fallback);
+    }
+
     return () => {
       cancelled = true;
       for (const t of timers) clearTimeout(t);
     };
-  }, [hole]);
+    // `hole` is intentionally not a dep here: the reset effect above
+    // already re-mounts the path + pose when the hole changes, which
+    // flips hasFirstTile false and re-runs this effect through the
+    // hasFirstTile dependency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasFirstTile, errorMsg]);
 
   function handleViewStateChange({ viewState: vs }: { viewState: ViewState }) {
     setViewState(vs);
