@@ -5,14 +5,44 @@
 /* Theme tokens. Values are RGB triples so Tailwind's <alpha-value>
    substitution still works (bg-panel/70 etc.).
 
-   Fairway (default, no data-theme) is the original green-tinted dark
-   skin. Three more themes (Caddie's Notebook / Blueprint / Back Nine)
-   are switchable via `<html data-theme="...">`, set by the in-app
-   ThemeToggle and a pre-paint script in layout.tsx. Font swaps go
-   through --font-display / --font-sans / --font-mono, which Tailwind
-   reads from tailwind.config.ts -- each theme just points those at a
-   different next/font variable. */
+   Caddie's Notebook is the default (on :root, no data-theme attr).
+   Three more skins (Fairway / Blueprint / Back Nine) switch via
+   `<html data-theme="...">`, set by the in-app ThemeToggle and a
+   pre-paint script in layout.tsx. Font swaps go through
+   --font-display / --font-sans / --font-mono, which Tailwind reads
+   from tailwind.config.ts -- each theme just points those at a
+   different next/font variable.
+
+   Card corner radius travels on --card-radius so the .card component
+   below picks up the per-theme softness automatically. */
 :root {
+  color-scheme: light;
+  --color-bg: 237 231 219;
+  --color-panel: 247 243 234;
+  --color-panel2: 240 234 223;
+  --color-border: 214 206 190;
+  --color-borderSoft: 226 218 202;
+  --color-ink: 38 34 28;
+  --color-mute: 116 108 92;
+  --color-faint: 146 134 112;
+  /* Two-pen scoring: accent = pine green (under-par, gain, leader);
+     danger = oxblood red (over-par, loss, debt). Both inks carry
+     meaning -- don't collapse to a single accent. */
+  --color-accent: 47 107 79;
+  --color-accentDim: 34 84 60;
+  --color-danger: 154 43 38;
+  --color-gold: 169 118 42;
+  --skeleton-base: 0 0 0;
+  --recharts-axis: 116 108 92;
+  --font-display: var(--font-newsreader);
+  --font-sans: var(--font-karla);
+  --font-mono: var(--font-dm-mono);
+  --card-radius: 14px;
+}
+
+/* Fairway -- the original green-tinted near-black skin with emerald
+   accent. Bricolage Grotesque + Geist + Geist Mono. */
+[data-theme="fairway"] {
   color-scheme: dark;
   --color-bg: 11 15 12;
   --color-panel: 17 24 21;
@@ -28,33 +58,10 @@
   --color-gold: 251 191 36;
   --skeleton-base: 255 255 255;
   --recharts-axis: 138 160 148;
-  /* Fairway font aliases (next/font variables are wired in layout.tsx). */
+  --font-display: var(--font-bricolage);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-/* Caddie's Notebook -- warm cream paper, clay-red accent, navy "ink"
-   for over-par. The light-mode option; replaces the old data-theme="light"
-   inverted-Fairway skin. */
-[data-theme="caddie"] {
-  color-scheme: light;
-  --color-bg: 233 225 207;
-  --color-panel: 245 239 224;
-  --color-panel2: 237 229 211;
-  --color-border: 216 205 180;
-  --color-borderSoft: 226 217 196;
-  --color-ink: 33 29 22;
-  --color-mute: 110 101 82;
-  --color-faint: 138 124 98;
-  --color-accent: 180 56 43;
-  --color-accentDim: 156 46 35;
-  --color-danger: 50 74 99;
-  --color-gold: 169 118 42;
-  --skeleton-base: 0 0 0;
-  --recharts-axis: 110 101 82;
-  --font-display: var(--font-spectral);
-  --font-sans: var(--font-karla);
-  --font-mono: var(--font-dm-mono);
+  --card-radius: 10px;
 }
 
 /* Blueprint -- architect's cyanotype: deep drafting blue + electric
@@ -78,6 +85,7 @@
   --font-display: var(--font-space-grotesk);
   --font-sans: var(--font-hanken-grotesk);
   --font-mono: var(--font-jetbrains-mono);
+  --card-radius: 6px;
 }
 
 /* Back Nine -- lush real-green surfaces, bentgrass-bright accent.
@@ -103,6 +111,7 @@
   /* Back Nine keeps Geist Mono -- it pairs well with Archivo + Figtree
      and avoids adding a fourth mono. */
   --font-mono: var(--font-geist-mono);
+  --card-radius: 8px;
 }
 
 html, body {
@@ -141,7 +150,11 @@ body {
     padding-right: 2rem;
   }
   .label { @apply block text-xs uppercase tracking-wider text-mute mb-1; }
-  .card { @apply rounded-lg border border-border bg-panel; }
+  /* Card radius reads from --card-radius so each theme controls its
+     own softness (Caddie 14, Fairway 10, Back Nine 8, Blueprint 6).
+     The rounded-lg @apply seeds the default; the explicit
+     border-radius below overrides it once the theme variable lands. */
+  .card { @apply rounded-lg border border-border bg-panel; border-radius: var(--card-radius); }
   .chip { @apply inline-flex items-center rounded-full border border-border bg-panel2 px-2 py-0.5 text-xs text-mute; }
   .tag-up { @apply text-accent; }
   .tag-down { @apply text-danger; }
@@ -231,11 +244,11 @@ body {
 
 /* Bottom-aligned ink colour used on top of the saturated accent fill
    (Enter Score CTA, AIM pill, score sheet Save button). Per-theme so
-   each theme picks the high-contrast counterpart to its accent: dark
-   ink on bright accents (Fairway emerald, Blueprint cyan, Back Nine
-   bentgrass), bright ink on the dark Caddie clay-red. */
-:root { --ink-on-accent: 6 33 24; }
-[data-theme="caddie"] { --ink-on-accent: 245 239 224; }
+   each theme picks the high-contrast counterpart to its accent: bone
+   paper on Caddie's pine accent, dark ink on Fairway emerald /
+   Blueprint cyan / Back Nine bentgrass. */
+:root { --ink-on-accent: 237 231 219; }
+[data-theme="fairway"] { --ink-on-accent: 6 33 24; }
 [data-theme="blueprint"] { --ink-on-accent: 8 35 61; }
 [data-theme="backnine"] { --ink-on-accent: 12 32 22; }
 .text-ink-on-accent { color: rgb(var(--ink-on-accent)); }

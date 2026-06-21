@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 
-// Four switchable visual themes. Fairway is the original Sticks skin and
-// the default (no data-theme attribute on <html>); the other three are
-// applied via `data-theme="<id>"`. globals.css drives every token --
-// palette + font roles -- off that attribute.
-type ThemeId = "fairway" | "caddie" | "blueprint" | "backnine";
+// Four switchable visual skins. Caddie's Notebook is the default
+// (no data-theme attribute on <html>); the other three are applied
+// via `data-theme="<id>"`. globals.css drives every token -- palette,
+// font roles, card-radius -- off that attribute.
+type ThemeId = "caddie" | "fairway" | "blueprint" | "backnine";
 
 const STORAGE_KEY = "sticks-theme";
 
@@ -20,16 +20,16 @@ const THEMES: {
   swatch: { bg: string; accent: string; ink: string };
 }[] = [
   {
-    id: "fairway",
-    label: "Fairway",
-    sub: "Default · dark",
-    swatch: { bg: "#111815", accent: "#34D399", ink: "#E8EFE9" },
-  },
-  {
     id: "caddie",
     label: "Caddie's Notebook",
-    sub: "Light · paper",
-    swatch: { bg: "#F5EFE0", accent: "#B4382B", ink: "#211D16" },
+    sub: "Default · paper",
+    swatch: { bg: "#F7F3EA", accent: "#2F6B4F", ink: "#26221C" },
+  },
+  {
+    id: "fairway",
+    label: "Fairway",
+    sub: "Dark · emerald",
+    swatch: { bg: "#111815", accent: "#34D399", ink: "#E8EFE9" },
   },
   {
     id: "blueprint",
@@ -47,7 +47,9 @@ const THEMES: {
 
 function applyTheme(theme: ThemeId) {
   if (typeof document === "undefined") return;
-  if (theme === "fairway") {
+  // Caddie's = :root, no attribute. The other three set the attribute
+  // and globals.css overrides root tokens.
+  if (theme === "caddie") {
     delete document.documentElement.dataset.theme;
   } else {
     document.documentElement.dataset.theme = theme;
@@ -58,7 +60,7 @@ function applyTheme(theme: ThemeId) {
 // (key `sticks-theme`); the pre-paint script in layout.tsx reads the
 // same key so reloads land on the right palette without a flash.
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<ThemeId>("fairway");
+  const [theme, setTheme] = useState<ThemeId>("caddie");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -66,7 +68,7 @@ export default function ThemeToggle() {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (
-        stored === "caddie" ||
+        stored === "fairway" ||
         stored === "blueprint" ||
         stored === "backnine"
       ) {
@@ -79,13 +81,13 @@ export default function ThemeToggle() {
     setTheme(next);
     applyTheme(next);
     try {
-      if (next === "fairway") localStorage.removeItem(STORAGE_KEY);
+      if (next === "caddie") localStorage.removeItem(STORAGE_KEY);
       else localStorage.setItem(STORAGE_KEY, next);
     } catch {}
   };
 
-  // Render Fairway as active until mounted so SSR markup matches the default.
-  const active: ThemeId = mounted ? theme : "fairway";
+  // Render Caddie's as active until mounted so SSR markup matches the default.
+  const active: ThemeId = mounted ? theme : "caddie";
 
   return (
     <div className="card p-5">
