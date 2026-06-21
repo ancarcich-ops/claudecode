@@ -530,7 +530,10 @@ export default function HoleMiniMap({
         })}
       </svg>
 
-      {/* GPS dot (HTML, so we can use CSS keyframe pulse-strong). */}
+      {/* GPS dot (HTML, so we can use CSS keyframe pulse-strong).
+          Sized + ringed to read on satellite imagery in sunlight, and
+          colored from the active theme so the marker stays on-brand
+          across Fairway / Caddie / Blueprint / Back Nine. */}
       {pPlayer && (
         <div
           className="absolute z-[16] pointer-events-none"
@@ -542,19 +545,28 @@ export default function HoleMiniMap({
           aria-label="Your position"
         >
           <div className="relative">
-            {/* Halo */}
+            {/* Outer halo -- theme accent at low alpha so the dot
+                glows on any base map (cream paper, green satellite,
+                desert sand alike). */}
             <div
-              className="absolute -inset-2 rounded-full"
+              className="absolute -inset-4 rounded-full"
               style={{
                 background:
-                  "radial-gradient(circle, rgba(52,211,153,0.28) 0%, rgba(52,211,153,0) 70%)",
+                  "radial-gradient(circle, rgb(var(--color-accent) / 0.35) 0%, rgb(var(--color-accent) / 0) 70%)",
               }}
             />
-            {/* Core */}
+            {/* White ring under the core gives the dot a hard edge
+                against busy satellite textures -- without it the
+                accent-on-fairway can disappear into the grass. */}
             <div
-              className="relative w-3.5 h-3.5 rounded-full bg-accent pulse-strong"
+              className="relative rounded-full pulse-strong"
               style={{
-                border: "2px solid rgb(var(--ink-on-accent))",
+                width: 18,
+                height: 18,
+                background: "rgb(var(--color-accent))",
+                border: "3px solid #fff",
+                boxShadow:
+                  "0 0 0 1px rgb(0 0 0 / 0.35), 0 2px 6px rgb(0 0 0 / 0.45)",
               }}
             />
           </div>

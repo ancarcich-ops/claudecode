@@ -230,9 +230,14 @@ body {
 @media (prefers-reduced-motion: reduce) { .sheet-up { animation: none; } }
 
 /* Bottom-aligned ink colour used on top of the saturated accent fill
-   (Enter Score CTA, AIM pill, score sheet Save button). Sits a notch
-   darker than text-ink against accent green so it doesn't vibrate. */
+   (Enter Score CTA, AIM pill, score sheet Save button). Per-theme so
+   each theme picks the high-contrast counterpart to its accent: dark
+   ink on bright accents (Fairway emerald, Blueprint cyan, Back Nine
+   bentgrass), bright ink on the dark Caddie clay-red. */
 :root { --ink-on-accent: 6 33 24; }
+[data-theme="caddie"] { --ink-on-accent: 245 239 224; }
+[data-theme="blueprint"] { --ink-on-accent: 8 35 61; }
+[data-theme="backnine"] { --ink-on-accent: 12 32 22; }
 .text-ink-on-accent { color: rgb(var(--ink-on-accent)); }
 
 /* Probability tick number flash (up/down) + row background pulse. */
