@@ -1126,11 +1126,28 @@ export default function NewMatchForm({
               Tee time
             </label>
             <div className="relative">
+              {/* Two-line tile (date over time) so the box matches the
+                  height of the adjacent Holes picker (Full 18 / Front 9
+                  / Back 9), which is also two lines (label over count).
+                  min-h-[3.25rem] keeps the two columns at the same
+                  height even when only one line of text is showing
+                  (e.g. unparseable scheduledAt -> "—"). */}
               <div
-                className="input text-center flex items-center justify-center pointer-events-none select-none"
+                className="input text-center flex flex-col items-center justify-center leading-tight pointer-events-none select-none min-h-[3.25rem]"
                 aria-hidden
               >
-                {formatTeeShort(scheduledAt)}
+                {(() => {
+                  const parts = formatTeeParts(scheduledAt);
+                  if (!parts) {
+                    return <span className="text-sm font-medium">—</span>;
+                  }
+                  return (
+                    <>
+                      <span className="text-sm font-medium">{parts.date}</span>
+                      <span className="text-sm font-medium">{parts.time}</span>
+                    </>
+                  );
+                })()}
               </div>
               <input
                 id="scheduledAt"
@@ -2669,16 +2686,26 @@ function RemoveIcon() {
 // "2026-05-17T21:00" -> "5/17 · 9:00pm". Falls back to the raw string
 // if parsing fails; "—" for empty.
 function formatTeeShort(iso: string): string {
-  if (!iso) return "—";
+  const parts = formatTeeParts(iso);
+  if (!parts) return iso || "—";
+  return `${parts.date} · ${parts.time}`;
+}
+
+// Split form of formatTeeShort used by the picker tile so the date
+// and time render on two lines (matching the height of the Holes
+// picker tiles next to it). Returns null when the input doesn't
+// parse so the caller can fall back to whatever it wants.
+function formatTeeParts(iso: string): { date: string; time: string } | null {
+  if (!iso) return null;
   const d = new Date(iso);
-  if (isNaN(d.getTime())) return iso;
-  const month = d.getMonth() + 1;
-  const day = d.getDate();
+  if (isNaN(d.getTime())) return null;
+  const date = `${d.getMonth() + 1}/${d.getDate()}`;
   let hours = d.getHours();
   const mins = d.getMinutes();
   const isPM = hours >= 12;
   hours = hours % 12;
   if (hours === 0) hours = 12;
   const m = mins === 0 ? "" : `:${String(mins).padStart(2, "0")}`;
-  return `${month}/${day} · ${hours}${m}${isPM ? "pm" : "am"}`;
+  const time = `${hours}${m}${isPM ? "pm" : "am"}`;
+  return { date, time };
 }
