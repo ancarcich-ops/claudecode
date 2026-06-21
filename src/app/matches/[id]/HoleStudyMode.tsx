@@ -318,16 +318,25 @@ export default function HoleStudyMode({
       </button>
 
       {/* Wind dial (top-right) -- same as OnCourseMode. Useful pre-
-          round even though it's a forecast snapshot. */}
-      <WindDial
-        speedMph={wind?.speedMph ?? 8}
-        fromDeg={wind?.fromDeg ?? 220}
-        breeze={false}
-      />
+          round even though it's a forecast snapshot. Hidden in 3D
+          mode so the user gets a clean orbit view (and so the dial
+          doesn't double up with the 3D view's own bottom-left HUD). */}
+      {!mode3d && (
+        <WindDial
+          speedMph={wind?.speedMph ?? 8}
+          fromDeg={wind?.fromDeg ?? 220}
+          breeze={false}
+        />
+      )}
 
-      {/* Bottom hazard summary card. Shows tee-to-{front/center/back}
-          + each hazard with carry. Compact and read-only. */}
-      <div
+      {/* Bottom hazard summary card -- 2D-only. The 3D preview is a
+          free orbit; tee-to-{front/center/back} + hazard pills are
+          anchored to the 2D player marker, not the free camera, so
+          they'd just confuse the view. Hiding it also un-blocks the
+          3D view's bottom-left "2D" toggle pill, which otherwise
+          sits behind this card. */}
+      {!mode3d && (
+        <div
         className="absolute inset-x-0 bottom-0 z-[30] pt-5 pb-[max(env(safe-area-inset-bottom),18px)] px-4"
         style={{
           background:
@@ -371,6 +380,7 @@ export default function HoleStudyMode({
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }
