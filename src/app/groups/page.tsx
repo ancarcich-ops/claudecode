@@ -159,6 +159,11 @@ export default async function GroupsPage({
             Join
           </button>
         </form>
+        <p className="text-xs text-mute mt-2">
+          Ask a group member to share theirs &mdash; tap{" "}
+          <span className="text-ink">Copy link</span> next to any group
+          above and the code rides along with the URL.
+        </p>
       </section>
     </div>
   );
