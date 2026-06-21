@@ -249,7 +249,15 @@ export default function HoleStudyMode({
           <button
             type="button"
             onClick={() => setMode3d(true)}
-            className="absolute right-3 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-[40] rounded-full bg-black/70 backdrop-blur text-white text-[11px] font-mono uppercase tracking-wider px-3 py-1.5 hover:bg-black/85"
+            // Aligned with the Tee/Mid/Green/Hole chip row in
+            // HoleMiniMap (PresetChipsPortal): same vertical
+            // anchor (env(safe-area-inset-bottom) + 120px, the
+            // default chipsBottomOffsetPx), same pill styling
+            // (px-3 py-1.5 / rounded-full / bg-black/70 /
+            // tracking-[0.04em] font-medium font-mono uppercase).
+            // Sits at the right edge so the centered chip group
+            // reads as a single HUD row.
+            className="absolute right-3 bottom-[calc(env(safe-area-inset-bottom)+120px)] z-[40] rounded-full bg-black/70 backdrop-blur-sm active:bg-black/85 text-white text-[11px] font-mono font-medium uppercase tracking-[0.04em] px-3 py-1.5"
           >
             3D
           </button>
