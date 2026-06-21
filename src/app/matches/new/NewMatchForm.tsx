@@ -1115,9 +1115,13 @@ export default function NewMatchForm({
             utility would otherwise override the [hidden] attribute and
             leak the tee/holes row onto the Course step. */}
         <div
+          // Tee time only needs room for "M/D" + "h:mma" (~6 chars
+          // per line); Holes packs three buttons (Full 18 / Front 9 /
+          // Back 9) and benefits from more horizontal room. 1:2 split
+          // matches the actual content footprints.
           className={
             roundStep === 1
-              ? "grid grid-cols-2 gap-3 field-active"
+              ? "grid grid-cols-[1fr_2fr] gap-3 field-active"
               : "hidden"
           }
         >

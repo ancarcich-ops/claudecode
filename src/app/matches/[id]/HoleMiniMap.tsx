@@ -83,6 +83,7 @@ export default function HoleMiniMap({
   engine,
   chipsBottomOffsetPx = 120,
   hidePresets = false,
+  onToggle3D,
 }: {
   player: Pt | null;
   tee: Pt | null;
@@ -132,11 +133,17 @@ export default function HoleMiniMap({
   // TO PIN / CARRY plus the ENTER SCORE button -- so it passes a
   // bigger value to push the chips above all of it.
   chipsBottomOffsetPx?: number;
-  // Suppresses the Tee/Mid/Green/Hole chip row -- e.g. when the
+  // Suppresses the Tee/Green/Hole/3D chip row -- e.g. when the
   // score-entry sheet is open, the chips would otherwise float on
   // top of the sheet because they're rendered in a body-level
   // portal at z-[60] (the sheet sits at z-50).
   hidePresets?: boolean;
+  // Optional callback that adds a fourth "3D" chip to the preset
+  // row, flipping the parent into the photorealistic preview when
+  // tapped. When undefined the chip is hidden so callers without a
+  // 3D path (no Google Maps key, missing tee/green coords, or
+  // surfaces that don't support 3D at all) get a 3-chip row.
+  onToggle3D?: () => void;
 }) {
   // GL path: a thin wrapper component owns the map; bail out early
   // so none of the static-path measurement or projection runs.
@@ -155,6 +162,7 @@ export default function HoleMiniMap({
         onAim={onAim}
         chipsBottomOffsetPx={chipsBottomOffsetPx}
         hidePresets={hidePresets}
+        onToggle3D={onToggle3D}
       />
     );
   }
@@ -713,7 +721,7 @@ export default function HoleMiniMap({
           pinchRef={pinchRef}
           tee={pTee ? { fx: pTee.cx / Vw, fy: pTee.cy / Vh } : null}
           green={pGC ? { fx: pGC.cx / Vw, fy: pGC.cy / Vh } : null}
-          gps={pPlayer ? { fx: pPlayer.cx / Vw, fy: pPlayer.cy / Vh } : null}
+          onToggle3D={onToggle3D}
           bottomOffsetPx={chipsBottomOffsetPx}
         />
       )}
@@ -1201,17 +1209,19 @@ function PresetChipsPortal({
   pinchRef,
   tee,
   green,
-  gps,
+  onToggle3D,
   bottomOffsetPx = 120,
 }: {
   pinchRef: React.RefObject<PinchZoomHandle>;
   tee: { fx: number; fy: number } | null;
   green: { fx: number; fy: number } | null;
-  // GPS = player marker position. In on-course mode it's the live
-  // device GPS; in study mode it's anchored at the tee (so tapping
-  // GPS lands the same spot as Tee, which is fine). Null hides the
-  // chip entirely when no marker is on the map.
-  gps: { fx: number; fy: number } | null;
+  // Optional mode-switch chip. When the parent passes a callback,
+  // the row renders a 4th "3D" chip that flips the parent into the
+  // photorealistic preview. Null/undefined hides the chip entirely,
+  // so callers without a 3D surface (no API key, missing tee or
+  // green coords, already in 3D mode) just get the 3-up Tee / Green
+  // / Hole strip.
+  onToggle3D?: () => void;
   bottomOffsetPx?: number;
 }) {
   // Portals can't render server-side; defer until after mount so
@@ -1224,12 +1234,10 @@ function PresetChipsPortal({
   // chip stays highlighted until another preset is tapped or the
   // user hits Hole; acceptable tradeoff vs. wiring an onZoomChange
   // callback through PinchZoom.
-  const [active, setActive] = useState<"tee" | "green" | "hole" | "gps">(
-    "hole",
-  );
+  const [active, setActive] = useState<"tee" | "green" | "hole">("hole");
 
   const onTap = (
-    label: "tee" | "green" | "gps",
+    label: "tee" | "green",
     target: { fx: number; fy: number } | null,
   ) => {
     if (!target || !pinchRef.current) return;
@@ -1249,9 +1257,9 @@ function PresetChipsPortal({
     setActive("hole");
   };
 
-  // Fixed width on every chip so the row reads as a balanced 4-up
-  // strip regardless of label length (Tee=3 / Green=5 / Hole=4 /
-  // GPS=3 chars). w-16 + text-center keeps the visual rhythm steady.
+  // Fixed width on every chip so the row reads as a balanced strip
+  // regardless of label length (Tee=3 / Green=5 / Hole=4 / 3D=2
+  // chars). w-16 + text-center keeps the visual rhythm steady.
   const chipCls = (on: boolean, disabled: boolean) =>
     "w-16 py-1.5 text-[11px] font-mono font-medium tracking-[0.04em] uppercase text-center " +
     "rounded-full backdrop-blur-sm transition-colors " +
@@ -1304,15 +1312,18 @@ function PresetChipsPortal({
       >
         Hole
       </button>
-      <button
-        type="button"
-        onClick={() => onTap("gps", gps)}
-        disabled={!gps}
-        className={chipCls(active === "gps", !gps)}
-        aria-pressed={active === "gps"}
-      >
-        GPS
-      </button>
+      {/* 3D chip is a mode switch, not a zoom target -- no active
+          state (the parent unmounts the 2D map when 3D enters, so
+          this chip is unreachable in 3D mode). */}
+      {onToggle3D && (
+        <button
+          type="button"
+          onClick={onToggle3D}
+          className={chipCls(false, false)}
+        >
+          3D
+        </button>
+      )}
     </div>,
     document.body,
   );
@@ -1339,6 +1350,7 @@ function GLBranch({
   onAim,
   chipsBottomOffsetPx,
   hidePresets,
+  onToggle3D,
 }: {
   player: { lat: number; lng: number } | null;
   tee: { lat: number; lng: number } | null;
@@ -1352,6 +1364,7 @@ function GLBranch({
   onAim?: (latLng: { lat: number; lng: number } | null) => void;
   chipsBottomOffsetPx?: number;
   hidePresets?: boolean;
+  onToggle3D?: () => void;
 }) {
   const glMapRef = useRef<MapboxMap | null>(null);
   return (
@@ -1374,7 +1387,7 @@ function GLBranch({
           mapRef={glMapRef}
           tee={tee}
           green={greenCenter}
-          gps={player}
+          onToggle3D={onToggle3D}
           bottomOffsetPx={chipsBottomOffsetPx}
         />
       )}
@@ -1389,28 +1402,25 @@ function PresetChipsPortalGL({
   mapRef,
   tee,
   green,
-  gps,
+  onToggle3D,
   bottomOffsetPx = 120,
 }: {
   mapRef: React.RefObject<MapboxMap | null>;
   tee: { lat: number; lng: number } | null;
   green: { lat: number; lng: number } | null;
-  // GPS = player marker position (on-course live GPS in OnCourseMode,
-  // anchored at tee in study mode). Null hides the chip when no
-  // marker exists.
-  gps: { lat: number; lng: number } | null;
+  // Optional 3D mode-switch chip. See PresetChipsPortal for the
+  // doc on this -- same contract.
+  onToggle3D?: () => void;
   bottomOffsetPx?: number;
 }) {
   // Portals can't render server-side; defer until after mount.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  const [active, setActive] = useState<"tee" | "green" | "hole" | "gps">(
-    "hole",
-  );
+  const [active, setActive] = useState<"tee" | "green" | "hole">("hole");
 
   const onTap = (
-    label: "tee" | "green" | "gps",
+    label: "tee" | "green",
     target: { lat: number; lng: number } | null,
   ) => {
     const map = mapRef.current;
@@ -1477,8 +1487,8 @@ function PresetChipsPortalGL({
     setActive("hole");
   };
 
-  // Fixed-width chips so the 4-up strip stays balanced regardless of
-  // label length (Tee=3 / Green=5 / Hole=4 / GPS=3 chars).
+  // Fixed-width chips so the row stays balanced regardless of label
+  // length (Tee=3 / Green=5 / Hole=4 / 3D=2 chars).
   const chipCls = (on: boolean, disabled: boolean) =>
     "w-16 py-1.5 text-[11px] font-mono font-medium tracking-[0.04em] uppercase text-center " +
     "rounded-full backdrop-blur-sm transition-colors " +
@@ -1522,15 +1532,18 @@ function PresetChipsPortalGL({
       >
         Hole
       </button>
-      <button
-        type="button"
-        onClick={() => onTap("gps", gps)}
-        disabled={!gps}
-        className={chipCls(active === "gps", !gps)}
-        aria-pressed={active === "gps"}
-      >
-        GPS
-      </button>
+      {/* 3D chip is a mode switch, not a zoom target -- no active
+          state (the parent unmounts the 2D map when 3D enters, so
+          this chip is unreachable in 3D mode). */}
+      {onToggle3D && (
+        <button
+          type="button"
+          onClick={onToggle3D}
+          className={chipCls(false, false)}
+        >
+          3D
+        </button>
+      )}
     </div>,
     document.body,
   );
