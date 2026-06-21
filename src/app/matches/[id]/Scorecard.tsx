@@ -147,7 +147,7 @@ export default function Scorecard({
       <table className="w-full text-sm border-separate border-spacing-0">
         <thead>
           <tr className="text-mute">
-            <th className="text-left font-normal text-xs uppercase tracking-wider px-2 py-2 sticky left-0 bg-panel z-30 min-w-[8rem]">
+            <th className="text-left font-normal text-xs uppercase tracking-wider px-2 py-2 sticky left-0 bg-panel z-30 min-w-[8rem] shadow-[-1rem_0_0_rgb(var(--color-panel))]">
               Hole
             </th>
             {holeNumbers.map((h, idx) => (
@@ -176,7 +176,7 @@ export default function Scorecard({
             </th>
           </tr>
           <tr className="text-mute/70">
-            <th className="text-left font-normal text-[10px] uppercase tracking-wider px-2 pb-2 sticky left-0 bg-panel z-30">
+            <th className="text-left font-normal text-[10px] uppercase tracking-wider px-2 pb-2 sticky left-0 bg-panel z-30 shadow-[-1rem_0_0_rgb(var(--color-panel))]">
               Par
             </th>
             {pars.map((p, i) => (
@@ -200,7 +200,7 @@ export default function Scorecard({
             const net = total - p.handicap;
             return (
               <tr key={p.id} className="border-t border-border">
-                <td className="px-2 py-1.5 sticky left-0 bg-panel z-30">
+                <td className="px-2 py-1.5 sticky left-0 bg-panel z-30 shadow-[-1rem_0_0_rgb(var(--color-panel))]">
                   <div className="flex items-center gap-2">
                     <span
                       className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
