@@ -37,7 +37,8 @@ async function main() {
   console.log("2. fetch course 1688 (Alondra Park)…");
   try {
     const c = await gb.getCourse(1688);
-    console.log(`   ✓ ${c.name} -- ${c.city}, ${c.state}`);
+    const where = [c.address?.city, c.address?.state].filter(Boolean).join(", ");
+    console.log(`   ✓ ${c.name}${where ? " -- " + where : ""}`);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error(`   ✗ ${msg}`);
