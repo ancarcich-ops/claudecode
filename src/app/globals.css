@@ -27,9 +27,11 @@
   --color-faint: 146 134 112;
   /* Two-pen scoring: accent = pine green (under-par, gain, leader);
      danger = oxblood red (over-par, loss, debt). Both inks carry
-     meaning -- don't collapse to a single accent. */
-  --color-accent: 47 107 79;
-  --color-accentDim: 34 84 60;
+     meaning -- don't collapse to a single accent. Pine is the
+     "deeper" 6:1-on-bone value from the locked Caddie spec; the
+     prior 47/107/79 was a notch lighter and didn't hit AA-large. */
+  --color-accent: 40 94 69;
+  --color-accentDim: 28 78 56;
   --color-danger: 154 43 38;
   --color-gold: 169 118 42;
   --skeleton-base: 0 0 0;
@@ -129,7 +131,11 @@ body {
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors;
   }
-  .btn-primary { @apply bg-accent text-black hover:bg-accentDim; }
+  /* text-ink-on-accent (not text-black) so each theme gets the
+     contrast-correct label color: cream on Caddie's pine, dark on
+     Fairway emerald / Blueprint cyan / Back Nine bentgrass. The
+     old text-black failed AA on the Caddie default (~2.4:1). */
+  .btn-primary { @apply bg-accent text-ink-on-accent hover:bg-accentDim; }
   .btn-ghost { @apply bg-panel2 text-ink border border-border hover:bg-panel; }
   .btn-danger { @apply bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20; }
 
@@ -244,10 +250,12 @@ body {
 
 /* Bottom-aligned ink colour used on top of the saturated accent fill
    (Enter Score CTA, AIM pill, score sheet Save button). Per-theme so
-   each theme picks the high-contrast counterpart to its accent: bone
-   paper on Caddie's pine accent, dark ink on Fairway emerald /
-   Blueprint cyan / Back Nine bentgrass. */
-:root { --ink-on-accent: 237 231 219; }
+   each theme picks the high-contrast counterpart to its accent. The
+   Caddie default specifically MUST use cream (#F4F0E6, ~7:1 on
+   the pine accent) -- dark ink on pine is only ~2.4:1 and fails AA.
+   Fairway / Blueprint / Back Nine use a dark tone on their bright
+   accents instead. */
+:root { --ink-on-accent: 244 240 230; }
 [data-theme="fairway"] { --ink-on-accent: 6 33 24; }
 [data-theme="blueprint"] { --ink-on-accent: 8 35 61; }
 [data-theme="backnine"] { --ink-on-accent: 12 32 22; }
