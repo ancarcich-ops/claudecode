@@ -35459,900 +35459,2307 @@
     "presetId": "dayton-valley-dayton",
     "gbId": 5180,
     "gbName": "Dayton Valley Country Club",
-    "gbCity": "Dayton",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      5,
+      3,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "eagle-valley-east-course-dayton",
     "gbId": 5178,
     "gbName": "Eagle Valley Golf Club (East course)",
-    "gbCity": "Dayton",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "rubyview-elko",
     "gbId": 5182,
     "gbName": "Rubyview Golf Course",
-    "gbCity": "Elko",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "spring-creek-elko",
     "gbId": 5265,
     "gbName": "Spring Creek Golf Course",
-    "gbCity": "Elko",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "white-pine-ely",
     "gbId": 5181,
     "gbName": "White Pine Golf Course",
-    "gbCity": "Ely",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      5,
+      3,
+      4,
+      5,
+      3,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "matched",
+    "kind": "skipped",
     "presetId": "burning-sands-empire",
-    "gbId": 5183,
-    "gbName": "Burning Sands Golf Course",
-    "gbCity": "Empire",
-    "pars": null,
-    "dbImported": false
+    "reason": "Golfbert returned 0 holes"
   },
   {
     "kind": "matched",
     "presetId": "fallon-fallon",
     "gbId": 5184,
     "gbName": "Fallon Golf Course",
-    "gbCity": "Fallon",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "matched",
+    "kind": "skipped",
     "presetId": "desert-lakes-2",
-    "gbId": 5185,
-    "gbName": "Desert Lakes Golf Course",
-    "gbCity": "Fernley",
-    "pars": null,
-    "dbImported": false
+    "reason": "Golfbert returned 0 holes"
   },
   {
     "kind": "matched",
     "presetId": "carson-valley-gardnerville",
     "gbId": 5186,
     "gbName": "Carson Valley Golf Course",
-    "gbCity": "Gardnerville",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      3,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      5,
+      4,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      3
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "glenbrook-glenbrook",
     "gbId": 5189,
     "gbName": "Glenbrook Golf Course",
-    "gbCity": "Glenbrook",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      3,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "matched",
+    "kind": "skipped",
     "presetId": "walker-lake-hawthorne",
-    "gbId": 5190,
-    "gbName": "Walker Lake Country Club",
-    "gbCity": "Hawthorne",
-    "pars": null,
-    "dbImported": false
+    "reason": "Golfbert returned 0 holes"
   },
   {
     "kind": "matched",
     "presetId": "anthem-henderson",
     "gbId": 5196,
     "gbName": "Anthem Country Club",
-    "gbCity": "Henderson",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      5,
+      3,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "black-mountain-golf-and-founders-9-course-henderson",
     "gbId": 5194,
     "gbName": "Black Mountain Golf & Country Club (Founders-9 course)",
-    "gbCity": "Henderson",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      3,
+      5,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "desert-willow-henderson",
     "gbId": 5193,
     "gbName": "Desert Willow Golf Course",
-    "gbCity": "Henderson",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      3,
+      3,
+      3,
+      4,
+      3,
+      3,
+      4,
+      4,
+      3,
+      3,
+      3,
+      3,
+      4,
+      3,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "matched",
+    "kind": "skipped",
     "presetId": "falls-the-henderson",
-    "gbId": 5199,
-    "gbName": "Falls Golf Club, The",
-    "gbCity": "Henderson",
-    "pars": null,
-    "dbImported": false
+    "reason": "Golfbert returned 0 holes"
   },
   {
     "kind": "matched",
     "presetId": "legacy-the-henderson",
     "gbId": 5232,
     "gbName": "Legacy Golf Club, The",
-    "gbCity": "Henderson",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "revere-concord-course-henderson",
     "gbId": 5198,
     "gbName": "Revere Golf Club (Concord course)",
-    "gbCity": "Henderson",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "southshore-henderson",
     "gbId": 5201,
     "gbName": "SouthShore Golf Club",
-    "gbCity": "Henderson",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      5,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      3,
+      5,
+      4,
+      5,
+      3,
+      4,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "tuscany-henderson",
     "gbId": 5197,
     "gbName": "Tuscany Golf Club",
-    "gbCity": "Henderson",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      3,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      3,
+      4,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "jackpot-jackpot",
     "gbId": 5204,
     "gbName": "Jackpot Golf Club",
-    "gbCity": "Jackpot",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      5,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "matched",
+    "kind": "skipped",
     "presetId": "primm-valley-jean",
-    "gbId": 5249,
-    "gbName": "Primm Valley Golf Club",
-    "gbCity": "Jean",
-    "pars": null,
-    "dbImported": false
+    "reason": "Golfbert returned 0 holes"
   },
   {
     "kind": "matched",
     "presetId": "arroyo-g-c-at-red-rock-las",
     "gbId": 5219,
     "gbName": "Arroyo G.C. at Red Rock Country Club",
-    "gbCity": "Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "badlands-g-c-diablo-9-course-las",
     "gbId": 17473,
     "gbName": "Badlands G.C. (Diablo-9 course)",
-    "gbCity": "Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "badlands-g-c-outlaw-9-course-las",
     "gbId": 17474,
     "gbName": "Badlands G.C. (Outlaw-9 course)",
-    "gbCity": "Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      4,
+      4,
+      4,
+      5,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "badlands-desperado-9-course-las",
     "gbId": 5217,
     "gbName": "Badlands Golf Club (Desperado-9 course)",
-    "gbCity": "Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      4,
+      5,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "canyon-gate-las",
     "gbId": 5218,
     "gbName": "Canyon Gate Country Club",
-    "gbCity": "Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      5,
+      4,
+      4,
+      3,
+      4,
+      3,
+      5,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "desert-pines-las",
     "gbId": 5223,
     "gbName": "Desert Pines Golf Club",
-    "gbCity": "Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "desert-rose-las",
     "gbId": 5234,
     "gbName": "Desert Rose Golf Course",
-    "gbCity": "Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      3,
+      5,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      5,
+      3,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "highland-falls-at-sun-city-las",
     "gbId": 5211,
     "gbName": "Highland Falls Golf Course at Sun City",
-    "gbCity": "Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      5,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "las-vegas-2",
     "gbId": 5220,
     "gbName": "Las Vegas Country Club",
-    "gbCity": "Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      5,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "las-vegas-golf-center-las",
     "gbId": 5209,
     "gbName": "Las Vegas Golf Center",
-    "gbCity": "Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "las-vegas-3",
     "gbId": 5213,
     "gbName": "Las Vegas Golf Club",
-    "gbCity": "Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      5,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "las-vegas-national-las",
     "gbId": 5227,
     "gbName": "Las Vegas National Golf Course",
-    "gbCity": "Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      5,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "los-prados-las",
     "gbId": 5205,
     "gbName": "Los Prados Golf Course",
-    "gbCity": "Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      5,
+      5,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      5,
+      3,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "matched",
+    "kind": "skipped",
     "presetId": "mount-charleston-alpine-resort-las",
-    "gbId": 5241,
-    "gbName": "Mount Charleston Alpine Resort Golf Club",
-    "gbCity": "Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "reason": "Golfbert returned 0 holes"
   },
   {
     "kind": "matched",
     "presetId": "painted-desert-las",
     "gbId": 5207,
     "gbName": "Painted Desert Golf Club",
-    "gbCity": "Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      5,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      3,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "palm-valley-sun-city-summerlin-las",
     "gbId": 5208,
     "gbName": "Palm Valley Golf Club - Sun City Summerlin",
-    "gbCity": "Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "rhodes-ranch-2",
     "gbId": 5229,
     "gbName": "Rhodes Ranch Country Club",
-    "gbCity": "Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      5,
+      4,
+      3,
+      5,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "rhodes-ranch-3",
     "gbId": 5230,
     "gbName": "Rhodes Ranch Golf Club",
-    "gbCity": "Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      5,
+      4,
+      3,
+      5,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "royal-links-las",
     "gbId": 5210,
     "gbName": "Royal Links Golf Club",
-    "gbCity": "Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      3,
+      5,
+      5,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "siena-las",
     "gbId": 5225,
     "gbName": "Siena Golf Club",
-    "gbCity": "Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      5,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      5,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "silverstone-desert-9-course-las",
     "gbId": 5206,
     "gbName": "SilverStone Golf Club (Desert-9 course)",
-    "gbCity": "Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "spanish-trail-c-c-sunrise-9-course-las",
     "gbId": 5226,
     "gbName": "Spanish Trail C.C. (Sunrise-9 course)",
-    "gbCity": "Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "stallion-mountain-las",
     "gbId": 5231,
     "gbName": "Stallion Mountain Country Club",
-    "gbCity": "Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      3,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "tpc-at-the-canyons-las",
     "gbId": 5215,
     "gbName": "TPC at The Canyons",
-    "gbCity": "Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      4,
+      5,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "matched",
+    "kind": "skipped",
     "presetId": "emerald-river-laughlin",
-    "gbId": 5235,
-    "gbName": "Emerald River Golf Course",
-    "gbCity": "Laughlin",
-    "pars": null,
-    "dbImported": false
+    "reason": "Golfbert returned 0 holes"
   },
   {
     "kind": "matched",
     "presetId": "mojave-resort-laughlin",
     "gbId": 5236,
     "gbName": "Mojave Resort Golf Club",
-    "gbCity": "Laughlin",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      5,
+      4,
+      4,
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      5,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "casablanca-and-resort-casino-mesquite",
     "gbId": 5237,
     "gbName": "Casablanca Golf Club and Resort/Casino",
-    "gbCity": "Mesquite",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "oasis-palmer-course-mesquite",
     "gbId": 5239,
     "gbName": "Oasis Golf Club (Palmer course)",
-    "gbCity": "Mesquite",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      3,
+      5,
+      3,
+      4,
+      4,
+      5,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "palms-mesquite",
     "gbId": 5238,
     "gbName": "Palms Golf Course",
-    "gbCity": "Mesquite",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      5,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      4,
+      5,
+      3,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "wolf-creek-mesquite",
     "gbId": 5240,
     "gbName": "Wolf Creek Golf Course",
-    "gbCity": "Mesquite",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "sunrise-vista-nellis",
     "gbId": 5242,
     "gbName": "Sunrise Vista Golf Course",
-    "gbCity": "Nellis Afb",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "aliante-north",
     "gbId": 17471,
     "gbName": "Aliante Golf Club",
-    "gbCity": "North Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      5,
+      3,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      5,
+      4,
+      3,
+      5,
+      3,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "craig-ranch-north",
     "gbId": 5244,
     "gbName": "Craig Ranch Golf Course",
-    "gbCity": "North Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "north-las-vegas-north",
     "gbId": 5243,
     "gbName": "North Las Vegas Golf Course",
-    "gbCity": "North Las Vegas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      3,
+      4,
+      3,
+      3,
+      3,
+      4,
+      3,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "mountain-falls-pahrump",
     "gbId": 5248,
     "gbName": "Mountain Falls Golf Club",
-    "gbCity": "Pahrump",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "matched",
+    "kind": "skipped",
     "presetId": "willow-creek-pahrump",
-    "gbId": 5246,
-    "gbName": "Willow Creek Golf Course",
-    "gbCity": "Pahrump",
-    "pars": null,
-    "dbImported": false
+    "reason": "Golfbert returned 0 holes"
   },
   {
-    "kind": "matched",
+    "kind": "skipped",
     "presetId": "brookside-municipal-reno",
-    "gbId": 5251,
-    "gbName": "Brookside Municipal Golf Course",
-    "gbCity": "Reno",
-    "pars": null,
-    "dbImported": false
+    "reason": "Golfbert returned 0 holes"
   },
   {
     "kind": "matched",
     "presetId": "lake-ridge-reno",
     "gbId": 5252,
     "gbName": "Lake Ridge Golf Course",
-    "gbCity": "Reno",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      5
+    ],
+    "dbImported": true
   },
   {
-    "kind": "matched",
+    "kind": "skipped",
     "presetId": "northgate-reno",
-    "gbId": 5253,
-    "gbName": "Northgate Golf Club",
-    "gbCity": "Reno",
-    "pars": null,
-    "dbImported": false
+    "reason": "Golfbert returned 0 holes"
   },
   {
     "kind": "matched",
     "presetId": "rosewood-lakes-reno",
     "gbId": 5254,
     "gbName": "Rosewood Lakes Golf Course",
-    "gbCity": "Reno",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      5,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "sierra-sage-reno",
     "gbId": 5257,
     "gbName": "Sierra Sage Golf Course",
-    "gbCity": "Reno",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "somersett-reno",
     "gbId": 5256,
     "gbName": "Somersett Country Club",
-    "gbCity": "Reno",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      5,
+      4,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "wolf-run-at-fieldcreek-ranch-reno",
     "gbId": 5258,
     "gbName": "Wolf Run Golf Club at Fieldcreek Ranch",
-    "gbCity": "Reno",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "round-mountain-round",
     "gbId": 5261,
     "gbName": "Round Mountain Golf Club",
-    "gbCity": "Round Mountain",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      4,
+      5,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "dand-039-andrea-golf-and-sparks",
     "gbId": 5262,
     "gbName": "D&#039;Andrea Golf & Country Club",
-    "gbCity": "Sparks",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      3,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      5,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "resort-at-red-hawk-hills-course-sparks",
     "gbId": 5264,
     "gbName": "Resort at Red Hawk Golf Club (Hills course) ",
-    "gbCity": "Sparks",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      5,
+      4,
+      4,
+      4,
+      3,
+      4,
+      3,
+      5,
+      4,
+      5,
+      3,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "wildcreek-sparks",
     "gbId": 5263,
     "gbName": "Wildcreek Golf Course",
-    "gbCity": "Sparks",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      5,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "thunder-canyon-washoe",
     "gbId": 5267,
     "gbName": "Thunder Canyon Country Club",
-    "gbCity": "Washoe Valley",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      5,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      3,
+      5,
+      5,
+      4,
+      5,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "winnemucca-municipal-winnemucca",
     "gbId": 5269,
     "gbName": "Winnemucca Municipal Golf Course",
-    "gbCity": "Winnemucca",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      5,
+      5,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "matched",
+    "kind": "skipped",
     "presetId": "hunewill-s-mason-valley-yerington",
-    "gbId": 5270,
-    "gbName": "Hunewill's Mason Valley Country Club",
-    "gbCity": "Yerington",
-    "pars": null,
-    "dbImported": false
+    "reason": "Golfbert returned 0 holes"
   },
   {
     "kind": "matched",
     "presetId": "golf-club-of-oregon-the-albany",
     "gbId": 4982,
     "gbName": "Golf Club of Oregon, The",
-    "gbCity": "Albany",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      4,
+      4,
+      5,
+      4,
+      4,
+      4,
+      3,
+      3,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "spring-hill-albany",
     "gbId": 4981,
     "gbName": "Spring Hill Country Club",
-    "gbCity": "Albany",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      3,
+      5,
+      3,
+      5,
+      4,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "china-creek-arlington",
     "gbId": 4984,
     "gbName": "China Creek Golf Course",
-    "gbCity": "Arlington",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      3,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "oak-knoll-ashland",
     "gbId": 4985,
     "gbName": "Oak Knoll Golf Course",
-    "gbCity": "Ashland",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      3,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "quaill-ridge-baker",
     "gbId": 4987,
     "gbName": "Quaill Ridge Golf Club",
-    "gbCity": "Baker City",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      3,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "bandon-crossings-bandon",
     "gbId": 4991,
     "gbName": "Bandon Crossings Golf Course",
-    "gbCity": "Bandon",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      4,
+      5,
+      5,
+      3,
+      4,
+      4,
+      3,
+      4,
+      3,
+      5,
+      5,
+      3,
+      4,
+      4,
+      3,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "bandon-face-rock-bandon",
     "gbId": 4988,
     "gbName": "Bandon Face Rock Golf Course",
-    "gbCity": "Bandon",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      3,
+      3,
+      3,
+      3,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      3,
+      3,
+      4,
+      4,
+      3,
+      3,
+      3
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "quail-valley-banks",
     "gbId": 4993,
     "gbName": "Quail Valley Golf Course",
-    "gbCity": "Banks",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      5,
+      3,
+      5,
+      3,
+      4,
+      4,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "reserve-vineyards-and-the-beaverton",
     "gbId": 4983,
     "gbName": "Reserve Vineyards & Golf Club, The",
-    "gbCity": "Beaverton",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      5,
+      4,
+      3,
+      4,
+      3,
+      5,
+      4,
+      5,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      3,
+      4,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "awbrey-glen-bend",
     "gbId": 4995,
     "gbName": "Awbrey Glen Golf Club",
-    "gbCity": "Bend",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      3,
+      5,
+      4,
+      3,
+      5,
+      3,
+      4,
+      4,
+      3,
+      4,
+      5
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "bend-golf-and-bend",
     "gbId": 4999,
     "gbName": "Bend Golf & Country Club",
-    "gbCity": "Bend",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      3,
+      4,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      5,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "broken-top-club-bend",
     "gbId": 4997,
     "gbName": "Broken Top Club",
-    "gbCity": "Bend",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      4,
+      5,
+      3,
+      4,
+      4,
+      5,
+      4,
+      4,
+      4,
+      5,
+      3,
+      4,
+      5,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "lost-tracks-bend",
     "gbId": 5002,
     "gbName": "Lost Tracks Golf Club",
-    "gbCity": "Bend",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      5,
+      4,
+      4,
+      4,
+      3,
+      4,
+      5
+    ],
+    "dbImported": true
   },
   {
-    "kind": "matched",
+    "kind": "skipped",
     "presetId": "mountain-high-bend",
-    "gbId": 5000,
-    "gbName": "Mountain High Golf Course",
-    "gbCity": "Bend",
-    "pars": null,
-    "dbImported": false
+    "reason": "Golfbert returned 9 holes"
   },
   {
-    "kind": "matched",
+    "kind": "skipped",
     "presetId": "orion-greens-bend",
-    "gbId": 4998,
-    "gbName": "Orion Greens Golf Course",
-    "gbCity": "Bend",
-    "pars": null,
-    "dbImported": false
+    "reason": "Golfbert returned 0 holes"
   },
   {
     "kind": "matched",
     "presetId": "river-s-edge-bend",
     "gbId": 4996,
     "gbName": "River's Edge Golf Course",
-    "gbCity": "Bend",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      5,
+      4,
+      4,
+      3,
+      4,
+      3,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "widgi-creek-bend",
     "gbId": 5001,
     "gbName": "Widgi Creek Golf Club",
-    "gbCity": "Bend",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      4,
+      3,
+      4,
+      5,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "matched",
+    "kind": "skipped",
     "presetId": "greanlee-boring",
-    "gbId": 5006,
-    "gbName": "Greanlee Golf Course",
-    "gbCity": "Boring",
-    "pars": null,
-    "dbImported": false
+    "reason": "Golfbert returned 9 holes"
   },
   {
     "kind": "matched",
     "presetId": "mountain-view-2",
     "gbId": 5007,
     "gbName": "Mountain View Golf Club",
-    "gbCity": "Boring",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      4,
+      4,
+      4,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4,
+      3,
+      3,
+      4,
+      5,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "salmon-run-brookings",
     "gbId": 5008,
     "gbName": "Salmon Run Golf Course",
-    "gbCity": "Brookings",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      5,
+      3,
+      4,
+      5,
+      3,
+      4,
+      4,
+      4,
+      4,
+      5,
+      3,
+      5,
+      3,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "matched",
+    "kind": "skipped",
     "presetId": "frontier-canby",
-    "gbId": 5010,
-    "gbName": "Frontier Golf Course",
-    "gbCity": "Canby",
-    "pars": null,
-    "dbImported": false
+    "reason": "Golfbert returned 9 holes"
   },
   {
     "kind": "matched",
     "presetId": "willamette-valley-canby",
     "gbId": 5009,
     "gbName": "Willamette Valley Country Club",
-    "gbCity": "Canby",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      5,
+      3,
+      4,
+      4,
+      5,
+      4,
+      3,
+      4,
+      4,
+      5,
+      4,
+      3,
+      5,
+      3,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "matched",
+    "kind": "skipped",
     "presetId": "illinois-valley-cave",
-    "gbId": 5011,
-    "gbName": "Illinois Valley Golf Club",
-    "gbCity": "Cave Junction",
-    "pars": null,
-    "dbImported": false
+    "reason": "Golfbert returned 9 holes"
   },
   {
-    "kind": "matched",
+    "kind": "skipped",
     "presetId": "laurel-hill-central",
-    "gbId": 5012,
-    "gbName": "Laurel Hill Golf Course",
-    "gbCity": "Central Point",
-    "pars": null,
-    "dbImported": false
+    "reason": "Golfbert returned 9 holes"
   },
   {
     "kind": "matched",
     "presetId": "pleasant-valley-clackamas",
     "gbId": 5015,
     "gbName": "Pleasant Valley Golf Club",
-    "gbCity": "Clackamas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      3,
+      3,
+      3,
+      4,
+      3,
+      4,
+      4,
+      4,
+      4,
+      5,
+      3,
+      3,
+      4,
+      4,
+      4,
+      3,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "sah-hah-lee-clackamas",
     "gbId": 5014,
     "gbName": "Sah-Hah-Lee Golf Course",
-    "gbCity": "Clackamas",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "coos-coos",
     "gbId": 5016,
     "gbName": "Coos Country Club",
-    "gbCity": "Coos Bay",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      4,
+      4,
+      4,
+      3,
+      5,
+      4,
+      3,
+      5,
+      4,
+      3,
+      4,
+      5,
+      4,
+      3,
+      4,
+      3,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
     "kind": "matched",
     "presetId": "sunset-bay-coos",
     "gbId": 5017,
     "gbName": "Sunset Bay Golf Course",
-    "gbCity": "Coos Bay",
-    "pars": null,
-    "dbImported": false
+    "pars": [
+      5,
+      3,
+      4,
+      3,
+      4,
+      4,
+      4,
+      5,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "dbImported": true
   },
   {
-    "kind": "matched",
+    "kind": "failed",
     "presetId": "coquille-valley-elks-coquille",
+    "error": "GolfBert 429 on /v1/courses/5018/holes: {\"message\":\"Limit Exceeded\"}",
     "gbId": 5018,
     "gbName": "Coquille Valley Elks",
-    "gbCity": "Coquille",
-    "pars": null,
-    "dbImported": false
+    "gbCity": "Coquille"
   },
   {
     "kind": "matched",
@@ -38466,6 +39873,4308 @@
     "gbId": 6368,
     "gbName": "Mountain View Golf Course",
     "gbCity": "West Jordan",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "top-of-the-rock",
+    "gbId": 3129,
+    "gbName": "Top of the Rock Golf Course",
+    "gbCity": "Hollister",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "john-daly-s-murder-rock",
+    "gbId": 3128,
+    "gbName": "John Daly's Murder Rock Golf Club",
+    "gbCity": "Hollister",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "missouri-bluffs-the",
+    "gbId": 3256,
+    "gbName": "Missouri Bluffs Golf Club, The",
+    "gbCity": "Saint Charles",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "shoal-creek",
+    "gbId": 8496,
+    "gbName": "Shoal Creek Golf Course",
+    "gbCity": "Raymond",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "stone-canyon",
+    "gbId": 19594,
+    "gbName": "Stone Canyon Golf Club",
+    "gbCity": "Blue Springs",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "winterstone",
+    "gbId": 18943,
+    "gbName": "WinterStone Golf Course",
+    "gbCity": "Independence",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "southern-pines",
+    "gbId": 10503,
+    "gbName": "Southern Pines Golf Club",
+    "gbCity": "Southern Pines",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "duke-university",
+    "gbId": 10203,
+    "gbName": "Duke University Golf Club",
+    "gbCity": "Durham",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "hillandale",
+    "gbId": 10204,
+    "gbName": "Hillandale Golf Course",
+    "gbCity": "Durham",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "rocky-river-at-concord",
+    "gbId": 10187,
+    "gbName": "Rocky River Golf Club at Concord",
+    "gbCity": "Harrisburg",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "highland-creek",
+    "gbId": 10169,
+    "gbName": "Highland Creek Golf Club",
+    "gbCity": "Charlotte",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "asheville-municipal",
+    "gbId": 18777,
+    "gbName": "Asheville Municipal Golf Course",
+    "gbCity": "Asheville",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "country-club-of-whispering-pines-east-course",
+    "gbId": 10567,
+    "gbName": "Country Club of Whispering Pines (East course)",
+    "gbCity": "Whispering Pines",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "thistle-north",
+    "gbId": 10529,
+    "gbName": "Thistle Golf Club (North)",
+    "gbCity": "Sunset Beach",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "caledonia-golf-and-fish-club",
+    "gbId": 9982,
+    "gbName": "Caledonia Golf & Fish Club",
+    "gbCity": "Pawleys Island",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "tpc-myrtle-beach",
+    "gbId": 9943,
+    "gbName": "TPC Myrtle Beach",
+    "gbCity": "Murrells Inlet",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "true-blue",
+    "gbId": 15958,
+    "gbName": "True Blue Golf Club",
+    "gbCity": "Pawleys Island",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "tidewater",
+    "gbId": 17461,
+    "gbName": "Tidewater Golf Club",
+    "gbCity": "North Myrtle Beach",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "pawleys-plantation-golf-and",
+    "gbId": 9980,
+    "gbName": "Pawleys Plantation Golf & Country Club",
+    "gbCity": "Pawleys Island",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "heron-point-by-pete-dye",
+    "gbId": 9871,
+    "gbName": "Heron Point by Pete Dye",
+    "gbCity": "Hilton Head Island",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "may-river-at-palmetto-bluff",
+    "gbId": 9756,
+    "gbName": "May River Golf Club at Palmetto Bluff",
+    "gbCity": "Bluffton",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "old-south-golf-links",
+    "gbId": 9764,
+    "gbName": "Old South Golf Links",
+    "gbCity": "Bluffton",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "hilton-head-national",
+    "gbId": 9767,
+    "gbName": "Hilton Head National Golf Club",
+    "gbCity": "Bluffton",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "oyster-reef",
+    "gbId": 17102,
+    "gbName": "Oyster Reef Golf Club",
+    "gbCity": "Hilton Head Island",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "pine-lakes",
+    "gbId": 3921,
+    "gbName": "Pine Lakes Country Club",
+    "gbCity": "North Fort Myers",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "the-founders-club-at-pawleys-island",
+    "gbId": 18496,
+    "gbName": "The Founders Club at Pawleys Island",
+    "gbCity": "Pawleys Island",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "international-world-tour-golf-links",
+    "gbId": 9945,
+    "gbName": "International World Tour Golf Links",
+    "gbCity": "Myrtle Beach",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "river-falls-plantation",
+    "gbId": 9809,
+    "gbName": "River Falls Plantation",
+    "gbCity": "Duncan",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "pebble-creek",
+    "gbId": 4239,
+    "gbName": "Pebble Creek Golf Club",
+    "gbCity": "Tampa",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "hyde-park",
+    "gbId": 3654,
+    "gbName": "Hyde Park Golf Club",
+    "gbCity": "Jacksonville",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "disney-s-magnolia",
+    "gbId": 18911,
+    "gbName": "Disney's Magnolia Golf Course",
+    "gbCity": "Lake Buena Vista",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "disney-s-palm",
+    "gbId": 18913,
+    "gbName": "Disney's Palm Golf Course",
+    "gbCity": "Lake Buena Vista",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "disney-s-lake-buena-vista",
+    "gbId": 18912,
+    "gbName": "Disney's Lake Buena Vista Golf Course",
+    "gbCity": "Lake Buena Vista",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "disney-s-oak-trail",
+    "gbId": 20004,
+    "gbName": "Disney's Oak Trail Golf Course",
+    "gbCity": "Lake Buena Vista",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "shingle-creek",
+    "gbId": 3974,
+    "gbName": "Shingle Creek Golf Club",
+    "gbCity": "Orlando",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "falcon-s-fire",
+    "gbId": 3699,
+    "gbName": "Falcon's Fire Golf Club",
+    "gbCity": "Kissimmee",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "celebration",
+    "gbId": 3463,
+    "gbName": "Celebration Golf Club",
+    "gbCity": "Kissimmee",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "tpc-tampa-bay",
+    "gbId": 3785,
+    "gbName": "TPC Tampa Bay",
+    "gbCity": "Lutz",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "old-corkscrew",
+    "gbId": 17441,
+    "gbName": "Old Corkscrew Golf Club",
+    "gbCity": "Estero",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "raptor-bay",
+    "gbId": 3414,
+    "gbName": "Raptor Bay Golf Club",
+    "gbCity": "Bonita Springs",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "crandon-park",
+    "gbId": 3686,
+    "gbName": "Crandon Park Golf Course",
+    "gbCity": "Key Biscayne",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "okeeheelee-heron",
+    "gbId": 4305,
+    "gbName": "Okeeheelee Golf Course (Heron)",
+    "gbCity": "West Palm Beach",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "north-palm-beach",
+    "gbId": 3928,
+    "gbName": "North Palm Beach Country Club",
+    "gbCity": "North Palm Beach",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "palm-beach-national",
+    "gbId": 3738,
+    "gbName": "Palm Beach National Golf Course",
+    "gbCity": "Lake Worth",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "golf-club-of-oregon-the-2",
+    "gbId": 4982,
+    "gbName": "Golf Club of Oregon, The",
+    "gbCity": "Albany",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "spring-hill-2",
+    "gbId": 4981,
+    "gbName": "Spring Hill Country Club",
+    "gbCity": "Albany",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "china-creek-2",
+    "gbId": 4984,
+    "gbName": "China Creek Golf Course",
+    "gbCity": "Arlington",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "oak-knoll-2",
+    "gbId": 4985,
+    "gbName": "Oak Knoll Golf Course",
+    "gbCity": "Ashland",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "quaill-ridge-2",
+    "gbId": 4987,
+    "gbName": "Quaill Ridge Golf Club",
+    "gbCity": "Baker City",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "bandon-crossings-2",
+    "gbId": 4991,
+    "gbName": "Bandon Crossings Golf Course",
+    "gbCity": "Bandon",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "bandon-face-rock-2",
+    "gbId": 4988,
+    "gbName": "Bandon Face Rock Golf Course",
+    "gbCity": "Bandon",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "quail-valley-2",
+    "gbId": 4993,
+    "gbName": "Quail Valley Golf Course",
+    "gbCity": "Banks",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "reserve-vineyards-and-the-2",
+    "gbId": 4983,
+    "gbName": "Reserve Vineyards & Golf Club, The",
+    "gbCity": "Beaverton",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "awbrey-glen-2",
+    "gbId": 4995,
+    "gbName": "Awbrey Glen Golf Club",
+    "gbCity": "Bend",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "bend-golf-and-2",
+    "gbId": 4999,
+    "gbName": "Bend Golf & Country Club",
+    "gbCity": "Bend",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "broken-top-club-2",
+    "gbId": 4997,
+    "gbName": "Broken Top Club",
+    "gbCity": "Bend",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "lost-tracks-2",
+    "gbId": 5002,
+    "gbName": "Lost Tracks Golf Club",
+    "gbCity": "Bend",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "mountain-high-2",
+    "gbId": 5000,
+    "gbName": "Mountain High Golf Course",
+    "gbCity": "Bend",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "orion-greens-2",
+    "gbId": 4998,
+    "gbName": "Orion Greens Golf Course",
+    "gbCity": "Bend",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "river-s-edge-2",
+    "gbId": 4996,
+    "gbName": "River's Edge Golf Course",
+    "gbCity": "Bend",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "widgi-creek-2",
+    "gbId": 5001,
+    "gbName": "Widgi Creek Golf Club",
+    "gbCity": "Bend",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "greanlee-2",
+    "gbId": 5006,
+    "gbName": "Greanlee Golf Course",
+    "gbCity": "Boring",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "mountain-view-4",
+    "gbId": 5007,
+    "gbName": "Mountain View Golf Club",
+    "gbCity": "Boring",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "salmon-run-2",
+    "gbId": 5008,
+    "gbName": "Salmon Run Golf Course",
+    "gbCity": "Brookings",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "frontier-2",
+    "gbId": 5010,
+    "gbName": "Frontier Golf Course",
+    "gbCity": "Canby",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "willamette-valley-2",
+    "gbId": 5009,
+    "gbName": "Willamette Valley Country Club",
+    "gbCity": "Canby",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "illinois-valley-2",
+    "gbId": 5011,
+    "gbName": "Illinois Valley Golf Club",
+    "gbCity": "Cave Junction",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "laurel-hill-2",
+    "gbId": 5012,
+    "gbName": "Laurel Hill Golf Course",
+    "gbCity": "Central Point",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "pleasant-valley-2",
+    "gbId": 5015,
+    "gbName": "Pleasant Valley Golf Club",
+    "gbCity": "Clackamas",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "sah-hah-lee-2",
+    "gbId": 5014,
+    "gbName": "Sah-Hah-Lee Golf Course",
+    "gbCity": "Clackamas",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "coos-2",
+    "gbId": 5016,
+    "gbName": "Coos Country Club",
+    "gbCity": "Coos Bay",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "sunset-bay-2",
+    "gbId": 5017,
+    "gbName": "Sunset Bay Golf Course",
+    "gbCity": "Coos Bay",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "coquille-valley-elks-2",
+    "gbId": 5018,
+    "gbName": "Coquille Valley Elks",
+    "gbCity": "Coquille",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "forest-hills-2",
+    "gbId": 5019,
+    "gbName": "Forest Hills Golf Course",
+    "gbCity": "Cornelius",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "corvallis-2",
+    "gbId": 5022,
+    "gbName": "Corvallis Country Club",
+    "gbCity": "Corvallis",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "golf-city-3",
+    "gbId": 5023,
+    "gbName": "Golf City",
+    "gbCity": "Corvallis",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "marysville-2",
+    "gbId": 5021,
+    "gbName": "Marysville Golf Course",
+    "gbCity": "Corvallis",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "trysting-tree-2",
+    "gbId": 5020,
+    "gbName": "Trysting Tree Golf Club",
+    "gbCity": "Corvallis",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "middlefield-village-2",
+    "gbId": 5025,
+    "gbName": "Middlefield Village Golf Course",
+    "gbCity": "Cottage Grove",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "emerald-valley-2",
+    "gbId": 5026,
+    "gbName": "Emerald Valley Golf Club",
+    "gbCity": "Creswell",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "dallas-2",
+    "gbId": 5028,
+    "gbName": "Dallas Golf Course",
+    "gbCity": "Dallas",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "riverwood-2",
+    "gbId": 5030,
+    "gbName": "Riverwood Golf Course",
+    "gbCity": "Dundee",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "eagle-point-2",
+    "gbId": 5032,
+    "gbName": "Eagle Point Golf Course",
+    "gbCity": "Eagle Point",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "echo-hills-2",
+    "gbId": 5034,
+    "gbName": "Echo Hills Golf Course",
+    "gbCity": "Echo",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "alpine-meadows-2",
+    "gbId": 5035,
+    "gbName": "Alpine Meadows Golf Course",
+    "gbCity": "Enterprise",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "springwater-2",
+    "gbId": 5036,
+    "gbName": "Springwater Golf Course",
+    "gbCity": "Estacada",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "eugene-eagles-on-the-green-275-2",
+    "gbId": 5041,
+    "gbName": "Eugene Eagles On The Green #275",
+    "gbCity": "Eugene",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "fiddler-s-green-2",
+    "gbId": 5042,
+    "gbName": "Fiddler's Green Golf Course",
+    "gbCity": "Eugene",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "laurelwood-2",
+    "gbId": 5037,
+    "gbName": "Laurelwood Golf Course",
+    "gbCity": "Eugene",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "oakway-2",
+    "gbId": 5039,
+    "gbName": "Oakway Golf Course",
+    "gbCity": "Eugene",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "riveridge-2",
+    "gbId": 5040,
+    "gbName": "Riveridge Golf Course",
+    "gbCity": "Eugene",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "ocean-dunes-golf-links-2",
+    "gbId": 5044,
+    "gbName": "Ocean Dunes Golf Links",
+    "gbCity": "Florence",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "sandpines-golf-links-2",
+    "gbId": 5043,
+    "gbName": "Sandpines Golf Links",
+    "gbCity": "Florence",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "sunset-grove-golf-2",
+    "gbId": 5045,
+    "gbName": "Sunset Grove Golf",
+    "gbCity": "Forest Grove",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "children-s-course-the-2",
+    "gbId": 5048,
+    "gbName": "Children's Course, The",
+    "gbCity": "Gladstone",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "cedar-bend-2",
+    "gbId": 5050,
+    "gbName": "Cedar Bend Golf Club",
+    "gbCity": "Gold Beach",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "applegate-golf-2",
+    "gbId": 5055,
+    "gbName": "Applegate Golf",
+    "gbCity": "Grants Pass",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "colonial-valley-2",
+    "gbId": 5053,
+    "gbName": "Colonial Valley Golf Course",
+    "gbCity": "Grants Pass",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "dutcher-creek-2",
+    "gbId": 5052,
+    "gbName": "Dutcher Creek Golf Course",
+    "gbCity": "Grants Pass",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "grants-pass-2",
+    "gbId": 5051,
+    "gbName": "Grants Pass Golf Club",
+    "gbCity": "Grants Pass",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "hillebrand-s-paradise-ranch-resort-2",
+    "gbId": 5054,
+    "gbName": "Hillebrand's Paradise Ranch Resort",
+    "gbCity": "Grants Pass",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "red-mountain-2",
+    "gbId": 5056,
+    "gbName": "Red Mountain Golf Course",
+    "gbCity": "Grants Pass",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "gresham-2",
+    "gbId": 5057,
+    "gbName": "Gresham Golf Course",
+    "gbCity": "Gresham",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "persimmon-2",
+    "gbId": 5058,
+    "gbName": "Persimmon Country Club",
+    "gbCity": "Gresham",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "willow-creek-4",
+    "gbId": 5059,
+    "gbName": "Willow Creek Country Club",
+    "gbCity": "Heppner",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "killarney-west-2",
+    "gbId": 5063,
+    "gbName": "Killarney West Golf Course",
+    "gbCity": "Hillsboro",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "meriwether-national-2",
+    "gbId": 5061,
+    "gbName": "Meriwether National Golf Club",
+    "gbCity": "Hillsboro",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "orenco-woods-2",
+    "gbId": 5060,
+    "gbName": "Orenco Woods Golf Club",
+    "gbCity": "Hillsboro",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "valley-2",
+    "gbId": 5064,
+    "gbName": "Valley Golf Club",
+    "gbCity": "Hines",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "hood-river-golf-and-2",
+    "gbId": 5066,
+    "gbName": "Hood River Golf & Country Club",
+    "gbCity": "Hood River",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "john-day-2",
+    "gbId": 5068,
+    "gbName": "John Day Golf Club",
+    "gbCity": "John Day",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "shadow-hills-2",
+    "gbId": 5069,
+    "gbName": "Shadow Hills Country Club",
+    "gbCity": "Junction City",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "mcnary-2",
+    "gbId": 5070,
+    "gbName": "McNary Golf Club",
+    "gbCity": "Keizer",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "harbor-links-public-golf-2",
+    "gbId": 5072,
+    "gbName": "Harbor Links Public Golf",
+    "gbCity": "Klamath Falls",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "reames-golf-and-2",
+    "gbId": 5073,
+    "gbName": "Reames Golf & Country Club",
+    "gbCity": "Klamath Falls",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "round-lake-public-2",
+    "gbId": 5076,
+    "gbName": "Round Lake Public Golf Course",
+    "gbCity": "Klamath Falls",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "running-y-ranch-resort-the-2",
+    "gbId": 5075,
+    "gbName": "Running Y Ranch Resort, The",
+    "gbCity": "Klamath Falls",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "shield-crest-2",
+    "gbId": 5074,
+    "gbName": "Shield Crest Golf Course",
+    "gbCity": "Klamath Falls",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "la-grande-2",
+    "gbId": 5077,
+    "gbName": "La Grande Country Club",
+    "gbCity": "La Grande",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "quail-run-2",
+    "gbId": 5078,
+    "gbName": "Quail Run Golf Course",
+    "gbCity": "La Pine",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "lake-oswego-2",
+    "gbId": 5080,
+    "gbName": "Lake Oswego Golf Course",
+    "gbCity": "Lake Oswego",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "oswego-lake-2",
+    "gbId": 5079,
+    "gbName": "Oswego Lake Country Club",
+    "gbCity": "Lake Oswego",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "lakeridge-2",
+    "gbId": 5081,
+    "gbName": "Lakeridge Golf Course",
+    "gbCity": "Lakeview",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "mallard-creek-2",
+    "gbId": 5083,
+    "gbName": "Mallard Creek Golf Course",
+    "gbCity": "Lebanon",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "pineway-2",
+    "gbId": 5082,
+    "gbName": "Pineway Golf Club",
+    "gbCity": "Lebanon",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "chinook-winds-golf-resort-2",
+    "gbId": 5084,
+    "gbName": "Chinook Winds Golf Resort",
+    "gbCity": "Lincoln City",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "elkhorn-valley-2",
+    "gbId": 5085,
+    "gbName": "Elkhorn Valley Golf Course",
+    "gbCity": "Lyons",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "gearhart-golf-links-2",
+    "gbId": 5046,
+    "gbName": "Gearhart Golf Links",
+    "gbCity": "Seaside",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "highlands-at-gearhart-the-2",
+    "gbId": 5047,
+    "gbName": "Highlands at Gearhart, The",
+    "gbCity": "Seaside",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "crooked-river-ranch-golf-2",
+    "gbId": 5027,
+    "gbName": "Crooked River Ranch Golf",
+    "gbCity": "Terrebonne",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "bandon-dunes-resort-sheep-ranch-course",
+    "gbId": 17175,
+    "gbName": "Bandon Dunes Resort (Sheep Ranch Course)",
+    "gbCity": "Bandon",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "forest-dunes",
+    "gbId": 965,
+    "gbName": "Forest Dunes Golf Club",
+    "gbCity": "Roscommon",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "bay-harbor",
+    "gbId": 381,
+    "gbName": "Bay Harbor Golf Club",
+    "gbCity": "Petoskey",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "treetops-resort-fazio-premiere",
+    "gbId": 596,
+    "gbName": "Treetops Resort (Fazio Premiere)",
+    "gbCity": "Gaylord",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "belvedere",
+    "gbId": 478,
+    "gbName": "Belvedere Golf Club",
+    "gbCity": "Charlevoix",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "tullymore",
+    "gbId": 17204,
+    "gbName": "Tullymore Golf Club",
+    "gbCity": "Stanwood",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "shepherd-s-hollow",
+    "gbId": 492,
+    "gbName": "Shepherd's Hollow Golf Club",
+    "gbCity": "Clarkston",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "northville-hills",
+    "gbId": 869,
+    "gbName": "Northville Hills Golf Club",
+    "gbCity": "Northville",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "eldorado",
+    "gbId": 17051,
+    "gbName": "Eldorado Golf Course",
+    "gbCity": "Cadillac",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "the-coeur-d-alene-resort",
+    "gbId": 19640,
+    "gbName": "the coeur d'alene resort golf course",
+    "gbCity": "Coeur d’Alene",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "circling-raven-at-coeur-dand-039-alene-casino",
+    "gbId": 5363,
+    "gbName": "Circling Raven Golf Club At Coeur D&#039;Alene Casino",
+    "gbCity": "Worley",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "black-mesa",
+    "gbId": 4378,
+    "gbName": "Black Mesa Golf Club",
+    "gbCity": "Espanola",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "twin-warriors",
+    "gbId": 4412,
+    "gbName": "Twin Warriors Golf Club",
+    "gbCity": "Bernalillo",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "sweetens-cove",
+    "gbId": 18901,
+    "gbName": "Sweetens Cove Golf Club",
+    "gbCity": "South Pittsburg",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "gaylord-springs-golf-links",
+    "gbId": 8997,
+    "gbName": "Gaylord Springs Golf Links",
+    "gbCity": "Nashville",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "two-rivers",
+    "gbId": 9007,
+    "gbName": "Two Rivers Golf Course",
+    "gbCity": "Nashville",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "harpeth-hills",
+    "gbId": 8998,
+    "gbName": "Harpeth Hills Golf Course",
+    "gbCity": "Nashville",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "ted-rhodes",
+    "gbId": 9006,
+    "gbName": "Ted Rhodes Golf Course",
+    "gbCity": "Nashville",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "franklin-bridge",
+    "gbId": 18996,
+    "gbName": "Franklin Bridge Golf Club",
+    "gbCity": "Franklin",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "bent-creek",
+    "gbId": 3662,
+    "gbName": "Bent Creek Golf Course",
+    "gbCity": "Jacksonville",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "bear-trace-at-harrison-bay-state-park",
+    "gbId": 8905,
+    "gbName": "Bear Trace at Harrison Bay State Park",
+    "gbCity": "Harrison",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "apache-creek-2",
+    "gbId": 4474,
+    "gbName": "Apache Creek Golf Club",
+    "gbCity": "Apache Junction",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "mountain-brook-2",
+    "gbId": 4533,
+    "gbName": "Mountain Brook Golf Club",
+    "gbCity": "Apache Junction",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "roadhaven-2",
+    "gbId": 4473,
+    "gbName": "Roadhaven Golf Course",
+    "gbCity": "Apache Junction",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "coldwater-2",
+    "gbId": 4476,
+    "gbName": "Coldwater Golf Club",
+    "gbCity": "Avondale",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "mesa-view-2",
+    "gbId": 4477,
+    "gbName": "Mesa View Golf Course",
+    "gbCity": "Bagdad",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "coyote-hills-at-benson-2",
+    "gbId": 4479,
+    "gbName": "Coyote Hills Golf Course at Benson Country Club",
+    "gbCity": "Benson",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "san-pedro-2",
+    "gbId": 4480,
+    "gbName": "San Pedro Golf Course",
+    "gbCity": "Benson",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "sundance-2",
+    "gbId": 4481,
+    "gbName": "Sundance Golf Club",
+    "gbCity": "Buckeye",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "chaparral-2",
+    "gbId": 4484,
+    "gbName": "Chaparral Country Club",
+    "gbCity": "Bullhead City",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "riverview-rv-resort-and-2",
+    "gbId": 4483,
+    "gbName": "Riverview RV Resort & Golf Club",
+    "gbCity": "Bullhead City",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "dave-white-municipal-2",
+    "gbId": 4490,
+    "gbName": "Dave White Municipal Golf Course",
+    "gbCity": "Casa Grande",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "francisco-grande-hotel-and-golf-resort-2",
+    "gbId": 4491,
+    "gbName": "Francisco Grande Hotel & Golf Resort",
+    "gbCity": "Casa Grande",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "francisco-grande-resort-and-2",
+    "gbId": 4492,
+    "gbName": "Francisco Grande Resort & Golf Club",
+    "gbCity": "Casa Grande",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "mission-royale-4",
+    "gbId": 4488,
+    "gbName": "Mission Royale Golf Club",
+    "gbCity": "Casa Grande",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "mission-royale-5",
+    "gbId": 4489,
+    "gbName": "Mission Royale Golf Club",
+    "gbCity": "Casa Grande",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "tierra-grande-2",
+    "gbId": 4493,
+    "gbName": "Tierra Grande Country Club",
+    "gbCity": "Casa Grande",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "rancho-manana-2",
+    "gbId": 4494,
+    "gbName": "Rancho Manana Golf Club",
+    "gbCity": "Cave Creek",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "tatum-ranch-2",
+    "gbId": 4495,
+    "gbName": "Tatum Ranch Golf Club",
+    "gbCity": "Cave Creek",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "ironwood-2",
+    "gbId": 4498,
+    "gbName": "Ironwood Country Club",
+    "gbCity": "Chandler",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "ocotillo-2",
+    "gbId": 4497,
+    "gbName": "Ocotillo Golf Course",
+    "gbCity": "Chandler",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "sheraton-san-marcos-2",
+    "gbId": 4496,
+    "gbName": "Sheraton San Marcos Country Club",
+    "gbCity": "Chandler",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "springfield-2",
+    "gbId": 4500,
+    "gbName": "Springfield Golf Course",
+    "gbCity": "Chandler",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "whirlwind-at-wild-horse-pass-devils-claw-course-2",
+    "gbId": 4501,
+    "gbName": "Whirlwind Golf Club at Wild Horse Pass (Devils Claw course)",
+    "gbCity": "Chandler",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "concho-valley-2",
+    "gbId": 4503,
+    "gbName": "Concho Valley Country Club",
+    "gbCity": "Concho",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "verde-santa-fe-2",
+    "gbId": 4504,
+    "gbName": "Verde Santa Fe Golf Course",
+    "gbCity": "Cornville",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "santa-rita-2",
+    "gbId": 4505,
+    "gbName": "Santa Rita Golf Club",
+    "gbCity": "Coronado Ntl Forest",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "prescott-golf-and-2",
+    "gbId": 4506,
+    "gbName": "Prescott Golf & Country Club",
+    "gbCity": "Dewey",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "quailwood-greens-2",
+    "gbId": 4507,
+    "gbName": "Quailwood Greens Golf Course",
+    "gbCity": "Dewey",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "douglas-2",
+    "gbId": 4508,
+    "gbName": "Douglas Golf Course",
+    "gbCity": "Douglas",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "greenlee-2",
+    "gbId": 4509,
+    "gbName": "Greenlee Country Club",
+    "gbCity": "Duncan",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "pueblo-el-mirage-rv-resort-and-2",
+    "gbId": 4510,
+    "gbName": "Pueblo El Mirage RV Resort & Country Club",
+    "gbCity": "El Mirage",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "grande-valley-2",
+    "gbId": 4511,
+    "gbName": "Grande Valley Golf Course",
+    "gbCity": "Eloy",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "aspen-valley-2",
+    "gbId": 4513,
+    "gbName": "Aspen Valley Golf Club",
+    "gbCity": "Flagstaff",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "elden-hills-2",
+    "gbId": 4515,
+    "gbName": "Elden Hills Golf Club",
+    "gbCity": "Flagstaff",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "flagstaff-ranch-2",
+    "gbId": 4514,
+    "gbName": "Flagstaff Ranch Golf Club",
+    "gbCity": "Flagstaff",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "desert-lakes-3",
+    "gbId": 4485,
+    "gbName": "Desert Lakes Golf Club",
+    "gbCity": "Fort Mohave",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "desert-canyon-2",
+    "gbId": 4519,
+    "gbName": "Desert Canyon Golf Club",
+    "gbCity": "Fountain Hills",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "eagle-mountain-3",
+    "gbId": 4520,
+    "gbName": "Eagle Mountain Golf Club",
+    "gbCity": "Fountain Hills",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "sunridge-canyon-2",
+    "gbId": 4518,
+    "gbName": "SunRidge Canyon Golf Club",
+    "gbCity": "Fountain Hills",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "greenfield-lakes-2",
+    "gbId": 4522,
+    "gbName": "Greenfield Lakes Golf Course",
+    "gbCity": "Gilbert",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "kokopelli-2",
+    "gbId": 4521,
+    "gbName": "Kokopelli Golf Course",
+    "gbCity": "Gilbert",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "western-skies-2",
+    "gbId": 4523,
+    "gbName": "Western Skies Golf Club",
+    "gbCity": "Gilbert",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "500-club-the-2",
+    "gbId": 72,
+    "gbName": "500 Club, The",
+    "gbCity": "Glendale",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "bellaire-2",
+    "gbId": 4527,
+    "gbName": "Bellaire Golf Course",
+    "gbCity": "Glendale",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "desert-mirage-2",
+    "gbId": 4526,
+    "gbName": "Desert Mirage Golf Course",
+    "gbCity": "Glendale",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "glen-lakes-municipal-2",
+    "gbId": 4525,
+    "gbName": "Glen Lakes Municipal Golf Course",
+    "gbCity": "Glendale",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "legend-at-arrowhead-the-2",
+    "gbId": 4529,
+    "gbName": "Legend at Arrowhead, The",
+    "gbCity": "Glendale",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "cobre-valle-2",
+    "gbId": 4531,
+    "gbName": "Cobre Valle Country Club",
+    "gbCity": "Globe",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "gold-canyon-golf-resort-2",
+    "gbId": 4532,
+    "gbName": "Gold Canyon Golf Resort",
+    "gbCity": "Gold Canyon",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "palm-valley-the-palms-course-2",
+    "gbId": 4535,
+    "gbName": "Palm Valley Golf Club (The Palms course)",
+    "gbCity": "Goodyear",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "tres-rios-at-estrella-mountain-formerly-estrella-mountain-2",
+    "gbId": 4534,
+    "gbName": "Tres Rios at Estrella Mountain (formerly Estrella Mountain golf course)",
+    "gbCity": "Goodyear",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "trilogy-2",
+    "gbId": 4524,
+    "gbName": "Trilogy Golf Course",
+    "gbCity": "Higley",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "hamilton-ranch-golf-resort-2",
+    "gbId": 4478,
+    "gbName": "Hamilton Ranch Golf Resort",
+    "gbCity": "Littlefield",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "ahwatukee-2",
+    "gbId": 62,
+    "gbName": "Ahwatukee Country Club",
+    "gbCity": "Phoenix",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "anthem-golf-and-persimmon-2",
+    "gbId": 4472,
+    "gbName": "Anthem Golf & Country Club (Persimmon)",
+    "gbCity": "Phoenix",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "arizona-biltmore-adobe-course-2",
+    "gbId": 50,
+    "gbName": "Arizona Biltmore Country Club (Adobe course)",
+    "gbCity": "Phoenix",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "arizona-the-2",
+    "gbId": 56,
+    "gbName": "Arizona Country Club, The",
+    "gbCity": "Phoenix",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "cave-creek-2",
+    "gbId": 67,
+    "gbName": "Cave Creek Golf Course",
+    "gbCity": "Phoenix",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "club-west-2",
+    "gbId": 64,
+    "gbName": "Club West Golf Course",
+    "gbCity": "Phoenix",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "el-caro-2",
+    "gbId": 58,
+    "gbName": "El Caro Golf Club",
+    "gbCity": "Phoenix",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "encanto-nine-2",
+    "gbId": 47,
+    "gbName": "Encanto Nine Golf Course",
+    "gbCity": "Phoenix",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "encanto-park-2",
+    "gbId": 49,
+    "gbName": "Encanto Park Golf Course",
+    "gbCity": "Phoenix",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "foothills-the-2",
+    "gbId": 65,
+    "gbName": "Foothills Golf Club, The",
+    "gbCity": "Phoenix",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "lakes-at-ahwatukee-the-2",
+    "gbId": 63,
+    "gbName": "Lakes At Ahwatukee, The",
+    "gbCity": "Phoenix",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "legacy-golf-resort-the-2",
+    "gbId": 52,
+    "gbName": "Legacy Golf Resort, The",
+    "gbCity": "Phoenix",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "maryvale-municipal-2",
+    "gbId": 57,
+    "gbName": "Maryvale Municipal Golf Course",
+    "gbCity": "Phoenix",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "moon-valley-2",
+    "gbId": 66,
+    "gbName": "Moon Valley Country Club",
+    "gbCity": "Phoenix",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "palo-verde-2",
+    "gbId": 51,
+    "gbName": "Palo Verde Golf Course",
+    "gbCity": "Phoenix",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "papago-2",
+    "gbId": 55,
+    "gbName": "Papago Golf Course",
+    "gbCity": "Phoenix",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "paradise-peak-west-2",
+    "gbId": 71,
+    "gbName": "Paradise Peak West",
+    "gbCity": "Phoenix",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "paradise-valley-park-2",
+    "gbId": 69,
+    "gbName": "Paradise Valley Park Golf Course",
+    "gbCity": "Phoenix",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "phantom-horse-2",
+    "gbId": 59,
+    "gbName": "Phantom Horse Golf Club",
+    "gbCity": "Phoenix",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "phoenix-2",
+    "gbId": 48,
+    "gbName": "Phoenix Country Club",
+    "gbCity": "Phoenix",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "pointe-on-lookout-mountain-2",
+    "gbId": 60,
+    "gbName": "Pointe Golf Club on Lookout Mountain",
+    "gbCity": "Phoenix",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "pointe-hilton-on-lookout-mtn-the-2",
+    "gbId": 61,
+    "gbName": "Pointe Hilton Golf Club on Lookout Mtn, The",
+    "gbCity": "Phoenix",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "raven-at-south-mountain-the-2",
+    "gbId": 53,
+    "gbName": "Raven Golf Club at South Mountain, The",
+    "gbCity": "Phoenix",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "villa-de-paz-2",
+    "gbId": 68,
+    "gbName": "Villa de Paz Golf Course",
+    "gbCity": "Phoenix",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "vistal-2",
+    "gbId": 54,
+    "gbName": "Vistal Golf Club",
+    "gbCity": "Phoenix",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "continental-2",
+    "gbId": 93,
+    "gbName": "Continental Golf Course",
+    "gbCity": "Scottsdale",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "country-club-at-dc-ranch-the-2",
+    "gbId": 92,
+    "gbName": "Country Club at DC Ranch, The",
+    "gbCity": "Scottsdale",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "desert-highlands-2",
+    "gbId": 98,
+    "gbName": "Desert Highlands Golf Club",
+    "gbCity": "Scottsdale",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "gainey-ranch-arroyo-2",
+    "gbId": 76,
+    "gbName": "Gainey Ranch Golf Club (Arroyo) ",
+    "gbCity": "Scottsdale",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "mccormick-ranch-pine-course-2",
+    "gbId": 77,
+    "gbName": "McCormick Ranch Golf Club (Pine course)",
+    "gbCity": "Scottsdale",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "sanctuary-at-westworld-2",
+    "gbId": 78,
+    "gbName": "Sanctuary Golf Course at Westworld",
+    "gbCity": "Scottsdale",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "scottsdale-2",
+    "gbId": 75,
+    "gbName": "Scottsdale Country Club",
+    "gbCity": "Scottsdale",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "scottsdale-silverado-2",
+    "gbId": 81,
+    "gbName": "Scottsdale Silverado Golf Club",
+    "gbCity": "Scottsdale",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "terravita-2",
+    "gbId": 102,
+    "gbName": "Terravita Golf Club",
+    "gbCity": "Scottsdale",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "tpc-of-scottsdale-2",
+    "gbId": 86,
+    "gbName": "TPC of Scottsdale",
+    "gbCity": "Scottsdale",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "aguila",
+    "gbId": 4555,
+    "gbName": "Aguila Golf Course",
+    "gbCity": "Laveen",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "ak-chin-southern-dunes",
+    "gbId": 4563,
+    "gbName": "Ak-Chin Southern Dunes Golf Club",
+    "gbCity": "Maricopa",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "cantigny-woodside-9-course",
+    "gbId": 8623,
+    "gbName": "Cantigny Golf Club (Woodside-9 course)",
+    "gbCity": "Wheaton",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "harborside-international-golf-center-starboard",
+    "gbId": 8106,
+    "gbName": "Harborside International Golf Center (Starboard)",
+    "gbCity": "Chicago",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "thunderhawk",
+    "gbId": 8025,
+    "gbName": "ThunderHawk Golf Club",
+    "gbCity": "Zion",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "bolingbrook",
+    "gbId": 8050,
+    "gbName": "Bolingbrook Golf Club",
+    "gbCity": "Bolingbrook",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "george-w-dunne-national",
+    "gbId": 8428,
+    "gbName": "George W. Dunne National Golf Course",
+    "gbCity": "Oak Forest",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "sydney-r-marovitz",
+    "gbId": 8094,
+    "gbName": "Sydney R. Marovitz Golf Course",
+    "gbCity": "Chicago",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "jackson-park",
+    "gbId": 3228,
+    "gbName": "Jackson Park Golf Course",
+    "gbCity": "Palmyra",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "columbus-park",
+    "gbId": 8096,
+    "gbName": "Columbus Park Golf Course",
+    "gbCity": "Chicago",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "marquette-park",
+    "gbId": 8098,
+    "gbName": "Marquette Park Golf Course",
+    "gbCity": "Chicago",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "gateway-national-golf-links",
+    "gbId": 8339,
+    "gbName": "Gateway National Golf Links",
+    "gbCity": "Madison",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "hominy-hill",
+    "gbId": 11812,
+    "gbName": "Hominy Hill Golf Course",
+    "gbCity": "Colts Neck",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "neshanic-valley",
+    "gbId": 18995,
+    "gbName": "Neshanic Valley Golf Course",
+    "gbCity": "Neshanic Station",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "montauk-downs-state-park",
+    "gbId": 13419,
+    "gbName": "Montauk Downs State Park",
+    "gbCity": "Montauk",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "west-sayville",
+    "gbId": 13732,
+    "gbName": "West Sayville Golf Course",
+    "gbCity": "West Sayville",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "van-cortlandt-park",
+    "gbId": 13069,
+    "gbName": "Van Cortlandt Park Golf Course",
+    "gbCity": "Bronx",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "dyker-beach",
+    "gbId": 13071,
+    "gbName": "Dyker Beach Golf Course",
+    "gbCity": "Brooklyn",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "marine-park",
+    "gbId": 13072,
+    "gbName": "Marine Park Golf Course",
+    "gbCity": "Brooklyn",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "clearview-park",
+    "gbId": 17890,
+    "gbName": "Clearview Park Golf Course",
+    "gbCity": "Queens",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "kissena-park",
+    "gbId": 13217,
+    "gbName": "Kissena Park Golf Course",
+    "gbCity": "Fresh Meadows",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "silver-lake",
+    "gbId": 13661,
+    "gbName": "Silver Lake Golf Course",
+    "gbCity": "Staten Island",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "south-shore",
+    "gbId": 14509,
+    "gbName": "South Shore Golf Course",
+    "gbCity": "Staten Island",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "saxon-woods",
+    "gbId": 13607,
+    "gbName": "Saxon Woods Golf Course",
+    "gbCity": "Scarsdale",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "mohansic",
+    "gbId": 13768,
+    "gbName": "Mohansic Golf Course",
+    "gbCity": "Yorktown Heights",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "dunwoodie",
+    "gbId": 13766,
+    "gbName": "Dunwoodie Golf Course",
+    "gbCity": "Yonkers",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "sprain-lake",
+    "gbId": 13767,
+    "gbName": "Sprain Lake Golf Course",
+    "gbCity": "Yonkers",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "maple-moor",
+    "gbId": 13743,
+    "gbName": "Maple Moor Golf Course",
+    "gbCity": "White Plains",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "hudson-hills",
+    "gbId": 13477,
+    "gbName": "Hudson Hills Golf Course",
+    "gbCity": "Ossining",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "centennial",
+    "gbId": 13094,
+    "gbName": "Centennial Golf Club",
+    "gbCity": "Carmel",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "abernathy-2",
+    "gbId": 2248,
+    "gbName": "Abernathy Country Club",
+    "gbCity": "Abernathy",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "abilene-north-course-2",
+    "gbId": 2250,
+    "gbName": "Abilene Country Club (North Course)",
+    "gbCity": "Abilene",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "fairway-oaks-2",
+    "gbId": 2252,
+    "gbName": "Fairway Oaks Country Club",
+    "gbCity": "Abilene",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "maxwell-municipal-2",
+    "gbId": 2249,
+    "gbName": "Maxwell Municipal Golf Course",
+    "gbCity": "Abilene",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "willow-creek-golf-center-2",
+    "gbId": 2251,
+    "gbName": "Willow Creek Golf Center",
+    "gbCity": "Abilene",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "alamo-2",
+    "gbId": 2254,
+    "gbName": "Alamo Country Club",
+    "gbCity": "Alamo",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "albany-2",
+    "gbId": 2255,
+    "gbName": "Albany Golf Club",
+    "gbCity": "Albany",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "alice-municipal-2",
+    "gbId": 2257,
+    "gbName": "Alice Municipal Golf Course",
+    "gbCity": "Alice",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "golf-club-at-twin-creeks-the-2",
+    "gbId": 2259,
+    "gbName": "Golf Club at Twin Creeks, The ",
+    "gbCity": "Allen",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "alpine-2",
+    "gbId": 2260,
+    "gbName": "Alpine Country Club",
+    "gbCity": "Alpine",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "amarillo-2",
+    "gbId": 2266,
+    "gbName": "Amarillo Country Club",
+    "gbCity": "Amarillo",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "comanche-trail-municipal-2",
+    "gbId": 2265,
+    "gbName": "Comanche Trail Municipal Golf Course",
+    "gbCity": "Amarillo",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "la-poloma-2",
+    "gbId": 2267,
+    "gbName": "La Poloma Golf Club",
+    "gbCity": "Amarillo",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "ross-rogers-mustang-2",
+    "gbId": 2263,
+    "gbName": "Ross Rogers Golf Course (Mustang)",
+    "gbCity": "Amarillo",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "tascosa-la-paloma-2",
+    "gbId": 2264,
+    "gbName": "Tascosa Golf Club (La Paloma)",
+    "gbCity": "Amarillo",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "chambers-county-2",
+    "gbId": 2269,
+    "gbName": "Chambers County Golf Course",
+    "gbCity": "Anahuac",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "andrews-county-2",
+    "gbId": 2270,
+    "gbName": "Andrews County Golf Course",
+    "gbCity": "Andrews",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "hurricane-creek-2",
+    "gbId": 2271,
+    "gbName": "Hurricane Creek Country Club",
+    "gbCity": "Anna",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "archer-city-2",
+    "gbId": 2272,
+    "gbName": "Archer City Country Club",
+    "gbCity": "Archer City",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "denton-2",
+    "gbId": 2273,
+    "gbName": "Denton Country Club",
+    "gbCity": "Argyle",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "arlington-family-golf-center-2",
+    "gbId": 2278,
+    "gbName": "Arlington Family Golf Center",
+    "gbCity": "Arlington",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "c-w-ditto-2",
+    "gbId": 2276,
+    "gbName": "C.W. Ditto Golf Course",
+    "gbCity": "Arlington",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "lake-arlington-golf-2",
+    "gbId": 2279,
+    "gbName": "Lake Arlington Golf",
+    "gbCity": "Arlington",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "meadowbrook-park-2",
+    "gbId": 2274,
+    "gbName": "Meadowbrook Park Golf Course",
+    "gbCity": "Arlington",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "rolling-hills-2",
+    "gbId": 2275,
+    "gbName": "Rolling Hills Country Club",
+    "gbCity": "Arlington",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "shady-valley-2",
+    "gbId": 2277,
+    "gbName": "Shady Valley Golf Club",
+    "gbCity": "Arlington",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "aspermont-city-2",
+    "gbId": 2280,
+    "gbName": "Aspermont City Golf Course",
+    "gbCity": "Aspermont",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "athens-2",
+    "gbId": 2282,
+    "gbName": "Athens Country Club",
+    "gbCity": "Athens",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "balcones-2",
+    "gbId": 2300,
+    "gbName": "Balcones Country Club",
+    "gbCity": "Austin",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "bluebonnet-hill-and-range-2",
+    "gbId": 2294,
+    "gbName": "Bluebonnet Hill Golf Club & Range",
+    "gbCity": "Austin",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "circle-c-ranch-2",
+    "gbId": 2299,
+    "gbName": "Circle C Ranch",
+    "gbCity": "Austin",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "great-hills-2",
+    "gbId": 2296,
+    "gbName": "Great Hills Golf Club",
+    "gbCity": "Austin",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "hancock-park-2",
+    "gbId": 2286,
+    "gbName": "Hancock Park Golf Course",
+    "gbCity": "Austin",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "hills-the-2",
+    "gbId": 2301,
+    "gbName": "Hills Country Club, The",
+    "gbCity": "Austin",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "jimmy-clay-roy-kizer-2",
+    "gbId": 2290,
+    "gbName": "Jimmy Clay/Roy Kizer Golf Course",
+    "gbCity": "Austin",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "morris-williams-2",
+    "gbId": 2288,
+    "gbName": "Morris Williams Golf Course",
+    "gbCity": "Austin",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "onion-creek-club-2",
+    "gbId": 2297,
+    "gbName": "Onion Creek Club",
+    "gbCity": "Austin",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "river-place-2",
+    "gbId": 2298,
+    "gbName": "River Place Country Club",
+    "gbCity": "Austin",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "riverside-2",
+    "gbId": 2287,
+    "gbName": "Riverside Golf Course",
+    "gbCity": "Austin",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "cross-timbers-2",
+    "gbId": 2303,
+    "gbName": "Cross Timbers Golf Course",
+    "gbCity": "Azle",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "shady-oaks-2",
+    "gbId": 2304,
+    "gbName": "Shady Oaks Golf Course",
+    "gbCity": "Baird",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "ballinger-2",
+    "gbId": 2305,
+    "gbName": "Ballinger Country Club",
+    "gbCity": "Ballinger",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "flying-l-guest-ranch-2",
+    "gbId": 2307,
+    "gbName": "Flying L Guest Ranch Golf Course",
+    "gbCity": "Bandera",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "lost-valley-resort-2",
+    "gbId": 2306,
+    "gbName": "Lost Valley Resort Golf Course",
+    "gbCity": "Bandera",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "colo-vista-2",
+    "gbId": 2310,
+    "gbName": "Colo Vista Country Club",
+    "gbCity": "Bastrop",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "pine-forest-2",
+    "gbId": 2309,
+    "gbName": "Pine Forest Golf Club",
+    "gbCity": "Bastrop",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "beeville-2",
+    "gbId": 2312,
+    "gbName": "Beeville Country Club",
+    "gbCity": "Beeville",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "john-c-beasley-municipal-2",
+    "gbId": 2311,
+    "gbName": "John C. Beasley Municipal Golf Course",
+    "gbCity": "Beeville",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "bellville-golf-and-recreation-club-2",
+    "gbId": 2313,
+    "gbName": "Bellville Golf & Recreation Club",
+    "gbCity": "Bellville",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "big-lake-2",
+    "gbId": 2317,
+    "gbName": "Big Lake Country Club",
+    "gbCity": "Big Lake",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "comanche-trail-2",
+    "gbId": 2319,
+    "gbName": "Comanche Trail Golf Course",
+    "gbCity": "Big Spring",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "fair-oaks-ranch-black-jack-2",
+    "gbId": 2322,
+    "gbName": "Fair Oaks Ranch - Black Jack",
+    "gbCity": "Boerne",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "tapatio-springs-resort-and-conference-center-2",
+    "gbId": 2321,
+    "gbName": "Tapatio Springs Resort & Conference Center",
+    "gbCity": "Boerne",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "bonham-golf-and-2",
+    "gbId": 2323,
+    "gbName": "Bonham Golf & Country Club",
+    "gbCity": "Bonham",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "booker-2",
+    "gbId": 2324,
+    "gbName": "Booker Country Club",
+    "gbCity": "Booker",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "borger-2",
+    "gbId": 2325,
+    "gbName": "Borger Country Club",
+    "gbCity": "Borger",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "phillips-municipal-2",
+    "gbId": 2326,
+    "gbName": "Phillips Municipal Golf Course",
+    "gbCity": "Borger",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "top-oand-039-the-lake-2",
+    "gbId": 2327,
+    "gbName": "Top O&#039; the Lake Country Club",
+    "gbCity": "Bowie",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "fort-clark-springs-2",
+    "gbId": 2328,
+    "gbName": "Fort Clark Springs Golf Club",
+    "gbCity": "Brackettville",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "brady-municipal-2",
+    "gbId": 2329,
+    "gbName": "Brady Municipal Golf Course",
+    "gbCity": "Brady",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "breckenridge-2",
+    "gbId": 2330,
+    "gbName": "Breckenridge Country Club",
+    "gbCity": "Breckenridge",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "brenham-2",
+    "gbId": 2331,
+    "gbName": "Brenham Country Club",
+    "gbCity": "Brenham",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "bridgeport-2",
+    "gbId": 2332,
+    "gbName": "Bridgeport Country Club",
+    "gbCity": "Bridgeport",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "runaway-bay-2",
+    "gbId": 2333,
+    "gbName": "Runaway Bay Golf Club",
+    "gbCity": "Bridgeport",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "singing-winds-2",
+    "gbId": 2334,
+    "gbName": "Singing Winds Golf Course",
+    "gbCity": "Bronte",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "brownsville-golf-and-recreation-center-2",
+    "gbId": 2336,
+    "gbName": "Brownsville Golf & Recreation Center",
+    "gbCity": "Brownsville",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "ft-brown-municipal-2",
+    "gbId": 2339,
+    "gbName": "Ft. Brown Municipal Golf Course",
+    "gbCity": "Brownsville",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "river-bend-resort-and-2",
+    "gbId": 2338,
+    "gbName": "River Bend Resort & Country Club",
+    "gbCity": "Brownsville",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "valley-international-2",
+    "gbId": 2337,
+    "gbName": "Valley International Country Club",
+    "gbCity": "Brownsville",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "brownwood-2",
+    "gbId": 2340,
+    "gbName": "Brownwood Country Club",
+    "gbCity": "Brownwood",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "feather-bay-2",
+    "gbId": 2341,
+    "gbName": "Feather Bay Golf Course",
+    "gbCity": "Brownwood",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "briarcrest-2",
+    "gbId": 2342,
+    "gbName": "Briarcrest Country Club",
+    "gbCity": "Bryan",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "bryan-2",
+    "gbId": 2343,
+    "gbName": "Bryan Golf Course",
+    "gbCity": "Bryan",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "eagle-s-bluff-2",
+    "gbId": 2346,
+    "gbName": "Eagle's Bluff Country Club",
+    "gbCity": "Bullard",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "emerald-bay-2",
+    "gbId": 2347,
+    "gbName": "Emerald Bay Country Club",
+    "gbCity": "Bullard",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "river-creek-park-2",
+    "gbId": 2348,
+    "gbName": "River Creek Park Golf Course",
+    "gbCity": "Burkburnett",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "hidden-creek-2",
+    "gbId": 2349,
+    "gbName": "Hidden Creek Golf Club",
+    "gbCity": "Burleson",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "southern-oaks-2",
+    "gbId": 2350,
+    "gbName": "Southern Oaks Golf Club",
+    "gbCity": "Burleson",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "delaware-springs-2",
+    "gbId": 2351,
+    "gbName": "Delaware Springs Golf Course",
+    "gbCity": "Burnet",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "copperas-hollow-2",
+    "gbId": 2352,
+    "gbName": "Copperas Hollow Country Club",
+    "gbCity": "Caldwell",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "calvert-2",
+    "gbId": 2353,
+    "gbName": "Calvert Country Club",
+    "gbCity": "Calvert",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "cameron-2",
+    "gbId": 2354,
+    "gbName": "Cameron Country Club",
+    "gbCity": "Cameron",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "sand-hills-golf-and-2",
+    "gbId": 2355,
+    "gbName": "Sand Hills Golf & Country Club",
+    "gbCity": "Campbell",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "canadian-2",
+    "gbId": 2356,
+    "gbName": "Canadian Golf Club",
+    "gbCity": "Canadian",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "van-zandt-2",
+    "gbId": 2357,
+    "gbName": "Van Zandt Country Club",
+    "gbCity": "Canton",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "benbrook-3-par-2",
+    "gbId": 2315,
+    "gbName": "Benbrook 3 Par",
+    "gbCity": "Fort Worth",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "the-whitestone-2",
+    "gbId": 2316,
+    "gbName": "The Whitestone Golf Club",
+    "gbCity": "Fort Worth",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "atascocita-2",
+    "gbId": 2281,
+    "gbName": "Atascocita Country Club",
+    "gbCity": "Humble",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "hermann-park",
+    "gbId": 2587,
+    "gbName": "Hermann Park Golf Course",
+    "gbCity": "Houston",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "gus-wortham-park",
+    "gbId": 2589,
+    "gbName": "Gus Wortham Park Golf Course",
+    "gbCity": "Houston",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "stevens-park",
+    "gbId": 2412,
+    "gbName": "Stevens Park Golf Course",
+    "gbCity": "Dallas",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "cowboys",
+    "gbId": 2555,
+    "gbName": "Cowboys Golf Club",
+    "gbCity": "Grapevine",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "texas-star",
+    "gbId": 2477,
+    "gbName": "Texas Star Golf Course",
+    "gbCity": "Euless",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "old-american",
+    "gbId": 18615,
+    "gbName": "Old American Golf Club",
+    "gbCity": "The Colony",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "grey-rock",
+    "gbId": 17385,
+    "gbName": "Grey Rock Golf Club",
+    "gbCity": "Austin",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "wolfdancer-at-hyatt-regency-lost-pines-resort",
+    "gbId": 2705,
+    "gbName": "Wolfdancer Golf Club at Hyatt Regency Lost Pines Resort",
+    "gbCity": "Cedar Creek",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "olmos-basin",
+    "gbId": 2887,
+    "gbName": "Olmos Basin Golf Course",
+    "gbCity": "San Antonio",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "cedar-creek",
+    "gbId": 373,
+    "gbName": "Cedar Creek Golf Course",
+    "gbCity": "Battle Creek",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "canyon-springs",
+    "gbId": 2901,
+    "gbName": "Canyon Springs Golf Club",
+    "gbCity": "San Antonio",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "west-seattle",
+    "gbId": 4901,
+    "gbName": "West Seattle Golf Course",
+    "gbCity": "Seattle",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "foster-golf-links",
+    "gbId": 4952,
+    "gbName": "Foster Golf Links",
+    "gbCity": "Seattle",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "washington-national",
+    "gbId": 4717,
+    "gbName": "Washington National Golf Club",
+    "gbCity": "Auburn",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "salish-cliffs",
+    "gbId": 20057,
+    "gbName": "Salish Cliffs Golf Club",
+    "gbCity": "Shelton",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "farmlinks-at-pursell-farms",
+    "gbId": 304,
+    "gbName": "Farmlinks Golf Club at Pursell Farms",
+    "gbCity": "Sylacauga",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "fossil-trace",
+    "gbId": 6175,
+    "gbName": "Fossil Trace Golf Club",
+    "gbCity": "Golden",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "murphy-creek",
+    "gbId": 6066,
+    "gbName": "Murphy Creek Golf Course",
+    "gbCity": "Aurora",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "commonground",
+    "gbId": 17505,
+    "gbName": "CommonGround Golf Course",
+    "gbCity": "Aurora",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "fox-hollow",
+    "gbId": 7708,
+    "gbName": "Fox Hollow Golf Course",
+    "gbCity": "La Crosse",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "buffalo-run",
+    "gbId": 6115,
+    "gbName": "Buffalo Run Golf Course",
+    "gbCity": "Commerce City",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "wellshire",
+    "gbId": 6131,
+    "gbName": "Wellshire Golf Course",
+    "gbCity": "Denver",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "sonnenalp",
+    "gbId": 17513,
+    "gbName": "Sonnenalp Golf Club",
+    "gbCity": "Edwards",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "pole-creek",
+    "gbId": 19584,
+    "gbName": "Pole Creek Golf Club",
+    "gbCity": "Tabernash",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "keller",
+    "gbId": 7441,
+    "gbName": "Keller Golf Course",
+    "gbCity": "Saint Paul",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "oakridge-4",
+    "gbId": 16339,
+    "gbName": "Oakridge Country Club",
+    "gbCity": "Farmington",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "tri-city-2",
+    "gbId": 6271,
+    "gbName": "Tri City Golf Course",
+    "gbCity": "American Fork",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "canyon-breeze-2",
+    "gbId": 6272,
+    "gbName": "Canyon Breeze Golf Course",
+    "gbCity": "Beaver",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "bountiful-ridge-2",
+    "gbId": 6273,
+    "gbName": "Bountiful Ridge Golf Course",
+    "gbCity": "Bountiful",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "eagle-mountain-4",
+    "gbId": 6274,
+    "gbName": "Eagle Mountain Golf Course",
+    "gbCity": "Brigham City",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "cedar-ridge-2",
+    "gbId": 6275,
+    "gbName": "Cedar Ridge Golf Course",
+    "gbCity": "Cedar City",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "sunset-view-4",
+    "gbId": 6277,
+    "gbName": "Sunset View Golf Course",
+    "gbCity": "Delta",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "sunset-view-5",
+    "gbId": 15940,
+    "gbName": "Sunset View Golf Course",
+    "gbCity": "Delta",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "south-mountain-2",
+    "gbId": 6278,
+    "gbName": "South Mountain Golf Club",
+    "gbCity": "Draper",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "frank-skul-memorial-2",
+    "gbId": 6279,
+    "gbName": "Frank Skul Memorial Golf Course",
+    "gbCity": "Dugway",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "nordic-valley-2",
+    "gbId": 6281,
+    "gbName": "Nordic Valley",
+    "gbCity": "Eden",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "wolf-creek-golf-resort-2",
+    "gbId": 6282,
+    "gbName": "Wolf Creek Golf Resort",
+    "gbCity": "Eden",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "oakridge-5",
+    "gbId": 6283,
+    "gbName": "Oakridge Country Club",
+    "gbCity": "Farmington",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "millsite-2",
+    "gbId": 6285,
+    "gbName": "Millsite Golf Course",
+    "gbCity": "Ferron",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "belmont-springs-park-2",
+    "gbId": 6320,
+    "gbName": "Belmont Springs Park",
+    "gbCity": "Fielding",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "paradise-golf-resort-2",
+    "gbId": 6286,
+    "gbName": "Paradise Golf Resort",
+    "gbCity": "Fillmore",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "bear-lake-2",
+    "gbId": 6288,
+    "gbName": "Bear Lake Golf Course",
+    "gbCity": "Garden City",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "green-river-2",
+    "gbId": 6289,
+    "gbName": "Green River Golf Course",
+    "gbCity": "Green River",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "sky-mountain-2",
+    "gbId": 6291,
+    "gbName": "Sky Mountain Golf Course",
+    "gbCity": "Hurricane",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "coral-cliffs-2",
+    "gbId": 6292,
+    "gbName": "Coral Cliffs Golf Course",
+    "gbCity": "Kanab",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "davis-park-2",
+    "gbId": 6287,
+    "gbName": "Davis Park Golf Course",
+    "gbCity": "Kaysville",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "sun-hills-2",
+    "gbId": 6294,
+    "gbName": "Sun Hills Golf Course",
+    "gbCity": "Layton",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "swan-lakes-2",
+    "gbId": 6293,
+    "gbName": "Swan Lakes Golf Course",
+    "gbCity": "Layton",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "valley-view-2",
+    "gbId": 6295,
+    "gbName": "Valley View Golf Course",
+    "gbCity": "Layton",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "golf-course-at-thanksgiving-point-the-2",
+    "gbId": 6296,
+    "gbName": "Golf Course at Thanksgiving Point, The",
+    "gbCity": "Lehi",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "ranches-the-2",
+    "gbId": 6280,
+    "gbName": "Ranches Golf Club, The",
+    "gbCity": "Lehi",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "talonscove-at-saratoga-springs-2",
+    "gbId": 6353,
+    "gbName": "TalonsCove at Saratoga Springs",
+    "gbCity": "Lehi",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "logan-golf-and-2",
+    "gbId": 6298,
+    "gbName": "Logan Golf & Country Club",
+    "gbCity": "Logan",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "logan-river-2",
+    "gbId": 6297,
+    "gbName": "Logan River Golf Course",
+    "gbCity": "Logan",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "copper-2",
+    "gbId": 6299,
+    "gbName": "Copper Golf Club",
+    "gbCity": "Magna",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "homestead-2",
+    "gbId": 6300,
+    "gbName": "Homestead",
+    "gbCity": "Midway",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "wasatch-mountain-state-park-2",
+    "gbId": 6301,
+    "gbName": "Wasatch Mountain State Park",
+    "gbCity": "Midway",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "moab-2",
+    "gbId": 6302,
+    "gbName": "Moab Golf Club",
+    "gbCity": "Moab",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "hideout-the-2",
+    "gbId": 6303,
+    "gbName": "Hideout, The",
+    "gbCity": "Monticello",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "round-valley-2",
+    "gbId": 6304,
+    "gbName": "Round Valley Golf Course",
+    "gbCity": "Morgan",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "canyon-hills-park-2",
+    "gbId": 6307,
+    "gbName": "Canyon Hills Park Golf Course",
+    "gbCity": "Nephi",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "eaglewood-2",
+    "gbId": 6308,
+    "gbName": "Eaglewood Golf Course",
+    "gbCity": "North Salt Lake",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "barn-the-2",
+    "gbId": 6319,
+    "gbName": "Barn Golf Club, The",
+    "gbCity": "Ogden",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "ben-lomond-2",
+    "gbId": 6313,
+    "gbName": "Ben Lomond Golf Course",
+    "gbCity": "Ogden",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "el-monte-2",
+    "gbId": 6311,
+    "gbName": "El Monte Golf Course",
+    "gbCity": "Ogden",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "golf-city-4",
+    "gbId": 6312,
+    "gbName": "Golf City",
+    "gbCity": "Ogden",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "mount-ogden-2",
+    "gbId": 6310,
+    "gbName": "Mount Ogden Golf Course",
+    "gbCity": "Ogden",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "ogden-golf-and-2",
+    "gbId": 6309,
+    "gbName": "Ogden Golf & Country Club",
+    "gbCity": "Ogden",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "remuda-2",
+    "gbId": 6284,
+    "gbName": "Remuda Golf Course",
+    "gbCity": "Ogden",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "schneiters-riverside-2",
+    "gbId": 6325,
+    "gbName": "Schneiters Riverside Golf Course",
+    "gbCity": "Ogden",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "cascade-fairways-public-2",
+    "gbId": 6314,
+    "gbName": "Cascade Fairways Public Golf Course",
+    "gbCity": "Orem",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "jeremy-golf-and-the-2",
+    "gbId": 6317,
+    "gbName": "Jeremy Golf & Country Club, The",
+    "gbCity": "Park City",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "park-city-2",
+    "gbId": 6315,
+    "gbName": "Park City Golf Course",
+    "gbCity": "Park City",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "gladstan-2",
+    "gbId": 6318,
+    "gbName": "Gladstan Golf Course",
+    "gbCity": "Payson",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "cedar-hills-2",
+    "gbId": 6276,
+    "gbName": "Cedar Hills Golf Club",
+    "gbCity": "Pleasant Grove",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "carbon-2",
+    "gbId": 6321,
+    "gbName": "Carbon Country Club",
+    "gbCity": "Price",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "east-bay-2",
+    "gbId": 6323,
+    "gbName": "East Bay Golf Course",
+    "gbCity": "Provo",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "cove-view-2",
+    "gbId": 6324,
+    "gbName": "Cove View Golf Course",
+    "gbCity": "Richfield",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "roosevelt-2",
+    "gbId": 6328,
+    "gbName": "Roosevelt Golf Course",
+    "gbCity": "Roosevelt",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "royal-greens-2",
+    "gbId": 6329,
+    "gbName": "Royal Greens Golf Course",
+    "gbCity": "Roy",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "bloomington-2",
+    "gbId": 6332,
+    "gbName": "Bloomington Country Club",
+    "gbCity": "Saint George",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "dixie-red-hills-2",
+    "gbId": 6333,
+    "gbName": "Dixie Red Hills Golf Course",
+    "gbCity": "Saint George",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "southgate-2",
+    "gbId": 6330,
+    "gbName": "Southgate Golf Club",
+    "gbCity": "Saint George",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "st-george-2",
+    "gbId": 6331,
+    "gbName": "St. George Golf Club",
+    "gbCity": "Saint George",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "sunbrook-black-rock-2",
+    "gbId": 6334,
+    "gbName": "Sunbrook Golf Club (Black Rock)",
+    "gbCity": "Saint George",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "cottonwood-2",
+    "gbId": 6347,
+    "gbName": "Cottonwood Country Club",
+    "gbCity": "Salt Lake City",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "country-club-the-2",
+    "gbId": 6342,
+    "gbName": "Country Club, The",
+    "gbCity": "Salt Lake City",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "fore-lakes-2",
+    "gbId": 6346,
+    "gbName": "Fore Lakes Golf Course",
+    "gbCity": "Salt Lake City",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "forest-dale-2",
+    "gbId": 6339,
+    "gbName": "Forest Dale Golf Course",
+    "gbCity": "Salt Lake City",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "glendale-2",
+    "gbId": 6340,
+    "gbName": "Glendale Golf Course",
+    "gbCity": "Salt Lake City",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "jordon-river-par-three-2",
+    "gbId": 6336,
+    "gbName": "Jordon River Par Three Golf Course",
+    "gbCity": "Salt Lake City",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "meadow-brook-2",
+    "gbId": 6344,
+    "gbName": "Meadow Brook Golf Course",
+    "gbCity": "Salt Lake City",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "mick-riley-2",
+    "gbId": 6305,
+    "gbName": "Mick Riley Golf Course",
+    "gbCity": "Salt Lake City",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "murray-parkway-2",
+    "gbId": 6306,
+    "gbName": "Murray Parkway Golf Course",
+    "gbCity": "Salt Lake City",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "nibley-park-2",
+    "gbId": 6341,
+    "gbName": "Nibley Park Golf Course",
+    "gbCity": "Salt Lake City",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "old-mill-2",
+    "gbId": 6348,
+    "gbName": "Old Mill Golf Club",
+    "gbCity": "Salt Lake City",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "rose-park-2",
+    "gbId": 6337,
+    "gbName": "Rose Park Golf Course",
+    "gbCity": "Salt Lake City",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "stonebridge-2",
+    "gbId": 6369,
+    "gbName": "Stonebridge Golf Club",
+    "gbCity": "Salt Lake City",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "university-of-utah-2",
+    "gbId": 6335,
+    "gbName": "University of Utah Golf Course",
+    "gbCity": "Salt Lake City",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "schneiter-s-pebblebrook-links-2",
+    "gbId": 6350,
+    "gbName": "Schneiter's Pebblebrook Links",
+    "gbCity": "Sandy",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "willow-creek-5",
+    "gbId": 6351,
+    "gbName": "Willow Creek Country Club",
+    "gbCity": "Sandy",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "birch-creek-2",
+    "gbId": 6354,
+    "gbName": "Birch Creek Golf Club",
+    "gbCity": "Smithfield",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "glenmoore-2",
+    "gbId": 6355,
+    "gbName": "Glenmoore Golf Course",
+    "gbCity": "South Jordan",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "mulligan-s-south-4",
+    "gbId": 6327,
+    "gbName": "Mulligan's South",
+    "gbCity": "South Jordan",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "mulligan-s-south-5",
+    "gbId": 16365,
+    "gbName": "Mulligan's South",
+    "gbCity": "South Jordan",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "the-oaks-at-spanish-fork-2",
+    "gbId": 6356,
+    "gbName": "The Oaks at Spanish Fork",
+    "gbCity": "Spanish Fork",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "hobble-creek-2",
+    "gbId": 6357,
+    "gbName": "Hobble Creek Golf Course",
+    "gbCity": "Springville",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "glen-eagle-2",
+    "gbId": 6361,
+    "gbName": "Glen Eagle Golf Club",
+    "gbCity": "Syracuse",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "oquirrh-hills-2",
+    "gbId": 6362,
+    "gbName": "Oquirrh Hills Golf Course",
+    "gbCity": "Tooele",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "stansbury-park-2",
+    "gbId": 6359,
+    "gbName": "Stansbury Park Golf Course",
+    "gbCity": "Tooele",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "skyway-2",
+    "gbId": 6363,
+    "gbName": "Skyway Golf Course",
+    "gbCity": "Tremonton",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "dinaland-2",
+    "gbId": 6364,
+    "gbName": "Dinaland Golf Course",
+    "gbCity": "Vernal",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "green-spring-2",
+    "gbId": 6365,
+    "gbName": "Green Spring Golf Course",
+    "gbCity": "Washington",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "sherwood-hills-2",
+    "gbId": 6366,
+    "gbName": "Sherwood Hills Golf Course",
+    "gbCity": "Wellsville",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "mountain-view-5",
+    "gbId": 6368,
+    "gbName": "Mountain View Golf Course",
+    "gbCity": "West Jordan",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "black-desert-resort",
+    "gbId": 18972,
+    "gbName": "Black Desert Resort Golf Course",
+    "gbCity": "Ivins",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "reston-national",
+    "gbId": 10835,
+    "gbName": "Reston National Golf Course",
+    "gbCity": "Reston",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "trappers-turn",
+    "gbId": 7972,
+    "gbName": "Trappers Turn Golf Club",
+    "gbCity": "Wisconsin Dells",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "christmas-mountain-village",
+    "gbId": 7976,
+    "gbName": "Christmas Mountain Village",
+    "gbCity": "Wisconsin Dells",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "washington-county",
+    "gbId": 7664,
+    "gbName": "Washington County Golf Course",
+    "gbCity": "Hartford",
+    "pars": null,
+    "dbImported": false
+  },
+  {
+    "kind": "matched",
+    "presetId": "glacier-wood",
+    "gbId": 7686,
+    "gbName": "Glacier Wood Golf Club",
+    "gbCity": "Iola",
     "pars": null,
     "dbImported": false
   }
