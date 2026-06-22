@@ -97,7 +97,7 @@ export default function QuickWagerButton({
       className={
         "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wider transition-colors border " +
         (armed
-          ? "bg-accent text-black border-accent"
+          ? "bg-accent text-ink-on-accent border-accent"
           : "bg-panel2 text-mute border-border hover:text-ink hover:border-accent/40")
       }
     >

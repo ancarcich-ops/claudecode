@@ -23,7 +23,7 @@ const THEMES: {
     id: "caddie",
     label: "Caddie's Notebook",
     sub: "Default · paper",
-    swatch: { bg: "#F7F3EA", accent: "#2F6B4F", ink: "#26221C" },
+    swatch: { bg: "#F7F3EA", accent: "#285E45", ink: "#26221C" },
   },
   {
     id: "fairway",

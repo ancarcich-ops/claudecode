@@ -57,7 +57,7 @@ export default function BaselinePicker({
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-accent text-black px-2 py-1 text-[10px] uppercase tracking-wider font-semibold hover:bg-accentDim transition-colors disabled:opacity-60"
+        className="rounded-md bg-accent text-ink-on-accent px-2 py-1 text-[10px] uppercase tracking-wider font-semibold hover:bg-accentDim transition-colors disabled:opacity-60"
       >
         {pending ? "…" : "Apply"}
       </button>
