@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import Link from "next/link";
+import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { deleteMatchInPlaceAction } from "@/lib/actions";
 
@@ -12,26 +13,30 @@ type RoundItem = {
   vsPar: number;
 };
 
-// Shows every logged round with a small delete-X. Two-tap confirm pattern
-// to avoid accidental deletions on mobile -- first tap arms the X (turns
-// red), second tap actually fires the action.
+// Each round row exposes two actions:
+//   - Edit  -> opens the match detail page where the creator can
+//              tweak scores, reopen the match if completed, or
+//              change side-game configuration.
+//   - Delete -> opens an inline confirm strip (Cancel / Delete
+//              forever) so a stray tap can't wipe a round. Auto-
+//              dismisses after 6s of inactivity.
 export default function RoundsList({ rounds }: { rounds: RoundItem[] }) {
   const [pending, startTransition] = useTransition();
-  const [armed, setArmed] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState<string | null>(null);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
+
+  // Auto-dismiss the open confirm strip after 6s so it doesn't sit
+  // armed forever if the user wanders away.
+  useEffect(() => {
+    if (!confirming) return;
+    const t = setTimeout(() => setConfirming(null), 6000);
+    return () => clearTimeout(t);
+  }, [confirming]);
 
   const visible = rounds.filter((r) => !hidden.has(r.matchId));
 
-  const remove = (matchId: string, label: string) => {
-    if (armed !== matchId) {
-      setArmed(matchId);
-      // Auto-disarm after a few seconds so the chip doesn't sit hot forever.
-      setTimeout(() => {
-        setArmed((cur) => (cur === matchId ? null : cur));
-      }, 3000);
-      return;
-    }
-    setArmed(null);
+  const confirmDelete = (matchId: string, label: string) => {
+    setConfirming(null);
     setHidden((s) => new Set(s).add(matchId));
     startTransition(async () => {
       try {
@@ -51,9 +56,7 @@ export default function RoundsList({ rounds }: { rounds: RoundItem[] }) {
   };
 
   if (visible.length === 0) {
-    return (
-      <p className="text-[11px] text-mute">No logged rounds.</p>
-    );
+    return <p className="text-[11px] text-mute">No logged rounds.</p>;
   }
 
   return (
@@ -65,7 +68,7 @@ export default function RoundsList({ rounds }: { rounds: RoundItem[] }) {
           day: "numeric",
           year: "2-digit",
         });
-        const isArmed = armed === r.matchId;
+        const isConfirming = confirming === r.matchId;
         const sign = r.vsPar > 0 ? "+" : "";
         const vsClass =
           r.vsPar < 0
@@ -92,28 +95,90 @@ export default function RoundsList({ rounds }: { rounds: RoundItem[] }) {
                 {r.vsPar === 0 ? "E" : r.vsPar}
               </span>
             </div>
-            <button
-              type="button"
-              onClick={() => remove(r.matchId, label)}
-              disabled={pending}
-              aria-label={
-                isArmed
-                  ? `Confirm delete ${label}`
-                  : `Delete ${label}`
-              }
-              className={
-                "shrink-0 w-8 h-8 rounded-md text-sm font-mono font-semibold transition-colors border " +
-                (isArmed
-                  ? "bg-danger text-black border-danger"
-                  : "bg-danger/10 text-danger border-danger/40 hover:bg-danger/20")
-              }
-              title={isArmed ? "Tap again to confirm" : "Delete round"}
-            >
-              {isArmed ? "✓" : "×"}
-            </button>
+            {isConfirming ? (
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setConfirming(null)}
+                  disabled={pending}
+                  className="h-8 px-2 rounded-md text-[11px] font-medium border border-border bg-panel2 text-mute hover:text-ink"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => confirmDelete(r.matchId, label)}
+                  disabled={pending}
+                  className="h-8 px-2 rounded-md text-[11px] font-semibold bg-danger text-white hover:bg-danger/85"
+                >
+                  Delete
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Link
+                  href={`/matches/${r.matchId}`}
+                  className="inline-flex items-center justify-center w-8 h-8 rounded-md text-mute hover:text-ink hover:bg-panel2 border border-border"
+                  aria-label={`Edit ${label}`}
+                  title="Edit round"
+                >
+                  <PencilIcon />
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setConfirming(r.matchId)}
+                  disabled={pending}
+                  aria-label={`Delete ${label}`}
+                  title="Delete round"
+                  className="inline-flex items-center justify-center w-8 h-8 rounded-md text-danger border border-danger/40 bg-danger/10 hover:bg-danger/20"
+                >
+                  <TrashIcon />
+                </button>
+              </div>
+            )}
           </li>
         );
       })}
     </ul>
+  );
+}
+
+function PencilIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z" />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6M14 11v6" />
+      <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+    </svg>
   );
 }
