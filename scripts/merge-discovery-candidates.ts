@@ -58,9 +58,24 @@ const STATE_TO_REGION: Record<string, CourseRegion> = {
   OR: "PNW",
   WA: "PNW",
   ID: "PNW",
+  MT: "PNW",
+  AK: "PNW",
   TX: "TX",
+  OK: "TX",
   FL: "FL",
   CO: "CO",
+  HI: "HI",
+  NM: "AZ",
+  // Southeast lump
+  NC: "SE", SC: "SE", GA: "SE", AL: "SE", TN: "SE", KY: "SE",
+  VA: "SE", WV: "SE", AR: "SE", MS: "SE", LA: "SE",
+  // Midwest lump
+  IL: "MW", MI: "MW", WI: "MW", MN: "MW", MO: "MW",
+  OH: "MW", IN: "MW", IA: "MW", KS: "MW", NE: "MW",
+  ND: "MW", SD: "MW",
+  // Northeast lump
+  NY: "NE", NJ: "NE", PA: "NE", CT: "NE", MA: "NE",
+  NH: "NE", VT: "NE", ME: "NE", RI: "NE", DE: "NE", MD: "NE",
 };
 
 function parseFlags(argv: string[]) {

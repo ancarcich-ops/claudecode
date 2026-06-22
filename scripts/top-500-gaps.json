@@ -1,0 +1,3302 @@
+[
+  {
+    "tier": "T1",
+    "rank": "13",
+    "name": "The Lido at Sand Valley",
+    "city": "Nekoosa",
+    "state": "WI",
+    "access": "resort",
+    "region": "MW",
+    "slug": "the-lido-at-sand-valley"
+  },
+  {
+    "tier": "T1",
+    "rank": "16",
+    "name": "Sheep Ranch",
+    "city": "Bandon",
+    "state": "OR",
+    "access": "resort",
+    "region": "PNW",
+    "slug": "sheep-ranch"
+  },
+  {
+    "tier": "T1",
+    "rank": "24",
+    "name": "Pinehurst No. 1",
+    "city": "Pinehurst",
+    "state": "NC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "pinehurst-no-1"
+  },
+  {
+    "tier": "T1",
+    "rank": "36",
+    "name": "Cog Hill \u2014 Dubsdread (No. 4)",
+    "city": "Lemont",
+    "state": "IL",
+    "access": "daily-fee",
+    "region": "MW",
+    "slug": "cog-hill-dubsdread-no-4"
+  },
+  {
+    "tier": "T1",
+    "rank": "39",
+    "name": "Ala Wai Golf Course",
+    "city": "Honolulu",
+    "state": "HI",
+    "access": "municipal",
+    "region": "HI",
+    "slug": "ala-wai-golf-course"
+  },
+  {
+    "tier": "T1",
+    "rank": "40",
+    "name": "Payne's Valley",
+    "city": "Hollister",
+    "state": "MO",
+    "access": "resort",
+    "region": "MW",
+    "slug": "paynes-valley"
+  },
+  {
+    "tier": "T1",
+    "rank": "41",
+    "name": "Ozarks National at Big Cedar Lodge",
+    "city": "Hollister",
+    "state": "MO",
+    "access": "resort",
+    "region": "MW",
+    "slug": "ozarks-national-at-big-cedar-lodge"
+  },
+  {
+    "tier": "T1",
+    "rank": "42",
+    "name": "Top of the Rock",
+    "city": "Ridgedale",
+    "state": "MO",
+    "access": "resort",
+    "region": "MW",
+    "slug": "top-of-the-rock"
+  },
+  {
+    "tier": "T1",
+    "rank": "43",
+    "name": "Mountain Top at Big Cedar Lodge",
+    "city": "Ridgedale",
+    "state": "MO",
+    "access": "resort",
+    "region": "MW",
+    "slug": "mountain-top-at-big-cedar-lodge"
+  },
+  {
+    "tier": "T1",
+    "rank": "44",
+    "name": "Buffalo Ridge Springs",
+    "city": "Hollister",
+    "state": "MO",
+    "access": "resort",
+    "region": "MW",
+    "slug": "buffalo-ridge-springs"
+  },
+  {
+    "tier": "T1",
+    "rank": "46",
+    "name": "Blackwolf Run (Meadow Valleys)",
+    "city": "Kohler",
+    "state": "WI",
+    "access": "resort",
+    "region": "MW",
+    "slug": "blackwolf-run-meadow-valleys"
+  },
+  {
+    "tier": "T1",
+    "rank": "50",
+    "name": "Caledonia Golf & Fish Club",
+    "city": "Pawleys Island",
+    "state": "SC",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "caledonia-golf-fish-club"
+  },
+  {
+    "tier": "T2",
+    "rank": "51",
+    "name": "Pinehurst No. 3",
+    "city": "Pinehurst",
+    "state": "NC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "pinehurst-no-3"
+  },
+  {
+    "tier": "T2",
+    "rank": "52",
+    "name": "Pinehurst No. 5",
+    "city": "Pinehurst",
+    "state": "NC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "pinehurst-no-5"
+  },
+  {
+    "tier": "T2",
+    "rank": "57",
+    "name": "TPC Las Colinas",
+    "city": "Irving",
+    "state": "TX",
+    "access": "resort",
+    "region": "TX",
+    "slug": "tpc-las-colinas"
+  },
+  {
+    "tier": "T2",
+    "rank": "58",
+    "name": "TPC Louisiana",
+    "city": "Avondale",
+    "state": "LA",
+    "access": "resort",
+    "region": "SE",
+    "slug": "tpc-louisiana"
+  },
+  {
+    "tier": "T2",
+    "rank": "59",
+    "name": "TPC Deere Run",
+    "city": "Silvis",
+    "state": "IL",
+    "access": "resort",
+    "region": "MW",
+    "slug": "tpc-deere-run"
+  },
+  {
+    "tier": "T2",
+    "rank": "61",
+    "name": "TPC Myrtle Beach",
+    "city": "Murrells Inlet",
+    "state": "SC",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "tpc-myrtle-beach"
+  },
+  {
+    "tier": "T2",
+    "rank": "62",
+    "name": "TPC San Antonio \u2014 Oaks",
+    "city": "San Antonio",
+    "state": "TX",
+    "access": "resort",
+    "region": "TX",
+    "slug": "tpc-san-antonio-oaks"
+  },
+  {
+    "tier": "T2",
+    "rank": "63",
+    "name": "TPC San Antonio \u2014 Canyons",
+    "city": "San Antonio",
+    "state": "TX",
+    "access": "resort",
+    "region": "TX",
+    "slug": "tpc-san-antonio-canyons"
+  },
+  {
+    "tier": "T2",
+    "rank": "64",
+    "name": "Kiawah \u2014 Cougar Point",
+    "city": "Kiawah Island",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "kiawah-cougar-point"
+  },
+  {
+    "tier": "T2",
+    "rank": "65",
+    "name": "Kiawah \u2014 Osprey Point",
+    "city": "Kiawah Island",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "kiawah-osprey-point"
+  },
+  {
+    "tier": "T2",
+    "rank": "67",
+    "name": "Kiawah \u2014 Oak Point",
+    "city": "Kiawah Island",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "kiawah-oak-point"
+  },
+  {
+    "tier": "T2",
+    "rank": "73",
+    "name": "Reynolds Lake Oconee \u2014 Plantation",
+    "city": "Greensboro",
+    "state": "GA",
+    "access": "resort",
+    "region": "SE",
+    "slug": "reynolds-lake-oconee-plantation"
+  },
+  {
+    "tier": "T2",
+    "rank": "74",
+    "name": "The Greenbrier \u2014 Old White TPC",
+    "city": "White Sulphur Springs",
+    "state": "WV",
+    "access": "resort",
+    "region": "SE",
+    "slug": "the-greenbrier-old-white-tpc"
+  },
+  {
+    "tier": "T2",
+    "rank": "75",
+    "name": "The Greenbrier \u2014 Greenbrier Course",
+    "city": "White Sulphur Springs",
+    "state": "WV",
+    "access": "resort",
+    "region": "SE",
+    "slug": "the-greenbrier-greenbrier-course"
+  },
+  {
+    "tier": "T2",
+    "rank": "76",
+    "name": "The Greenbrier \u2014 Meadows",
+    "city": "White Sulphur Springs",
+    "state": "WV",
+    "access": "resort",
+    "region": "SE",
+    "slug": "the-greenbrier-meadows"
+  },
+  {
+    "tier": "T2",
+    "rank": "83",
+    "name": "Innisbrook \u2014 North",
+    "city": "Palm Harbor",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "innisbrook-north"
+  },
+  {
+    "tier": "T2",
+    "rank": "84",
+    "name": "Innisbrook \u2014 South",
+    "city": "Palm Harbor",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "innisbrook-south"
+  },
+  {
+    "tier": "T2",
+    "rank": "86",
+    "name": "PGA National \u2014 Match",
+    "city": "Palm Beach Gardens",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "pga-national-match"
+  },
+  {
+    "tier": "T2",
+    "rank": "88",
+    "name": "PGA Golf Club \u2014 Wanamaker",
+    "city": "Port St. Lucie",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "pga-golf-club-wanamaker"
+  },
+  {
+    "tier": "T2",
+    "rank": "89",
+    "name": "PGA Golf Club \u2014 Ryder",
+    "city": "Port St. Lucie",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "pga-golf-club-ryder"
+  },
+  {
+    "tier": "T2",
+    "rank": "91",
+    "name": "True Blue Golf Club",
+    "city": "Pawleys Island",
+    "state": "SC",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "true-blue-golf-club"
+  },
+  {
+    "tier": "T2",
+    "rank": "92",
+    "name": "Tidewater Golf Club",
+    "city": "North Myrtle Beach",
+    "state": "SC",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "tidewater-golf-club"
+  },
+  {
+    "tier": "T2",
+    "rank": "93",
+    "name": "Barefoot Resort \u2014 Dye Course",
+    "city": "North Myrtle Beach",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "barefoot-resort-dye-course"
+  },
+  {
+    "tier": "T2",
+    "rank": "94",
+    "name": "Barefoot Resort \u2014 Fazio Course",
+    "city": "North Myrtle Beach",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "barefoot-resort-fazio-course"
+  },
+  {
+    "tier": "T2",
+    "rank": "95",
+    "name": "Barefoot Resort \u2014 Love Course",
+    "city": "North Myrtle Beach",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "barefoot-resort-love-course"
+  },
+  {
+    "tier": "T2",
+    "rank": "96",
+    "name": "Barefoot Resort \u2014 Norman Course",
+    "city": "North Myrtle Beach",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "barefoot-resort-norman-course"
+  },
+  {
+    "tier": "T2",
+    "rank": "97",
+    "name": "Dunes Golf & Beach Club",
+    "city": "Myrtle Beach",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "dunes-golf-beach-club"
+  },
+  {
+    "tier": "T2",
+    "rank": "99",
+    "name": "Pawleys Plantation",
+    "city": "Pawleys Island",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "pawleys-plantation"
+  },
+  {
+    "tier": "T2",
+    "rank": "100",
+    "name": "Cabot Citrus Farms \u2014 Karoo",
+    "city": "Brooksville",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "cabot-citrus-farms-karoo"
+  },
+  {
+    "tier": "T2",
+    "rank": "101",
+    "name": "Cabot Citrus Farms \u2014 Roost",
+    "city": "Brooksville",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "cabot-citrus-farms-roost"
+  },
+  {
+    "tier": "T2",
+    "rank": "102",
+    "name": "Forest Dunes Golf Club",
+    "city": "Roscommon",
+    "state": "MI",
+    "access": "resort",
+    "region": "MW",
+    "slug": "forest-dunes-golf-club"
+  },
+  {
+    "tier": "T2",
+    "rank": "103",
+    "name": "The Loop at Forest Dunes",
+    "city": "Roscommon",
+    "state": "MI",
+    "access": "resort",
+    "region": "MW",
+    "slug": "the-loop-at-forest-dunes"
+  },
+  {
+    "tier": "T2",
+    "rank": "104",
+    "name": "Arcadia Bluffs \u2014 Bluffs",
+    "city": "Arcadia",
+    "state": "MI",
+    "access": "resort",
+    "region": "MW",
+    "slug": "arcadia-bluffs-bluffs"
+  },
+  {
+    "tier": "T2",
+    "rank": "105",
+    "name": "Arcadia Bluffs \u2014 South",
+    "city": "Arcadia",
+    "state": "MI",
+    "access": "resort",
+    "region": "MW",
+    "slug": "arcadia-bluffs-south"
+  },
+  {
+    "tier": "T2",
+    "rank": "106",
+    "name": "Bay Harbor Golf Club",
+    "city": "Bay Harbor",
+    "state": "MI",
+    "access": "resort",
+    "region": "MW",
+    "slug": "bay-harbor-golf-club"
+  },
+  {
+    "tier": "T2",
+    "rank": "107",
+    "name": "Boyne Highlands \u2014 The Heather",
+    "city": "Harbor Springs",
+    "state": "MI",
+    "access": "resort",
+    "region": "MW",
+    "slug": "boyne-highlands-the-heather"
+  },
+  {
+    "tier": "T2",
+    "rank": "108",
+    "name": "Boyne Highlands \u2014 Arthur Hills",
+    "city": "Harbor Springs",
+    "state": "MI",
+    "access": "resort",
+    "region": "MW",
+    "slug": "boyne-highlands-arthur-hills"
+  },
+  {
+    "tier": "T2",
+    "rank": "109",
+    "name": "Boyne Mountain \u2014 The Monument",
+    "city": "Boyne Falls",
+    "state": "MI",
+    "access": "resort",
+    "region": "MW",
+    "slug": "boyne-mountain-the-monument"
+  },
+  {
+    "tier": "T2",
+    "rank": "110",
+    "name": "Boyne Mountain \u2014 Alpine",
+    "city": "Boyne Falls",
+    "state": "MI",
+    "access": "resort",
+    "region": "MW",
+    "slug": "boyne-mountain-alpine"
+  },
+  {
+    "tier": "T2",
+    "rank": "111",
+    "name": "Treetops Resort",
+    "city": "Gaylord",
+    "state": "MI",
+    "access": "resort",
+    "region": "MW",
+    "slug": "treetops-resort"
+  },
+  {
+    "tier": "T2",
+    "rank": "112",
+    "name": "Grand Traverse \u2014 The Bear",
+    "city": "Acme",
+    "state": "MI",
+    "access": "resort",
+    "region": "MW",
+    "slug": "grand-traverse-the-bear"
+  },
+  {
+    "tier": "T2",
+    "rank": "113",
+    "name": "Grand Traverse \u2014 Wolverine",
+    "city": "Acme",
+    "state": "MI",
+    "access": "resort",
+    "region": "MW",
+    "slug": "grand-traverse-wolverine"
+  },
+  {
+    "tier": "T2",
+    "rank": "114",
+    "name": "Shanty Creek \u2014 The Legend",
+    "city": "Bellaire",
+    "state": "MI",
+    "access": "resort",
+    "region": "MW",
+    "slug": "shanty-creek-the-legend"
+  },
+  {
+    "tier": "T2",
+    "rank": "115",
+    "name": "Shanty Creek \u2014 Cedar River",
+    "city": "Bellaire",
+    "state": "MI",
+    "access": "resort",
+    "region": "MW",
+    "slug": "shanty-creek-cedar-river"
+  },
+  {
+    "tier": "T2",
+    "rank": "116",
+    "name": "Crystal Mountain \u2014 Mountain Ridge",
+    "city": "Thompsonville",
+    "state": "MI",
+    "access": "resort",
+    "region": "MW",
+    "slug": "crystal-mountain-mountain-ridge"
+  },
+  {
+    "tier": "T2",
+    "rank": "117",
+    "name": "American Dunes",
+    "city": "Grand Haven",
+    "state": "MI",
+    "access": "daily-fee",
+    "region": "MW",
+    "slug": "american-dunes"
+  },
+  {
+    "tier": "T2",
+    "rank": "121",
+    "name": "Southern Pines Golf Club",
+    "city": "Southern Pines",
+    "state": "NC",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "southern-pines-golf-club"
+  },
+  {
+    "tier": "T2",
+    "rank": "122",
+    "name": "The Prairie Club \u2014 Dunes",
+    "city": "Valentine",
+    "state": "NE",
+    "access": "resort",
+    "region": "MW",
+    "slug": "the-prairie-club-dunes"
+  },
+  {
+    "tier": "T2",
+    "rank": "123",
+    "name": "The Prairie Club \u2014 Pines",
+    "city": "Valentine",
+    "state": "NE",
+    "access": "resort",
+    "region": "MW",
+    "slug": "the-prairie-club-pines"
+  },
+  {
+    "tier": "T2",
+    "rank": "142",
+    "name": "SilverRock Resort",
+    "city": "La Quinta",
+    "state": "CA",
+    "access": "municipal",
+    "region": "IE",
+    "slug": "silverrock-resort"
+  },
+  {
+    "tier": "T2",
+    "rank": "149",
+    "name": "Talking Stick \u2014 O'odham",
+    "city": "Scottsdale",
+    "state": "AZ",
+    "access": "resort",
+    "region": "AZ",
+    "slug": "talking-stick-oodham"
+  },
+  {
+    "tier": "T2",
+    "rank": "150",
+    "name": "Talking Stick \u2014 Piipaash",
+    "city": "Scottsdale",
+    "state": "AZ",
+    "access": "resort",
+    "region": "AZ",
+    "slug": "talking-stick-piipaash"
+  },
+  {
+    "tier": "T3",
+    "rank": "151",
+    "name": "Bethpage Blue",
+    "city": "Farmingdale",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "bethpage-blue"
+  },
+  {
+    "tier": "T3",
+    "rank": "152",
+    "name": "Bethpage Yellow",
+    "city": "Farmingdale",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "bethpage-yellow"
+  },
+  {
+    "tier": "T3",
+    "rank": "153",
+    "name": "Bethpage Green",
+    "city": "Farmingdale",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "bethpage-green"
+  },
+  {
+    "tier": "T3",
+    "rank": "154",
+    "name": "Montauk Downs State Park",
+    "city": "Montauk",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "montauk-downs-state-park"
+  },
+  {
+    "tier": "T3",
+    "rank": "155",
+    "name": "Eisenhower Park \u2014 Red",
+    "city": "East Meadow",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "eisenhower-park-red"
+  },
+  {
+    "tier": "T3",
+    "rank": "156",
+    "name": "Eisenhower Park \u2014 White",
+    "city": "East Meadow",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "eisenhower-park-white"
+  },
+  {
+    "tier": "T3",
+    "rank": "157",
+    "name": "Eisenhower Park \u2014 Blue",
+    "city": "East Meadow",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "eisenhower-park-blue"
+  },
+  {
+    "tier": "T3",
+    "rank": "158",
+    "name": "Bethpage State Park \u2014 Bergen Point",
+    "city": "West Babylon",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "bethpage-state-park-bergen-point"
+  },
+  {
+    "tier": "T3",
+    "rank": "159",
+    "name": "Timber Point Golf Course",
+    "city": "Great River",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "timber-point-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "160",
+    "name": "West Sayville Golf Course",
+    "city": "West Sayville",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "west-sayville-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "161",
+    "name": "Indian Island Golf Course",
+    "city": "Riverhead",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "indian-island-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "162",
+    "name": "Van Cortlandt Park Golf Course",
+    "city": "Bronx",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "van-cortlandt-park-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "163",
+    "name": "Pelham Bay Golf Course",
+    "city": "Bronx",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "pelham-bay-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "164",
+    "name": "Split Rock Golf Course",
+    "city": "Bronx",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "split-rock-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "165",
+    "name": "Mosholu Golf Course",
+    "city": "Bronx",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "mosholu-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "166",
+    "name": "Bally's Golf Links at Ferry Point",
+    "city": "Bronx",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "ballys-golf-links-at-ferry-point"
+  },
+  {
+    "tier": "T3",
+    "rank": "167",
+    "name": "Dyker Beach Golf Course",
+    "city": "Brooklyn",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "dyker-beach-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "168",
+    "name": "Marine Park Golf Course",
+    "city": "Brooklyn",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "marine-park-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "170",
+    "name": "Clearview Park Golf Course",
+    "city": "Queens",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "clearview-park-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "171",
+    "name": "Douglaston Park Golf Course",
+    "city": "Queens",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "douglaston-park-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "172",
+    "name": "Kissena Park Golf Course",
+    "city": "Queens",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "kissena-park-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "173",
+    "name": "Silver Lake Golf Course",
+    "city": "Staten Island",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "silver-lake-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "174",
+    "name": "La Tourette Golf Course",
+    "city": "Staten Island",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "la-tourette-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "175",
+    "name": "South Shore Golf Course",
+    "city": "Staten Island",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "south-shore-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "176",
+    "name": "Saxon Woods Golf Course",
+    "city": "Scarsdale",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "saxon-woods-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "177",
+    "name": "Mohansic Golf Course",
+    "city": "Yorktown Heights",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "mohansic-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "178",
+    "name": "Dunwoodie Golf Course",
+    "city": "Yonkers",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "dunwoodie-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "179",
+    "name": "Sprain Lake Golf Course",
+    "city": "Yonkers",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "sprain-lake-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "180",
+    "name": "Maple Moor Golf Course",
+    "city": "White Plains",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "maple-moor-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "181",
+    "name": "Hudson Hills Golf Course",
+    "city": "Ossining",
+    "state": "NY",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "hudson-hills-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "182",
+    "name": "Centennial Golf Club",
+    "city": "Carmel",
+    "state": "NY",
+    "access": "daily-fee",
+    "region": "NE",
+    "slug": "centennial-golf-club"
+  },
+  {
+    "tier": "T3",
+    "rank": "183",
+    "name": "Galloping Hill Golf Course",
+    "city": "Kenilworth",
+    "state": "NJ",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "galloping-hill-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "184",
+    "name": "Hominy Hill Golf Course",
+    "city": "Colts Neck",
+    "state": "NJ",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "hominy-hill-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "185",
+    "name": "Neshanic Valley Golf Course",
+    "city": "Branchburg",
+    "state": "NJ",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "neshanic-valley-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "187",
+    "name": "Griffith Park Harding",
+    "city": "Los Angeles",
+    "state": "CA",
+    "access": "municipal",
+    "region": "LA",
+    "slug": "griffith-park-harding"
+  },
+  {
+    "tier": "T3",
+    "rank": "190",
+    "name": "Encino Golf Course",
+    "city": "Encino",
+    "state": "CA",
+    "access": "municipal",
+    "region": "LA",
+    "slug": "encino-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "206",
+    "name": "El Cariso Golf Course",
+    "city": "Sylmar",
+    "state": "CA",
+    "access": "municipal",
+    "region": "NC",
+    "slug": "el-cariso-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "207",
+    "name": "La Mirada Golf Course",
+    "city": "La Mirada",
+    "state": "CA",
+    "access": "municipal",
+    "region": "NC",
+    "slug": "la-mirada-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "208",
+    "name": "Eaton Canyon Golf Course",
+    "city": "Pasadena",
+    "state": "CA",
+    "access": "municipal",
+    "region": "LA",
+    "slug": "eaton-canyon-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "209",
+    "name": "Chester Washington Golf Course",
+    "city": "Los Angeles",
+    "state": "CA",
+    "access": "municipal",
+    "region": "LA",
+    "slug": "chester-washington-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "227",
+    "name": "Cog Hill \u2014 No. 1 (Course 1)",
+    "city": "Lemont",
+    "state": "IL",
+    "access": "daily-fee",
+    "region": "MW",
+    "slug": "cog-hill-no-1-course-1"
+  },
+  {
+    "tier": "T3",
+    "rank": "228",
+    "name": "Cog Hill \u2014 No. 2 (Course 2)",
+    "city": "Lemont",
+    "state": "IL",
+    "access": "daily-fee",
+    "region": "MW",
+    "slug": "cog-hill-no-2-course-2"
+  },
+  {
+    "tier": "T3",
+    "rank": "229",
+    "name": "Cog Hill \u2014 No. 3 (Ravines)",
+    "city": "Lemont",
+    "state": "IL",
+    "access": "daily-fee",
+    "region": "MW",
+    "slug": "cog-hill-no-3-ravines"
+  },
+  {
+    "tier": "T3",
+    "rank": "230",
+    "name": "Cantigny Golf",
+    "city": "Wheaton",
+    "state": "IL",
+    "access": "daily-fee",
+    "region": "MW",
+    "slug": "cantigny-golf"
+  },
+  {
+    "tier": "T3",
+    "rank": "231",
+    "name": "Harborside International Golf Center",
+    "city": "Chicago",
+    "state": "IL",
+    "access": "daily-fee",
+    "region": "MW",
+    "slug": "harborside-international-golf-center"
+  },
+  {
+    "tier": "T3",
+    "rank": "233",
+    "name": "ThunderHawk Golf Club",
+    "city": "Beach Park",
+    "state": "IL",
+    "access": "resort",
+    "region": "MW",
+    "slug": "thunderhawk-golf-club"
+  },
+  {
+    "tier": "T3",
+    "rank": "234",
+    "name": "Bolingbrook Golf Club",
+    "city": "Bolingbrook",
+    "state": "IL",
+    "access": "daily-fee",
+    "region": "MW",
+    "slug": "bolingbrook-golf-club"
+  },
+  {
+    "tier": "T3",
+    "rank": "235",
+    "name": "George W. Dunne National",
+    "city": "Oak Forest",
+    "state": "IL",
+    "access": "resort",
+    "region": "MW",
+    "slug": "george-w-dunne-national"
+  },
+  {
+    "tier": "T3",
+    "rank": "236",
+    "name": "Sydney R. Marovitz Golf Course",
+    "city": "Chicago",
+    "state": "IL",
+    "access": "municipal",
+    "region": "MW",
+    "slug": "sydney-r-marovitz-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "237",
+    "name": "Robert A. Black Golf Course",
+    "city": "Chicago",
+    "state": "IL",
+    "access": "municipal",
+    "region": "MW",
+    "slug": "robert-a-black-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "238",
+    "name": "Jackson Park Golf Course",
+    "city": "Chicago",
+    "state": "IL",
+    "access": "municipal",
+    "region": "MW",
+    "slug": "jackson-park-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "239",
+    "name": "Columbus Park Golf Course",
+    "city": "Chicago",
+    "state": "IL",
+    "access": "municipal",
+    "region": "MW",
+    "slug": "columbus-park-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "240",
+    "name": "Marquette Park Golf Course",
+    "city": "Chicago",
+    "state": "IL",
+    "access": "municipal",
+    "region": "MW",
+    "slug": "marquette-park-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "243",
+    "name": "Jefferson Park Golf Course",
+    "city": "Seattle",
+    "state": "WA",
+    "access": "municipal",
+    "region": "PNW",
+    "slug": "jefferson-park-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "244",
+    "name": "West Seattle Golf Course",
+    "city": "Seattle",
+    "state": "WA",
+    "access": "municipal",
+    "region": "PNW",
+    "slug": "west-seattle-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "245",
+    "name": "Foster Golf Links",
+    "city": "Tukwila",
+    "state": "WA",
+    "access": "municipal",
+    "region": "PNW",
+    "slug": "foster-golf-links"
+  },
+  {
+    "tier": "T3",
+    "rank": "255",
+    "name": "Glendoveer Golf Course \u2014 East",
+    "city": "Portland",
+    "state": "OR",
+    "access": "municipal",
+    "region": "PNW",
+    "slug": "glendoveer-golf-course-east"
+  },
+  {
+    "tier": "T3",
+    "rank": "256",
+    "name": "Glendoveer Golf Course \u2014 West",
+    "city": "Portland",
+    "state": "OR",
+    "access": "municipal",
+    "region": "PNW",
+    "slug": "glendoveer-golf-course-west"
+  },
+  {
+    "tier": "T3",
+    "rank": "270",
+    "name": "Aguila Golf Course",
+    "city": "Laveen",
+    "state": "AZ",
+    "access": "municipal",
+    "region": "AZ",
+    "slug": "aguila-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "277",
+    "name": "Westin Kierland Golf Club",
+    "city": "Scottsdale",
+    "state": "AZ",
+    "access": "resort",
+    "region": "AZ",
+    "slug": "westin-kierland-golf-club"
+  },
+  {
+    "tier": "T3",
+    "rank": "280",
+    "name": "Ak-Chin Southern Dunes",
+    "city": "Maricopa",
+    "state": "AZ",
+    "access": "daily-fee",
+    "region": "AZ",
+    "slug": "ak-chin-southern-dunes"
+  },
+  {
+    "tier": "T3",
+    "rank": "281",
+    "name": "Verrado Golf Club",
+    "city": "Buckeye",
+    "state": "AZ",
+    "access": "daily-fee",
+    "region": "AZ",
+    "slug": "verrado-golf-club"
+  },
+  {
+    "tier": "T3",
+    "rank": "283",
+    "name": "Hermann Park Golf Course",
+    "city": "Houston",
+    "state": "TX",
+    "access": "municipal",
+    "region": "TX",
+    "slug": "hermann-park-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "284",
+    "name": "Gus Wortham Park Golf Course",
+    "city": "Houston",
+    "state": "TX",
+    "access": "municipal",
+    "region": "TX",
+    "slug": "gus-wortham-park-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "285",
+    "name": "Sharpstown Park Golf Course",
+    "city": "Houston",
+    "state": "TX",
+    "access": "municipal",
+    "region": "TX",
+    "slug": "sharpstown-park-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "286",
+    "name": "Golf Club of Houston \u2014 Tournament",
+    "city": "Humble",
+    "state": "TX",
+    "access": "daily-fee",
+    "region": "TX",
+    "slug": "golf-club-of-houston-tournament"
+  },
+  {
+    "tier": "T3",
+    "rank": "287",
+    "name": "Cypresswood \u2014 Tradition",
+    "city": "Spring",
+    "state": "TX",
+    "access": "daily-fee",
+    "region": "TX",
+    "slug": "cypresswood-tradition"
+  },
+  {
+    "tier": "T3",
+    "rank": "290",
+    "name": "Tour 18 Houston",
+    "city": "Humble",
+    "state": "TX",
+    "access": "daily-fee",
+    "region": "TX",
+    "slug": "tour-18-houston"
+  },
+  {
+    "tier": "T3",
+    "rank": "291",
+    "name": "Tenison Park Highlands",
+    "city": "Dallas",
+    "state": "TX",
+    "access": "municipal",
+    "region": "TX",
+    "slug": "tenison-park-highlands"
+  },
+  {
+    "tier": "T3",
+    "rank": "292",
+    "name": "Stevens Park Golf Course",
+    "city": "Dallas",
+    "state": "TX",
+    "access": "municipal",
+    "region": "TX",
+    "slug": "stevens-park-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "293",
+    "name": "Grapevine Golf Course",
+    "city": "Grapevine",
+    "state": "TX",
+    "access": "municipal",
+    "region": "TX",
+    "slug": "grapevine-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "294",
+    "name": "Cowboys Golf Club",
+    "city": "Grapevine",
+    "state": "TX",
+    "access": "daily-fee",
+    "region": "TX",
+    "slug": "cowboys-golf-club"
+  },
+  {
+    "tier": "T3",
+    "rank": "295",
+    "name": "Texas Star Golf Course",
+    "city": "Euless",
+    "state": "TX",
+    "access": "daily-fee",
+    "region": "TX",
+    "slug": "texas-star-golf-course"
+  },
+  {
+    "tier": "T3",
+    "rank": "296",
+    "name": "The Tribute Golf Links",
+    "city": "The Colony",
+    "state": "TX",
+    "access": "daily-fee",
+    "region": "TX",
+    "slug": "the-tribute-golf-links"
+  },
+  {
+    "tier": "T3",
+    "rank": "297",
+    "name": "Old American Golf Club",
+    "city": "The Colony",
+    "state": "TX",
+    "access": "daily-fee",
+    "region": "TX",
+    "slug": "old-american-golf-club"
+  },
+  {
+    "tier": "T3",
+    "rank": "298",
+    "name": "Tour 18 Dallas",
+    "city": "Flower Mound",
+    "state": "TX",
+    "access": "daily-fee",
+    "region": "TX",
+    "slug": "tour-18-dallas"
+  },
+  {
+    "tier": "T3",
+    "rank": "299",
+    "name": "Lions Municipal (Muny)",
+    "city": "Austin",
+    "state": "TX",
+    "access": "municipal",
+    "region": "TX",
+    "slug": "lions-municipal-muny"
+  },
+  {
+    "tier": "T3",
+    "rank": "300",
+    "name": "Jimmy Clay Golf Course",
+    "city": "Austin",
+    "state": "TX",
+    "access": "municipal",
+    "region": "TX",
+    "slug": "jimmy-clay-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "304",
+    "name": "Grey Rock Golf Club",
+    "city": "Austin",
+    "state": "TX",
+    "access": "daily-fee",
+    "region": "TX",
+    "slug": "grey-rock-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "307",
+    "name": "Wolfdancer Golf Club",
+    "city": "Bastrop",
+    "state": "TX",
+    "access": "resort",
+    "region": "TX",
+    "slug": "wolfdancer-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "308",
+    "name": "Brackenridge Park Golf Course",
+    "city": "San Antonio",
+    "state": "TX",
+    "access": "municipal",
+    "region": "TX",
+    "slug": "brackenridge-park-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "309",
+    "name": "Olmos Basin Golf Course",
+    "city": "San Antonio",
+    "state": "TX",
+    "access": "municipal",
+    "region": "TX",
+    "slug": "olmos-basin-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "310",
+    "name": "Cedar Creek Golf Course",
+    "city": "San Antonio",
+    "state": "TX",
+    "access": "municipal",
+    "region": "TX",
+    "slug": "cedar-creek-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "312",
+    "name": "Canyon Springs Golf Club",
+    "city": "San Antonio",
+    "state": "TX",
+    "access": "daily-fee",
+    "region": "TX",
+    "slug": "canyon-springs-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "313",
+    "name": "La Cantera Golf Club \u2014 Resort",
+    "city": "San Antonio",
+    "state": "TX",
+    "access": "resort",
+    "region": "TX",
+    "slug": "la-cantera-golf-club-resort"
+  },
+  {
+    "tier": "T4",
+    "rank": "314",
+    "name": "Hyatt Hill Country Golf Club",
+    "city": "San Antonio",
+    "state": "TX",
+    "access": "resort",
+    "region": "TX",
+    "slug": "hyatt-hill-country-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "315",
+    "name": "Hyde Park Golf Club",
+    "city": "Jacksonville",
+    "state": "FL",
+    "access": "daily-fee",
+    "region": "FL",
+    "slug": "hyde-park-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "316",
+    "name": "Jacksonville Beach Golf Club",
+    "city": "Jacksonville Beach",
+    "state": "FL",
+    "access": "municipal",
+    "region": "FL",
+    "slug": "jacksonville-beach-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "317",
+    "name": "World Golf Village \u2014 King & Bear",
+    "city": "St. Augustine",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "world-golf-village-king-bear"
+  },
+  {
+    "tier": "T4",
+    "rank": "318",
+    "name": "World Golf Village \u2014 Slammer & Squire",
+    "city": "St. Augustine",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "world-golf-village-slammer-squire"
+  },
+  {
+    "tier": "T4",
+    "rank": "319",
+    "name": "Disney's Magnolia",
+    "city": "Lake Buena Vista",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "disneys-magnolia"
+  },
+  {
+    "tier": "T4",
+    "rank": "320",
+    "name": "Disney's Palm",
+    "city": "Lake Buena Vista",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "disneys-palm"
+  },
+  {
+    "tier": "T4",
+    "rank": "321",
+    "name": "Disney's Lake Buena Vista",
+    "city": "Lake Buena Vista",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "disneys-lake-buena-vista"
+  },
+  {
+    "tier": "T4",
+    "rank": "322",
+    "name": "Disney's Oak Trail",
+    "city": "Lake Buena Vista",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "disneys-oak-trail"
+  },
+  {
+    "tier": "T4",
+    "rank": "323",
+    "name": "Waldorf Astoria Orlando",
+    "city": "Orlando",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "waldorf-astoria-orlando"
+  },
+  {
+    "tier": "T4",
+    "rank": "324",
+    "name": "Reunion Resort \u2014 Watson",
+    "city": "Reunion",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "reunion-resort-watson"
+  },
+  {
+    "tier": "T4",
+    "rank": "325",
+    "name": "Reunion Resort \u2014 Palmer",
+    "city": "Reunion",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "reunion-resort-palmer"
+  },
+  {
+    "tier": "T4",
+    "rank": "326",
+    "name": "Reunion Resort \u2014 Nicklaus",
+    "city": "Reunion",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "reunion-resort-nicklaus"
+  },
+  {
+    "tier": "T4",
+    "rank": "327",
+    "name": "ChampionsGate \u2014 National",
+    "city": "ChampionsGate",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "championsgate-national"
+  },
+  {
+    "tier": "T4",
+    "rank": "328",
+    "name": "ChampionsGate \u2014 International",
+    "city": "ChampionsGate",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "championsgate-international"
+  },
+  {
+    "tier": "T4",
+    "rank": "329",
+    "name": "Orange County National \u2014 Panther Lake",
+    "city": "Winter Garden",
+    "state": "FL",
+    "access": "daily-fee",
+    "region": "FL",
+    "slug": "orange-county-national-panther-lake"
+  },
+  {
+    "tier": "T4",
+    "rank": "330",
+    "name": "Orange County National \u2014 Crooked Cat",
+    "city": "Winter Garden",
+    "state": "FL",
+    "access": "daily-fee",
+    "region": "FL",
+    "slug": "orange-county-national-crooked-cat"
+  },
+  {
+    "tier": "T4",
+    "rank": "331",
+    "name": "Shingle Creek Golf Club",
+    "city": "Orlando",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "shingle-creek-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "332",
+    "name": "Falcon's Fire Golf Club",
+    "city": "Kissimmee",
+    "state": "FL",
+    "access": "daily-fee",
+    "region": "FL",
+    "slug": "falcons-fire-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "333",
+    "name": "Celebration Golf Club",
+    "city": "Celebration",
+    "state": "FL",
+    "access": "daily-fee",
+    "region": "FL",
+    "slug": "celebration-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "336",
+    "name": "TPC Tampa Bay",
+    "city": "Lutz",
+    "state": "FL",
+    "access": "daily-fee",
+    "region": "FL",
+    "slug": "tpc-tampa-bay"
+  },
+  {
+    "tier": "T4",
+    "rank": "337",
+    "name": "Saddlebrook Resort",
+    "city": "Wesley Chapel",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "saddlebrook-resort"
+  },
+  {
+    "tier": "T4",
+    "rank": "338",
+    "name": "Cabot Citrus Farms \u2014 Squeeze",
+    "city": "Brooksville",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "cabot-citrus-farms-squeeze"
+  },
+  {
+    "tier": "T4",
+    "rank": "339",
+    "name": "Cabot Citrus Farms \u2014 Wedge",
+    "city": "Brooksville",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "cabot-citrus-farms-wedge"
+  },
+  {
+    "tier": "T4",
+    "rank": "340",
+    "name": "Tiburon \u2014 Gold (Ritz-Carlton)",
+    "city": "Naples",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "tiburon-gold-ritz-carlton"
+  },
+  {
+    "tier": "T4",
+    "rank": "341",
+    "name": "Tiburon \u2014 Black (Ritz-Carlton)",
+    "city": "Naples",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "tiburon-black-ritz-carlton"
+  },
+  {
+    "tier": "T4",
+    "rank": "342",
+    "name": "Lely Resort \u2014 Flamingo Island",
+    "city": "Naples",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "lely-resort-flamingo-island"
+  },
+  {
+    "tier": "T4",
+    "rank": "343",
+    "name": "Lely Resort \u2014 Mustang",
+    "city": "Naples",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "lely-resort-mustang"
+  },
+  {
+    "tier": "T4",
+    "rank": "344",
+    "name": "Old Corkscrew Golf Club",
+    "city": "Estero",
+    "state": "FL",
+    "access": "daily-fee",
+    "region": "FL",
+    "slug": "old-corkscrew-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "345",
+    "name": "Raptor Bay Golf Club",
+    "city": "Bonita Springs",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "raptor-bay-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "346",
+    "name": "Naples Grande Golf Club",
+    "city": "Naples",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "naples-grande-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "347",
+    "name": "Crandon Park Golf Course",
+    "city": "Key Biscayne",
+    "state": "FL",
+    "access": "municipal",
+    "region": "FL",
+    "slug": "crandon-park-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "349",
+    "name": "Okeeheelee Golf Course",
+    "city": "West Palm Beach",
+    "state": "FL",
+    "access": "municipal",
+    "region": "FL",
+    "slug": "okeeheelee-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "350",
+    "name": "North Palm Beach Country Club",
+    "city": "North Palm Beach",
+    "state": "FL",
+    "access": "municipal",
+    "region": "FL",
+    "slug": "north-palm-beach-country-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "351",
+    "name": "The Breakers Ocean Course",
+    "city": "Palm Beach",
+    "state": "FL",
+    "access": "resort",
+    "region": "FL",
+    "slug": "the-breakers-ocean-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "352",
+    "name": "Palm Beach National Golf Course",
+    "city": "Lake Worth",
+    "state": "FL",
+    "access": "daily-fee",
+    "region": "FL",
+    "slug": "palm-beach-national-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "353",
+    "name": "Trump International (West Palm)",
+    "city": "West Palm Beach",
+    "state": "FL",
+    "access": "daily-fee",
+    "region": "FL",
+    "slug": "trump-international-west-palm"
+  },
+  {
+    "tier": "T4",
+    "rank": "354",
+    "name": "Harbour Town (#31 above; alias)",
+    "city": "Hilton Head Island",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "harbour-town-31-above-alias"
+  },
+  {
+    "tier": "T4",
+    "rank": "355",
+    "name": "Heron Point by Pete Dye",
+    "city": "Hilton Head Island",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "heron-point-by-pete-dye"
+  },
+  {
+    "tier": "T4",
+    "rank": "356",
+    "name": "Atlantic Dunes by Davis Love III",
+    "city": "Hilton Head Island",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "atlantic-dunes-by-davis-love-iii"
+  },
+  {
+    "tier": "T4",
+    "rank": "357",
+    "name": "Palmetto Dunes \u2014 Robert Trent Jones",
+    "city": "Hilton Head Island",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "palmetto-dunes-robert-trent-jones"
+  },
+  {
+    "tier": "T4",
+    "rank": "358",
+    "name": "Palmetto Dunes \u2014 Fazio",
+    "city": "Hilton Head Island",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "palmetto-dunes-fazio"
+  },
+  {
+    "tier": "T4",
+    "rank": "359",
+    "name": "Palmetto Dunes \u2014 Arthur Hills",
+    "city": "Hilton Head Island",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "palmetto-dunes-arthur-hills"
+  },
+  {
+    "tier": "T4",
+    "rank": "360",
+    "name": "Palmetto Hall \u2014 Arthur Hills",
+    "city": "Hilton Head Island",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "palmetto-hall-arthur-hills"
+  },
+  {
+    "tier": "T4",
+    "rank": "361",
+    "name": "Palmetto Hall \u2014 Robert Cupp",
+    "city": "Hilton Head Island",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "palmetto-hall-robert-cupp"
+  },
+  {
+    "tier": "T4",
+    "rank": "362",
+    "name": "May River Golf Club at Palmetto Bluff",
+    "city": "Bluffton",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "may-river-golf-club-at-palmetto-bluff"
+  },
+  {
+    "tier": "T4",
+    "rank": "363",
+    "name": "Old South Golf Links",
+    "city": "Bluffton",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "old-south-golf-links"
+  },
+  {
+    "tier": "T4",
+    "rank": "364",
+    "name": "Hilton Head National Golf Club",
+    "city": "Bluffton",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "hilton-head-national-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "365",
+    "name": "Oyster Reef Golf Club",
+    "city": "Hilton Head Island",
+    "state": "SC",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "oyster-reef-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "366",
+    "name": "Port Royal \u2014 Robber's Row",
+    "city": "Hilton Head Island",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "port-royal-robbers-row"
+  },
+  {
+    "tier": "T4",
+    "rank": "367",
+    "name": "Port Royal \u2014 Barony",
+    "city": "Hilton Head Island",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "port-royal-barony"
+  },
+  {
+    "tier": "T4",
+    "rank": "368",
+    "name": "Shipyard \u2014 Clipper/Galleon",
+    "city": "Hilton Head Island",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "shipyard-clippergalleon"
+  },
+  {
+    "tier": "T4",
+    "rank": "369",
+    "name": "Shipyard \u2014 Brigantine",
+    "city": "Hilton Head Island",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "shipyard-brigantine"
+  },
+  {
+    "tier": "T4",
+    "rank": "370",
+    "name": "Myrtle Beach National \u2014 King's North",
+    "city": "Myrtle Beach",
+    "state": "SC",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "myrtle-beach-national-kings-north"
+  },
+  {
+    "tier": "T4",
+    "rank": "371",
+    "name": "Myrtle Beach National \u2014 West",
+    "city": "Myrtle Beach",
+    "state": "SC",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "myrtle-beach-national-west"
+  },
+  {
+    "tier": "T4",
+    "rank": "372",
+    "name": "Myrtle Beach National \u2014 SouthCreek",
+    "city": "Myrtle Beach",
+    "state": "SC",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "myrtle-beach-national-southcreek"
+  },
+  {
+    "tier": "T4",
+    "rank": "374",
+    "name": "Pine Lakes Country Club",
+    "city": "Myrtle Beach",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "pine-lakes-country-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "375",
+    "name": "Legends Resort \u2014 Heathland",
+    "city": "Myrtle Beach",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "legends-resort-heathland"
+  },
+  {
+    "tier": "T4",
+    "rank": "376",
+    "name": "Legends Resort \u2014 Moorland",
+    "city": "Myrtle Beach",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "legends-resort-moorland"
+  },
+  {
+    "tier": "T4",
+    "rank": "377",
+    "name": "Legends Resort \u2014 Parkland",
+    "city": "Myrtle Beach",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "legends-resort-parkland"
+  },
+  {
+    "tier": "T4",
+    "rank": "378",
+    "name": "Founders Club at Pawleys Island",
+    "city": "Pawleys Island",
+    "state": "SC",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "founders-club-at-pawleys-island"
+  },
+  {
+    "tier": "T4",
+    "rank": "379",
+    "name": "World Tour Golf Links",
+    "city": "Myrtle Beach",
+    "state": "SC",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "world-tour-golf-links"
+  },
+  {
+    "tier": "T4",
+    "rank": "380",
+    "name": "Grande Dunes Resort Course",
+    "city": "Myrtle Beach",
+    "state": "SC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "grande-dunes-resort-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "381",
+    "name": "Lonnie Poole GC at NC State",
+    "city": "Raleigh",
+    "state": "NC",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "lonnie-poole-gc-at-nc-state"
+  },
+  {
+    "tier": "T4",
+    "rank": "382",
+    "name": "UNC Finley Golf Course",
+    "city": "Chapel Hill",
+    "state": "NC",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "unc-finley-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "383",
+    "name": "Duke University Golf Club",
+    "city": "Durham",
+    "state": "NC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "duke-university-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "384",
+    "name": "Hillandale Golf Course",
+    "city": "Durham",
+    "state": "NC",
+    "access": "municipal",
+    "region": "SE",
+    "slug": "hillandale-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "385",
+    "name": "Knights Play Golf Center",
+    "city": "Apex",
+    "state": "NC",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "knights-play-golf-center"
+  },
+  {
+    "tier": "T4",
+    "rank": "386",
+    "name": "The Preserve at Jordan Lake",
+    "city": "Chapel Hill",
+    "state": "NC",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "the-preserve-at-jordan-lake"
+  },
+  {
+    "tier": "T4",
+    "rank": "388",
+    "name": "Tanglewood Park \u2014 Championship",
+    "city": "Clemmons",
+    "state": "NC",
+    "access": "municipal",
+    "region": "SE",
+    "slug": "tanglewood-park-championship"
+  },
+  {
+    "tier": "T4",
+    "rank": "389",
+    "name": "Tanglewood Park \u2014 Reynolds",
+    "city": "Clemmons",
+    "state": "NC",
+    "access": "municipal",
+    "region": "SE",
+    "slug": "tanglewood-park-reynolds"
+  },
+  {
+    "tier": "T4",
+    "rank": "390",
+    "name": "Bryan Park \u2014 Players",
+    "city": "Browns Summit",
+    "state": "NC",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "bryan-park-players"
+  },
+  {
+    "tier": "T4",
+    "rank": "392",
+    "name": "Grandover Resort \u2014 East",
+    "city": "Greensboro",
+    "state": "NC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "grandover-resort-east"
+  },
+  {
+    "tier": "T4",
+    "rank": "393",
+    "name": "Grandover Resort \u2014 West",
+    "city": "Greensboro",
+    "state": "NC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "grandover-resort-west"
+  },
+  {
+    "tier": "T4",
+    "rank": "394",
+    "name": "Rocky River Golf Club at Concord",
+    "city": "Concord",
+    "state": "NC",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "rocky-river-golf-club-at-concord"
+  },
+  {
+    "tier": "T4",
+    "rank": "396",
+    "name": "Highland Creek Golf Club",
+    "city": "Charlotte",
+    "state": "NC",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "highland-creek-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "397",
+    "name": "Charles T. Myers Golf Course",
+    "city": "Charlotte",
+    "state": "NC",
+    "access": "municipal",
+    "region": "SE",
+    "slug": "charles-t-myers-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "398",
+    "name": "Asheville Municipal Golf Course",
+    "city": "Asheville",
+    "state": "NC",
+    "access": "municipal",
+    "region": "SE",
+    "slug": "asheville-municipal-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "399",
+    "name": "Reems Creek Golf Club",
+    "city": "Weaverville",
+    "state": "NC",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "reems-creek-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "400",
+    "name": "Talamore Golf Resort",
+    "city": "Southern Pines",
+    "state": "NC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "talamore-golf-resort"
+  },
+  {
+    "tier": "T4",
+    "rank": "402",
+    "name": "Longleaf Golf & Family Club",
+    "city": "Southern Pines",
+    "state": "NC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "longleaf-golf-family-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "403",
+    "name": "Pinewild \u2014 Magnolia",
+    "city": "Pinehurst",
+    "state": "NC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "pinewild-magnolia"
+  },
+  {
+    "tier": "T4",
+    "rank": "404",
+    "name": "Country Club of Whispering Pines",
+    "city": "Whispering Pines",
+    "state": "NC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "country-club-of-whispering-pines"
+  },
+  {
+    "tier": "T4",
+    "rank": "405",
+    "name": "Furman Golf Club",
+    "city": "Greenville",
+    "state": "SC",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "furman-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "406",
+    "name": "The Preserve at Verdae",
+    "city": "Greenville",
+    "state": "SC",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "the-preserve-at-verdae"
+  },
+  {
+    "tier": "T4",
+    "rank": "407",
+    "name": "River Falls Plantation",
+    "city": "Duncan",
+    "state": "SC",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "river-falls-plantation"
+  },
+  {
+    "tier": "T4",
+    "rank": "409",
+    "name": "Pebble Creek Golf Club",
+    "city": "Taylors",
+    "state": "SC",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "pebble-creek-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "410",
+    "name": "Murder Rock Golf Club",
+    "city": "Branson",
+    "state": "MO",
+    "access": "daily-fee",
+    "region": "MW",
+    "slug": "murder-rock-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "411",
+    "name": "Branson Hills Golf Club",
+    "city": "Branson",
+    "state": "MO",
+    "access": "daily-fee",
+    "region": "MW",
+    "slug": "branson-hills-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "412",
+    "name": "LedgeStone Golf Course",
+    "city": "Branson West",
+    "state": "MO",
+    "access": "daily-fee",
+    "region": "MW",
+    "slug": "ledgestone-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "413",
+    "name": "Pointe Royale Golf Course",
+    "city": "Branson",
+    "state": "MO",
+    "access": "resort",
+    "region": "MW",
+    "slug": "pointe-royale-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "414",
+    "name": "Thousand Hills Golf Resort",
+    "city": "Branson",
+    "state": "MO",
+    "access": "resort",
+    "region": "MW",
+    "slug": "thousand-hills-golf-resort"
+  },
+  {
+    "tier": "T4",
+    "rank": "416",
+    "name": "Missouri Bluffs Golf Club",
+    "city": "St. Charles",
+    "state": "MO",
+    "access": "daily-fee",
+    "region": "MW",
+    "slug": "missouri-bluffs-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "417",
+    "name": "Gateway National Golf Links",
+    "city": "Madison",
+    "state": "IL",
+    "access": "daily-fee",
+    "region": "MW",
+    "slug": "gateway-national-golf-links"
+  },
+  {
+    "tier": "T4",
+    "rank": "418",
+    "name": "Shoal Creek Golf Course",
+    "city": "Kansas City",
+    "state": "MO",
+    "access": "municipal",
+    "region": "MW",
+    "slug": "shoal-creek-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "419",
+    "name": "Stone Canyon Golf Club",
+    "city": "Blue Springs",
+    "state": "MO",
+    "access": "daily-fee",
+    "region": "MW",
+    "slug": "stone-canyon-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "420",
+    "name": "WinterStone Golf Course",
+    "city": "Independence",
+    "state": "MO",
+    "access": "daily-fee",
+    "region": "MW",
+    "slug": "winterstone-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "421",
+    "name": "Trappers Turn Golf Club",
+    "city": "Wisconsin Dells",
+    "state": "WI",
+    "access": "daily-fee",
+    "region": "MW",
+    "slug": "trappers-turn-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "422",
+    "name": "Wild Rock Golf Club",
+    "city": "Wisconsin Dells",
+    "state": "WI",
+    "access": "resort",
+    "region": "MW",
+    "slug": "wild-rock-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "423",
+    "name": "Cold Water Canyon Golf Course",
+    "city": "Wisconsin Dells",
+    "state": "WI",
+    "access": "resort",
+    "region": "MW",
+    "slug": "cold-water-canyon-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "424",
+    "name": "Christmas Mountain Village",
+    "city": "Wisconsin Dells",
+    "state": "WI",
+    "access": "resort",
+    "region": "MW",
+    "slug": "christmas-mountain-village"
+  },
+  {
+    "tier": "T4",
+    "rank": "425",
+    "name": "SentryWorld",
+    "city": "Stevens Point",
+    "state": "WI",
+    "access": "resort",
+    "region": "MW",
+    "slug": "sentryworld"
+  },
+  {
+    "tier": "T4",
+    "rank": "426",
+    "name": "Tullymore Golf Club",
+    "city": "Stanwood",
+    "state": "MI",
+    "access": "resort",
+    "region": "MW",
+    "slug": "tullymore-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "427",
+    "name": "St. Ives Golf Club",
+    "city": "Stanwood",
+    "state": "MI",
+    "access": "resort",
+    "region": "MW",
+    "slug": "st-ives-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "429",
+    "name": "Fox Hills Golf & Banquet Center",
+    "city": "Plymouth",
+    "state": "MI",
+    "access": "daily-fee",
+    "region": "MW",
+    "slug": "fox-hills-golf-banquet-center"
+  },
+  {
+    "tier": "T4",
+    "rank": "430",
+    "name": "Shepherd's Hollow Golf Club",
+    "city": "Clarkston",
+    "state": "MI",
+    "access": "daily-fee",
+    "region": "MW",
+    "slug": "shepherds-hollow-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "431",
+    "name": "Northville Hills Golf Club",
+    "city": "Northville",
+    "state": "MI",
+    "access": "daily-fee",
+    "region": "MW",
+    "slug": "northville-hills-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "433",
+    "name": "Fossil Trace Golf Club",
+    "city": "Golden",
+    "state": "CO",
+    "access": "municipal",
+    "region": "CO",
+    "slug": "fossil-trace-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "434",
+    "name": "Riverdale Dunes",
+    "city": "Brighton",
+    "state": "CO",
+    "access": "municipal",
+    "region": "CO",
+    "slug": "riverdale-dunes"
+  },
+  {
+    "tier": "T4",
+    "rank": "435",
+    "name": "Riverdale Knolls",
+    "city": "Brighton",
+    "state": "CO",
+    "access": "municipal",
+    "region": "CO",
+    "slug": "riverdale-knolls"
+  },
+  {
+    "tier": "T4",
+    "rank": "436",
+    "name": "Murphy Creek Golf Course",
+    "city": "Aurora",
+    "state": "CO",
+    "access": "municipal",
+    "region": "CO",
+    "slug": "murphy-creek-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "437",
+    "name": "CommonGround Golf Course",
+    "city": "Aurora",
+    "state": "CO",
+    "access": "daily-fee",
+    "region": "CO",
+    "slug": "commonground-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "439",
+    "name": "Fox Hollow Golf Course",
+    "city": "Lakewood",
+    "state": "CO",
+    "access": "municipal",
+    "region": "CO",
+    "slug": "fox-hollow-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "441",
+    "name": "Buffalo Run Golf Course",
+    "city": "Commerce City",
+    "state": "CO",
+    "access": "municipal",
+    "region": "CO",
+    "slug": "buffalo-run-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "443",
+    "name": "Wellshire Golf Course",
+    "city": "Denver",
+    "state": "CO",
+    "access": "municipal",
+    "region": "CO",
+    "slug": "wellshire-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "445",
+    "name": "Patty Jewett Golf Course",
+    "city": "Colorado Springs",
+    "state": "CO",
+    "access": "municipal",
+    "region": "CO",
+    "slug": "patty-jewett-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "447",
+    "name": "Cheyenne Mountain Resort Golf Club",
+    "city": "Colorado Springs",
+    "state": "CO",
+    "access": "resort",
+    "region": "CO",
+    "slug": "cheyenne-mountain-resort-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "449",
+    "name": "Keystone Ranch Golf Course",
+    "city": "Keystone",
+    "state": "CO",
+    "access": "resort",
+    "region": "CO",
+    "slug": "keystone-ranch-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "450",
+    "name": "The River Course at Keystone",
+    "city": "Keystone",
+    "state": "CO",
+    "access": "resort",
+    "region": "CO",
+    "slug": "the-river-course-at-keystone"
+  },
+  {
+    "tier": "T4",
+    "rank": "451",
+    "name": "Sonnenalp Golf Club",
+    "city": "Edwards",
+    "state": "CO",
+    "access": "resort",
+    "region": "CO",
+    "slug": "sonnenalp-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "453",
+    "name": "Hermitage Golf Course \u2014 President's Reserve",
+    "city": "Old Hickory",
+    "state": "TN",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "hermitage-golf-course-presidents-reserve"
+  },
+  {
+    "tier": "T4",
+    "rank": "454",
+    "name": "Hermitage Golf Course \u2014 General's Retreat",
+    "city": "Old Hickory",
+    "state": "TN",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "hermitage-golf-course-generals-retreat"
+  },
+  {
+    "tier": "T4",
+    "rank": "455",
+    "name": "Gaylord Springs Golf Links",
+    "city": "Nashville",
+    "state": "TN",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "gaylord-springs-golf-links"
+  },
+  {
+    "tier": "T4",
+    "rank": "456",
+    "name": "Two Rivers Golf Course",
+    "city": "Nashville",
+    "state": "TN",
+    "access": "municipal",
+    "region": "SE",
+    "slug": "two-rivers-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "457",
+    "name": "McCabe Golf Course",
+    "city": "Nashville",
+    "state": "TN",
+    "access": "municipal",
+    "region": "SE",
+    "slug": "mccabe-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "458",
+    "name": "Harpeth Hills Golf Course",
+    "city": "Nashville",
+    "state": "TN",
+    "access": "municipal",
+    "region": "SE",
+    "slug": "harpeth-hills-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "459",
+    "name": "Ted Rhodes Golf Course",
+    "city": "Nashville",
+    "state": "TN",
+    "access": "municipal",
+    "region": "SE",
+    "slug": "ted-rhodes-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "460",
+    "name": "Franklin Bridge Golf Club",
+    "city": "Franklin",
+    "state": "TN",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "franklin-bridge-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "461",
+    "name": "Bent Creek Golf Course",
+    "city": "Gatlinburg",
+    "state": "TN",
+    "access": "resort",
+    "region": "SE",
+    "slug": "bent-creek-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "462",
+    "name": "Sevierville Golf Club",
+    "city": "Sevierville",
+    "state": "TN",
+    "access": "municipal",
+    "region": "SE",
+    "slug": "sevierville-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "463",
+    "name": "Gatlinburg Golf Course",
+    "city": "Pigeon Forge",
+    "state": "TN",
+    "access": "municipal",
+    "region": "SE",
+    "slug": "gatlinburg-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "464",
+    "name": "Bear Trace at Harrison Bay",
+    "city": "Harrison",
+    "state": "TN",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "bear-trace-at-harrison-bay"
+  },
+  {
+    "tier": "T4",
+    "rank": "465",
+    "name": "Mirimichi Golf Course",
+    "city": "Millington",
+    "state": "TN",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "mirimichi-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "467",
+    "name": "Soldier Hollow \u2014 Silver",
+    "city": "Midway",
+    "state": "UT",
+    "access": "daily-fee",
+    "region": "UT",
+    "slug": "soldier-hollow-silver"
+  },
+  {
+    "tier": "T4",
+    "rank": "475",
+    "name": "Black Desert Resort",
+    "city": "Ivins",
+    "state": "UT",
+    "access": "resort",
+    "region": "UT",
+    "slug": "black-desert-resort"
+  },
+  {
+    "tier": "T4",
+    "rank": "476",
+    "name": "Cambrian Ridge (RTJ Trail)",
+    "city": "Greenville",
+    "state": "AL",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "cambrian-ridge-rtj-trail"
+  },
+  {
+    "tier": "T4",
+    "rank": "479",
+    "name": "Pursell Farms",
+    "city": "Sylacauga",
+    "state": "AL",
+    "access": "resort",
+    "region": "SE",
+    "slug": "pursell-farms"
+  },
+  {
+    "tier": "T4",
+    "rank": "482",
+    "name": "Cobbs Creek Golf Course",
+    "city": "Philadelphia",
+    "state": "PA",
+    "access": "municipal",
+    "region": "NE",
+    "slug": "cobbs-creek-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "483",
+    "name": "Nemacolin (Mystic Rock)",
+    "city": "Farmington",
+    "state": "PA",
+    "access": "resort",
+    "region": "NE",
+    "slug": "nemacolin-mystic-rock"
+  },
+  {
+    "tier": "T4",
+    "rank": "484",
+    "name": "Omni Bedford Springs Resort",
+    "city": "Bedford",
+    "state": "PA",
+    "access": "resort",
+    "region": "NE",
+    "slug": "omni-bedford-springs-resort"
+  },
+  {
+    "tier": "T4",
+    "rank": "485",
+    "name": "French Lick Resort \u2014 Pete Dye",
+    "city": "French Lick",
+    "state": "IN",
+    "access": "resort",
+    "region": "MW",
+    "slug": "french-lick-resort-pete-dye"
+  },
+  {
+    "tier": "T4",
+    "rank": "486",
+    "name": "French Lick Resort \u2014 Donald Ross",
+    "city": "French Lick",
+    "state": "IN",
+    "access": "resort",
+    "region": "MW",
+    "slug": "french-lick-resort-donald-ross"
+  },
+  {
+    "tier": "T4",
+    "rank": "487",
+    "name": "Reston National Golf Course",
+    "city": "Reston",
+    "state": "VA",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "reston-national-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "489",
+    "name": "Washington County Golf Course",
+    "city": "Hartford",
+    "state": "WI",
+    "access": "municipal",
+    "region": "MW",
+    "slug": "washington-county-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "490",
+    "name": "Keller Golf Course",
+    "city": "Maplewood",
+    "state": "MN",
+    "access": "municipal",
+    "region": "MW",
+    "slug": "keller-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "491",
+    "name": "The Classic at Madden's",
+    "city": "Brainerd",
+    "state": "MN",
+    "access": "resort",
+    "region": "MW",
+    "slug": "the-classic-at-maddens"
+  },
+  {
+    "tier": "T4",
+    "rank": "493",
+    "name": "Pumpkin Ridge \u2014 Ghost Creek (#257; alias)",
+    "city": "North Plains",
+    "state": "OR",
+    "access": "daily-fee",
+    "region": "PNW",
+    "slug": "pumpkin-ridge-ghost-creek-257-alias"
+  },
+  {
+    "tier": "T4",
+    "rank": "494",
+    "name": "Druids Glen Golf Club",
+    "city": "Covington",
+    "state": "WA",
+    "access": "daily-fee",
+    "region": "PNW",
+    "slug": "druids-glen-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "495",
+    "name": "Washington National Golf Club",
+    "city": "Auburn",
+    "state": "WA",
+    "access": "daily-fee",
+    "region": "PNW",
+    "slug": "washington-national-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "496",
+    "name": "Salish Cliffs Golf Club",
+    "city": "Shelton",
+    "state": "WA",
+    "access": "resort",
+    "region": "PNW",
+    "slug": "salish-cliffs-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "497",
+    "name": "Pole Creek Golf Club",
+    "city": "Tabernash",
+    "state": "CO",
+    "access": "daily-fee",
+    "region": "CO",
+    "slug": "pole-creek-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "498",
+    "name": "Eldorado Golf Course",
+    "city": "Cadillac",
+    "state": "MI",
+    "access": "daily-fee",
+    "region": "MW",
+    "slug": "eldorado-golf-course"
+  },
+  {
+    "tier": "T4",
+    "rank": "499",
+    "name": "Thistle Golf Club",
+    "city": "Sunset Beach",
+    "state": "NC",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "thistle-golf-club"
+  },
+  {
+    "tier": "T4",
+    "rank": "500",
+    "name": "Glacier Wood Golf Club",
+    "city": "Iola",
+    "state": "WI",
+    "access": "daily-fee",
+    "region": "MW",
+    "slug": "glacier-wood-golf-club"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "Four Seasons Hualalai",
+    "city": "Kailua-Kona \u00b7 Big Island",
+    "state": "HI",
+    "access": "resort",
+    "region": "HI",
+    "slug": "four-seasons-hualalai"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "Mauna Lani (North)",
+    "city": "Kohala Coast \u00b7 Big Island",
+    "state": "HI",
+    "access": "resort",
+    "region": "HI",
+    "slug": "mauna-lani-north"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "Mauna Lani (South)",
+    "city": "Kohala Coast \u00b7 Big Island",
+    "state": "HI",
+    "access": "resort",
+    "region": "HI",
+    "slug": "mauna-lani-south"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "Ocean Course at Hokuala (Timbers Kauai)",
+    "city": "Lihue \u00b7 Kauai",
+    "state": "HI",
+    "access": "resort",
+    "region": "HI",
+    "slug": "ocean-course-at-hokuala-timbers-kauai"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "Po'ipu Bay Golf Course",
+    "city": "Koloa \u00b7 Kauai",
+    "state": "HI",
+    "access": "resort",
+    "region": "HI",
+    "slug": "poipu-bay-golf-course"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "Wailua Municipal Golf Course",
+    "city": "Lihue \u00b7 Kauai",
+    "state": "HI",
+    "access": "municipal",
+    "region": "HI",
+    "slug": "wailua-municipal-golf-course"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "Coeur d'Alene Resort",
+    "city": "Coeur d'Alene",
+    "state": "ID",
+    "access": "resort",
+    "region": "PNW",
+    "slug": "coeur-dalene-resort"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "Circling Raven",
+    "city": "Worley",
+    "state": "ID",
+    "access": "resort",
+    "region": "PNW",
+    "slug": "circling-raven"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "Juniper Preserve / Pronghorn (Fazio)",
+    "city": "Bend",
+    "state": "OR",
+    "access": "resort",
+    "region": "PNW",
+    "slug": "juniper-preserve-pronghorn-fazio"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "The Scarecrow at Gamble Sands",
+    "city": "Brewster",
+    "state": "WA",
+    "access": "resort",
+    "region": "PNW",
+    "slug": "the-scarecrow-at-gamble-sands"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "Gamble Sands (original)",
+    "city": "Brewster",
+    "state": "WA",
+    "access": "resort",
+    "region": "PNW",
+    "slug": "gamble-sands-original"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "Sweetens Cove",
+    "city": "South Pittsburg",
+    "state": "TN",
+    "access": "daily-fee",
+    "region": "SE",
+    "slug": "sweetens-cove"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "Lawsonia (Links)",
+    "city": "Green Lake",
+    "state": "WI",
+    "access": "daily-fee",
+    "region": "MW",
+    "slug": "lawsonia-links"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "Greywalls at Marquette G.C.",
+    "city": "Marquette",
+    "state": "MI",
+    "access": "daily-fee",
+    "region": "MW",
+    "slug": "greywalls-at-marquette-gc"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "Forest Dunes (Weiskopf)",
+    "city": "Roscommon",
+    "state": "MI",
+    "access": "resort",
+    "region": "MW",
+    "slug": "forest-dunes-weiskopf"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "Belvedere Golf Club",
+    "city": "Charlevoix",
+    "state": "MI",
+    "access": "daily-fee",
+    "region": "MW",
+    "slug": "belvedere-golf-club"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "Bay Harbor \u2014 Quarry/Links combo",
+    "city": "Harbor Springs",
+    "state": "MI",
+    "access": "resort",
+    "region": "MW",
+    "slug": "bay-harbor-quarrylinks-combo"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "Treetops Signature Course",
+    "city": "Gaylord",
+    "state": "MI",
+    "access": "resort",
+    "region": "MW",
+    "slug": "treetops-signature-course"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "The Keep at McLemore",
+    "city": "Rising Fawn",
+    "state": "GA",
+    "access": "resort",
+    "region": "SE",
+    "slug": "the-keep-at-mclemore"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "The Highlands at McLemore",
+    "city": "Rising Fawn",
+    "state": "GA",
+    "access": "resort",
+    "region": "SE",
+    "slug": "the-highlands-at-mclemore"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "High Hampton (Fazio)",
+    "city": "Cashiers",
+    "state": "NC",
+    "access": "resort",
+    "region": "SE",
+    "slug": "high-hampton-fazio"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "Omni Homestead (Cascades)",
+    "city": "Hot Springs",
+    "state": "VA",
+    "access": "resort",
+    "region": "SE",
+    "slug": "omni-homestead-cascades"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "Omni La Costa (North)",
+    "city": "Carlsbad",
+    "state": "CA",
+    "access": "resort",
+    "region": "SD",
+    "slug": "omni-la-costa-north"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "Leatherstocking at The Otesaga",
+    "city": "Cooperstown",
+    "state": "NY",
+    "access": "resort",
+    "region": "NE",
+    "slug": "leatherstocking-at-the-otesaga"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "Yocha Dehe Golf Club",
+    "city": "Brooks",
+    "state": "CA",
+    "access": "resort",
+    "region": "NC",
+    "slug": "yocha-dehe-golf-club"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "Black Mesa Golf Club",
+    "city": "La Mesilla",
+    "state": "NM",
+    "access": "daily-fee",
+    "region": "AZ",
+    "slug": "black-mesa-golf-club"
+  },
+  {
+    "tier": "ADD",
+    "rank": "",
+    "name": "Twin Warriors Golf Club",
+    "city": "Santa Ana Pueblo",
+    "state": "NM",
+    "access": "resort",
+    "region": "AZ",
+    "slug": "twin-warriors-golf-club"
+  }
+]
