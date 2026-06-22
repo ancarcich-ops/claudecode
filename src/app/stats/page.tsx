@@ -173,6 +173,36 @@ export default async function PersonalStatsPage({
         />
       ) : (
         <>
+          {/* Round-by-round vs par. Promoted to the top so the page
+              opens with the chart that answers "am I getting better?"
+              -- counters and side-game tallies follow as supporting
+              detail. */}
+          {stats.rounds.length >= 1 && (
+            <section className="card p-5">
+              <div className="flex items-center justify-between mb-3 gap-2">
+                <h2 className="font-display text-base font-semibold text-ink">
+                  Rounds over time
+                </h2>
+                <span className="text-[11px] text-mute">vs par · lower is better</span>
+              </div>
+              <RoundHistoryChart
+                baselineHcp={baselineHcp}
+                rounds={stats.rounds.map((r) => ({
+                  t: r.scheduledAt.getTime(),
+                  vsPar: r.vsPar,
+                  holesPlayed: r.holesPlayed,
+                  courseName: r.courseName,
+                }))}
+              />
+            </section>
+          )}
+
+          {/* Scoring analysis (par-3/4/5 splits + birdie-to-double
+              distribution) -- the second-most-useful chart, sits
+              right under the trend so the analytics live together
+              before the totals + records below. */}
+          <ScoringAnalysis stats={stats} baselineHcp={baselineHcp} />
+
           {/* Top-line counters. Only render when the user has competitive
               matches (2+ players); solo rounds don't contribute to wins
               or streaks. */}
@@ -218,30 +248,6 @@ export default async function PersonalStatsPage({
           </section>
           )}
 
-          {/* Round-by-round vs par */}
-          {stats.rounds.length >= 1 && (
-            <section className="card p-5">
-              <div className="flex items-center justify-between mb-3 gap-2">
-                <h2 className="font-display text-base font-semibold text-ink">
-                  Rounds over time
-                </h2>
-                <span className="text-[11px] text-mute">vs par · lower is better</span>
-              </div>
-              <RoundHistoryChart
-                baselineHcp={baselineHcp}
-                rounds={stats.rounds.map((r) => ({
-                  t: r.scheduledAt.getTime(),
-                  vsPar: r.vsPar,
-                  holesPlayed: r.holesPlayed,
-                  courseName: r.courseName,
-                }))}
-              />
-            </section>
-          )}
-
-          {/* Scoring analysis */}
-          <ScoringAnalysis stats={stats} baselineHcp={baselineHcp} />
-
           {/* Course records */}
           {stats.courseRecords.length > 0 && (
             <section className="card p-5">
@@ -281,7 +287,7 @@ export default async function PersonalStatsPage({
                 <h2 className="font-display text-base font-semibold text-ink">
                   Logged rounds
                 </h2>
-                <span className="text-[11px] text-mute">tap × to delete</span>
+                <span className="text-[11px] text-mute">edit or delete any round</span>
               </div>
               <RoundsList
                 rounds={[...stats.rounds]
