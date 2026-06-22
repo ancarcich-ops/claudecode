@@ -548,4 +548,66 @@ Compiled from 16+ research streams (transactional booking data, Golf Digest / Go
 
 ---
 
+## Addendum — late-arriving high-priority targets (Golfweek 2024/25/26)
+
+A research agent that was rate-limited during the main run came back online afterwards with the Golfweek 2024 / 2025 / 2026 "Best You Can Play" + "Top 200 Resort" rankings. The entries below are courses with high Golfweek ratings that **didn't surface in the main 500-row table above**. Treat as bonus priority targets — they belong near the top of the ingestion queue alongside Tier 1/2.
+
+### Hawaii — the major gap
+
+| Course | City / Island | State | Type | Golfweek note |
+|---|---|---|---|---|
+| Kapalua (Plantation Course) | Lahaina · Maui | HI | resort | 2026 Resort #22; PGA Tour Sentry host |
+| Four Seasons Hualalai | Kailua-Kona · Big Island | HI | resort | 2026 Resort T58 |
+| Mauna Lani (North) | Kohala Coast · Big Island | HI | resort | 2026 Resort T88 |
+| Mauna Lani (South) | Kohala Coast · Big Island | HI | resort | 2026 Resort T132 |
+| Princeville Makai | Princeville · Kauai | HI | resort | 2025 Public #62; 2026 Resort T41 |
+| Ocean Course at Hokuala (Timbers Kauai) | Lihue · Kauai | HI | resort | 2024 HI #8 Kauai |
+| Po'ipu Bay Golf Course | Koloa · Kauai | HI | resort | 2024 HI T9 Kauai |
+| Wailua Municipal Golf Course | Lihue · Kauai | HI | municipal | 2024 HI #14 Kauai |
+| Mauna Kea Golf Course | Kohala Coast · Big Island | HI | resort | known critical favorite |
+| Kapalua (Bay Course) | Lahaina · Maui | HI | resort | sister course to Plantation |
+
+### Pacific Northwest — new entries
+
+| Course | City | State | Type | Golfweek note |
+|---|---|---|---|---|
+| Coeur d'Alene Resort | Coeur d'Alene | ID | resort | 2026 Resort #169; famous floating green |
+| Circling Raven | Worley | ID | resort | 2024 ID #1 |
+| Juniper Preserve / Pronghorn (Fazio) | Bend | OR | resort | 2026 Resort #61 |
+| Sunriver Resort (Crosswater) | Sunriver | OR | resort | 2026 Resort T67 |
+| The Scarecrow at Gamble Sands | Brewster | WA | resort | 2026 Resort T73; "new" callout |
+| Gamble Sands (original) | Brewster | WA | resort | sister course to Scarecrow |
+
+### Top-ranked names missed in the 1–500 run
+
+| Course | City | State | Type | Golfweek note |
+|---|---|---|---|---|
+| Sweetens Cove | South Pittsburg | TN | daily-fee | 2024 Public #35 (cult 9-hole) |
+| Lawsonia (Links) | Green Lake | WI | daily-fee | 2024 Public #25 |
+| Greywalls at Marquette G.C. | Marquette | MI | daily-fee | 2024 #40, 2025 #46 |
+| Forest Dunes (Weiskopf) | Roscommon | MI | resort | 2025 #78 (separate from The Loop already listed) |
+| Belvedere Golf Club | Charlevoix | MI | daily-fee | 2025 Public #99 |
+| Bay Harbor — Quarry/Links combo | Harbor Springs | MI | resort | 2026 Resort T84 (sister combo) |
+| Treetops Signature Course | Gaylord | MI | resort | 2026 Resort T174 |
+| The Keep at McLemore | Rising Fawn | GA | resort | 2026 Resort #25; top "new" entry |
+| The Highlands at McLemore | Rising Fawn | GA | resort | 2026 Resort T158 |
+| High Hampton (Fazio) | Cashiers | NC | resort | 2026 Resort #45 (Western NC) |
+| Omni Homestead (Cascades) | Hot Springs | VA | resort | 2025 Public #37 |
+| Omni La Costa (North) | Carlsbad | CA | resort | 2026 Resort #56 (new entry) |
+| Leatherstocking at The Otesaga | Cooperstown | NY | resort | 2025 Public #87 |
+| Yocha Dehe Golf Club | Brooks | CA | resort | 2024 CA #6 |
+| Bayonet Black Horse | Seaside | CA | daily-fee | 2024 CA #15 |
+| Silverado Resort (North/South) | Napa | CA | resort | 2024 CA #30; PGA Tour Fortinet host |
+| Paa-Ko Ridge | Sandia Park | NM | daily-fee | 2024 Public #49 (Albuquerque area) |
+| Black Mesa Golf Club | La Mesilla | NM | daily-fee | New Mexico flagship |
+| Twin Warriors Golf Club | Santa Ana Pueblo | NM | resort | New Mexico flagship |
+
+### Confidence notes
+
+- All entries verified against multiple Golfweek source snippets (Yahoo Sports syndication, Planet Golf, KemperSports, Visit Coeur d'Alene, Pinehurst Resort press, Big Cedar Lodge)
+- WebFetch was blocked on golfweek.usatoday.com itself; entries above are reconstructed from search summaries and resort-press-release confirmations
+- A few mid-table ranks remain uncertain (e.g. Sand Valley 2025 reported as either #17 or #18 across snippets) — use the ranks as priority hints, not as gospel
+
+These bring the practical "must-have before launch" list closer to ~530 courses. Suggest treating Tier 1 + Tier 2 + this addendum as the "ship-blocker" set (~180 courses) and everything in Tier 3/4 as nice-to-have.
+
 Generated 2026-06-22 via a 16-stream deep-research workflow on Sticks app catalog priorities.
