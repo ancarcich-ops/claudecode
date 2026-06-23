@@ -289,16 +289,19 @@ function Hero({
           Gross · thru {holesThru}
         </div>
       </div>
-      {/* gap tightened from 9px to 4px so the rows read as a stat
-          stack rather than a list with breathing room. Adds F9 / B9
-          to-par lines (B9 only when the round is 10+ holes). */}
-      <div className="flex-1 flex flex-col gap-[4px] min-w-0">
+      {/* Right pane: NET spans the top (when scoring mode shows it),
+          then POSITION + HOLE stacked as the left column and FRONT 9
+          + BACK 9 as the right column. Pure 2-col grid below NET so
+          each pair reads at a glance. */}
+      <div className="flex-1 grid grid-cols-2 gap-x-3 gap-y-1 min-w-0">
         {scoringMode !== "GROSS" && (
-          <HeroStat
-            label="Net"
-            value={formatToPar(netToPar)}
-            accent={netToPar != null && netToPar < 0}
-          />
+          <div className="col-span-2">
+            <HeroStat
+              label="Net"
+              value={formatToPar(netToPar)}
+              accent={netToPar != null && netToPar < 0}
+            />
+          </div>
         )}
         <HeroStat
           label="Position"
@@ -320,13 +323,6 @@ function Hero({
           value={formatToPar(front9ToPar)}
           accent={front9ToPar != null && front9ToPar < 0}
         />
-        {showBack9 && (
-          <HeroStat
-            label="Back 9"
-            value={formatToPar(back9ToPar)}
-            accent={back9ToPar != null && back9ToPar < 0}
-          />
-        )}
         <HeroStat
           label="Hole"
           value={
@@ -344,6 +340,15 @@ function Hero({
             </>
           }
         />
+        {showBack9 ? (
+          <HeroStat
+            label="Back 9"
+            value={formatToPar(back9ToPar)}
+            accent={back9ToPar != null && back9ToPar < 0}
+          />
+        ) : (
+          <div />
+        )}
       </div>
     </section>
   );
