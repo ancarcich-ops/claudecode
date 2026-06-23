@@ -413,15 +413,23 @@ function ScorecardGrid({
   onDismissCoach: () => void;
   onPickCell: (player: InRoundPlayer, hole: number) => void;
 }) {
-  // 7-hole window centered on the current hole, clamped to the round
-  // boundaries. Width is fixed at 7 so the grid stays balanced; if
-  // the round is shorter than 7 holes the window shrinks.
+  // Every hole, rendered in a horizontally scrollable strip. The
+  // player-name column stays pinned on the left; the current hole is
+  // auto-centered on mount + whenever it advances.
   const lastHole = startingHole + holes - 1;
-  const span = Math.min(7, holes);
-  const half = Math.floor(span / 2);
-  let from = Math.max(startingHole, currentHole - half);
-  if (from + span - 1 > lastHole) from = Math.max(startingHole, lastHole - span + 1);
-  const windowHoles = Array.from({ length: span }, (_, i) => from + i);
+  const allHoles = Array.from({ length: holes }, (_, i) => startingHole + i);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = scrollRef.current?.querySelector<HTMLElement>('[data-cur="1"]');
+    if (el) {
+      el.scrollIntoView({
+        inline: "center",
+        block: "nearest",
+        behavior: "smooth",
+      });
+    }
+  }, [currentHole]);
 
   // Which nine the current hole sits on (Front / Back / Solo nine).
   const frontEnd = startingHole + Math.min(9, holes) - 1;
@@ -471,52 +479,60 @@ function ScorecardGrid({
         </div>
       </div>
       <div
-        className="grid gap-[5px_3px] items-center px-[5px]"
-        style={{ gridTemplateColumns: `62px repeat(${span}, minmax(0, 1fr))` }}
+        ref={scrollRef}
+        className="overflow-x-auto no-scrollbar px-[5px]"
       >
-        <div>
-          <span className="font-mono text-[8px] tracking-[0.08em] uppercase text-faint font-semibold">
-            Hole
-          </span>
-        </div>
-        {windowHoles.map((h) => {
-          const par = pars[h - startingHole] ?? 4;
-          const isCur = h === currentHole;
-          return (
-            <div
-              key={`head-${h}`}
-              className={
-                "flex flex-col items-center gap-px pb-px pt-[3px] " +
-                (isCur ? "rounded-t-[8px] bg-accent/[0.07]" : "")
-              }
-            >
-              <span
+        <div
+          className="grid gap-[5px_3px] items-center"
+          style={{
+            gridTemplateColumns: `84px repeat(${allHoles.length}, 44px)`,
+          }}
+        >
+          <div className="sticky left-0 z-[2] bg-panel pr-1">
+            <span className="font-mono text-[8px] tracking-[0.08em] uppercase text-faint font-semibold">
+              Hole
+            </span>
+          </div>
+          {allHoles.map((h) => {
+            const par = pars[h - startingHole] ?? 4;
+            const isCur = h === currentHole;
+            return (
+              <div
+                key={`head-${h}`}
+                data-cur={isCur ? 1 : undefined}
                 className={
-                  "font-mono text-[9px] leading-none font-semibold " +
-                  (isCur ? "text-accent" : "text-faint")
+                  "flex flex-col items-center gap-px pb-px pt-[3px] " +
+                  (isCur ? "rounded-t-[8px] bg-accent/[0.07]" : "")
                 }
               >
-                {h}
-              </span>
-              <span className="font-mono text-[8px] leading-none text-faint">
-                P{par}
-              </span>
-            </div>
-          );
-        })}
+                <span
+                  className={
+                    "font-mono text-[9px] leading-none font-semibold " +
+                    (isCur ? "text-accent" : "text-faint")
+                  }
+                >
+                  {h}
+                </span>
+                <span className="font-mono text-[8px] leading-none text-faint">
+                  P{par}
+                </span>
+              </div>
+            );
+          })}
 
-        {players.map((p) => (
-          <ScorecardRow
-            key={p.id}
-            player={p}
-            currentHole={currentHole}
-            windowHoles={windowHoles}
-            startingHole={startingHole}
-            pars={pars}
-            canLogScores={canLogScores}
-            onPick={onPickCell}
-          />
-        ))}
+          {players.map((p) => (
+            <ScorecardRow
+              key={p.id}
+              player={p}
+              currentHole={currentHole}
+              windowHoles={allHoles}
+              startingHole={startingHole}
+              pars={pars}
+              canLogScores={canLogScores}
+              onPick={onPickCell}
+            />
+          ))}
+        </div>
       </div>
 
       {showCoach && (
@@ -574,7 +590,7 @@ function ScorecardRow({
 
   return (
     <>
-      <div className="flex items-center gap-1.5 min-w-0 pl-1">
+      <div className="sticky left-0 z-[2] bg-panel flex items-center gap-1.5 min-w-0 pl-1 pr-1.5">
         <PlayerBubble player={player} size={14} />
         <span className="font-sans text-[12px] text-ink font-semibold truncate">
           {player.displayName}
