@@ -149,10 +149,13 @@ function liveProbabilities(
     const priorRate = p.handicap / totalHoles; // expected over-par per hole
     const observedRate =
       holesPlayed > 0 ? (strokesSoFar - parSoFar) / holesPlayed : priorRate;
-    // Convex blend (was linear) so the first few holes don't overweight
-    // small samples. At hole 3 of 18 observed pace counts ~7% instead
-    // of 17%; by the back nine the curves converge.
-    const blend = Math.pow(holesPlayed / totalHoles, 1.5);
+    // Square-root blend: the observed pace catches up fast. At hole
+    // 3 of 18 observed pace counts ~41% (vs 7% under the old ^1.5
+    // curve), at hole 7 it's ~62%, by the back nine it dominates.
+    // The handicap prior never quite vanishes -- it keeps a hot
+    // start from sandbagging a fresh hot round -- but it's no longer
+    // half the prediction at hole 12.
+    const blend = Math.sqrt(holesPlayed / totalHoles);
     const blendedRate = (1 - blend) * priorRate + blend * observedRate;
 
     const projectedRemaining = remainingPar + holesRemaining * blendedRate;
@@ -163,10 +166,13 @@ function liveProbabilities(
     reportedNets.push(projectedNet);
   }
 
-  const t = 4 - 3 * (maxHolesPlayed / totalHoles);
+  // Softmax temperature: high = soft (probabilities flatten), low =
+  // sharp. Old 4 -> 1 ramp kept the line too flat into the back nine.
+  // 3 -> 0.8 lets a clear leader read as a clear leader by hole 12.
+  const t = 3 - 2.2 * (maxHolesPlayed / totalHoles);
   const probs = softmax(
     projectedNets.map((n) => -n),
-    Math.max(1, t),
+    Math.max(0.8, t),
   );
   return { probs, netScores: reportedNets, holesPlayed: maxHolesPlayed };
 }
@@ -230,9 +236,12 @@ export function computeOdds(input: OddsInput): OddsOutput {
       scoringMode,
       startingHole,
     );
-    // Live channel weight ramps in convex too -- early holes shouldn't
-    // dictate the line even if the projection itself looks confident.
-    const liveWeight = Math.min(0.95, Math.pow(holesPlayed / holes, 1.5));
+    // Live channel ramps in on a square-root curve: at 7 of 18 holes
+    // live carries ~62% of the mix (vs ~24% on the old ^1.5 curve),
+    // by hole 12 it's ~82%. The handicap-based model still keeps a
+    // small share so an unlucky hole or two doesn't crash the line,
+    // but the predominantly observed-play signal dominates fast.
+    const liveWeight = Math.min(0.95, Math.sqrt(holesPlayed / holes));
     const remaining = 1 - liveWeight;
     const crowdWeight =
       remaining * Math.min(0.7, totalWagers / (totalWagers + 4));
