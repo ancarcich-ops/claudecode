@@ -115,6 +115,14 @@ export default function InRoundLive({
     } catch {}
   };
 
+  // Picker modal target: which player + hole the user is logging
+  // a score for. null = closed. Tapping a cell opens; the chip grid
+  // commits and closes in one tap.
+  const [pickerTarget, setPickerTarget] = useState<{
+    player: InRoundPlayer;
+    hole: number;
+  } | null>(null);
+
   // Standings switcher state.
   type Tab = "live" | "skins" | "nassau" | "stbl";
   const availableTabs: Tab[] = ["live"];
@@ -153,6 +161,10 @@ export default function InRoundLive({
         canLogScores={canLogScores}
         showCoach={showCoach}
         onDismissCoach={dismissCoach}
+        onPickCell={(player, hole) => {
+          dismissCoach();
+          setPickerTarget({ player, hole });
+        }}
       />
       <StandingsCard
         tab={tab}
@@ -176,6 +188,14 @@ export default function InRoundLive({
           </button>
         </div>
       )}
+
+      <ScorePicker
+        target={pickerTarget}
+        matchId={matchId}
+        startingHole={startingHole}
+        pars={pars}
+        onClose={() => setPickerTarget(null)}
+      />
     </div>
   );
 }
@@ -311,6 +331,7 @@ function ScorecardGrid({
   canLogScores,
   showCoach,
   onDismissCoach,
+  onPickCell,
 }: {
   matchId: string;
   currentHole: number;
@@ -322,6 +343,7 @@ function ScorecardGrid({
   canLogScores: boolean;
   showCoach: boolean;
   onDismissCoach: () => void;
+  onPickCell: (player: InRoundPlayer, hole: number) => void;
 }) {
   // 7-hole window centered on the current hole, clamped to the round
   // boundaries. Width is fixed at 7 so the grid stays balanced; if
@@ -423,9 +445,8 @@ function ScorecardGrid({
             windowHoles={windowHoles}
             startingHole={startingHole}
             pars={pars}
-            matchId={matchId}
             canLogScores={canLogScores}
-            onAnyTap={onDismissCoach}
+            onPick={onPickCell}
           />
         ))}
       </div>
@@ -467,43 +488,20 @@ function ScorecardRow({
   windowHoles,
   startingHole,
   pars,
-  matchId,
   canLogScores,
-  onAnyTap,
+  onPick,
 }: {
   player: InRoundPlayer;
   currentHole: number;
   windowHoles: number[];
   startingHole: number;
   pars: number[];
-  matchId: string;
   canLogScores: boolean;
-  onAnyTap: () => void;
+  onPick: (player: InRoundPlayer, hole: number) => void;
 }) {
-  const [, startTransition] = useTransition();
-
   const onTap = (hole: number) => {
-    onAnyTap();
     if (!canLogScores) return;
-    const par = pars[hole - startingHole] ?? 4;
-    const current = player.scoresByHole[hole];
-    const next = window.prompt(
-      `${player.displayName} — hole ${hole} (par ${par})`,
-      current != null ? String(current) : "",
-    );
-    if (next == null) return;
-    const trimmed = next.trim();
-    if (!trimmed) return;
-    const strokes = parseInt(trimmed, 10);
-    if (!Number.isFinite(strokes) || strokes < 1 || strokes > 15) return;
-    const fd = new FormData();
-    fd.set("matchId", matchId);
-    fd.set("matchPlayerId", player.id);
-    fd.set("hole", String(hole));
-    fd.set("strokes", String(strokes));
-    startTransition(async () => {
-      await logScoreAction(fd);
-    });
+    onPick(player, hole);
   };
 
   return (
@@ -1018,6 +1016,134 @@ function computeToPar(
     total += s - (pars[h - startingHole] ?? 4);
   }
   return any ? total : null;
+}
+
+// ===== Score picker modal ============================================
+//
+// Slides up from the bottom with a par-tinted chip row. One tap on a
+// chip saves the score and closes -- no keyboard needed (was a
+// window.prompt that defaulted to a text input on iOS).
+
+function ScorePicker({
+  target,
+  matchId,
+  startingHole,
+  pars,
+  onClose,
+}: {
+  target: { player: InRoundPlayer; hole: number } | null;
+  matchId: string;
+  startingHole: number;
+  pars: number[];
+  onClose: () => void;
+}) {
+  const [pending, startTransition] = useTransition();
+  if (!target) return null;
+  const { player, hole } = target;
+  const par = pars[hole - startingHole] ?? 4;
+  const current = player.scoresByHole[hole] ?? null;
+
+  // Chip range: par-2 (eagle) through par+5 (snowman). Clamped at 1
+  // so par-3 holes don't show a "0".
+  const choices: number[] = [];
+  for (let s = Math.max(1, par - 2); s <= par + 5; s++) choices.push(s);
+
+  const save = (strokes: number) => {
+    const fd = new FormData();
+    fd.set("matchId", matchId);
+    fd.set("matchPlayerId", player.id);
+    fd.set("hole", String(hole));
+    fd.set("strokes", String(strokes));
+    startTransition(async () => {
+      await logScoreAction(fd);
+      onClose();
+    });
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 backdrop-blur-[2px]"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Log score for ${player.displayName}`}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="w-full max-w-md bg-bg border-t border-border rounded-t-2xl p-4 pb-[max(env(safe-area-inset-bottom),16px)] shadow-[0_-20px_50px_-10px_rgba(0,0,0,0.45)]">
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <span
+              className="w-2.5 h-2.5 rounded-full shrink-0"
+              style={{ background: player.color }}
+            />
+            <div className="min-w-0">
+              <div className="font-display font-semibold text-[14px] text-ink truncate">
+                {player.displayName}
+              </div>
+              <div className="font-mono text-[10px] tracking-[0.08em] uppercase text-mute">
+                Hole {hole} · Par {par}
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="font-mono text-[10px] tracking-[0.1em] uppercase text-mute active:text-ink"
+          >
+            Cancel
+          </button>
+        </div>
+        <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
+          {choices.map((s) => {
+            const rel = s - par;
+            const isCurrent = s === current;
+            return (
+              <button
+                key={s}
+                type="button"
+                disabled={pending}
+                onClick={() => save(s)}
+                className={
+                  "h-14 rounded-[12px] flex flex-col items-center justify-center gap-0.5 transition-transform active:scale-95 disabled:opacity-60 " +
+                  scoreChipCls(rel, isCurrent)
+                }
+              >
+                <span className="font-display font-bold text-[20px] leading-none tabular-nums">
+                  {s}
+                </span>
+                <span className="font-mono text-[8px] tracking-[0.06em] uppercase opacity-70">
+                  {scoreLabel(rel)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function scoreChipCls(rel: number, selected: boolean): string {
+  if (selected) {
+    return "bg-accent text-ink-on-accent border border-transparent shadow-[0_8px_20px_-6px_rgb(var(--color-accent)/0.5)]";
+  }
+  if (rel <= -2) return "bg-gold/10 border border-gold/40 text-gold";
+  if (rel === -1) return "bg-accent/10 border border-accent/35 text-accent";
+  if (rel === 0) return "bg-panel border border-border text-ink";
+  if (rel === 1) return "bg-panel border border-border text-mute";
+  return "bg-panel border border-border text-danger";
+}
+
+function scoreLabel(rel: number): string {
+  if (rel <= -3) return "Albatross";
+  if (rel === -2) return "Eagle";
+  if (rel === -1) return "Birdie";
+  if (rel === 0) return "Par";
+  if (rel === 1) return "Bogey";
+  if (rel === 2) return "Double";
+  if (rel === 3) return "Triple";
+  return `+${rel}`;
 }
 
 function ordinalSuffix(n: number): string {
