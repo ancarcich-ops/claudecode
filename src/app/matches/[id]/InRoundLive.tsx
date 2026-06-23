@@ -736,34 +736,41 @@ function StandingsCard({
           Repricing
         </span>
       </div>
-      <div className="flex gap-[3px] p-[3px] rounded-[10px] bg-panel2 border border-border mb-2.5">
-        {(["live", "skins", "nassau", "stbl"] as const)
-          .filter((t) => availableTabs.includes(t))
-          .map((t) => {
-            const on = t === tab;
-            return (
-              <button
-                key={t}
-                type="button"
-                onClick={() => onTab(t)}
-                className={
-                  "flex-1 text-center py-[7px] rounded-[7px] font-mono text-[10px] tracking-[0.02em] font-semibold transition-colors whitespace-nowrap " +
-                  (on
-                    ? "bg-accent text-ink-on-accent"
-                    : "text-mute active:text-ink")
-                }
-              >
-                {t === "live"
-                  ? "Live"
-                  : t === "skins"
-                    ? "Skins"
-                    : t === "nassau"
-                      ? "Nassau"
-                      : "Stbl"}
-              </button>
-            );
-          })}
-      </div>
+      {/* Segmented control only renders when there's something to
+          switch BETWEEN. A single "Live" pill looking like a tab when
+          there are no side games reads as a stranded button -- just
+          hide it. With side games present, "Live" becomes "Overall"
+          to read as the umbrella view across all games. */}
+      {availableTabs.length > 1 && (
+        <div className="flex gap-[3px] p-[3px] rounded-[10px] bg-panel2 border border-border mb-2.5">
+          {(["live", "skins", "nassau", "stbl"] as const)
+            .filter((t) => availableTabs.includes(t))
+            .map((t) => {
+              const on = t === tab;
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => onTab(t)}
+                  className={
+                    "flex-1 text-center py-[7px] rounded-[7px] font-mono text-[10px] tracking-[0.02em] font-semibold transition-colors whitespace-nowrap " +
+                    (on
+                      ? "bg-accent text-ink-on-accent"
+                      : "text-mute active:text-ink")
+                  }
+                >
+                  {t === "live"
+                    ? "Overall"
+                    : t === "skins"
+                      ? "Skins"
+                      : t === "nassau"
+                        ? "Nassau"
+                        : "Stbl"}
+                </button>
+              );
+            })}
+        </div>
+      )}
       {/* Rows */}
       <div className="flex flex-col">
         {rows.map((r, i) => {
