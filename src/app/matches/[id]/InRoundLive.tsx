@@ -478,75 +478,104 @@ function ScorecardGrid({
           </span>
         </div>
       </div>
-      <div
-        ref={scrollRef}
-        className="overflow-x-auto no-scrollbar px-[5px]"
-      >
+      {/* Split layout: the player-name column lives OUTSIDE the scroll
+          container so it never moves, while the holes + total cells
+          live INSIDE and scroll horizontally. Both sides share the
+          same row template so rows stay aligned. */}
+      <div className="flex">
         <div
-          className="grid gap-[5px_3px] items-center"
+          className="shrink-0 grid pl-[5px] pr-1.5"
           style={{
-            gridTemplateColumns: `84px repeat(${allHoles.length}, 44px) 56px`,
+            width: 88,
+            gridTemplateRows: `26px repeat(${players.length}, 30px)`,
+            rowGap: 5,
           }}
         >
-          <div
-            className="sticky left-0 z-[2] bg-panel pr-1.5"
-            style={{
-              boxShadow: "8px 0 8px -8px rgb(var(--color-ink) / 0.18)",
-            }}
-          >
+          <div className="flex items-end pb-px">
             <span className="font-mono text-[8px] tracking-[0.08em] uppercase text-faint font-semibold">
               Hole
             </span>
           </div>
-          {allHoles.map((h) => {
-            const par = pars[h - startingHole] ?? 4;
-            const isCur = h === currentHole;
-            return (
-              <div
-                key={`head-${h}`}
-                data-cur={isCur ? 1 : undefined}
-                className={
-                  "flex flex-col items-center gap-px pb-px pt-[3px] " +
-                  (isCur ? "rounded-t-[8px] bg-accent/[0.07]" : "")
-                }
-              >
-                <span
+          {players.map((p) => (
+            <div
+              key={p.id}
+              className="flex items-center gap-1.5 min-w-0"
+            >
+              <PlayerBubble player={p} size={14} />
+              <span className="font-sans text-[12px] text-ink font-semibold truncate">
+                {p.displayName}
+              </span>
+            </div>
+          ))}
+        </div>
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-x-auto no-scrollbar"
+          style={{
+            // Inset shadow on the left edge of the scroll area so cells
+            // sliding under the boundary fade behind a soft falloff
+            // instead of bleeding against the name column.
+            boxShadow: "inset 8px 0 8px -8px rgb(var(--color-ink) / 0.18)",
+          }}
+        >
+          <div
+            className="grid items-center"
+            style={{
+              gridTemplateColumns: `repeat(${allHoles.length}, 44px) 56px`,
+              gridTemplateRows: `26px repeat(${players.length}, 30px)`,
+              rowGap: 5,
+              columnGap: 3,
+              paddingRight: 5,
+            }}
+          >
+            {allHoles.map((h) => {
+              const par = pars[h - startingHole] ?? 4;
+              const isCur = h === currentHole;
+              return (
+                <div
+                  key={`head-${h}`}
+                  data-cur={isCur ? 1 : undefined}
                   className={
-                    "font-mono text-[9px] leading-none font-semibold " +
-                    (isCur ? "text-accent" : "text-faint")
+                    "flex flex-col items-center gap-px pb-px pt-[3px] " +
+                    (isCur ? "rounded-t-[8px] bg-accent/[0.07]" : "")
                   }
                 >
-                  {h}
-                </span>
-                <span className="font-mono text-[8px] leading-none text-faint">
-                  P{par}
-                </span>
-              </div>
-            );
-          })}
-          {/* Total column header. Scrolls with the strip so it sits
-              naturally as the last column at the far right. */}
-          <div className="flex flex-col items-center gap-px pb-px pt-[3px] border-l border-border ml-0.5 pl-1">
-            <span className="font-mono text-[9px] leading-none font-semibold text-faint">
-              Tot
-            </span>
-            <span className="font-mono text-[8px] leading-none text-faint">
-              {pars.reduce((a, b) => a + b, 0)}
-            </span>
-          </div>
+                  <span
+                    className={
+                      "font-mono text-[9px] leading-none font-semibold " +
+                      (isCur ? "text-accent" : "text-faint")
+                    }
+                  >
+                    {h}
+                  </span>
+                  <span className="font-mono text-[8px] leading-none text-faint">
+                    P{par}
+                  </span>
+                </div>
+              );
+            })}
+            <div className="flex flex-col items-center gap-px pb-px pt-[3px] border-l border-border pl-1">
+              <span className="font-mono text-[9px] leading-none font-semibold text-faint">
+                Tot
+              </span>
+              <span className="font-mono text-[8px] leading-none text-faint">
+                {pars.reduce((a, b) => a + b, 0)}
+              </span>
+            </div>
 
-          {players.map((p) => (
-            <ScorecardRow
-              key={p.id}
-              player={p}
-              currentHole={currentHole}
-              windowHoles={allHoles}
-              startingHole={startingHole}
-              pars={pars}
-              canLogScores={canLogScores}
-              onPick={onPickCell}
-            />
-          ))}
+            {players.map((p) => (
+              <ScorecardRow
+                key={p.id}
+                player={p}
+                currentHole={currentHole}
+                windowHoles={allHoles}
+                startingHole={startingHole}
+                pars={pars}
+                canLogScores={canLogScores}
+                onPick={onPickCell}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
@@ -605,17 +634,6 @@ function ScorecardRow({
 
   return (
     <>
-      <div
-        className="sticky left-0 z-[2] bg-panel flex items-center gap-1.5 min-w-0 pl-1 pr-1.5"
-        style={{
-          boxShadow: "8px 0 8px -8px rgb(var(--color-ink) / 0.18)",
-        }}
-      >
-        <PlayerBubble player={player} size={14} />
-        <span className="font-sans text-[12px] text-ink font-semibold truncate">
-          {player.displayName}
-        </span>
-      </div>
       {windowHoles.map((h) => {
         const par = pars[h - startingHole] ?? 4;
         const score = player.scoresByHole[h];
