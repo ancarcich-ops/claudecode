@@ -244,6 +244,28 @@ export default function HoleMiniMap({
   minLat -= dLat * padFrac;
   maxLat += dLat * padFrac;
 
+  // Chrome-aware extra padding. The caller's bottom chrome
+  // (distance panel + ENTER SCORE + seg control) and top chrome
+  // (hole rail + header band) cover a significant chunk of the
+  // viewport; without compensating the tee or green can sit BEHIND
+  // those panels. Expand the lat range so features land in the
+  // unobscured middle band. Caps at ~45% bottom / 35% top so very
+  // narrow viewports stay sane.
+  const TOP_CHROME_PX = 96;
+  const bottomChromePx = chipsBottomOffsetPx + 56;
+  const insetBottomFrac = Math.min(0.45, bottomChromePx / Math.max(1, size.h));
+  const insetTopFrac = Math.min(0.35, TOP_CHROME_PX / Math.max(1, size.h));
+  const featureLatSpan = maxLat - minLat;
+  const usableFrac = Math.max(
+    0.2,
+    1 - insetTopFrac - insetBottomFrac,
+  );
+  const totalLatSpan = featureLatSpan / usableFrac;
+  const extraSouth = totalLatSpan * insetBottomFrac;
+  const extraNorth = totalLatSpan * insetTopFrac;
+  minLat -= extraSouth;
+  maxLat += extraNorth;
+
   // Square the bbox in meters to match the container aspect.
   const midLat = (minLat + maxLat) / 2;
   const cosMid = Math.cos((midLat * Math.PI) / 180);
@@ -1407,6 +1429,12 @@ function GLBranch({
         aim={aim}
         onAim={onAim}
         mapRefProp={glMapRef}
+        // Match the static engine's chrome-aware padding: top is the
+        // hole rail + header band (~96px), bottom is the seg control
+        // + distance panel + ENTER SCORE button (chipsBottomOffsetPx
+        // + ~56 for the panel chrome on top of it).
+        chromeTopPx={96}
+        chromeBottomPx={(chipsBottomOffsetPx ?? 120) + 56}
       />
       {(tee || greenCenter) && !hidePresets && (
         <PresetChipsPortalGL

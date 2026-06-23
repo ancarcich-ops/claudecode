@@ -105,6 +105,8 @@ export default function HoleMiniMapGL({
   aim,
   onAim,
   mapRefProp,
+  chromeBottomPx = 40,
+  chromeTopPx = 40,
 }: {
   player: Pt | null;
   tee: Pt | null;
@@ -123,6 +125,11 @@ export default function HoleMiniMapGL({
   // the parent can drive things like flyTo (preset chips) without
   // converting HoleMiniMapGL into a forwardRef.
   mapRefProp?: React.MutableRefObject<mapboxgl.Map | null>;
+  // Chrome insets (pixels of obscured screen at top / bottom). Drive
+  // the fitBounds padding so the tee + green don't sit under the
+  // header band or the bottom distance panel.
+  chromeBottomPx?: number;
+  chromeTopPx?: number;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -266,13 +273,18 @@ export default function HoleMiniMapGL({
         [bbox.maxLng, bbox.maxLat],
       ],
       {
-        padding: 40,
+        padding: {
+          top: chromeTopPx,
+          bottom: chromeBottomPx,
+          left: 40,
+          right: 40,
+        },
         duration: 0,
         maxZoom: 19,
         bearing: holeBearing,
       },
     );
-  }, [bbox, tee, greenCenter]);
+  }, [bbox, tee, greenCenter, chromeBottomPx, chromeTopPx]);
 
   // Green polygon + tee/green markers + hazards. Re-runs whenever
   // those props change. We add sources/layers once the style is
