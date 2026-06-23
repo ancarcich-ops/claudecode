@@ -58,7 +58,7 @@ import HoleStudyMode from "./HoleStudyMode";
 import { getCourseHazardsByName, getCourseHolesByName } from "@/lib/course";
 import { getWindForCoord } from "@/lib/weather";
 import AutoRefresh from "@/components/AutoRefresh";
-import Scorecard from "./Scorecard";
+import InRoundLive from "./InRoundLive";
 import WagerForm from "./WagerForm";
 import ParsEditor from "./ParsEditor";
 import HandicapInput from "./HandicapInput";
@@ -824,6 +824,8 @@ export default async function MatchPage({
           sideGameLabel,
           enabledKinds,
           myWager,
+          myMatchPlayerId: myMatchPlayer?.id ?? null,
+          scoringMode,
           bbbGame,
           bbbEvents,
           snakeGame,
@@ -996,6 +998,8 @@ type BuildMatchTabsArgs = {
   updateHandicapAction: (fd: FormData) => Promise<void>;
   updateParsAction: (fd: FormData) => Promise<void>;
   saveCourseParsAction: (fd: FormData) => Promise<void>;
+  myMatchPlayerId: string | null;
+  scoringMode: "GROSS" | "NET" | "CUSTOM";
 };
 
 function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
@@ -1034,6 +1038,8 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
     updateHandicapAction,
     updateParsAction,
     saveCourseParsAction,
+    myMatchPlayerId,
+    scoringMode,
   } = a;
 
   // Defined before scorecardContent so the latter can append the
@@ -1085,44 +1091,40 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
 
   const scorecardContent = (
     <div className="space-y-6">
-      <section className="card p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-display text-base font-semibold text-ink">
-            Scorecard
-          </h2>
-          <span className="text-xs text-mute">
-            {odds.meta.holesPlayed}/{match.holes} holes logged
-          </span>
-        </div>
-        {!user ? (
+      {!user ? (
+        <section className="card p-4">
           <div className="text-sm text-mute">
             Sign in to log scores during the round.
           </div>
-        ) : (
-          <>
-            {!canLogScores && !isCompleted && (
-              <div className="text-xs text-mute mb-3">
-                Read-only — only the creator and players in this match can log
-                scores.
-              </div>
-            )}
-            <Scorecard
-              matchId={match.id}
-              holes={match.holes}
-              startingHole={matchStart}
-              pars={pars}
-              // Always per-player entry. SCRAMBLE used to collapse to
-              // 2 team rows (captain logs the team's score), but the
-              // team-rule aggregations (sum, high-low, aggregate net)
-              // need every player's individual score to compute. The
-              // 2-team summary still surfaces via the market chart +
-              // the Team vs Team leaderboard card below.
-              players={playerMeta}
-              locked={!canLogScores}
-            />
-          </>
-        )}
-      </section>
+        </section>
+      ) : (
+        <InRoundLive
+          matchId={match.id}
+          courseName={match.courseName}
+          holes={match.holes}
+          startingHole={matchStart}
+          pars={pars}
+          players={displayEntities.map((p) => ({
+            id: p.id,
+            displayName: p.displayName,
+            color: p.color,
+            handicap: p.handicap,
+            probability: p.probability,
+            netScore: p.netScore,
+            scoresByHole: Object.fromEntries(
+              p.scores.map((s) => [s.hole, s.strokes]),
+            ),
+          }))}
+          myMatchPlayerId={myMatchPlayerId}
+          scoringMode={scoringMode}
+          sideGames={{
+            skins: sgSeries.skins?.rows,
+            nassauTotal: sgSeries.nassauTotal?.rows,
+            stableford: sgSeries.stableford?.rows,
+          }}
+          canLogScores={canLogScores}
+        />
+      )}
       {/* Creator-only nudge: when the round has no side games enabled,
           surface a one-line CTA so we don't bury the option inside
           Edit > step 3. Hidden once any side game is active (the
