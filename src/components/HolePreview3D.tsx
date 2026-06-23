@@ -86,6 +86,12 @@ export default function HolePreview3D({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const tileLoadCount = useRef(0);
   const [capped, setCapped] = useState(false);
+  // Minimum time the loading scrim stays up after mount / hole change.
+  // Without this, a fast first-tile arrival makes the spinner flash on
+  // and immediately off again, which reads as a glitch.
+  const MIN_LOADING_MS = 700;
+  const [minLoadDone, setMinLoadDone] = useState(false);
+  const hideLoadingScrim = hasFirstTile && minLoadDone;
 
   // Reset render-state flags when the hole changes so the spinner +
   // tile counter restart cleanly for the new hole. Also snap the
@@ -97,9 +103,12 @@ export default function HolePreview3D({
     setHasFirstTile(false);
     setErrorMsg(null);
     setCapped(false);
+    setMinLoadDone(false);
     tileLoadCount.current = 0;
     path.current = flightPathFor(hole);
     setViewState({ ...path.current[0], transitionDuration: 0 });
+    const t = setTimeout(() => setMinLoadDone(true), MIN_LOADING_MS);
+    return () => clearTimeout(t);
   }, [hole]);
 
   // Cinematic intro -- gated on first-tile arrival so the camera
@@ -303,17 +312,41 @@ export default function HolePreview3D({
           dragRotate: true,
         }}
         layers={tile3d ? [tile3d] : []}
-        style={{ background: "rgb(var(--color-bg))" }}
+        // Sky-to-grass gradient under the deck.gl canvas. When the
+        // mesh hasn't streamed in yet (or there's a gap between
+        // tiles) the user sees something map-shaped instead of the
+        // page background, so the empty state reads as "loading"
+        // rather than "broken".
+        style={{
+          background:
+            "linear-gradient(180deg, #8fb6c8 0%, #b9c9b7 55%, #6e8c5c 100%)",
+        }}
       />
 
-      {/* Loading scrim -- shows until the first tile arrives so the
-          user sees something other than the page-bg color while the
-          mesh streams in. */}
-      {!hasFirstTile && !errorMsg && (
-        <div className="absolute inset-0 flex items-center justify-center bg-bg/60 backdrop-blur-sm pointer-events-none">
-          <div className="flex items-center gap-2 rounded-full bg-black/70 text-white text-[11px] font-mono uppercase tracking-wider px-3 py-1.5">
-            <span className="inline-block w-2 h-2 rounded-full bg-accent animate-pulse" />
-            Loading 3D mesh
+      {/* Loading scrim -- shows until the first tile arrives. Stays
+          up for at least MIN_LOADING_MS after mount so a quick
+          first-tile arrival doesn't flash the spinner on / off, and
+          uses a solid dark wash so the brand mark + text read
+          against the sky-grass canvas underneath. */}
+      {!hideLoadingScrim && !errorMsg && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[rgba(15,22,18,0.65)] backdrop-blur-sm pointer-events-none transition-opacity duration-300">
+          <div className="flex flex-col items-center gap-3 text-center px-6">
+            <span className="relative inline-flex w-9 h-9 items-center justify-center">
+              <span
+                className="absolute inset-0 rounded-full border-2 border-white/30 border-t-white animate-spin"
+                style={{ animationDuration: "0.9s" }}
+              />
+            </span>
+            <div className="font-mono uppercase tracking-[0.16em] text-[10.5px] text-white/90 font-semibold">
+              Loading 3D view
+            </div>
+            {hole.number != null && (
+              <div className="font-mono text-[10px] text-white/60 tabular-nums">
+                Hole {hole.number}
+                {hole.par != null && ` · Par ${hole.par}`}
+                {hole.yards != null && ` · ${hole.yards} yds`}
+              </div>
+            )}
           </div>
         </div>
       )}
