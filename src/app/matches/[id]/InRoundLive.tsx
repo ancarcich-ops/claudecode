@@ -485,10 +485,15 @@ function ScorecardGrid({
         <div
           className="grid gap-[5px_3px] items-center"
           style={{
-            gridTemplateColumns: `84px repeat(${allHoles.length}, 44px)`,
+            gridTemplateColumns: `84px repeat(${allHoles.length}, 44px) 56px`,
           }}
         >
-          <div className="sticky left-0 z-[2] bg-panel pr-1">
+          <div
+            className="sticky left-0 z-[2] bg-panel pr-1.5"
+            style={{
+              boxShadow: "8px 0 8px -8px rgb(var(--color-ink) / 0.18)",
+            }}
+          >
             <span className="font-mono text-[8px] tracking-[0.08em] uppercase text-faint font-semibold">
               Hole
             </span>
@@ -519,6 +524,16 @@ function ScorecardGrid({
               </div>
             );
           })}
+          {/* Total column header. Scrolls with the strip so it sits
+              naturally as the last column at the far right. */}
+          <div className="flex flex-col items-center gap-px pb-px pt-[3px] border-l border-border ml-0.5 pl-1">
+            <span className="font-mono text-[9px] leading-none font-semibold text-faint">
+              Tot
+            </span>
+            <span className="font-mono text-[8px] leading-none text-faint">
+              {pars.reduce((a, b) => a + b, 0)}
+            </span>
+          </div>
 
           {players.map((p) => (
             <ScorecardRow
@@ -590,7 +605,12 @@ function ScorecardRow({
 
   return (
     <>
-      <div className="sticky left-0 z-[2] bg-panel flex items-center gap-1.5 min-w-0 pl-1 pr-1.5">
+      <div
+        className="sticky left-0 z-[2] bg-panel flex items-center gap-1.5 min-w-0 pl-1 pr-1.5"
+        style={{
+          boxShadow: "8px 0 8px -8px rgb(var(--color-ink) / 0.18)",
+        }}
+      >
         <PlayerBubble player={player} size={14} />
         <span className="font-sans text-[12px] text-ink font-semibold truncate">
           {player.displayName}
@@ -688,7 +708,48 @@ function ScorecardRow({
           </button>
         );
       })}
+      <TotalCell player={player} startingHole={startingHole} pars={pars} />
     </>
+  );
+}
+
+function TotalCell({
+  player,
+  startingHole,
+  pars,
+}: {
+  player: InRoundPlayer;
+  startingHole: number;
+  pars: number[];
+}) {
+  let strokes = 0;
+  let toPar = 0;
+  let any = false;
+  for (let i = 0; i < pars.length; i++) {
+    const h = startingHole + i;
+    const s = player.scoresByHole[h];
+    if (s == null) continue;
+    any = true;
+    strokes += s;
+    toPar += s - pars[i];
+  }
+  const tone =
+    !any
+      ? "text-faint"
+      : toPar < 0
+        ? "text-accent"
+        : toPar > 0
+          ? "text-danger"
+          : "text-ink";
+  return (
+    <div className="flex flex-col items-center justify-center gap-px border-l border-border ml-0.5 pl-1 h-[30px]">
+      <span className={"font-display font-bold text-[14px] leading-none tabular-nums " + tone}>
+        {any ? strokes : "—"}
+      </span>
+      <span className="font-mono text-[8px] leading-none text-mute tabular-nums">
+        {!any ? "" : toPar === 0 ? "E" : toPar > 0 ? `+${toPar}` : `${toPar}`}
+      </span>
+    </div>
   );
 }
 
