@@ -499,6 +499,23 @@ export default function OnCourseMode({
     });
   };
 
+  // Skip handler: advance to the next un-scored player on this hole
+  // WITHOUT logging a score for the current one (don't know it / not
+  // entering it). Mirrors commitScore's post-save branch minus the
+  // write. When nobody's left, close the sheet + advance the hole.
+  const skipToNextPlayer = () => {
+    const nextIdx = findNextCycleIdx(cyclePos);
+    if (nextIdx >= 0) {
+      setCyclePos(nextIdx);
+      setSheetSelection(null);
+    } else {
+      setSheetOpen(false);
+      setSheetSelection(null);
+      setCyclePos(0);
+      if (!isLastHole) setHole(hole + 1);
+    }
+  };
+
   // Back-arrow handler: jump to the previous cycle position so the
   // scorekeeper can re-edit an earlier player's hole. Pre-populates
   // the sheet selection with that player's existing score (if any) so
@@ -734,6 +751,13 @@ export default function OnCourseMode({
             : null
         }
         onBack={previousPlayerInCycle ? goBackInCycle : undefined}
+        // Skip → next player, only while cycling through the group.
+        // Solo / disabled cycling has no "next player" so it's hidden.
+        onSkip={
+          cyclePref === "enabled" && nextPlayerInCycle
+            ? skipToNextPlayer
+            : undefined
+        }
         playerIndex={cyclePref === "enabled" ? cyclePos + 1 : undefined}
         playerCount={cyclePref === "enabled" ? cycleOrder.length : undefined}
       />

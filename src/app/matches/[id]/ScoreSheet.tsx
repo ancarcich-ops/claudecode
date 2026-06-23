@@ -60,6 +60,7 @@ export default function ScoreSheet({
   onSelect,
   onSave,
   onCancel,
+  onSkip,
   currentPlayer,
   nextPlayer,
   previousPlayer,
@@ -79,6 +80,10 @@ export default function ScoreSheet({
   onSelect: (s: SheetSelection) => void;
   onSave: () => void;
   onCancel: () => void;
+  // Skip → advance to the next player on this hole without logging a
+  // score (don't know it / not entering it). Only passed while
+  // cycling through the group; undefined hides the Skip button.
+  onSkip?: () => void;
   // Player badge at the top + cycle info. Defaults preserve the
   // pre-cycle behavior (single self-entry) when callers don't pass
   // these.
@@ -324,6 +329,18 @@ export default function ScoreSheet({
             {saveLabel}
           </button>
         </div>
+        {/* Skip → next player. Only shown while cycling the group so a
+            score you don't know doesn't block the rest of the
+            foursome. Leaves this player's hole blank. */}
+        {onSkip && (
+          <button
+            type="button"
+            onClick={onSkip}
+            className="w-full mt-2 py-3 rounded-full border border-border bg-panel2/60 text-mute font-mono text-[11px] tracking-[0.12em] uppercase hover:text-ink"
+          >
+            Skip · next player →
+          </button>
+        )}
       </div>
     </>
   );
