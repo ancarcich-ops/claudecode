@@ -213,6 +213,10 @@ export default function HoleStudyMode({
             }}
             height="100%"
             onRequest2D={() => setMode3d(false)}
+            // Suppress HolePreview3D's internal bottom-left HUD --
+            // the System B hole rail + header band below render the
+            // hole label, so the small pill would just double up.
+            hideHud
           />
         ) : anchor ? (
           <HoleMiniMap
@@ -267,68 +271,84 @@ export default function HoleStudyMode({
         </>
       )}
 
-      {/* System B chrome -- hidden in 3D mode so HolePreview3D's free
-          orbit + own HUD aren't obscured. */}
+      {/* Top: slim hole rail + header band. Stays visible in 3D so
+          the user can switch holes during the flyover. */}
+      <div className="absolute inset-x-0 top-0 z-[30] pt-[max(env(safe-area-inset-top),12px)] px-3">
+        <HoleRail
+          firstHole={firstHole}
+          lastHole={lastHole}
+          activeHole={hole}
+          pars={pars}
+          scoresByHole={scoresByHole ?? {}}
+          onPick={setHole}
+          onExit={() => setActive(false)}
+          activeLabel="VIEW"
+        />
+        <div className="mt-2 flex justify-center">
+          <HeaderBand
+            hole={hole}
+            par={par}
+            yardage={headlineYds != null ? Math.round(headlineYds) : null}
+            unmapped={!greenSet}
+            trailing={teeSet ? "FROM TEE" : "PREVIEW"}
+          />
+        </div>
+      </div>
+
+      {/* Right control stack -- wind chip always, plus a "2D / EXIT
+          3D" pill in 3D mode (the seg control with the 3D chip is
+          part of HoleMiniMap's portal and is unmounted while 3D is
+          up, so without this there's no exit path). */}
+      <div className="absolute z-[24] right-3 top-[172px] flex flex-col gap-2.5 items-center">
+        <WindTile
+          speedMph={wind?.speedMph ?? 8}
+          fromDeg={wind?.fromDeg ?? 220}
+          breeze={aimPoint != null}
+        />
+        {mode3d && (
+          <button
+            type="button"
+            onClick={() => setMode3d(false)}
+            className="map-chip w-[60px] rounded-[15px] py-2 px-2 flex flex-col items-center gap-1.5 active:scale-95 transition-transform"
+            aria-label="Back to 2D"
+          >
+            <span
+              className="font-display font-bold text-[18px] leading-none"
+              style={{ color: "var(--mint)" }}
+            >
+              2D
+            </span>
+            <span className="font-mono text-[8.5px] tracking-[0.06em] uppercase text-[var(--map-ink)] font-semibold">
+              EXIT 3D
+            </span>
+          </button>
+        )}
+      </div>
+
+      {/* Bottom panel + tap-hint -- 2D only. Preview's aim / FRONT-
+          BACK numbers are tied to the 2D anchor and would be
+          confusing under a free orbit. */}
       {!mode3d && (
-        <>
-          {/* Top: slim hole rail (active = forest "VIEW") + dedicated
-              header band with the forest "FROM TEE" tag. */}
-          <div className="absolute inset-x-0 top-0 z-[30] pt-[max(env(safe-area-inset-top),12px)] px-3">
-            <HoleRail
-              firstHole={firstHole}
-              lastHole={lastHole}
-              activeHole={hole}
-              pars={pars}
-              scoresByHole={scoresByHole ?? {}}
-              onPick={setHole}
-              onExit={() => setActive(false)}
-              activeLabel="VIEW"
+        <div className="absolute inset-x-0 bottom-0 z-[32] px-3 pt-3 pb-[max(env(safe-area-inset-bottom),14px)] flex flex-col gap-2">
+          {aimPoint && toAimYds != null ? (
+            <PreviewAimPanel
+              toAim={toAimYds}
+              toPin={aimToPinYds}
+              onClear={() => setAimPoint(null)}
             />
-            <div className="mt-2 flex justify-center">
-              <HeaderBand
-                hole={hole}
-                par={par}
-                yardage={headlineYds != null ? Math.round(headlineYds) : null}
-                unmapped={!greenSet}
-                trailing={teeSet ? "FROM TEE" : "PREVIEW"}
-              />
-            </div>
-          </div>
-
-          {/* Right control stack -- wind only on the preview (no MOVE
-              PIN; tap-to-aim still works on the satellite directly). */}
-          <div className="absolute z-[24] right-3 top-[172px] flex flex-col gap-2.5 items-center">
-            <WindTile
-              speedMph={wind?.speedMph ?? 8}
-              fromDeg={wind?.fromDeg ?? 220}
-              breeze={aimPoint != null}
+          ) : (
+            <PreviewDistancePanel
+              center={center}
+              front={front}
+              back={back}
+              unmapped={!greenSet}
             />
+          )}
+          <div className="text-center font-mono text-[9.5px] tracking-[0.1em] uppercase font-semibold pt-0.5"
+               style={{ color: "var(--map-mute)" }}>
+            Tap the course for custom aim distances
           </div>
-
-          {/* Bottom panel -- TO GREEN · CENTER dominant + FRONT/BACK
-              secondary, OR aim-mode TO AIM/TO PIN. Tap-for-custom-aim
-              hint sits as a quiet mono line below the panel. */}
-          <div className="absolute inset-x-0 bottom-0 z-[32] px-3 pt-3 pb-[max(env(safe-area-inset-bottom),14px)] flex flex-col gap-2">
-            {aimPoint && toAimYds != null ? (
-              <PreviewAimPanel
-                toAim={toAimYds}
-                toPin={aimToPinYds}
-                onClear={() => setAimPoint(null)}
-              />
-            ) : (
-              <PreviewDistancePanel
-                center={center}
-                front={front}
-                back={back}
-                unmapped={!greenSet}
-              />
-            )}
-            <div className="text-center font-mono text-[9.5px] tracking-[0.1em] uppercase font-semibold pt-0.5"
-                 style={{ color: "var(--map-mute)" }}>
-              Tap the course for custom aim distances
-            </div>
-          </div>
-        </>
+        </div>
       )}
     </div>
   );
