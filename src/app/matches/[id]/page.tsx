@@ -54,7 +54,6 @@ import PressEditor from "./PressEditor";
 import WolfSettings from "./WolfSettings";
 import WinCelebration from "@/components/WinCelebration";
 import OnCourseMode from "./OnCourseMode";
-import HoleStudyMode from "./HoleStudyMode";
 import { getCourseHazardsByName, getCourseHolesByName } from "@/lib/course";
 import { getWindForCoord } from "@/lib/weather";
 import AutoRefresh from "@/components/AutoRefresh";
@@ -599,96 +598,13 @@ export default async function MatchPage({
         )}
       </header>
 
-      {/* On-course launcher hoisted above the tabs as a primary CTA
-          during a live round so it never gets buried behind a tab.
-          Pre-round (UPCOMING) the on-course button is suppressed --
-          GPS distances make no sense yet -- but the preview entry
-          stays so players can study the holes in advance. */}
-      {canLogScores && (
-        <section className="card p-4">
-          <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
-            <div>
-              <h2 className="font-display text-base font-semibold text-ink">
-                {match.status === "UPCOMING" ? "Prep" : "On course"}
-              </h2>
-              <p className="text-[11px] text-mute mt-0.5">
-                {match.status === "UPCOMING"
-                  ? "Walk the course before the round. Distances from each tee."
-                  : "GPS distances to the green + one-tap score entry."}
-              </p>
-            </div>
-            {(() => {
-              const mappedCount = Object.values(holeGeoByHole).filter(
-                (h) => h.greenLat != null,
-              ).length;
-              return (
-                <span className="text-[11px] text-mute font-mono tabular-nums">
-                  {mappedCount}/{match.holes} mapped
-                </span>
-              );
-            })()}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <HoleStudyMode
-              holes={match.holes}
-              matchStartingHole={matchStart}
-              startingHole={onCourseStartingHole}
-              pars={pars}
-              scoresByHole={
-                myMatchPlayer
-                  ? Object.fromEntries(
-                      myMatchPlayer.scores.map((s) => [s.hole, s.strokes]),
-                    )
-                  : undefined
-              }
-              holeGeoByHole={holeGeoByHole}
-              hazardsByHole={hazardsByHole}
-              wind={
-                wind
-                  ? { speedMph: wind.speedMph, fromDeg: wind.fromDeg }
-                  : null
-              }
-            />
-            <OnCourseMode
-                matchId={match.id}
-                courseName={match.courseName}
-                holes={match.holes}
-                matchStartingHole={matchStart}
-                startingHole={onCourseStartingHole}
-                pars={pars}
-                scoresByHole={
-                  myMatchPlayer
-                    ? Object.fromEntries(
-                        myMatchPlayer.scores.map((s) => [s.hole, s.strokes]),
-                      )
-                    : undefined
-                }
-                holeGeoByHole={holeGeoByHole}
-                hazardsByHole={hazardsByHole}
-                myMatchPlayerId={myMatchPlayer?.id ?? null}
-                players={(match.players ?? []).map((p) => ({
-                  id: p.id,
-                  displayName: p.displayName,
-                  color: colorForSeat(p.seat ?? 0),
-                  scoresByHole: Object.fromEntries(
-                    (p.scores ?? []).map((s) => [s.hole, s.strokes]),
-                  ),
-                }))}
-                wind={
-                  wind
-                    ? { speedMph: wind.speedMph, fromDeg: wind.fromDeg }
-                    : null
-                }
-                // Pre-round: the launcher both flips the match to live and
-                // opens GPS in one tap. Live: the action is omitted and the
-                // launcher just opens GPS.
-                startMatchAction={
-                  match.status === "UPCOMING" ? startMatchAction : undefined
-                }
-              />
-          </div>
-        </section>
-      )}
+      {/* The old "On course / Prep" hero card lived here -- it has
+          been removed. The GPS launcher now sits at the bottom of the
+          scoring view as the spec's "Resume GPS →" button (and pre-
+          round on UPCOMING matches, as "Start on-course GPS →"). The
+          in-round Preview button is gone entirely (preview is pre-
+          match only; a future entry point can land outside the scoring
+          tab). */}
 
       {/* Inline Team-vs-Team standings. For a "Both" match the team
           competition IS the point, so we surface its leaderboards
@@ -826,6 +742,48 @@ export default async function MatchPage({
           myWager,
           myMatchPlayerId: myMatchPlayer?.id ?? null,
           scoringMode,
+          resumeAction: canLogScores ? (
+            <OnCourseMode
+              matchId={match.id}
+              courseName={match.courseName}
+              holes={match.holes}
+              matchStartingHole={matchStart}
+              startingHole={onCourseStartingHole}
+              pars={pars}
+              scoresByHole={
+                myMatchPlayer
+                  ? Object.fromEntries(
+                      myMatchPlayer.scores.map((s) => [s.hole, s.strokes]),
+                    )
+                  : undefined
+              }
+              holeGeoByHole={holeGeoByHole}
+              hazardsByHole={hazardsByHole}
+              myMatchPlayerId={myMatchPlayer?.id ?? null}
+              players={(match.players ?? []).map((p) => ({
+                id: p.id,
+                displayName: p.displayName,
+                color: colorForSeat(p.seat ?? 0),
+                scoresByHole: Object.fromEntries(
+                  (p.scores ?? []).map((s) => [s.hole, s.strokes]),
+                ),
+              }))}
+              wind={
+                wind
+                  ? { speedMph: wind.speedMph, fromDeg: wind.fromDeg }
+                  : null
+              }
+              startMatchAction={
+                match.status === "UPCOMING" ? startMatchAction : undefined
+              }
+              launcherLabel={
+                match.status === "UPCOMING"
+                  ? "Start on-course GPS →"
+                  : "Resume GPS →"
+              }
+              launcherClassName="w-full inline-flex items-center justify-center py-3.5 rounded-[13px] bg-accent text-ink-on-accent font-display font-bold text-[14px] tracking-[0.02em] active:scale-[0.99] disabled:opacity-60"
+            />
+          ) : undefined,
           bbbGame,
           bbbEvents,
           snakeGame,
@@ -1000,6 +958,11 @@ type BuildMatchTabsArgs = {
   saveCourseParsAction: (fd: FormData) => Promise<void>;
   myMatchPlayerId: string | null;
   scoringMode: "GROSS" | "NET" | "CUSTOM";
+  // Pre-built launcher node mounted at the bottom of the InRoundLive
+  // scoring view. Page-level so it can close over GPS data (geo,
+  // hazards, wind, start action) without re-plumbing each through
+  // the tabs args bag.
+  resumeAction?: React.ReactNode;
 };
 
 function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
@@ -1040,6 +1003,7 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
     saveCourseParsAction,
     myMatchPlayerId,
     scoringMode,
+    resumeAction,
   } = a;
 
   // Defined before scorecardContent so the latter can append the
@@ -1123,6 +1087,7 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
             stableford: sgSeries.stableford?.rows,
           }}
           canLogScores={canLogScores}
+          resumeAction={resumeAction}
         />
       )}
       {/* Creator-only nudge: when the round has no side games enabled,

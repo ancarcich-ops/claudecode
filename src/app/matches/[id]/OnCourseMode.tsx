@@ -50,6 +50,8 @@ export default function OnCourseMode({
   players,
   wind,
   startMatchAction,
+  launcherLabel = "Start on-course GPS and scorecard →",
+  launcherClassName = "btn btn-primary w-full sm:w-auto disabled:opacity-60",
 }: {
   matchId: string;
   courseName: string;
@@ -79,6 +81,11 @@ export default function OnCourseMode({
   // When set (pre-round / UPCOMING), tapping the launcher marks the match
   // live before opening the GPS view, so "start the round" is one tap.
   startMatchAction?: (formData: FormData) => Promise<void>;
+  // Inactive-state launcher label + className override. Lets the
+  // scoring view render the spec's "Resume GPS →" pill in place of
+  // the default verbose label.
+  launcherLabel?: string;
+  launcherClassName?: string;
 }) {
   // Normalize the optional prop once so every downstream consumer can
   // treat it as a guaranteed array without re-checking.
@@ -283,9 +290,9 @@ export default function OnCourseMode({
             });
           }
         }}
-        className="btn btn-primary w-full sm:w-auto disabled:opacity-60"
+        className={launcherClassName}
       >
-        Start on-course GPS and scorecard →
+        {launcherLabel}
       </button>
     );
   }
