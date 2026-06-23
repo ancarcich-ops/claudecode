@@ -15,6 +15,7 @@ import {
   markTeeAction,
 } from "@/lib/actions";
 import HoleMiniMap, { type Landmark } from "./HoleMiniMap";
+import HolePreview3D from "@/components/HolePreview3D";
 import { useMapEngine } from "./useMapEngine";
 import ScoreSheet from "./ScoreSheet";
 
@@ -106,6 +107,14 @@ export default function OnCourseMode({
   );
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetSelection, setSheetSelection] = useState<SheetSelection>(null);
+  // 2D satellite mini-map vs 3D Google photorealistic flyover. Mirrors
+  // HoleStudyMode's mode toggle so the on-course view can pop into 3D
+  // for terrain / slope context, then back to 2D for scoring. Reset on
+  // hole change so each hole re-plays its intro flyover.
+  const [mode3d, setMode3d] = useState(false);
+  useEffect(() => {
+    setMode3d(false);
+  }, [hole]);
   // Cycle-through-group preference. "unset" = never been asked; show
   // the prompt after the first save. "enabled" = cycle through every
   // player after each save. "disabled" = log only the signed-in
@@ -581,9 +590,27 @@ export default function OnCourseMode({
 
   return (
     <div className="fixed inset-0 z-50 bg-bg flex flex-col overflow-hidden overscroll-contain text-ink">
-      {/* Map (full background) */}
+      {/* Map (full background). 2D = the satellite mini-map with
+          tap-to-aim. 3D = Google's photorealistic mesh with a
+          cinematic intro flyover. The 3D view needs tee + green to
+          compute the camera path AND a Google Maps API key to load
+          tiles, so it's only offered when both hold. */}
       <div className="absolute inset-0 z-[10]">
-        {playerPos ? (
+        {mode3d && teeSet && greenSet && geo ? (
+          <HolePreview3D
+            hole={{
+              teeLat: geo.teeLat!,
+              teeLng: geo.teeLng!,
+              greenLat: geo.greenLat!,
+              greenLng: geo.greenLng!,
+              number: hole,
+              par,
+              yards: yardage != null ? Math.round(yardage) : undefined,
+            }}
+            height="100%"
+            onRequest2D={() => setMode3d(false)}
+          />
+        ) : playerPos ? (
           <HoleMiniMap
             engine={mapEngine}
             // Bottom panel (DistancePanel ~88px + 10px gap + ENTER
@@ -623,6 +650,15 @@ export default function OnCourseMode({
                   }
                 : undefined
             }
+            // 3D chip in the seg control — only available when the
+            // hole is fully mapped AND we have a Google Maps API key.
+            onToggle3D={
+              teeSet &&
+              greenSet &&
+              process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+                ? () => setMode3d(true)
+                : undefined
+            }
           />
         ) : (
           // GPS hasn't locked yet. Black background with a centered
@@ -636,85 +672,94 @@ export default function OnCourseMode({
       {/* Soft baked scrims per System B — top + bottom black washes
           at low opacity so dark-ink chrome reads against the bright
           satellite without dimming the grass. Below the chrome
-          (z-[15]) but above the map (z-[10]). */}
-      <div
-        className="absolute inset-x-0 top-0 h-[150px] z-[15] pointer-events-none"
-        style={{ background: "rgba(0,0,0,0.10)" }}
-      />
-      <div
-        className="absolute inset-x-0 bottom-0 h-[200px] z-[15] pointer-events-none"
-        style={{ background: "rgba(0,0,0,0.14)" }}
-      />
-
-      {/* ============================================================
-          System B — top: slim hole rail + dedicated header band
-          ============================================================ */}
-      <div
-        className="absolute inset-x-0 top-0 z-[30] pt-[max(env(safe-area-inset-top),12px)] px-3"
-      >
-        <HoleRail
-          firstHole={firstHole}
-          lastHole={lastHole}
-          activeHole={hole}
-          pars={pars}
-          scoresByHole={scoresByHole ?? {}}
-          onPick={pickHole}
-          onExit={() => setActive(false)}
-        />
-        <div className="mt-2 flex justify-center">
-          <HeaderBand
-            hole={hole}
-            par={par}
-            yardage={yardage}
-            unmapped={!greenSet}
+          (z-[15]) but above the map (z-[10]). Hidden in 3D mode so
+          the HolePreview3D HUD isn't dimmed. */}
+      {!mode3d && (
+        <>
+          <div
+            className="absolute inset-x-0 top-0 h-[150px] z-[15] pointer-events-none"
+            style={{ background: "rgba(0,0,0,0.10)" }}
           />
-        </div>
-      </div>
-
-      {/* Right control stack — wind chip + (when green is set) MOVE PIN
-          tile. Sits below the header band so the two never collide. */}
-      <div className="absolute z-[24] right-3 top-[172px] flex flex-col gap-2.5 items-center">
-        <WindTile
-          speedMph={wind?.speedMph ?? 8}
-          fromDeg={wind?.fromDeg ?? 220}
-          breeze={aimPoint != null}
-        />
-        {greenSet && (
-          <MovePinTile
-            active={aimPoint != null}
-            onClick={() => {
-              if (aimPoint) setAimPoint(null);
-            }}
+          <div
+            className="absolute inset-x-0 bottom-0 h-[200px] z-[15] pointer-events-none"
+            style={{ background: "rgba(0,0,0,0.14)" }}
           />
-        )}
-      </div>
+        </>
+      )}
 
-      {/* Bottom — dominant distance + ENTER SCORE. The preset chip
-          row (TEE/GREEN/HOLE/3D) is rendered through HoleMiniMap's
-          body portal and floats just above this panel. */}
-      <div
-        className="absolute inset-x-0 bottom-0 z-[32] px-3 pt-3 pb-[max(env(safe-area-inset-bottom),14px)] flex flex-col gap-2.5"
-      >
-        <DistancePanel
-          toPin={center}
-          toAim={toAimYds}
-          carryYds={carryHazard?.distance ?? null}
-          carryLabel={carryHazard ? (carryHazard.kind === "WATER" ? "CARRY H₂O" : "CARRY BNK") : null}
-          unmapped={!greenSet}
-        />
-        <EnterScoreButton
-          disabled={!myMatchPlayerId || !greenSet}
-          label={
-            !myMatchPlayerId
-              ? "Watching only"
-              : !greenSet
-                ? "Map the hole first"
-                : "Enter Score"
-          }
-          onClick={() => setSheetOpen(true)}
-          pacified={!greenSet}
-        />
-      </div>
+      {/* All System B chrome hidden in 3D mode -- the photorealistic
+          flyover paints its own HUD + back-to-2D pill, so the 2D
+          rail / header / wind / pin / distance panel would just be
+          competing chrome. */}
+      {!mode3d && (
+        <>
+          <div
+            className="absolute inset-x-0 top-0 z-[30] pt-[max(env(safe-area-inset-top),12px)] px-3"
+          >
+            <HoleRail
+              firstHole={firstHole}
+              lastHole={lastHole}
+              activeHole={hole}
+              pars={pars}
+              scoresByHole={scoresByHole ?? {}}
+              onPick={pickHole}
+              onExit={() => setActive(false)}
+            />
+            <div className="mt-2 flex justify-center">
+              <HeaderBand
+                hole={hole}
+                par={par}
+                yardage={yardage}
+                unmapped={!greenSet}
+              />
+            </div>
+          </div>
+
+          {/* Right control stack — wind chip + MOVE PIN (when green set). */}
+          <div className="absolute z-[24] right-3 top-[172px] flex flex-col gap-2.5 items-center">
+            <WindTile
+              speedMph={wind?.speedMph ?? 8}
+              fromDeg={wind?.fromDeg ?? 220}
+              breeze={aimPoint != null}
+            />
+            {greenSet && (
+              <MovePinTile
+                active={aimPoint != null}
+                onClick={() => {
+                  if (aimPoint) setAimPoint(null);
+                }}
+              />
+            )}
+          </div>
+
+          {/* Bottom — dominant distance + ENTER SCORE. The preset chip
+              row (TEE/GREEN/HOLE/3D) is rendered through HoleMiniMap's
+              body portal and floats just above this panel. */}
+          <div
+            className="absolute inset-x-0 bottom-0 z-[32] px-3 pt-3 pb-[max(env(safe-area-inset-bottom),14px)] flex flex-col gap-2.5"
+          >
+            <DistancePanel
+              toPin={center}
+              toAim={toAimYds}
+              carryYds={carryHazard?.distance ?? null}
+              carryLabel={carryHazard ? (carryHazard.kind === "WATER" ? "CARRY H₂O" : "CARRY BNK") : null}
+              unmapped={!greenSet}
+            />
+            <EnterScoreButton
+              disabled={!myMatchPlayerId || !greenSet}
+              label={
+                !myMatchPlayerId
+                  ? "Watching only"
+                  : !greenSet
+                    ? "Map the hole first"
+                    : "Enter Score"
+              }
+              onClick={() => setSheetOpen(true)}
+              pacified={!greenSet}
+            />
+          </div>
+        </>
+      )}
 
       {/* Score-entry sheet */}
       <ScoreSheet

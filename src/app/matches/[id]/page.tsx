@@ -1514,7 +1514,7 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
   if (!isSolo) {
     tabs.push({
       id: "market",
-      label: "Market",
+      label: "Live odds",
       badge: odds.meta.totalWagers > 0 ? odds.meta.totalWagers : null,
       content: marketContent,
     });
