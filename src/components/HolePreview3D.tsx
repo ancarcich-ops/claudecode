@@ -23,12 +23,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DeckGL } from "@deck.gl/react";
 import { Tile3DLayer } from "@deck.gl/geo-layers";
+import { ScatterplotLayer, TextLayer } from "@deck.gl/layers";
 import { Tiles3DLoader } from "@loaders.gl/3d-tiles";
 import {
   flightPathFor,
   type CameraKeyframe,
   type HoleEndpoints,
 } from "@/lib/holeFlightPath";
+import { distanceYards } from "@/lib/course";
 
 const TILESET_URL = "https://tile.googleapis.com/v1/3dtiles/root.json";
 // Raised from 400 -- normal panning + zooming chews through tiles
@@ -57,6 +59,15 @@ export type HolePreview3DProps = {
   // would otherwise double up with the HUD; standalone callers
   // (preview, fullscreen modal) keep showing it.
   hideHud?: boolean;
+  // Tap-to-aim. When `onAim` is set, taps on the 3D mesh fire with
+  // the unprojected lat/lng (deck.gl picks the terrain surface).
+  // `aim` is the current aim point (cream dot + AIM xy label on the
+  // mesh); pass null to clear. `from` is the anchor used to measure
+  // distance to the aim point -- typically the on-course GPS
+  // position; falls back to the tee when omitted.
+  aim?: { lat: number; lng: number } | null;
+  onAim?: (point: { lat: number; lng: number } | null) => void;
+  from?: { lat: number; lng: number } | null;
 };
 
 type ViewState = {
@@ -73,6 +84,9 @@ export default function HolePreview3D({
   height = "100%",
   onRequest2D,
   hideHud = false,
+  aim,
+  onAim,
+  from,
 }: HolePreview3DProps) {
   const apiKey =
     typeof process !== "undefined"
@@ -311,6 +325,66 @@ export default function HolePreview3D({
     });
   }, [apiKey]);
 
+  // Aim layers (cream dot + AIM <yds>y label on the mesh) -- shown
+  // only when the parent passes an aim point. Distance is from the
+  // `from` anchor (typically the on-course GPS position) when set;
+  // falls back to the tee. Rendered as deck.gl layers so they ride
+  // the camera correctly in 3D instead of needing a separate HTML
+  // projection pass.
+  const aimAnchor = from ?? { lat: hole.teeLat, lng: hole.teeLng };
+  const aimYds = aim ? Math.round(distanceYards(aimAnchor, aim)) : null;
+  const aimLayers = useMemo(() => {
+    if (!aim) return [];
+    return [
+      new ScatterplotLayer({
+        id: "aim-marker-3d",
+        data: [aim],
+        getPosition: (d: { lat: number; lng: number }) => [d.lng, d.lat, 0],
+        getRadius: 3,
+        radiusUnits: "pixels" as const,
+        radiusMinPixels: 8,
+        radiusMaxPixels: 12,
+        getFillColor: [244, 240, 230, 255], // cream
+        getLineColor: [46, 87, 64, 255], // forest
+        lineWidthMinPixels: 2,
+        stroked: true,
+        // Drape onto the mesh terrain so the dot sits at ground level
+        // regardless of altitude (Tile3DLayer ground varies).
+        billboard: true,
+      }),
+      new TextLayer({
+        id: "aim-label-3d",
+        data: aimYds != null ? [{ ...aim, label: `AIM ${aimYds}y` }] : [],
+        getPosition: (d: { lat: number; lng: number }) => [d.lng, d.lat, 0],
+        getText: (d: { label: string }) => d.label,
+        getSize: 13,
+        sizeUnits: "pixels" as const,
+        getColor: [244, 240, 230, 255],
+        getBackgroundColor: [46, 87, 64, 235],
+        background: true,
+        backgroundPadding: [8, 4, 8, 4],
+        getPixelOffset: [0, -22],
+        fontWeight: 700,
+        getBorderColor: [46, 87, 64, 255],
+        getBorderWidth: 0,
+        characterSet: "auto",
+      }),
+    ];
+    // aim object identity is enough to rebuild; aimYds tied to same lifecycle.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aim?.lat, aim?.lng, aimYds]);
+
+  // Handle taps on the 3D canvas: pickInfo.coordinate is [lng, lat,
+  // altitude?] from deck.gl's unprojection against the picked mesh.
+  // Only honors clicks that actually land on the tile mesh (pickInfo
+  // truthy); empty-sky taps no-op.
+  function handleClick(info: { coordinate?: number[] | null } | null) {
+    if (!onAim) return;
+    const c = info?.coordinate;
+    if (!c || c.length < 2) return;
+    onAim({ lng: c[0], lat: c[1] });
+  }
+
   return (
     <div
       style={{ position: "relative", height, width: "100%", overflow: "hidden" }}
@@ -335,7 +409,19 @@ export default function HolePreview3D({
           touchRotate: true,
           dragRotate: true,
         }}
-        layers={tile3d ? [tile3d] : []}
+        onClick={onAim ? (handleClick as never) : undefined}
+        // Cursor flips to crosshair when the parent has wired tap-to-
+        // aim so the affordance reads on desktop.
+        getCursor={
+          onAim
+            ? () => "crosshair"
+            : undefined
+        }
+        layers={
+          tile3d
+            ? [tile3d, ...aimLayers]
+            : aimLayers
+        }
         // Sky-to-grass gradient under the deck.gl canvas. When the
         // mesh hasn't streamed in yet (or there's a gap between
         // tiles) the user sees something map-shaped instead of the

@@ -217,6 +217,12 @@ export default function HoleStudyMode({
             // the System B hole rail + header band below render the
             // hole label, so the small pill would just double up.
             hideHud
+            // Tap-to-aim mirrors the 2D satellite path -- the same
+            // aimPoint state backs both views so a pin set in 3D is
+            // still there if the user flips to 2D.
+            aim={aimPoint}
+            onAim={(p) => setAimPoint(p)}
+            from={anchor}
           />
         ) : anchor ? (
           <HoleMiniMap

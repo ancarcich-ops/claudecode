@@ -613,6 +613,12 @@ export default function OnCourseMode({
             // we already render the hole rail + header + distance
             // panel ourselves; the small pill would just double up.
             hideHud
+            // Tap-to-aim parity with the 2D satellite view. The
+            // shared `aimPoint` + `setAimPoint` mean a pin dropped
+            // in 3D survives the flip back to 2D and vice-versa.
+            aim={aimPoint}
+            onAim={(p) => setAimPoint(p)}
+            from={playerPos}
           />
         ) : playerPos ? (
           <HoleMiniMap
