@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { logScoreAction } from "@/lib/actions";
+import PlayerAvatar, { isVariant, type AvatarVariant } from "@/components/Avatar";
 
 // In-round scoring view per IN_ROUND_SCREENS_SPEC.md §1. Replaces the
 // old long stack of cards on the scorecard tab with the live-round
@@ -21,7 +22,46 @@ export type InRoundPlayer = {
   // projection). Pre-computed in page.tsx and passed straight through.
   probability: number;
   netScore: number | null;
+  // Avatar customization. Empty/null when the player isn't a Sticks
+  // account; the Avatar component falls back to a seed-based generated
+  // mark.
+  avatarSeed?: string | null;
+  avatarVariant?: string | null;
+  avatarUrl?: string | null;
 };
+
+// Reusable avatar bubble that renders the user's photo or generated
+// boring-avatar, with the seat color as a thin ring fallback for free-
+// typed players (no Sticks account).
+function PlayerBubble({
+  player,
+  size,
+}: {
+  player: InRoundPlayer;
+  size: number;
+}) {
+  const variant: AvatarVariant =
+    player.avatarVariant && isVariant(player.avatarVariant)
+      ? (player.avatarVariant as AvatarVariant)
+      : "beam";
+  return (
+    <span
+      className="inline-block rounded-full shrink-0 overflow-hidden"
+      style={{
+        width: size,
+        height: size,
+        boxShadow: `0 0 0 1.5px ${player.color}`,
+      }}
+    >
+      <PlayerAvatar
+        seed={player.avatarSeed ?? player.displayName}
+        variant={variant}
+        avatarUrl={player.avatarUrl ?? null}
+        size={size}
+      />
+    </span>
+  );
+}
 
 export type SideGameRow = { hole: number } & Record<string, number>;
 
@@ -52,10 +92,6 @@ export type InRoundProps = {
   // tag on the hero card's HOLE row. Missing keys = no yardage tag
   // for that hole.
   yardageByHole?: Record<number, number | null>;
-  // Optional: an arbitrary node the parent provides for the bottom CTA
-  // (typically the OnCourseMode launcher button). Falls back to a
-  // default Resume GPS button when omitted.
-  resumeAction?: React.ReactNode;
 };
 
 const COACHMARK_KEY = "sticks.coachmark.scorecard.dismissed";
@@ -72,7 +108,6 @@ export default function InRoundLive({
   sideGames,
   canLogScores,
   yardageByHole,
-  resumeAction,
 }: InRoundProps) {
   // The "current hole" is the lowest hole nobody (including you) has
   // logged yet. If everyone is fully scored, anchor on the last hole.
@@ -150,11 +185,6 @@ export default function InRoundLive({
         currentPar={pars[currentHole - startingHole] ?? 4}
         currentYardage={yardageByHole?.[currentHole] ?? null}
       />
-      {/* Resume / Start GPS sits ABOVE the scorecard so it's the
-          first action people see after the hero. The old position
-          below Standings buried it under several cards on smaller
-          phones. */}
-      {resumeAction && <div>{resumeAction}</div>}
       <ScorecardGrid
         matchId={matchId}
         currentHole={currentHole}
@@ -518,10 +548,7 @@ function ScorecardRow({
   return (
     <>
       <div className="flex items-center gap-1.5 min-w-0 pl-1">
-        <span
-          className="w-[8px] h-[8px] rounded-full shrink-0"
-          style={{ background: player.color }}
-        />
+        <PlayerBubble player={player} size={14} />
         <span className="font-sans text-[12px] text-ink font-semibold truncate">
           {player.displayName}
         </span>
@@ -817,10 +844,7 @@ function StandingsRow({
           : { gridTemplateColumns: "18px 1fr auto 56px" }
       }
     >
-      <span
-        className="w-[18px] h-[18px] rounded-full"
-        style={{ background: player.color }}
-      />
+      <PlayerBubble player={player} size={18} />
       <span className="min-w-0 flex items-baseline gap-1.5">
         <span className="font-sans text-[13px] font-semibold text-ink truncate">
           {player.displayName}
@@ -1089,10 +1113,7 @@ function ScorePicker({
       <div className="w-full max-w-md bg-bg border-t border-border rounded-t-2xl p-4 pb-[max(env(safe-area-inset-bottom),16px)] shadow-[0_-20px_50px_-10px_rgba(0,0,0,0.45)]">
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2 min-w-0">
-            <span
-              className="w-2.5 h-2.5 rounded-full shrink-0"
-              style={{ background: player.color }}
-            />
+            <PlayerBubble player={player} size={20} />
             <div className="min-w-0">
               <div className="font-display font-semibold text-[14px] text-ink truncate">
                 {player.displayName}

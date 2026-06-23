@@ -59,6 +59,7 @@ import { getCourseHazardsByName, getCourseHolesByName } from "@/lib/course";
 import { getWindForCoord } from "@/lib/weather";
 import AutoRefresh from "@/components/AutoRefresh";
 import InRoundLive from "./InRoundLive";
+import PlayerAvatar, { isVariant, type AvatarVariant } from "@/components/Avatar";
 import WagerForm from "./WagerForm";
 import ParsEditor from "./ParsEditor";
 import HandicapInput from "./HandicapInput";
@@ -237,6 +238,12 @@ export default async function MatchPage({
     probability: odds.probabilities[p.id] ?? 0,
     netScore: odds.meta.netScores[p.id] ?? null,
     scores: p.scores.slice().sort((a, b) => a.hole - b.hole),
+    // Avatar fields. Empty when the player isn't a Sticks account
+    // (free-typed name); the Avatar component falls back to a
+    // generated mark seeded by the displayName.
+    avatarSeed: p.user?.avatarSeed ?? p.user?.username ?? p.displayName,
+    avatarVariant: p.user?.avatarVariant ?? null,
+    avatarUrl: p.user?.avatarUrl ?? null,
   }));
 
   // displayEntities is what every player-facing view renders against.
@@ -284,6 +291,12 @@ export default async function MatchPage({
           // server action takes a matchPlayerId, so writing through
           // the captain Just Works.
           scores: captain.scores.slice().sort((a, b) => a.hole - b.hole),
+          // No team-level avatar (teams are composite); leave avatar
+          // fields blank so the rendering component falls back to a
+          // seat-colored dot for the team row.
+          avatarSeed: captain.user?.avatarSeed ?? captain.displayName,
+          avatarVariant: captain.user?.avatarVariant ?? null,
+          avatarUrl: null as string | null,
         };
       })
       .filter((x): x is NonNullable<typeof x> => x != null);
@@ -722,6 +735,72 @@ export default async function MatchPage({
         );
       })()}
 
+      {/* GPS / preview launcher floats ABOVE the tabs so it's always
+          one tap away regardless of which section the user is viewing.
+          UPCOMING → "Preview the course →" (HoleStudyMode). Otherwise
+          OnCourseMode with its localStorage-driven Start/Resume label. */}
+      {canLogScores && (
+        <div>
+          {match.status === "UPCOMING" ? (
+            <HoleStudyMode
+              holes={match.holes}
+              matchStartingHole={matchStart}
+              startingHole={onCourseStartingHole}
+              pars={pars}
+              scoresByHole={
+                myMatchPlayer
+                  ? Object.fromEntries(
+                      myMatchPlayer.scores.map((s) => [s.hole, s.strokes]),
+                    )
+                  : undefined
+              }
+              holeGeoByHole={holeGeoByHole}
+              hazardsByHole={hazardsByHole}
+              wind={
+                wind
+                  ? { speedMph: wind.speedMph, fromDeg: wind.fromDeg }
+                  : null
+              }
+              launcherLabel="Preview the course →"
+              launcherClassName="w-full inline-flex items-center justify-center py-3.5 rounded-[13px] bg-accent text-ink-on-accent font-display font-bold text-[14px] tracking-[0.02em] active:scale-[0.99]"
+            />
+          ) : (
+            <OnCourseMode
+              matchId={match.id}
+              courseName={match.courseName}
+              holes={match.holes}
+              matchStartingHole={matchStart}
+              startingHole={onCourseStartingHole}
+              pars={pars}
+              scoresByHole={
+                myMatchPlayer
+                  ? Object.fromEntries(
+                      myMatchPlayer.scores.map((s) => [s.hole, s.strokes]),
+                    )
+                  : undefined
+              }
+              holeGeoByHole={holeGeoByHole}
+              hazardsByHole={hazardsByHole}
+              myMatchPlayerId={myMatchPlayer?.id ?? null}
+              players={(match.players ?? []).map((p) => ({
+                id: p.id,
+                displayName: p.displayName,
+                color: colorForSeat(p.seat ?? 0),
+                scoresByHole: Object.fromEntries(
+                  (p.scores ?? []).map((s) => [s.hole, s.strokes]),
+                ),
+              }))}
+              wind={
+                wind
+                  ? { speedMph: wind.speedMph, fromDeg: wind.fromDeg }
+                  : null
+              }
+              launcherClassName="w-full inline-flex items-center justify-center py-3.5 rounded-[13px] bg-accent text-ink-on-accent font-display font-bold text-[14px] tracking-[0.02em] active:scale-[0.99] disabled:opacity-60"
+            />
+          )}
+        </div>
+      )}
+
       <MatchTabs
         defaultTabId="scorecard"
         tabs={buildMatchTabs({
@@ -753,74 +832,6 @@ export default async function MatchPage({
               g.distanceYds,
             ]),
           ),
-          resumeAction: canLogScores
-            ? match.status === "UPCOMING"
-              ? (
-                  // Pre-round: GPS distances make no sense yet. The CTA
-                  // is the course-preview launcher so players can walk
-                  // the holes / study layouts before the round.
-                  <HoleStudyMode
-                    holes={match.holes}
-                    matchStartingHole={matchStart}
-                    startingHole={onCourseStartingHole}
-                    pars={pars}
-                    scoresByHole={
-                      myMatchPlayer
-                        ? Object.fromEntries(
-                            myMatchPlayer.scores.map((s) => [s.hole, s.strokes]),
-                          )
-                        : undefined
-                    }
-                    holeGeoByHole={holeGeoByHole}
-                    hazardsByHole={hazardsByHole}
-                    wind={
-                      wind
-                        ? { speedMph: wind.speedMph, fromDeg: wind.fromDeg }
-                        : null
-                    }
-                    launcherLabel="Preview the course →"
-                    launcherClassName="w-full inline-flex items-center justify-center py-3.5 rounded-[13px] bg-accent text-ink-on-accent font-display font-bold text-[14px] tracking-[0.02em] active:scale-[0.99]"
-                  />
-                )
-              : (
-                  // In-progress / completed: the GPS launcher (label
-                  // flips between "Start on-course GPS →" and
-                  // "Resume on-course GPS →" based on a per-match
-                  // localStorage flag inside OnCourseMode).
-                  <OnCourseMode
-                    matchId={match.id}
-                    courseName={match.courseName}
-                    holes={match.holes}
-                    matchStartingHole={matchStart}
-                    startingHole={onCourseStartingHole}
-                    pars={pars}
-                    scoresByHole={
-                      myMatchPlayer
-                        ? Object.fromEntries(
-                            myMatchPlayer.scores.map((s) => [s.hole, s.strokes]),
-                          )
-                        : undefined
-                    }
-                    holeGeoByHole={holeGeoByHole}
-                    hazardsByHole={hazardsByHole}
-                    myMatchPlayerId={myMatchPlayer?.id ?? null}
-                    players={(match.players ?? []).map((p) => ({
-                      id: p.id,
-                      displayName: p.displayName,
-                      color: colorForSeat(p.seat ?? 0),
-                      scoresByHole: Object.fromEntries(
-                        (p.scores ?? []).map((s) => [s.hole, s.strokes]),
-                      ),
-                    }))}
-                    wind={
-                      wind
-                        ? { speedMph: wind.speedMph, fromDeg: wind.fromDeg }
-                        : null
-                    }
-                    launcherClassName="w-full inline-flex items-center justify-center py-3.5 rounded-[13px] bg-accent text-ink-on-accent font-display font-bold text-[14px] tracking-[0.02em] active:scale-[0.99] disabled:opacity-60"
-                  />
-                )
-            : undefined,
           bbbGame,
           bbbEvents,
           snakeGame,
@@ -932,6 +943,9 @@ type BuildMatchTabsArgs = {
     netScore: number | null;
     scores: Array<{ hole: number; strokes: number }>;
     seat: number;
+    avatarSeed?: string | null;
+    avatarVariant?: string | null;
+    avatarUrl?: string | null;
   }>;
   // Same shape as playerMeta but collapsed to 2 team rows in
   // SCRAMBLE matches. Equal to playerMeta in INDIVIDUAL matches.
@@ -945,6 +959,9 @@ type BuildMatchTabsArgs = {
     netScore: number | null;
     scores: Array<{ hole: number; strokes: number }>;
     seat: number;
+    avatarSeed?: string | null;
+    avatarVariant?: string | null;
+    avatarUrl?: string | null;
   }>;
   odds: {
     weights: { model: number; crowd: number; live: number };
@@ -998,11 +1015,6 @@ type BuildMatchTabsArgs = {
   // Per-hole tee-to-green yardage drawn from holeGeoByHole. Drives the
   // "388y" tag on the hero card's HOLE row.
   yardageByHole: Record<number, number | null>;
-  // Pre-built launcher node mounted at the bottom of the InRoundLive
-  // scoring view. Page-level so it can close over GPS data (geo,
-  // hazards, wind, start action) without re-plumbing each through
-  // the tabs args bag.
-  resumeAction?: React.ReactNode;
 };
 
 function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
@@ -1044,7 +1056,6 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
     myMatchPlayerId,
     scoringMode,
     yardageByHole,
-    resumeAction,
   } = a;
 
   // Defined before scorecardContent so the latter can append the
@@ -1119,6 +1130,9 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
             scoresByHole: Object.fromEntries(
               p.scores.map((s) => [s.hole, s.strokes]),
             ),
+            avatarSeed: p.avatarSeed,
+            avatarVariant: p.avatarVariant,
+            avatarUrl: p.avatarUrl,
           }))}
           myMatchPlayerId={myMatchPlayerId}
           scoringMode={scoringMode}
@@ -1129,7 +1143,6 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
           }}
           canLogScores={canLogScores}
           yardageByHole={yardageByHole}
-          resumeAction={resumeAction}
         />
       )}
       {/* Side-games link always visible under Standings so creators
@@ -1188,9 +1201,24 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
                   <span
-                    className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                    style={{ background: p.color }}
-                  />
+                    className="inline-block shrink-0 rounded-full overflow-hidden"
+                    style={{
+                      width: 20,
+                      height: 20,
+                      boxShadow: `0 0 0 1.5px ${p.color}`,
+                    }}
+                  >
+                    <PlayerAvatar
+                      seed={p.avatarSeed ?? p.displayName}
+                      variant={
+                        p.avatarVariant && isVariant(p.avatarVariant)
+                          ? (p.avatarVariant as AvatarVariant)
+                          : "beam"
+                      }
+                      avatarUrl={p.avatarUrl ?? null}
+                      size={20}
+                    />
+                  </span>
                   <span className="font-medium truncate">{p.displayName}</span>
                   {isCreator ? (
                     <HandicapInput

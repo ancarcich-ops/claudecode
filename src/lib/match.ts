@@ -21,6 +21,18 @@ export async function loadMatchWithOdds(matchId: string) {
         include: {
           scores: true,
           _count: { select: { wagers: true } },
+          // Pull avatar customization so leaderboards / standings /
+          // market rows can render the user's photo or generated
+          // boring-avatar instead of a flat seat-colored dot.
+          user: {
+            select: {
+              id: true,
+              username: true,
+              avatarSeed: true,
+              avatarVariant: true,
+              avatarUrl: true,
+            },
+          },
         },
       },
       wagers: { include: { user: true, pickedPlayer: true } },
