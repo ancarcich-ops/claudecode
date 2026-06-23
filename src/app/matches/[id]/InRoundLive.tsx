@@ -184,6 +184,9 @@ export default function InRoundLive({
         currentHole={currentHole}
         currentPar={pars[currentHole - startingHole] ?? 4}
         currentYardage={yardageByHole?.[currentHole] ?? null}
+        front9ToPar={heroStats.front9ToPar}
+        back9ToPar={heroStats.back9ToPar}
+        showBack9={holes > 9}
       />
       <ScorecardGrid
         matchId={matchId}
@@ -253,6 +256,9 @@ function Hero({
   currentHole,
   currentPar,
   currentYardage,
+  front9ToPar,
+  back9ToPar,
+  showBack9,
 }: {
   toPar: number | null;
   netToPar: number | null;
@@ -263,6 +269,9 @@ function Hero({
   currentHole: number;
   currentPar: number;
   currentYardage: number | null;
+  front9ToPar: number | null;
+  back9ToPar: number | null;
+  showBack9: boolean;
 }) {
   return (
     <section className="card p-[15px_18px] flex items-center gap-4">
@@ -280,19 +289,14 @@ function Hero({
           Gross · thru {holesThru}
         </div>
       </div>
-      <div className="flex-1 flex flex-col gap-[9px] min-w-0">
+      {/* gap tightened from 9px to 4px so the rows read as a stat
+          stack rather than a list with breathing room. Adds F9 / B9
+          to-par lines (B9 only when the round is 10+ holes). */}
+      <div className="flex-1 flex flex-col gap-[4px] min-w-0">
         {scoringMode !== "GROSS" && (
           <HeroStat
             label="Net"
-            value={
-              netToPar == null
-                ? "—"
-                : netToPar === 0
-                  ? "E"
-                  : netToPar > 0
-                    ? `+${netToPar}`
-                    : `${netToPar}`
-            }
+            value={formatToPar(netToPar)}
             accent={netToPar != null && netToPar < 0}
           />
         )}
@@ -311,6 +315,18 @@ function Hero({
                 )
           }
         />
+        <HeroStat
+          label="Front 9"
+          value={formatToPar(front9ToPar)}
+          accent={front9ToPar != null && front9ToPar < 0}
+        />
+        {showBack9 && (
+          <HeroStat
+            label="Back 9"
+            value={formatToPar(back9ToPar)}
+            accent={back9ToPar != null && back9ToPar < 0}
+          />
+        )}
         <HeroStat
           label="Hole"
           value={
@@ -331,6 +347,12 @@ function Hero({
       </div>
     </section>
   );
+}
+
+function formatToPar(v: number | null): string {
+  if (v == null) return "—";
+  if (v === 0) return "E";
+  return v > 0 ? `+${v}` : `${v}`;
 }
 
 function HeroStat({
@@ -997,24 +1019,48 @@ function computeHeroStats(
   scoringMode: "GROSS" | "NET" | "CUSTOM",
 ) {
   if (!me) {
-    return { toParGross: null, toParNet: null, holesThru: 0, position: null };
+    return {
+      toParGross: null,
+      toParNet: null,
+      holesThru: 0,
+      position: null,
+      front9ToPar: null,
+      back9ToPar: null,
+    };
   }
   let total = 0;
   let played = 0;
   let any = false;
+  let front = 0;
+  let frontAny = false;
+  let back = 0;
+  let backAny = false;
   const lastHole = startingHole + pars.length - 1;
+  // The "front 9" is the first 9 holes of THIS round -- so for a
+  // back-9 match (startingHole=10) hole 10 still counts as the front.
   for (let h = startingHole; h <= lastHole; h++) {
     const s = me.scoresByHole[h];
     if (s == null) continue;
     any = true;
-    total += s - (pars[h - startingHole] ?? 4);
+    const rel = s - (pars[h - startingHole] ?? 4);
+    total += rel;
     played++;
+    const idx = h - startingHole;
+    if (idx < 9) {
+      front += rel;
+      frontAny = true;
+    } else {
+      back += rel;
+      backAny = true;
+    }
   }
   const toParGross = any ? total : null;
   const toParNet =
     scoringMode === "GROSS" || !any || me.handicap == null
       ? null
       : Math.round((total - me.handicap * (played / pars.length)) * 10) / 10;
+  const front9ToPar = frontAny ? front : null;
+  const back9ToPar = backAny ? back : null;
 
   // Position: rank players by their netScore (if available) ascending
   // (lowest net = best). Falls back to to-par from raw scores.
@@ -1040,7 +1086,14 @@ function computeHeroStats(
   const idx = ranked.findIndex((r) => r.id === me.id);
   const position = idx >= 0 ? idx + 1 : null;
 
-  return { toParGross, toParNet, holesThru: played, position };
+  return {
+    toParGross,
+    toParNet,
+    holesThru: played,
+    position,
+    front9ToPar,
+    back9ToPar,
+  };
 }
 
 function computeToPar(
