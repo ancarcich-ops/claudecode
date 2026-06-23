@@ -205,37 +205,46 @@ export function deriveTeamScoresByHole<
   for (let i = 0; i < totalHoles; i++) {
     const hole = startingHole + i;
     const vals: number[] = [];
-    let anyMissing = false;
+    let missingCount = 0;
     for (const p of team) {
       const v = scoreFor(p, i);
       if (v == null) {
-        anyMissing = true;
-        break;
+        missingCount++;
+        continue;
       }
       vals.push(v);
     }
-    if (anyMissing || vals.length === 0) continue;
+    // Need at least one teammate's score to register the hole. For
+    // best-/worst-ball, a single logged score is a meaningful
+    // provisional bound (best/worst can only stay where it is or
+    // move down/up once more scores arrive), so live odds can react
+    // to "JHeacock logged a 4" immediately instead of waiting for
+    // every teammate to log. Sum-style rules genuinely need every
+    // player's contribution -- a partial sum understates the team's
+    // score and would distort the line.
+    if (vals.length === 0) continue;
+    const allLogged = missingCount === 0;
     let teamScore: number;
     switch (r) {
       case "BEST_BALL":
+        // Provisional min. As more teammates log, this only goes
+        // lower (a lower score takes over) -- never higher.
         teamScore = Math.min(...vals);
         break;
       case "WORST_BALL":
+        // Provisional max. As more teammates log, this only goes
+        // higher.
         teamScore = Math.max(...vals);
         break;
       case "HIGH_LOW":
       case "HIGH_LOW_BALL":
       case "VEGAS":
-        // Points-based rules (see computeTeamVsTeam in sideGames.ts) --
-        // the odds engine can't price points directly. Fall back to
-        // team gross sum so live odds still track who's outscoring
-        // whom; tends to correlate with the points leaderboard since
-        // the team with lower strokes wins more head-to-heads.
-        // Leaderboards remain points-accurate.
-        teamScore = vals.reduce((a, b) => a + b, 0);
-        break;
       case "SUM":
       case "AGGREGATE_NET":
+        // Sum-style aggregations need every teammate to have a
+        // score; otherwise the partial sum makes the team look
+        // artificially better. Skip the hole until everyone logs.
+        if (!allLogged) continue;
         teamScore = vals.reduce((a, b) => a + b, 0);
         break;
     }
