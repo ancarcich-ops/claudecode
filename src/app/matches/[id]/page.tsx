@@ -195,25 +195,30 @@ export default async function MatchPage({
 
   if (roundStarted) {
     oddsXMode = "hole";
-    // Map each snapshot to the hole that was active at its timestamp.
-    // Hole-at-time T = max hole whose earliest score was logged at or
-    // before T. Snapshots before any score entry land in bucket 0
-    // ("pre-round" -- shown as the leading point on the chart).
+    // Bucket each snapshot by HOW MANY distinct holes have been
+    // logged at or before its timestamp -- i.e. "round progress" --
+    // not the MAX hole reached. Earlier code used max-hole, so an
+    // accidental out-of-order log (someone taps hole 18 while
+    // playing hole 4) would jam every subsequent snapshot into the
+    // x=18 bucket. Count-based bucketing is always monotonic and
+    // matches the user's mental model of "how far through the round
+    // were we when the odds were here."
     const holeStartPairs = Array.from(earliestPerHole.entries()).sort(
-      (a, b) => a[0] - b[0],
+      (a, b) => a[1] - b[1],
     );
-    function holeAtTime(t: number): number {
-      let h = 0;
-      for (const [hole, startT] of holeStartPairs) {
-        if (startT <= t && hole > h) h = hole;
+    function holesPlayedAtTime(t: number): number {
+      let count = 0;
+      for (const [, startT] of holeStartPairs) {
+        if (startT <= t) count++;
       }
-      return h;
+      return count;
     }
-    // Last snapshot per hole bucket -- later overwrites earlier so we
-    // keep the most recent odds in each bucket. Map preserves insert
-    // order, but we sort by hole at the end to be safe.
+    // Last snapshot per holes-played bucket -- later overwrites
+    // earlier so we keep the most recent odds in each bucket. Map
+    // preserves insert order, but we sort by bucket at the end to
+    // be safe.
     const byHole = new Map<number, Row>();
-    for (const row of series) byHole.set(holeAtTime(row.t), row);
+    for (const row of series) byHole.set(holesPlayedAtTime(row.t), row);
     const sortedHoles = Array.from(byHole.keys()).sort((a, b) => a - b);
     oddsHoleSeries = sortedHoles.map((h) => {
       const row = byHole.get(h)!;
