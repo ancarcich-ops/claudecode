@@ -52,6 +52,11 @@ export type HolePreview3DProps = {
   // Optional callback when the user taps the 2D toggle pill so the
   // parent (HoleStudyMode etc.) can switch back to its flat map.
   onRequest2D?: () => void;
+  // Hide the bottom-left HUD pill (2D toggle + hole label). The
+  // on-course view paints its own hole rail + distance panel that
+  // would otherwise double up with the HUD; standalone callers
+  // (preview, fullscreen modal) keep showing it.
+  hideHud?: boolean;
 };
 
 type ViewState = {
@@ -67,6 +72,7 @@ export default function HolePreview3D({
   hole,
   height = "100%",
   onRequest2D,
+  hideHud = false,
 }: HolePreview3DProps) {
   const apiKey =
     typeof process !== "undefined"
@@ -87,17 +93,15 @@ export default function HolePreview3D({
   const tileLoadCount = useRef(0);
   const [tilesLoaded, setTilesLoaded] = useState(0);
   const [capped, setCapped] = useState(false);
-  // Hide the loading scrim only once enough tiles have streamed in
-  // to cover the establishing pose at decent detail. First-tile alone
-  // wasn't enough -- the first tile is often a far-away parent at low
-  // detail, which left the user staring at a blurry mesh for several
-  // seconds after the scrim disappeared. Bumping the floor to ~10
-  // tiles and the min-wait to 1.5s gives the streamer time to fill in
-  // the close-in level. Hard ceiling of 6s so a slow network never
-  // strands the user on the spinner forever.
-  const MIN_LOADING_MS = 1500;
-  const MIN_TILES_FOR_READY = 10;
-  const MAX_LOADING_MS = 6000;
+  // Loading scrim gating. Earlier passes (1.5s / 10 tiles / 6s) still
+  // dropped the scrim mid-stream while parent-level low-detail tiles
+  // were still being replaced by close-in detail. Bumped: at least
+  // 3s of wall-clock AND 30 tiles loaded, ceiling 9s. The 30-tile
+  // floor roughly tracks "the close-in mesh around the establishing
+  // pose is filled in"; below that the user sees the chunky blur.
+  const MIN_LOADING_MS = 3000;
+  const MIN_TILES_FOR_READY = 30;
+  const MAX_LOADING_MS = 9000;
   const [minLoadDone, setMinLoadDone] = useState(false);
   const [maxLoadDone, setMaxLoadDone] = useState(false);
   const hideLoadingScrim =
@@ -392,7 +396,10 @@ export default function HolePreview3D({
         </div>
       )}
 
-      {/* Bottom-left HUD: hole label + 2D toggle, mirroring the IG ref. */}
+      {/* Bottom-left HUD: hole label + 2D toggle, mirroring the IG ref.
+          Suppressed when the parent paints its own chrome (on-course
+          view) to avoid double-up. */}
+      {!hideHud && (
       <div className="absolute left-3 bottom-3 flex items-center gap-2">
         {onRequest2D && (
           <button
@@ -421,6 +428,7 @@ export default function HolePreview3D({
           </div>
         )}
       </div>
+      )}
 
       {capped && (
         <button

@@ -609,6 +609,10 @@ export default function OnCourseMode({
             }}
             height="100%"
             onRequest2D={() => setMode3d(false)}
+            // Suppress HolePreview3D's own bottom-left HUD pill --
+            // we already render the hole rail + header + distance
+            // panel ourselves; the small pill would just double up.
+            hideHud
           />
         ) : playerPos ? (
           <HoleMiniMap
@@ -687,12 +691,14 @@ export default function OnCourseMode({
         </>
       )}
 
-      {/* Hole rail + header band stay visible in 3D mode so the
-          user can still switch holes / see hole info while the
-          flyover is up. Right stack (wind/pin) and bottom distance
-          panel + ENTER SCORE are hidden in 3D -- the free orbit
-          doesn't have a GPS-tied aim line and entering a score
-          while looking at a flyover is the wrong mental gear. */}
+      {/* System B chrome stays visible in 3D mode. The hole rail +
+          header band let the user switch holes from the flyover,
+          and the bottom distance panel + ENTER SCORE keep working
+          since the GPS-derived TO PIN / TO AIM numbers don't depend
+          on which view (2D vs 3D) is active. Right stack (wind /
+          MOVE PIN) also stays -- wind is useful everywhere, and
+          MOVE PIN is harmless when 3D is up (the aim drops on the
+          underlying 2D model). */}
       <div
         className="absolute inset-x-0 top-0 z-[30] pt-[max(env(safe-area-inset-top),12px)] px-3"
       >
@@ -715,53 +721,72 @@ export default function OnCourseMode({
         </div>
       </div>
 
-      {!mode3d && (
-        <>
-          {/* Right control stack — wind chip + MOVE PIN (when green set). */}
-          <div className="absolute z-[24] right-3 top-[172px] flex flex-col gap-2.5 items-center">
-            <WindTile
-              speedMph={wind?.speedMph ?? 8}
-              fromDeg={wind?.fromDeg ?? 220}
-              breeze={aimPoint != null}
-            />
-            {greenSet && (
-              <MovePinTile
-                active={aimPoint != null}
-                onClick={() => {
-                  if (aimPoint) setAimPoint(null);
-                }}
-              />
-            )}
-          </div>
-
-          {/* Bottom — dominant distance + ENTER SCORE. The preset chip
-              row (TEE/GREEN/HOLE/3D) is rendered through HoleMiniMap's
-              body portal and floats just above this panel. */}
-          <div
-            className="absolute inset-x-0 bottom-0 z-[32] px-3 pt-3 pb-[max(env(safe-area-inset-bottom),14px)] flex flex-col gap-2.5"
+      {/* Right control stack — wind chip + MOVE PIN (when green set)
+          OR a "2D" pill in 3D mode (replacing MOVE PIN). The seg
+          control with the 3D chip is part of HoleMiniMap's portal and
+          is unmounted while 3D is up, so this is the only path back
+          to the satellite. */}
+      <div className="absolute z-[24] right-3 top-[172px] flex flex-col gap-2.5 items-center">
+        <WindTile
+          speedMph={wind?.speedMph ?? 8}
+          fromDeg={wind?.fromDeg ?? 220}
+          breeze={aimPoint != null}
+        />
+        {mode3d ? (
+          <button
+            type="button"
+            onClick={() => setMode3d(false)}
+            className="map-chip w-[60px] rounded-[15px] py-2 px-2 flex flex-col items-center gap-1.5 active:scale-95 transition-transform"
+            aria-label="Back to 2D"
           >
-            <DistancePanel
-              toPin={center}
-              toAim={toAimYds}
-              carryYds={carryHazard?.distance ?? null}
-              carryLabel={carryHazard ? (carryHazard.kind === "WATER" ? "CARRY H₂O" : "CARRY BNK") : null}
-              unmapped={!greenSet}
+            <span
+              className="font-display font-bold text-[18px] leading-none"
+              style={{ color: "var(--mint)" }}
+            >
+              2D
+            </span>
+            <span className="font-mono text-[8.5px] tracking-[0.06em] uppercase text-[var(--map-ink)] font-semibold">
+              EXIT 3D
+            </span>
+          </button>
+        ) : (
+          greenSet && (
+            <MovePinTile
+              active={aimPoint != null}
+              onClick={() => {
+                if (aimPoint) setAimPoint(null);
+              }}
             />
-            <EnterScoreButton
-              disabled={!myMatchPlayerId || !greenSet}
-              label={
-                !myMatchPlayerId
-                  ? "Watching only"
-                  : !greenSet
-                    ? "Map the hole first"
-                    : "Enter Score"
-              }
-              onClick={() => setSheetOpen(true)}
-              pacified={!greenSet}
-            />
-          </div>
-        </>
-      )}
+          )
+        )}
+      </div>
+
+      {/* Bottom — dominant distance + ENTER SCORE. The preset chip
+          row (TEE/GREEN/HOLE/3D) is rendered through HoleMiniMap's
+          body portal and floats just above this panel. */}
+      <div
+        className="absolute inset-x-0 bottom-0 z-[32] px-3 pt-3 pb-[max(env(safe-area-inset-bottom),14px)] flex flex-col gap-2.5"
+      >
+        <DistancePanel
+          toPin={center}
+          toAim={toAimYds}
+          carryYds={carryHazard?.distance ?? null}
+          carryLabel={carryHazard ? (carryHazard.kind === "WATER" ? "CARRY H₂O" : "CARRY BNK") : null}
+          unmapped={!greenSet}
+        />
+        <EnterScoreButton
+          disabled={!myMatchPlayerId || !greenSet}
+          label={
+            !myMatchPlayerId
+              ? "Watching only"
+              : !greenSet
+                ? "Map the hole first"
+                : "Enter Score"
+          }
+          onClick={() => setSheetOpen(true)}
+          pacified={!greenSet}
+        />
+      </div>
 
       {/* Score-entry sheet */}
       <ScoreSheet
