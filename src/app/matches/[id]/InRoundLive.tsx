@@ -48,6 +48,10 @@ export type InRoundProps = {
   };
   // Whether the user can log scores (creator + seated players).
   canLogScores: boolean;
+  // Tee-to-green yardage per absolute hole number. Drives the "388y"
+  // tag on the hero card's HOLE row. Missing keys = no yardage tag
+  // for that hole.
+  yardageByHole?: Record<number, number | null>;
   // Optional: an arbitrary node the parent provides for the bottom CTA
   // (typically the OnCourseMode launcher button). Falls back to a
   // default Resume GPS button when omitted.
@@ -67,6 +71,7 @@ export default function InRoundLive({
   scoringMode,
   sideGames,
   canLogScores,
+  yardageByHole,
   resumeAction,
 }: InRoundProps) {
   // The "current hole" is the lowest hole nobody (including you) has
@@ -135,6 +140,7 @@ export default function InRoundLive({
         scoringMode={scoringMode}
         currentHole={currentHole}
         currentPar={pars[currentHole - startingHole] ?? 4}
+        currentYardage={yardageByHole?.[currentHole] ?? null}
       />
       <ScorecardGrid
         matchId={matchId}
@@ -185,6 +191,7 @@ function Hero({
   scoringMode,
   currentHole,
   currentPar,
+  currentYardage,
 }: {
   toPar: number | null;
   netToPar: number | null;
@@ -194,6 +201,7 @@ function Hero({
   scoringMode: "GROSS" | "NET" | "CUSTOM";
   currentHole: number;
   currentPar: number;
+  currentYardage: number | null;
 }) {
   return (
     <section className="card p-[15px_18px] flex items-center gap-4">
@@ -249,6 +257,12 @@ function Hero({
               {currentHole}
               <small className="font-mono text-[10.5px] text-mute ml-1.5">
                 · P{currentPar}
+                {currentYardage != null && (
+                  <>
+                    {" · "}
+                    {currentYardage}y
+                  </>
+                )}
               </small>
             </>
           }
@@ -417,17 +431,22 @@ function ScorecardGrid({
       </div>
 
       {showCoach && (
+        // Hangs OFF the bottom of the card with the arrow pointing UP
+        // at the active column. Spec puts it below so the cells stay
+        // unobstructed.
         <div
           className="absolute left-1/2 -translate-x-1/2 z-10 rounded-[10px] px-3 py-2 text-[11px] font-sans font-semibold text-center w-[180px] shadow-[0_12px_26px_-12px_rgba(0,0,0,0.55)]"
           style={{
             background: "rgb(var(--color-accent))",
             color: "rgb(var(--ink-on-accent))",
-            // Anchor the tooltip just BELOW the active-column body so
-            // its tail points up at the "+" cell. The active column
-            // sits at row ~30px from card top with header ~22px.
-            top: "calc(100% - 56px)",
+            bottom: "-46px",
           }}
         >
+          <span
+            aria-hidden
+            className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 rounded-[2px]"
+            style={{ background: "rgb(var(--color-accent))" }}
+          />
           Tap any cell to enter a score
           <button
             type="button"
@@ -436,11 +455,6 @@ function ScorecardGrid({
           >
             Got it
           </button>
-          <span
-            aria-hidden
-            className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 rounded-[2px]"
-            style={{ background: "rgb(var(--color-accent))" }}
-          />
         </div>
       )}
     </section>

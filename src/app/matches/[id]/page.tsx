@@ -742,6 +742,12 @@ export default async function MatchPage({
           myWager,
           myMatchPlayerId: myMatchPlayer?.id ?? null,
           scoringMode,
+          yardageByHole: Object.fromEntries(
+            Object.entries(holeGeoByHole).map(([h, g]) => [
+              Number(h),
+              g.distanceYds,
+            ]),
+          ),
           resumeAction: canLogScores ? (
             <OnCourseMode
               matchId={match.id}
@@ -958,6 +964,9 @@ type BuildMatchTabsArgs = {
   saveCourseParsAction: (fd: FormData) => Promise<void>;
   myMatchPlayerId: string | null;
   scoringMode: "GROSS" | "NET" | "CUSTOM";
+  // Per-hole tee-to-green yardage drawn from holeGeoByHole. Drives the
+  // "388y" tag on the hero card's HOLE row.
+  yardageByHole: Record<number, number | null>;
   // Pre-built launcher node mounted at the bottom of the InRoundLive
   // scoring view. Page-level so it can close over GPS data (geo,
   // hazards, wind, start action) without re-plumbing each through
@@ -1003,6 +1012,7 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
     saveCourseParsAction,
     myMatchPlayerId,
     scoringMode,
+    yardageByHole,
     resumeAction,
   } = a;
 
@@ -1087,6 +1097,7 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
             stableford: sgSeries.stableford?.rows,
           }}
           canLogScores={canLogScores}
+          yardageByHole={yardageByHole}
           resumeAction={resumeAction}
         />
       )}
