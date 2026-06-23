@@ -27,6 +27,8 @@ export default function HoleStudyMode({
   holeGeoByHole,
   hazardsByHole,
   wind,
+  launcherLabel = "Preview holes →",
+  launcherClassName = "btn btn-ghost w-full sm:w-auto",
 }: {
   holes: number;
   matchStartingHole?: number;
@@ -36,6 +38,10 @@ export default function HoleStudyMode({
   holeGeoByHole: Record<number, HoleGeo>;
   hazardsByHole: Record<number, HazardGeo[]>;
   wind?: { speedMph: number; fromDeg: number } | null;
+  // Inactive-state launcher overrides. Lets the scoring view's
+  // pre-round CTA take over the styling + label.
+  launcherLabel?: string;
+  launcherClassName?: string;
 }) {
   const [active, setActive] = useState(false);
   // 2D (existing satellite mini-map) vs 3D (Google photorealistic mesh
@@ -179,9 +185,9 @@ export default function HoleStudyMode({
       <button
         type="button"
         onClick={() => setActive(true)}
-        className="btn btn-ghost w-full sm:w-auto"
+        className={launcherClassName}
       >
-        Preview holes →
+        {launcherLabel}
       </button>
     );
   }

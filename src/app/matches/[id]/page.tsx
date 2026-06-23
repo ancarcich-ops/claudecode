@@ -54,6 +54,7 @@ import PressEditor from "./PressEditor";
 import WolfSettings from "./WolfSettings";
 import WinCelebration from "@/components/WinCelebration";
 import OnCourseMode from "./OnCourseMode";
+import HoleStudyMode from "./HoleStudyMode";
 import { getCourseHazardsByName, getCourseHolesByName } from "@/lib/course";
 import { getWindForCoord } from "@/lib/weather";
 import AutoRefresh from "@/components/AutoRefresh";
@@ -752,46 +753,74 @@ export default async function MatchPage({
               g.distanceYds,
             ]),
           ),
-          resumeAction: canLogScores ? (
-            <OnCourseMode
-              matchId={match.id}
-              courseName={match.courseName}
-              holes={match.holes}
-              matchStartingHole={matchStart}
-              startingHole={onCourseStartingHole}
-              pars={pars}
-              scoresByHole={
-                myMatchPlayer
-                  ? Object.fromEntries(
-                      myMatchPlayer.scores.map((s) => [s.hole, s.strokes]),
-                    )
-                  : undefined
-              }
-              holeGeoByHole={holeGeoByHole}
-              hazardsByHole={hazardsByHole}
-              myMatchPlayerId={myMatchPlayer?.id ?? null}
-              players={(match.players ?? []).map((p) => ({
-                id: p.id,
-                displayName: p.displayName,
-                color: colorForSeat(p.seat ?? 0),
-                scoresByHole: Object.fromEntries(
-                  (p.scores ?? []).map((s) => [s.hole, s.strokes]),
-                ),
-              }))}
-              wind={
-                wind
-                  ? { speedMph: wind.speedMph, fromDeg: wind.fromDeg }
-                  : null
-              }
-              startMatchAction={
-                match.status === "UPCOMING" ? startMatchAction : undefined
-              }
-              // launcherLabel intentionally omitted -- OnCourseMode
-              // picks "Start on-course GPS →" vs "Resume on-course
-              // GPS →" itself, gated on localStorage per match.
-              launcherClassName="w-full inline-flex items-center justify-center py-3.5 rounded-[13px] bg-accent text-ink-on-accent font-display font-bold text-[14px] tracking-[0.02em] active:scale-[0.99] disabled:opacity-60"
-            />
-          ) : undefined,
+          resumeAction: canLogScores
+            ? match.status === "UPCOMING"
+              ? (
+                  // Pre-round: GPS distances make no sense yet. The CTA
+                  // is the course-preview launcher so players can walk
+                  // the holes / study layouts before the round.
+                  <HoleStudyMode
+                    holes={match.holes}
+                    matchStartingHole={matchStart}
+                    startingHole={onCourseStartingHole}
+                    pars={pars}
+                    scoresByHole={
+                      myMatchPlayer
+                        ? Object.fromEntries(
+                            myMatchPlayer.scores.map((s) => [s.hole, s.strokes]),
+                          )
+                        : undefined
+                    }
+                    holeGeoByHole={holeGeoByHole}
+                    hazardsByHole={hazardsByHole}
+                    wind={
+                      wind
+                        ? { speedMph: wind.speedMph, fromDeg: wind.fromDeg }
+                        : null
+                    }
+                    launcherLabel="Preview the course →"
+                    launcherClassName="w-full inline-flex items-center justify-center py-3.5 rounded-[13px] bg-accent text-ink-on-accent font-display font-bold text-[14px] tracking-[0.02em] active:scale-[0.99]"
+                  />
+                )
+              : (
+                  // In-progress / completed: the GPS launcher (label
+                  // flips between "Start on-course GPS →" and
+                  // "Resume on-course GPS →" based on a per-match
+                  // localStorage flag inside OnCourseMode).
+                  <OnCourseMode
+                    matchId={match.id}
+                    courseName={match.courseName}
+                    holes={match.holes}
+                    matchStartingHole={matchStart}
+                    startingHole={onCourseStartingHole}
+                    pars={pars}
+                    scoresByHole={
+                      myMatchPlayer
+                        ? Object.fromEntries(
+                            myMatchPlayer.scores.map((s) => [s.hole, s.strokes]),
+                          )
+                        : undefined
+                    }
+                    holeGeoByHole={holeGeoByHole}
+                    hazardsByHole={hazardsByHole}
+                    myMatchPlayerId={myMatchPlayer?.id ?? null}
+                    players={(match.players ?? []).map((p) => ({
+                      id: p.id,
+                      displayName: p.displayName,
+                      color: colorForSeat(p.seat ?? 0),
+                      scoresByHole: Object.fromEntries(
+                        (p.scores ?? []).map((s) => [s.hole, s.strokes]),
+                      ),
+                    }))}
+                    wind={
+                      wind
+                        ? { speedMph: wind.speedMph, fromDeg: wind.fromDeg }
+                        : null
+                    }
+                    launcherClassName="w-full inline-flex items-center justify-center py-3.5 rounded-[13px] bg-accent text-ink-on-accent font-display font-bold text-[14px] tracking-[0.02em] active:scale-[0.99] disabled:opacity-60"
+                  />
+                )
+            : undefined,
           bbbGame,
           bbbEvents,
           snakeGame,
