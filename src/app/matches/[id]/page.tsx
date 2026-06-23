@@ -786,11 +786,9 @@ export default async function MatchPage({
               startMatchAction={
                 match.status === "UPCOMING" ? startMatchAction : undefined
               }
-              launcherLabel={
-                match.status === "UPCOMING"
-                  ? "Start on-course GPS →"
-                  : "Resume GPS →"
-              }
+              // launcherLabel intentionally omitted -- OnCourseMode
+              // picks "Start on-course GPS →" vs "Resume on-course
+              // GPS →" itself, gated on localStorage per match.
               launcherClassName="w-full inline-flex items-center justify-center py-3.5 rounded-[13px] bg-accent text-ink-on-accent font-display font-bold text-[14px] tracking-[0.02em] active:scale-[0.99] disabled:opacity-60"
             />
           ) : undefined,

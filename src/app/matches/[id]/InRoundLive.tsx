@@ -150,6 +150,11 @@ export default function InRoundLive({
         currentPar={pars[currentHole - startingHole] ?? 4}
         currentYardage={yardageByHole?.[currentHole] ?? null}
       />
+      {/* Resume / Start GPS sits ABOVE the scorecard so it's the
+          first action people see after the hero. The old position
+          below Standings buried it under several cards on smaller
+          phones. */}
+      {resumeAction && <div>{resumeAction}</div>}
       <ScorecardGrid
         matchId={matchId}
         currentHole={currentHole}
@@ -177,18 +182,6 @@ export default function InRoundLive({
         startingHole={startingHole}
         pars={pars}
       />
-      {resumeAction ?? (
-        <div className="flex">
-          <button
-            type="button"
-            disabled
-            className="flex-1 py-3.5 rounded-[13px] bg-panel border border-border text-mute font-display font-semibold text-[14px]"
-          >
-            Resume GPS →
-          </button>
-        </div>
-      )}
-
       <ScorePicker
         target={pickerTarget}
         matchId={matchId}

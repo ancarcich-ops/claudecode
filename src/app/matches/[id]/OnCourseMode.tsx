@@ -50,7 +50,7 @@ export default function OnCourseMode({
   players,
   wind,
   startMatchAction,
-  launcherLabel = "Start on-course GPS and scorecard →",
+  launcherLabel,
   launcherClassName = "btn btn-primary w-full sm:w-auto disabled:opacity-60",
 }: {
   matchId: string;
@@ -273,7 +273,24 @@ export default function OnCourseMode({
   // render") because the hook only ran in the active branch.
   const mapEngine = useMapEngine();
 
+  // Has the user ever opened GPS for THIS match? Persisted in
+  // localStorage so the label on the launcher flips from "Start on-
+  // course GPS →" to "Resume on-course GPS →" once they've come
+  // back from the GPS view at least once. Must also live above the
+  // !active early return for hook-count stability.
+  const launchedKey = `sticks.gps.launched.${matchId}`;
+  const [hasLaunched, setHasLaunched] = useState(false);
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(launchedKey) === "1") setHasLaunched(true);
+    } catch {}
+  }, [launchedKey]);
+
   if (!active) {
+    // Pick the label: explicit override beats the launched-state
+    // default. Lets pre-match flows (or tests) force a specific copy.
+    const computedLabel =
+      launcherLabel ?? (hasLaunched ? "Resume on-course GPS →" : "Start on-course GPS →");
     return (
       <button
         type="button"
@@ -282,6 +299,10 @@ export default function OnCourseMode({
           // Open GPS immediately for a snappy feel; if the match hasn't
           // started yet, flip it to live in the background.
           setActive(true);
+          try {
+            localStorage.setItem(launchedKey, "1");
+          } catch {}
+          setHasLaunched(true);
           if (startMatchAction) {
             const fd = new FormData();
             fd.set("matchId", matchId);
@@ -292,7 +313,7 @@ export default function OnCourseMode({
         }}
         className={launcherClassName}
       >
-        {launcherLabel}
+        {computedLabel}
       </button>
     );
   }
