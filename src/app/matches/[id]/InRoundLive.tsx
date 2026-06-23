@@ -221,18 +221,20 @@ export default function InRoundLive({
         startingHole={startingHole}
         pars={pars}
         onClose={() => setPickerTarget(null)}
-        onSaved={(savedPlayer, hole) => {
-          // Auto-advance to the next unscored player on the SAME
-          // hole so the user can rip through "5, tap, 4, tap, 4, tap"
-          // for the foursome without re-tapping cells. Cycle order
-          // follows the players[] array (seat order). Wraps once;
-          // if every other player already has a score, close.
-          const idx = players.findIndex((p) => p.id === savedPlayer.id);
+        onAdvance={(fromPlayer, hole) => {
+          // Move to the next player on the SAME hole who still has no
+          // score. Used by BOTH save and skip so the foursome can be
+          // ripped through ("5, tap; skip; 4, tap; ...") without
+          // re-tapping cells. Cycle follows seat order; if everyone
+          // else already has a score, close.
+          const idx = players.findIndex((p) => p.id === fromPlayer.id);
           const ordered = [
             ...players.slice(idx + 1),
             ...players.slice(0, idx),
           ];
-          const next = ordered.find((p) => p.scoresByHole[hole] == null);
+          const next = ordered.find(
+            (p) => p.id !== fromPlayer.id && p.scoresByHole[hole] == null,
+          );
           if (next) {
             setPickerTarget({ player: next, hole });
           } else {
@@ -1130,17 +1132,17 @@ function ScorePicker({
   startingHole,
   pars,
   onClose,
-  onSaved,
+  onAdvance,
 }: {
   target: { player: InRoundPlayer; hole: number } | null;
   matchId: string;
   startingHole: number;
   pars: number[];
   onClose: () => void;
-  // Fires after a successful save. The parent decides what comes
-  // next (auto-cycle to next unscored player on the same hole, or
-  // close).
-  onSaved: (player: InRoundPlayer, hole: number) => void;
+  // Advance to the next player on the same hole. Fires after a save
+  // OR when the user skips (doesn't know / doesn't want to enter a
+  // score). The parent finds the next unscored player or closes.
+  onAdvance: (player: InRoundPlayer, hole: number) => void;
 }) {
   const [pending, startTransition] = useTransition();
   if (!target) return null;
@@ -1161,7 +1163,7 @@ function ScorePicker({
     fd.set("strokes", String(strokes));
     startTransition(async () => {
       await logScoreAction(fd);
-      onSaved(player, hole);
+      onAdvance(player, hole);
     });
   };
 
@@ -1221,6 +1223,16 @@ function ScorePicker({
             );
           })}
         </div>
+        {/* Skip: move to the next player on this hole without logging
+            a score (don't know it / not entering it). */}
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => onAdvance(player, hole)}
+          className="w-full mt-2.5 py-2.5 rounded-[12px] border border-border bg-panel2 text-mute font-mono text-[11px] tracking-[0.12em] uppercase font-semibold active:text-ink disabled:opacity-60"
+        >
+          Skip · next player →
+        </button>
       </div>
     </div>
   );
