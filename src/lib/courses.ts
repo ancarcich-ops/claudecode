@@ -727,6 +727,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
   // On Naval Weapons Station Seal Beach but the championship 18
   // (Destroyer) is open to civilians at daily-fee rates.
   { id: "navy-seal-beach-destroyer", name: "Navy Golf Course Seal Beach - Destroyer Course", city: "Cypress, CA", region: "OC", access: "public", holes: 18, pars: [4, 3, 3, 3, 4, 4, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4] },
+  { id: "navy-seal-beach-cruiser", name: "Navy Golf Course Seal Beach - Cruiser Course", city: "Cypress, CA", region: "OC", access: "public", holes: 18, pars: [4, 3, 3, 3, 4, 3, 3, 4, 4, 4, 3, 3, 3, 4, 4, 3, 3, 4] },
 
   // LA + OC deep-infill batch -- public/muni gaps + private clubs
   // the catalog was missing. Skipped from research: Vista Valencia
@@ -3260,6 +3261,7 @@ export const COURSE_PRESET_COORDS: Record<string, { lat: number; lng: number }> 
   "lakewood-cc": { lat: 33.8333, lng: -118.1419 },
   "westridge-gc": { lat: 33.9404, lng: -117.9568 },
   "navy-seal-beach-destroyer": { lat: 33.8350, lng: -118.0581 },
+  "navy-seal-beach-cruiser": { lat: 33.8350, lng: -118.0581 },
 
   // LA + OC deep-infill coords.
   "debell-gc": { lat: 34.1900, lng: -118.2864 },
