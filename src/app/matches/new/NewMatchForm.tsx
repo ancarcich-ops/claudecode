@@ -1902,6 +1902,13 @@ export default function NewMatchForm({
                 <PlayerNameInput
                   value={p.name}
                   userId={p.userId}
+                  // Block re-picking a Sticks account that's already
+                  // taken by another row. The current row's own pick
+                  // is omitted so the suggestion list still includes
+                  // them (e.g. if the user clears + re-types).
+                  excludeUserIds={players
+                    .map((pp, j) => (j !== i ? pp.userId : null))
+                    .filter((id): id is string => !!id)}
                   onChange={(next) => {
                     // When the user picks a linked Sticks account we
                     // also receive their auto-computed index. Real

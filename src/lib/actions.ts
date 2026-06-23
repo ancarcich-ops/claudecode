@@ -348,6 +348,21 @@ export async function createMatchAction(formData: FormData) {
   if (drafts.some((p) => Number.isNaN(p.handicap)))
     throw new Error("Handicaps must be numbers");
 
+  // Belt-and-braces dedupe of linked Sticks accounts. The client
+  // PlayerNameInput already filters duplicate user ids out of the
+  // autocomplete; this catches the case where a user types two
+  // matching names or comes in via a hand-crafted POST.
+  const linkedSet = new Set<string>();
+  for (const d of drafts) {
+    if (!d.explicitUserId) continue;
+    if (linkedSet.has(d.explicitUserId)) {
+      throw new Error(
+        "Same player is in this round twice. Each linked account can only fill one slot.",
+      );
+    }
+    linkedSet.add(d.explicitUserId);
+  }
+
   // Scramble requires at least one player on each team. A 4-person
   // round that left everyone on Team A would otherwise create a
   // valid-but-broken match (one team with 0 captain, odds engine
@@ -809,6 +824,19 @@ export async function editMatchAction(formData: FormData) {
   if (drafts.length < 1) throw new Error("Need at least one player");
   if (drafts.some((p) => Number.isNaN(p.handicap)))
     throw new Error("Handicaps must be numbers");
+
+  // Same dedupe as createMatchAction -- one linked Sticks account
+  // per round.
+  const linkedSet = new Set<string>();
+  for (const d of drafts) {
+    if (!d.explicitUserId) continue;
+    if (linkedSet.has(d.explicitUserId)) {
+      throw new Error(
+        "Same player is in this round twice. Each linked account can only fill one slot.",
+      );
+    }
+    linkedSet.add(d.explicitUserId);
+  }
 
   if (format === "SCRAMBLE") {
     if (drafts.length < 2) throw new Error("Teams format needs at least 2 players");

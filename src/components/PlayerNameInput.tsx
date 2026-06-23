@@ -25,12 +25,18 @@ export default function PlayerNameInput({
   userId,
   onChange,
   placeholder,
+  excludeUserIds,
 }: {
   value: string;
   userId: string | null;
   onChange: (next: PlayerPick) => void;
   placeholder: string;
+  // User ids already taken by other rows in the same form. Suggestions
+  // matching one of these are filtered out so the same Sticks account
+  // can't get picked into two slots in the same round.
+  excludeUserIds?: string[];
 }) {
+  const excludeSet = new Set(excludeUserIds ?? []);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [open, setOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
@@ -59,7 +65,13 @@ export default function PlayerNameInput({
         );
         if (!res.ok) return;
         const data: { users: Suggestion[] } = await res.json();
-        setSuggestions(data.users ?? []);
+        // Drop anyone already picked into another slot on this form
+        // (and don't drop the row's own current pick -- the parent
+        // omits it from excludeUserIds for us).
+        const filtered = (data.users ?? []).filter(
+          (u) => !excludeSet.has(u.id),
+        );
+        setSuggestions(filtered);
         setActiveIdx(0);
       } catch {
         // Network errors fail silently; the user can still type a name.
