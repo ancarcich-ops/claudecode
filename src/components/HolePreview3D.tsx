@@ -85,13 +85,23 @@ export default function HolePreview3D({
   const [hasFirstTile, setHasFirstTile] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const tileLoadCount = useRef(0);
+  const [tilesLoaded, setTilesLoaded] = useState(0);
   const [capped, setCapped] = useState(false);
-  // Minimum time the loading scrim stays up after mount / hole change.
-  // Without this, a fast first-tile arrival makes the spinner flash on
-  // and immediately off again, which reads as a glitch.
-  const MIN_LOADING_MS = 700;
+  // Hide the loading scrim only once enough tiles have streamed in
+  // to cover the establishing pose at decent detail. First-tile alone
+  // wasn't enough -- the first tile is often a far-away parent at low
+  // detail, which left the user staring at a blurry mesh for several
+  // seconds after the scrim disappeared. Bumping the floor to ~10
+  // tiles and the min-wait to 1.5s gives the streamer time to fill in
+  // the close-in level. Hard ceiling of 6s so a slow network never
+  // strands the user on the spinner forever.
+  const MIN_LOADING_MS = 1500;
+  const MIN_TILES_FOR_READY = 10;
+  const MAX_LOADING_MS = 6000;
   const [minLoadDone, setMinLoadDone] = useState(false);
-  const hideLoadingScrim = hasFirstTile && minLoadDone;
+  const [maxLoadDone, setMaxLoadDone] = useState(false);
+  const hideLoadingScrim =
+    maxLoadDone || (minLoadDone && tilesLoaded >= MIN_TILES_FOR_READY);
 
   // Reset render-state flags when the hole changes so the spinner +
   // tile counter restart cleanly for the new hole. Also snap the
@@ -104,11 +114,17 @@ export default function HolePreview3D({
     setErrorMsg(null);
     setCapped(false);
     setMinLoadDone(false);
+    setMaxLoadDone(false);
+    setTilesLoaded(0);
     tileLoadCount.current = 0;
     path.current = flightPathFor(hole);
     setViewState({ ...path.current[0], transitionDuration: 0 });
-    const t = setTimeout(() => setMinLoadDone(true), MIN_LOADING_MS);
-    return () => clearTimeout(t);
+    const tMin = setTimeout(() => setMinLoadDone(true), MIN_LOADING_MS);
+    const tMax = setTimeout(() => setMaxLoadDone(true), MAX_LOADING_MS);
+    return () => {
+      clearTimeout(tMin);
+      clearTimeout(tMax);
+    };
   }, [hole]);
 
   // Cinematic intro -- gated on first-tile arrival so the camera
@@ -260,6 +276,10 @@ export default function HolePreview3D({
         // a stale hasFirstTile value (the layer is memoized, so its
         // initial closure persists until apiKey changes).
         setHasFirstTile((prev) => prev || true);
+        // Tile count drives the "is the mesh detailed enough to
+        // show?" gate. Tracked in state so the render reacts; the
+        // ref is just there for cheap session-cap comparison.
+        setTilesLoaded((n) => n + 1);
         if (tileLoadCount.current >= MAX_TILE_LOADS) {
           setCapped((prev) => prev || true);
         }

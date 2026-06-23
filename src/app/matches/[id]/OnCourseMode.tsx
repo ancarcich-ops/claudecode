@@ -687,34 +687,36 @@ export default function OnCourseMode({
         </>
       )}
 
-      {/* All System B chrome hidden in 3D mode -- the photorealistic
-          flyover paints its own HUD + back-to-2D pill, so the 2D
-          rail / header / wind / pin / distance panel would just be
-          competing chrome. */}
+      {/* Hole rail + header band stay visible in 3D mode so the
+          user can still switch holes / see hole info while the
+          flyover is up. Right stack (wind/pin) and bottom distance
+          panel + ENTER SCORE are hidden in 3D -- the free orbit
+          doesn't have a GPS-tied aim line and entering a score
+          while looking at a flyover is the wrong mental gear. */}
+      <div
+        className="absolute inset-x-0 top-0 z-[30] pt-[max(env(safe-area-inset-top),12px)] px-3"
+      >
+        <HoleRail
+          firstHole={firstHole}
+          lastHole={lastHole}
+          activeHole={hole}
+          pars={pars}
+          scoresByHole={scoresByHole ?? {}}
+          onPick={pickHole}
+          onExit={() => setActive(false)}
+        />
+        <div className="mt-2 flex justify-center">
+          <HeaderBand
+            hole={hole}
+            par={par}
+            yardage={yardage}
+            unmapped={!greenSet}
+          />
+        </div>
+      </div>
+
       {!mode3d && (
         <>
-          <div
-            className="absolute inset-x-0 top-0 z-[30] pt-[max(env(safe-area-inset-top),12px)] px-3"
-          >
-            <HoleRail
-              firstHole={firstHole}
-              lastHole={lastHole}
-              activeHole={hole}
-              pars={pars}
-              scoresByHole={scoresByHole ?? {}}
-              onPick={pickHole}
-              onExit={() => setActive(false)}
-            />
-            <div className="mt-2 flex justify-center">
-              <HeaderBand
-                hole={hole}
-                par={par}
-                yardage={yardage}
-                unmapped={!greenSet}
-              />
-            </div>
-          </div>
-
           {/* Right control stack — wind chip + MOVE PIN (when green set). */}
           <div className="absolute z-[24] right-3 top-[172px] flex flex-col gap-2.5 items-center">
             <WindTile
