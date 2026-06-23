@@ -10,7 +10,7 @@ import {
 import HoleMiniMap, { type Landmark } from "./HoleMiniMap";
 import HolePreview3D from "@/components/HolePreview3D";
 import { useMapEngine } from "./useMapEngine";
-import { HolePicker, WindDial } from "./OnCourseMode";
+import { HoleRail, HeaderBand, WindTile } from "./OnCourseMode";
 
 // "Study mode": read-only hole preview before / between rounds. Mirrors
 // the on-course view almost verbatim, but anchors the player marker at
@@ -123,10 +123,11 @@ export default function HoleStudyMode({
     }))
     .sort((a, b) => (a.distance ?? 1e9) - (b.distance ?? 1e9));
 
-  // Landmarks: green-center "PIN" (headline), front-of-green "F" if
-  // available + distinct, plus EVERY hazard as a small kind+carry pill.
-  // Preview suppresses the colored hazard circles (passed empty below)
-  // so the satellite stays clean -- labels alone carry the meaning.
+  // Landmarks: bone-cream PIN chip on the green, tan/cool hazard chips
+  // on bunkers/water with their CARRY distance, and a forest AIM pill
+  // when the player has dropped one. FRONT/BACK live in the bottom
+  // panel under System B -- not on the map -- so the satellite reads
+  // clean.
   const landmarks: Landmark[] = [];
   if (greenCenter && center != null) {
     landmarks.push({
@@ -136,17 +137,8 @@ export default function HoleStudyMode({
       prefix: "PIN",
       yds: center,
       orientation: "below",
-      variant: "accent",
-    });
-  }
-  if (greenFront && front != null) {
-    landmarks.push({
-      id: "front",
-      lat: greenFront.lat,
-      lng: greenFront.lng,
-      prefix: "F",
-      yds: front,
-      orientation: "below",
+      variant: "default",
+      tone: "white",
     });
   }
   for (const h of holeHazards) {
@@ -229,6 +221,11 @@ export default function HoleStudyMode({
             aim={aimPoint}
             onAim={(p) => setAimPoint(p)}
             landmarks={landmarks}
+            // Preview bottom panel (distance card + hint line) is
+            // ~130px tall, so the seg control floats at 140 to clear
+            // it cleanly. Smaller than on-course because there's no
+            // ENTER SCORE button.
+            chipsBottomOffsetPx={140}
             // 3D mode switcher lives in the preset-chip row. Only
             // supplied when the same guards used by the old
             // standalone pill hold (tee + green coords + API key);
@@ -248,166 +245,191 @@ export default function HoleStudyMode({
         )}
       </div>
 
-      {/* The 3D mode switch is now the fourth chip in the
-          Tee/Green/Hole/3D row that HoleMiniMap renders -- see the
-          onToggle3D prop passed in the HoleMiniMap call above.
-          That callback is only supplied when the same three guards
-          hold (tee + greenCenter coords AND
-          NEXT_PUBLIC_GOOGLE_MAPS_API_KEY set), so when 3D isn't
-          available the row just renders 3 chips. */}
-
-      {/* Top scrim + hole picker + sub-header */}
-      <div
-        className="absolute inset-x-0 top-0 z-[30] pt-[max(env(safe-area-inset-top),12px)] pb-2"
-        style={{
-          background:
-            "linear-gradient(180deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0) 100%)",
-        }}
-      >
-        <HolePicker
-          firstHole={firstHole}
-          lastHole={lastHole}
-          activeHole={hole}
-          pars={pars}
-          scoresByHole={scoresByHole ?? {}}
-          onPick={setHole}
-        />
-        <div className="mt-2 px-4 text-center font-mono tabular-nums text-[11.5px] tracking-[0.14em] uppercase text-white/78">
-          PAR {par}
-          <span className="text-white/35"> · </span>
-          {headlineYds != null ? (
-            <>
-              {Math.round(headlineYds)}
-              <span className="text-white/55">Y</span>
-            </>
-          ) : !greenSet ? (
-            <span className="text-gold">UNMAPPED</span>
-          ) : (
-            <span className="text-white/55">— Y</span>
-          )}
-          <span className="text-white/35"> · </span>
-          <span className="text-accent/85">
-            {teeSet ? "FROM TEE" : "PREVIEW"}
-          </span>
-        </div>
-      </div>
-
-      {/* Exit (top-left). Shape, color, and label all chosen to look
-          unambiguously NOT like a hole-picker pill -- a rounded
-          rectangle with "Done" text instead of yet-another-circle
-          with a glyph. Tested side-by-side with the picker scroll
-          row that runs across the same scrim. */}
-      <button
-        type="button"
-        onClick={() => setActive(false)}
-        className="absolute z-[31] top-[max(env(safe-area-inset-top),12px)] left-3 inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-black/85 border border-white/15 text-white font-medium text-[12px] tracking-wide shadow-[0_4px_14px_-4px_rgba(0,0,0,0.6)] active:scale-95 transition-transform"
-        aria-label="Exit preview"
-      >
-        <svg
-          width="11"
-          height="11"
-          viewBox="0 0 16 16"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-        >
-          <line x1="3" y1="3" x2="13" y2="13" />
-          <line x1="13" y1="3" x2="3" y2="13" />
-        </svg>
-        Done
-      </button>
-
-      {/* Wind dial (top-right) -- same as OnCourseMode. Useful pre-
-          round even though it's a forecast snapshot. Hidden in 3D
-          mode so the user gets a clean orbit view (and so the dial
-          doesn't double up with the 3D view's own bottom-left HUD). */}
+      {/* Soft baked scrims (System B) -- low-opacity top + bottom
+          washes so dark-ink chrome reads against the bright satellite.
+          Hidden in 3D mode (HolePreview3D paints its own HUD). */}
       {!mode3d && (
-        <WindDial
-          speedMph={wind?.speedMph ?? 8}
-          fromDeg={wind?.fromDeg ?? 220}
-          breeze={false}
-        />
+        <>
+          <div
+            className="absolute inset-x-0 top-0 h-[150px] z-[15] pointer-events-none"
+            style={{ background: "rgba(0,0,0,0.10)" }}
+          />
+          <div
+            className="absolute inset-x-0 bottom-0 h-[200px] z-[15] pointer-events-none"
+            style={{ background: "rgba(0,0,0,0.14)" }}
+          />
+        </>
       )}
 
-      {/* Bottom hazard summary card -- 2D-only. The 3D preview is a
-          free orbit; tee-to-{front/center/back} + hazard pills are
-          anchored to the 2D player marker, not the free camera, so
-          they'd just confuse the view. Hiding it also un-blocks the
-          3D view's bottom-left "2D" toggle pill, which otherwise
-          sits behind this card. */}
+      {/* System B chrome -- hidden in 3D mode so HolePreview3D's free
+          orbit + own HUD aren't obscured. */}
       {!mode3d && (
-        <div
-        className="absolute inset-x-0 bottom-0 z-[30] pt-5 pb-[max(env(safe-area-inset-bottom),18px)] px-4"
-        style={{
-          background:
-            "linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0) 100%)",
-        }}
-      >
-        <div className="max-w-md mx-auto rounded-xl bg-bg/75 backdrop-blur-md border border-white/8 p-3">
-          {aimPoint && toAimYds != null ? (
-            // Aim mode: replace the front/center/back row with the
-            // plan-a-shot trio. Tap anywhere else on the map to move
-            // the aim, or hit Clear to drop back to the green view.
-            <>
-              <div className="flex items-center justify-between mb-2 px-0.5">
-                <div className="text-[9px] uppercase tracking-wider text-accent">
-                  Aim set
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setAimPoint(null)}
-                  className="text-[10px] uppercase tracking-wider text-mute hover:text-ink"
-                >
-                  Clear
-                </button>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-center">
-                <DistStat label="To aim" yds={toAimYds} accent />
-                <DistStat label="To pin" yds={aimToPinYds} />
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="grid grid-cols-3 gap-2 text-center mb-2">
-                <DistStat label="Front" yds={front} />
-                <DistStat label="Center" yds={center} accent />
-                <DistStat label="Back" yds={back} />
-              </div>
-              <div className="text-center text-[9.5px] uppercase tracking-wider text-mute pb-1.5">
-                Tap on the course to see custom aim distances
-              </div>
-            </>
-          )}
-        </div>
-      </div>
+        <>
+          {/* Top: slim hole rail (active = forest "VIEW") + dedicated
+              header band with the forest "FROM TEE" tag. */}
+          <div className="absolute inset-x-0 top-0 z-[30] pt-[max(env(safe-area-inset-top),12px)] px-3">
+            <HoleRail
+              firstHole={firstHole}
+              lastHole={lastHole}
+              activeHole={hole}
+              pars={pars}
+              scoresByHole={scoresByHole ?? {}}
+              onPick={setHole}
+              onExit={() => setActive(false)}
+              activeLabel="VIEW"
+            />
+            <div className="mt-2 flex justify-center">
+              <HeaderBand
+                hole={hole}
+                par={par}
+                yardage={headlineYds != null ? Math.round(headlineYds) : null}
+                unmapped={!greenSet}
+                trailing={teeSet ? "FROM TEE" : "PREVIEW"}
+              />
+            </div>
+          </div>
+
+          {/* Right control stack -- wind only on the preview (no MOVE
+              PIN; tap-to-aim still works on the satellite directly). */}
+          <div className="absolute z-[24] right-3 top-[172px] flex flex-col gap-2.5 items-center">
+            <WindTile
+              speedMph={wind?.speedMph ?? 8}
+              fromDeg={wind?.fromDeg ?? 220}
+              breeze={aimPoint != null}
+            />
+          </div>
+
+          {/* Bottom panel -- TO GREEN · CENTER dominant + FRONT/BACK
+              secondary, OR aim-mode TO AIM/TO PIN. Tap-for-custom-aim
+              hint sits as a quiet mono line below the panel. */}
+          <div className="absolute inset-x-0 bottom-0 z-[32] px-3 pt-3 pb-[max(env(safe-area-inset-bottom),14px)] flex flex-col gap-2">
+            {aimPoint && toAimYds != null ? (
+              <PreviewAimPanel
+                toAim={toAimYds}
+                toPin={aimToPinYds}
+                onClear={() => setAimPoint(null)}
+              />
+            ) : (
+              <PreviewDistancePanel
+                center={center}
+                front={front}
+                back={back}
+                unmapped={!greenSet}
+              />
+            )}
+            <div className="text-center font-mono text-[9.5px] tracking-[0.1em] uppercase font-semibold pt-0.5"
+                 style={{ color: "var(--map-mute)" }}>
+              Tap the course for custom aim distances
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
 }
 
-function DistStat({
-  label,
-  yds,
-  accent,
+// Bone-cream distance panel for the preview view. Dominant TO GREEN ·
+// CENTER serif number, with FRONT / BACK stacked as a secondary pair
+// on the right. Unmapped state shows neutral em-dashes.
+function PreviewDistancePanel({
+  center,
+  front,
+  back,
+  unmapped,
 }: {
-  label: string;
-  yds: number | null;
-  accent?: boolean;
+  center: number | null;
+  front: number | null;
+  back: number | null;
+  unmapped: boolean;
 }) {
   return (
-    <div>
-      <div className="text-[9px] uppercase tracking-wider text-white/55">
+    <div className="map-chip rounded-[18px] p-[14px_16px] flex items-stretch gap-3.5">
+      <div className="flex-1 min-w-0">
+        <div className="font-mono text-[10px] tracking-[0.1em] uppercase font-semibold"
+             style={{ color: "var(--map-mute)" }}>
+          {unmapped ? "GREEN NEEDED" : "TO GREEN · CENTER"}
+        </div>
+        <div className="font-display font-bold tabular-nums leading-none mt-1 flex items-baseline gap-0.5"
+             style={{ color: "var(--map-ink)" }}>
+          {unmapped || center == null ? (
+            <span className="text-[28px] leading-none" style={{ color: "var(--map-mute)" }}>—</span>
+          ) : (
+            <>
+              <span className="text-[52px] leading-[0.9]">{Math.round(center)}</span>
+              <span className="text-[18px] ml-0.5" style={{ color: "var(--map-mute)" }}>y</span>
+            </>
+          )}
+        </div>
+      </div>
+      <div className="self-stretch w-px" style={{ background: "var(--chip-line)" }} />
+      <div className="flex flex-col gap-2 min-w-[78px]">
+        <PreviewSecondary label="FRONT" value={front != null ? Math.round(front) : null} />
+        <PreviewSecondary label="BACK" value={back != null ? Math.round(back) : null} />
+      </div>
+    </div>
+  );
+}
+
+function PreviewAimPanel({
+  toAim,
+  toPin,
+  onClear,
+}: {
+  toAim: number;
+  toPin: number | null;
+  onClear: () => void;
+}) {
+  return (
+    <div className="map-chip rounded-[18px] p-[14px_16px] flex items-stretch gap-3.5">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-2">
+          <div className="font-mono text-[10px] tracking-[0.1em] uppercase font-semibold"
+               style={{ color: "var(--mint)" }}>
+            TO AIM
+          </div>
+          <button
+            type="button"
+            onClick={onClear}
+            className="font-mono text-[9px] tracking-[0.12em] uppercase font-semibold active:opacity-70"
+            style={{ color: "var(--map-mute)" }}
+          >
+            CLEAR
+          </button>
+        </div>
+        <div className="font-display font-bold tabular-nums leading-none mt-1 flex items-baseline gap-0.5"
+             style={{ color: "var(--mint)" }}>
+          <span className="text-[52px] leading-[0.9]">{Math.round(toAim)}</span>
+          <span className="text-[18px] ml-0.5" style={{ color: "var(--map-mute)" }}>y</span>
+        </div>
+      </div>
+      <div className="self-stretch w-px" style={{ background: "var(--chip-line)" }} />
+      <div className="flex flex-col justify-center min-w-[78px]">
+        <PreviewSecondary
+          label="TO PIN"
+          value={toPin != null ? Math.round(toPin) : null}
+        />
+      </div>
+    </div>
+  );
+}
+
+function PreviewSecondary({ label, value }: { label: string; value: number | null }) {
+  return (
+    <div className="flex flex-col gap-px">
+      <div className="font-mono text-[8.5px] tracking-[0.08em] uppercase font-semibold"
+           style={{ color: "var(--map-mute)" }}>
         {label}
       </div>
-      <div
-        className={
-          "font-mono tabular-nums leading-none mt-0.5 " +
-          (accent ? "text-accent text-[26px]" : "text-white/90 text-[20px]")
-        }
-      >
-        {yds != null ? Math.round(yds) : "—"}
-        <span className="text-white/45 text-[12px] ml-0.5">y</span>
+      <div className="font-display font-bold tabular-nums leading-none flex items-baseline gap-px"
+           style={{ color: "var(--map-ink)" }}>
+        {value == null ? (
+          <span className="text-[18px]" style={{ color: "var(--map-mute)" }}>—</span>
+        ) : (
+          <>
+            <span className="text-[22px]">{value}</span>
+            <span className="text-[11px]" style={{ color: "var(--map-mute)" }}>y</span>
+          </>
+        )}
       </div>
     </div>
   );

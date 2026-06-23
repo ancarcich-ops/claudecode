@@ -779,6 +779,7 @@ export function HoleRail({
   scoresByHole,
   onPick,
   onExit,
+  activeLabel = "PLAY",
 }: {
   firstHole: number;
   lastHole: number;
@@ -787,6 +788,9 @@ export function HoleRail({
   scoresByHole: Record<number, number | null>;
   onPick: (h: number) => void;
   onExit?: () => void;
+  // What to print under the active hole number. "PLAY" on the GPS
+  // view, "VIEW" on the course preview. Defaults to PLAY.
+  activeLabel?: string;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -859,8 +863,8 @@ export function HoleRail({
                   : `${rel}`;
           const played = score != null;
           // Played holes show to-par. Unplayed (including upcoming)
-          // show "PAR N". Active = forest chip with "PLAY".
-          const sublabel = isActive ? "PLAY" : played ? relLabel : `P${par}`;
+          // show "PAR N". Active = forest chip with activeLabel.
+          const sublabel = isActive ? activeLabel : played ? relLabel : `P${par}`;
           const subTone = isActive
             ? "text-[rgba(244,240,230,0.78)]"
             : played && rel != null && rel < 0
@@ -910,16 +914,21 @@ export function HoleRail({
   );
 }
 
-function HeaderBand({
+export function HeaderBand({
   hole,
   par,
   yardage,
   unmapped,
+  trailing,
 }: {
   hole: number;
   par: number;
   yardage: number | null;
   unmapped: boolean;
+  // Optional forest-tinted tag appended after a dot separator. The
+  // preview view passes "FROM TEE" here; the on-course view leaves it
+  // off.
+  trailing?: string;
 }) {
   // Header band rides BELOW the hole rail on its own line, so par /
   // yardage never gets sliced. Just hole · par · yardage — no GPS
@@ -948,11 +957,22 @@ function HeaderBand({
           — YDS
         </span>
       )}
+      {trailing && (
+        <>
+          <span className="w-[3px] h-[3px] rounded-full bg-[var(--map-mute)]" />
+          <span
+            className="font-mono text-[11px] tracking-[0.08em] uppercase font-semibold"
+            style={{ color: "var(--mint)" }}
+          >
+            {trailing}
+          </span>
+        </>
+      )}
     </div>
   );
 }
 
-function WindTile({
+export function WindTile({
   speedMph,
   fromDeg,
   breeze,
@@ -1103,138 +1123,6 @@ function SecondaryStat({
             <span className="text-[11px] text-[var(--map-mute)]">y</span>
           </>
         )}
-      </div>
-    </div>
-  );
-}
-
-// ===== Legacy chrome (still used by HoleStudyMode preview) ==========
-//
-// These keep the old dark-glass chrome alive for the course-preview
-// view while it's awaiting its own System B redesign. Once
-// HoleStudyMode is rebuilt to match the spec, drop these.
-
-export function HolePicker({
-  firstHole,
-  lastHole,
-  activeHole,
-  pars,
-  scoresByHole,
-  onPick,
-}: {
-  firstHole: number;
-  lastHole: number;
-  activeHole: number;
-  pars: number[];
-  scoresByHole: Record<number, number | null>;
-  onPick: (h: number) => void;
-}) {
-  const scrollerRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    const active = el.querySelector<HTMLElement>('[data-active="1"]');
-    if (active) {
-      active.scrollIntoView({
-        behavior: "smooth",
-        inline: "center",
-        block: "nearest",
-      });
-    }
-  }, [activeHole]);
-
-  const holesArr = useMemo(() => {
-    const a: number[] = [];
-    for (let h = firstHole; h <= lastHole; h++) a.push(h);
-    return a;
-  }, [firstHole, lastHole]);
-
-  return (
-    <div
-      ref={scrollerRef}
-      className="pl-[76px] pr-4 flex items-center gap-2 overflow-x-auto no-scrollbar snap-x snap-mandatory"
-    >
-      {holesArr.map((h) => {
-        const isActive = h === activeHole;
-        const par = pars[h - firstHole] ?? 4;
-        const score = scoresByHole[h] ?? null;
-        const rel = score != null ? score - par : null;
-        const relLabel =
-          rel == null ? null : rel === 0 ? "E" : rel > 0 ? `+${rel}` : `${rel}`;
-        const played = score != null;
-        return (
-          <button
-            key={h}
-            type="button"
-            data-active={isActive ? 1 : undefined}
-            onClick={() => onPick(h)}
-            className={
-              "snap-center shrink-0 flex flex-col items-center justify-center rounded-full font-display select-none transition-transform " +
-              (isActive
-                ? "w-11 h-11 bg-white text-bg shadow-[0_6px_20px_-4px_rgba(255,255,255,0.25)] font-semibold text-[16px]"
-                : "w-[38px] h-[38px] bg-[rgba(20,28,24,0.7)] backdrop-blur-md border border-white/8 text-mute font-medium text-[14px] hover:text-ink")
-            }
-          >
-            <span className="leading-none">{h}</span>
-            {!isActive && played && relLabel && (
-              <span
-                className={
-                  "font-mono text-[8.5px] mt-[1px] " +
-                  (rel != null && rel < 0
-                    ? "text-accent"
-                    : rel === 0
-                      ? "text-gold/80"
-                      : "text-mute")
-                }
-              >
-                {relLabel}
-              </span>
-            )}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-export function WindDial({
-  speedMph,
-  fromDeg,
-  breeze,
-}: {
-  speedMph: number;
-  fromDeg: number;
-  breeze: boolean;
-}) {
-  return (
-    <div
-      className="absolute z-[24] right-[22px] top-[114px] w-[60px] h-[60px] rounded-[14px] bg-panel/90 backdrop-blur-[14px] border border-border shadow-[0_4px_12px_-4px_rgba(0,0,0,0.4)] flex flex-col items-center justify-center pt-1 pb-1.5"
-      aria-label={`Wind ${speedMph} mph`}
-    >
-      <svg
-        width="12"
-        height="16"
-        viewBox="0 0 11 15"
-        style={{ transform: `rotate(${fromDeg}deg)`, transformOrigin: "50% 50%" }}
-      >
-        <path
-          d="M5.5 0.5 L10 13 L5.5 10 L1 13 Z"
-          fill={breeze ? "rgb(var(--color-accent))" : "rgb(var(--color-ink))"}
-          fillOpacity={breeze ? 0.9 : 0.92}
-        />
-      </svg>
-      <div className="inline-flex items-baseline gap-[2px] mt-px">
-        <span
-          className={
-            "font-mono font-semibold text-[14px] tabular-nums tracking-[-0.01em] " +
-            (breeze ? "text-accent" : "text-ink")
-          }
-        >
-          {Math.round(speedMph)}
-        </span>
-        <span className="text-[8.5px] uppercase tracking-[0.08em] text-mute">
-          mph
-        </span>
       </div>
     </div>
   );
