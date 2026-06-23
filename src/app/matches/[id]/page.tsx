@@ -318,8 +318,12 @@ export default async function MatchPage({
   const myMatchPlayer = user
     ? match.players.find((p) => p.userId === user.id)
     : null;
-  // Suggest starting on the hole after the user's last logged score; or
-  // the max thru of the whole match if the user isn't a player.
+  // Land GPS on the hole the group is currently playing. Take the
+  // MAX of the user's last logged hole and the group's last logged
+  // hole (someone else may be the scorekeeper and further ahead) +1.
+  // Earlier this used "userLast OR groupLast" which kept sending the
+  // user back to where they last typed instead of where they're
+  // actually standing.
   const userLastHole = myMatchPlayer
     ? myMatchPlayer.scores.reduce((m, s) => Math.max(m, s.hole), 0)
     : 0;
@@ -332,7 +336,7 @@ export default async function MatchPage({
   const matchEnd = matchStart + match.holes - 1;
   const onCourseStartingHole = Math.max(
     matchStart,
-    Math.min(matchEnd, (userLastHole || groupLastHole) + 1),
+    Math.min(matchEnd, Math.max(userLastHole, groupLastHole) + 1),
   );
 
   // Side-game leaderboards. Filter persisted kinds against the known set in
@@ -1101,21 +1105,25 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
           resumeAction={resumeAction}
         />
       )}
-      {/* Creator-only nudge: when the round has no side games enabled,
-          surface a one-line CTA so we don't bury the option inside
-          Edit > step 3. Hidden once any side game is active (the
-          Side games tab takes over discovery). */}
-      {isCreator && !hasSideGames && (
+      {/* Side-games link always visible under Standings so creators
+          can add OR edit side games in one tap. Label flips based on
+          whether any are already enabled. Players (non-creators) see
+          a quieter read-only label. */}
+      {isCreator ? (
         <div className="text-[12px] text-mute text-center">
-          No side games on this round.{" "}
+          {hasSideGames
+            ? "Side games active on this round. "
+            : "No side games on this round. "}
           <Link
             href={`/matches/${match.id}/side-games`}
             className="text-accent hover:underline"
           >
-            Add Skins / Stableford / Teams →
+            {hasSideGames
+              ? "Add or edit →"
+              : "Add Skins / Stableford / Teams →"}
           </Link>
         </div>
-      )}
+      ) : null}
       {/* Creator-only configuration lives here instead of its own tab --
           pars + Wolf rotation are tied directly to scoring, so they
           read naturally as a continuation of the scorecard. */}
