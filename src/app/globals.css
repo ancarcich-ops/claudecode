@@ -127,6 +127,46 @@ body {
   font-feature-settings: "cv02", "cv11";
 }
 
+/* ============================================================
+   System B — map-overlay tokens
+
+   Bone-cream chrome that floats on bright satellite imagery.
+   These do NOT switch with [data-theme]; the satellite is the
+   same green/sunlit surface regardless of which app theme is
+   active, so the overlay system stays fixed for legibility.
+   ============================================================ */
+:root {
+  --chip: rgba(244, 240, 230, 0.93);
+  --chip-line: rgba(120, 108, 82, 0.22);
+  --map-ink: #23201A;
+  --map-mute: #7C7768;
+  --mint: #2E5740;
+  --aimline: #F4F0E6;
+  --map-cream: #F4F0E6;
+  --map-sand: rgba(205, 185, 140, 0.92);
+  --map-sand-ink: #3A2F18;
+  --map-sand-mute: #7A6326;
+}
+
+@keyframes lp {
+  0%   { box-shadow: 0 0 0 0 rgba(46, 87, 64, 0.5); }
+  70%  { box-shadow: 0 0 0 7px rgba(46, 87, 64, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(46, 87, 64, 0); }
+}
+
+@layer components {
+  /* Every floating control on the map (rail chips, header band,
+     wind tile, distance card, seg control, page dots, etc.). */
+  .map-chip {
+    background: var(--chip);
+    border: 1px solid var(--chip-line);
+    color: var(--map-ink);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+
+
 @layer components {
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors;

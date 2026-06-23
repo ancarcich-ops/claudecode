@@ -326,12 +326,37 @@ export default function OnCourseMode({
     })
     .sort((a, b) => (a.distance ?? 1e9) - (b.distance ?? 1e9));
 
-  // Landmarks (yardage pills) the map should overlay. Kept lean: up to
-  // 2 nearby hazards + the AIM pill when an aim is set. The pin itself
-  // (green center) is drawn separately; the front/back distances live
-  // in the F/C/B card below the map, so we don't re-label them here.
+  // Carry distance to the nearest still-in-play hazard on the line of
+  // play. "In play" = farther out than the ball but closer than the
+  // pin. Drives the CARRY BNK pair on the bottom panel.
+  const carryHazard = (() => {
+    const pinD = center;
+    if (pinD == null) return null;
+    for (const h of holeHazards) {
+      if (h.distance == null) continue;
+      if (h.distance < 20) continue; // already past it
+      if (h.distance > pinD - 10) continue; // beyond the green
+      return h;
+    }
+    return null;
+  })();
+
+  // Landmarks (yardage pills) the map should overlay. The PIN bone
+  // chip sits on the green center; the AIM forest pill rides the aim
+  // point; up to 2 nearby hazards float as small bone/tan chips.
   const landmarks: Landmark[] = [];
-  // 2 closest hazards as tiny pills.
+  if (greenCenterLatLng && center != null) {
+    landmarks.push({
+      id: "pin",
+      lat: greenCenterLatLng.lat,
+      lng: greenCenterLatLng.lng,
+      prefix: "PIN",
+      yds: center,
+      variant: "default",
+      tone: "white",
+      orientation: "below",
+    });
+  }
   for (const h of holeHazards.slice(0, 2)) {
     if (h.distance == null) continue;
     landmarks.push({
@@ -516,12 +541,12 @@ export default function OnCourseMode({
         {playerPos ? (
           <HoleMiniMap
             engine={mapEngine}
-            // Chip row offset: AimCard sits at bottom-120 (~70px
-            // tall) when an aim is set, so chips need ~200 to sit
-            // just above it. Without an aim, only the ENTER SCORE
-            // button bar is at the bottom (~80px), so 100 keeps chips
-            // close to the button instead of floating mid-screen.
-            chipsBottomOffsetPx={aimPoint ? 200 : 100}
+            // Bottom panel (DistancePanel ~88px + 10px gap + ENTER
+            // SCORE ~54px + 14px safe area) is ~170px tall, so the
+            // chip row needs ~180 to clear cleanly. Same height
+            // whether or not an aim is set — the panel shape no
+            // longer depends on the aim.
+            chipsBottomOffsetPx={180}
             // Hide the Tee/Mid/Green/Hole portal while the score sheet
             // is open -- the portal mounts on document.body at z-[60]
             // so it would otherwise float on top of the sheet (z-50).
@@ -563,109 +588,76 @@ export default function OnCourseMode({
         )}
       </div>
 
-      {/* Top scrim + hole picker + sub-header */}
+      {/* Soft baked scrims per System B — top + bottom black washes
+          at low opacity so dark-ink chrome reads against the bright
+          satellite without dimming the grass. Below the chrome
+          (z-[15]) but above the map (z-[10]). */}
       <div
-        className="absolute inset-x-0 top-0 z-[30] pt-[max(env(safe-area-inset-top),12px)] pb-2"
-        style={{
-          background:
-            "linear-gradient(180deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0) 100%)",
-        }}
+        className="absolute inset-x-0 top-0 h-[150px] z-[15] pointer-events-none"
+        style={{ background: "rgba(0,0,0,0.10)" }}
+      />
+      <div
+        className="absolute inset-x-0 bottom-0 h-[200px] z-[15] pointer-events-none"
+        style={{ background: "rgba(0,0,0,0.14)" }}
+      />
+
+      {/* ============================================================
+          System B — top: slim hole rail + dedicated header band
+          ============================================================ */}
+      <div
+        className="absolute inset-x-0 top-0 z-[30] pt-[max(env(safe-area-inset-top),12px)] px-3"
       >
-        <HolePicker
+        <HoleRail
           firstHole={firstHole}
           lastHole={lastHole}
-          /* below: pickHole, not setHole, so a manual tap suppresses
-             the GPS auto-advance for a couple of minutes. */
           activeHole={hole}
           pars={pars}
           scoresByHole={scoresByHole ?? {}}
           onPick={pickHole}
+          onExit={() => setActive(false)}
         />
-        <div className="mt-2 px-4 text-center font-mono tabular-nums text-[11.5px] tracking-[0.14em] uppercase text-white/78">
-          PAR {par}
-          <span className="text-white/35"> · </span>
-          {yardage != null ? (
-            <>
-              {yardage}
-              <span className="text-white/55">Y</span>
-            </>
-          ) : !greenSet ? (
-            <span className="text-gold">UNMAPPED</span>
-          ) : (
-            <span className="text-white/55">— Y</span>
-          )}
-          <span className="text-white/35"> · </span>
-          {!process.env.NEXT_PUBLIC_MAPBOX_TOKEN ? (
-            <span className="text-white/55">SCHEMATIC</span>
-          ) : (
-            <>
-              <span className="text-white/55">±{accuracyYd ?? "?"}</span>
-              <span className="text-white/55">Y GPS</span>
-            </>
-          )}
+        <div className="mt-2 flex justify-center">
+          <HeaderBand
+            hole={hole}
+            par={par}
+            yardage={yardage}
+            unmapped={!greenSet}
+          />
         </div>
       </div>
 
-      {/* Exit (top-left, sits over the scrim) */}
-      <button
-        type="button"
-        onClick={() => setActive(false)}
-        className="absolute z-[31] top-[max(env(safe-area-inset-top),12px)] left-3 inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-black/85 border border-white/15 text-white font-medium text-[12px] tracking-wide shadow-[0_4px_14px_-4px_rgba(0,0,0,0.6)] active:scale-95 transition-transform"
-        aria-label="Exit on-course"
-      >
-        <svg
-          width="11"
-          height="11"
-          viewBox="0 0 16 16"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-        >
-          <line x1="3" y1="3" x2="13" y2="13" />
-          <line x1="13" y1="3" x2="3" y2="13" />
-        </svg>
-        Done
-      </button>
-
-      {/* Wind dial + Set Pin FAB (top-right stack) */}
-      <WindDial
-        speedMph={wind?.speedMph ?? 8}
-        fromDeg={wind?.fromDeg ?? 220}
-        breeze={aimPoint != null}
-      />
-      <SetPinFab
-        label={!greenSet ? "Aim" : aimPoint ? "Move Pin" : "Set Pin"}
-        onClick={() => {
-          // Tapping the FAB toggles "aim" mode hint. The actual click
-          // happens on the satellite; this is mostly a visual affordance.
-          if (aimPoint) {
-            setAimPoint(null);
-          }
-        }}
-      />
-
-      {/* Aim card (3-up numerics, when an aim is set) */}
-      {aimPoint && toAimYds != null && (
-        <AimCard
-          toAim={toAimYds}
-          toPin={
-            (aimToGreenYds ?? 0) +
-            (toAimYds ?? 0)
-          }
-          carry={Math.round(toAimYds)}
+      {/* Right control stack — wind chip + (when green is set) MOVE PIN
+          tile. Sits below the header band so the two never collide. */}
+      <div className="absolute z-[24] right-3 top-[172px] flex flex-col gap-2.5 items-center">
+        <WindTile
+          speedMph={wind?.speedMph ?? 8}
+          fromDeg={wind?.fromDeg ?? 220}
+          breeze={aimPoint != null}
         />
-      )}
+        {greenSet && (
+          <MovePinTile
+            active={aimPoint != null}
+            onClick={() => {
+              if (aimPoint) setAimPoint(null);
+            }}
+          />
+        )}
+      </div>
 
-      {/* Bottom scrim + Enter Score CTA */}
+      {/* Bottom — dominant distance + ENTER SCORE. The preset chip
+          row (TEE/GREEN/HOLE/3D) is rendered through HoleMiniMap's
+          body portal and floats just above this panel. */}
       <div
-        className="absolute inset-x-0 bottom-0 z-[32] pt-5 pb-[max(env(safe-area-inset-bottom),20px)] px-5 flex justify-center"
-        style={{
-          background:
-            "linear-gradient(0deg, #000 0%, rgba(0,0,0,0.85) 50%, rgba(0,0,0,0) 100%)",
-        }}
+        className="absolute inset-x-0 bottom-0 z-[32] px-3 pt-3 pb-[max(env(safe-area-inset-bottom),14px)] flex flex-col gap-2.5"
       >
-        <EnterScoreCta
+        <DistancePanel
+          toPin={center}
+          toAim={toAimYds}
+          carryYds={carryHazard?.distance ?? null}
+          carryLabel={carryHazard ? (carryHazard.kind === "WATER" ? "CARRY H₂O" : "CARRY BNK") : null}
+          unmapped={!greenSet}
+        />
+        <EnterScoreButton
           disabled={!myMatchPlayerId || !greenSet}
           label={
             !myMatchPlayerId
@@ -767,6 +759,360 @@ export default function OnCourseMode({
 }
 
 // ===== Sub-components =================================================
+//
+// System B — bone-cream chips floating on a bright satellite map.
+// All chrome here uses .map-chip + the --map-* tokens defined in
+// globals.css; theme-driven --color-* tokens DON'T affect this view
+// (the map's grass-green base never changes per theme, so neither
+// should its overlay).
+//
+// Header / hierarchy: one dominant distance (TO PIN, ~52px serif),
+// a secondary pair (TO AIM forest, CARRY BNK), then a single
+// full-width ENTER SCORE button. The slim hole rail is navigation
+// only — it no longer doubles as a status strip.
+
+export function HoleRail({
+  firstHole,
+  lastHole,
+  activeHole,
+  pars,
+  scoresByHole,
+  onPick,
+  onExit,
+}: {
+  firstHole: number;
+  lastHole: number;
+  activeHole: number;
+  pars: number[];
+  scoresByHole: Record<number, number | null>;
+  onPick: (h: number) => void;
+  onExit?: () => void;
+}) {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const active = el.querySelector<HTMLElement>('[data-active="1"]');
+    if (active) {
+      active.scrollIntoView({
+        behavior: "smooth",
+        inline: "center",
+        block: "nearest",
+      });
+    }
+  }, [activeHole]);
+
+  const holesArr = useMemo(() => {
+    const a: number[] = [];
+    for (let h = firstHole; h <= lastHole; h++) a.push(h);
+    return a;
+  }, [firstHole, lastHole]);
+
+  return (
+    <div className="flex items-center gap-1.5">
+      {onExit && (
+        <button
+          type="button"
+          onClick={onExit}
+          className="map-chip shrink-0 inline-flex items-center gap-1.5 h-[34px] px-3 rounded-[11px] font-sans font-semibold text-[12px] active:scale-95 transition-transform"
+          aria-label="Exit on-course"
+        >
+          <svg
+            width="9"
+            height="9"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+          >
+            <line x1="3" y1="3" x2="13" y2="13" />
+            <line x1="13" y1="3" x2="3" y2="13" />
+          </svg>
+          Done
+        </button>
+      )}
+      <div
+        ref={scrollerRef}
+        // Mask the edges of the rail so chips fade out instead of
+        // hard-cutting at the screen border. Matches the spec's
+        // -webkit-mask: linear-gradient(...) recipe.
+        className="flex-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar snap-x snap-mandatory"
+        style={{
+          WebkitMask:
+            "linear-gradient(90deg, transparent, #000 8%, #000 88%, transparent)",
+          mask: "linear-gradient(90deg, transparent, #000 8%, #000 88%, transparent)",
+        }}
+      >
+        {holesArr.map((h) => {
+          const isActive = h === activeHole;
+          const par = pars[h - firstHole] ?? 4;
+          const score = scoresByHole[h] ?? null;
+          const rel = score != null ? score - par : null;
+          const relLabel =
+            rel == null
+              ? null
+              : rel === 0
+                ? "E"
+                : rel > 0
+                  ? `+${rel}`
+                  : `${rel}`;
+          const played = score != null;
+          // Played holes show to-par. Unplayed (including upcoming)
+          // show "PAR N". Active = forest chip with "PLAY".
+          const sublabel = isActive ? "PLAY" : played ? relLabel : `P${par}`;
+          const subTone = isActive
+            ? "text-[rgba(244,240,230,0.78)]"
+            : played && rel != null && rel < 0
+              ? "text-[var(--mint)]"
+              : played && rel != null && rel > 0
+                ? "text-[#B0473B]"
+                : "text-[var(--map-mute)]";
+          return (
+            <button
+              key={h}
+              type="button"
+              data-active={isActive ? 1 : undefined}
+              onClick={() => onPick(h)}
+              className={
+                "snap-center shrink-0 flex flex-col items-center justify-center gap-px w-[38px] h-[38px] rounded-[11px] select-none transition-colors " +
+                (isActive
+                  ? "border border-transparent text-[var(--map-cream)] shadow-[0_6px_18px_-6px_rgba(46,87,64,0.55)]"
+                  : "map-chip")
+              }
+              style={isActive ? { background: "var(--mint)" } : undefined}
+            >
+              <span
+                className={
+                  "leading-none font-display tabular-nums " +
+                  (isActive
+                    ? "text-[14px] font-semibold text-[var(--map-cream)]"
+                    : "text-[14px] font-semibold text-[var(--map-ink)]")
+                }
+              >
+                {h}
+              </span>
+              {sublabel && (
+                <span
+                  className={
+                    "font-mono text-[8px] tracking-[0.04em] leading-none " +
+                    subTone
+                  }
+                >
+                  {sublabel}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function HeaderBand({
+  hole,
+  par,
+  yardage,
+  unmapped,
+}: {
+  hole: number;
+  par: number;
+  yardage: number | null;
+  unmapped: boolean;
+}) {
+  // Header band rides BELOW the hole rail on its own line, so par /
+  // yardage never gets sliced. Just hole · par · yardage — no GPS
+  // accuracy tag (it lived in the old design and stole prominence
+  // from the dominant distance below).
+  return (
+    <div className="map-chip inline-flex items-center gap-2 px-3.5 py-[7px] rounded-full">
+      <span className="font-mono text-[11px] tracking-[0.08em] uppercase text-[var(--map-ink)] font-semibold">
+        HOLE {hole}
+      </span>
+      <span className="w-[3px] h-[3px] rounded-full bg-[var(--map-mute)]" />
+      <span className="font-mono text-[11px] tracking-[0.08em] uppercase text-[var(--map-ink)] font-semibold">
+        PAR {par}
+      </span>
+      <span className="w-[3px] h-[3px] rounded-full bg-[var(--map-mute)]" />
+      {unmapped ? (
+        <span className="font-mono text-[11px] tracking-[0.08em] uppercase text-[var(--map-sand-mute)] font-semibold">
+          UNMAPPED
+        </span>
+      ) : yardage != null ? (
+        <span className="font-mono text-[11px] tracking-[0.08em] uppercase text-[var(--map-ink)] font-semibold">
+          {yardage} YDS
+        </span>
+      ) : (
+        <span className="font-mono text-[11px] tracking-[0.08em] uppercase text-[var(--map-mute)] font-semibold">
+          — YDS
+        </span>
+      )}
+    </div>
+  );
+}
+
+function WindTile({
+  speedMph,
+  fromDeg,
+  breeze,
+}: {
+  speedMph: number;
+  fromDeg: number;
+  breeze: boolean;
+}) {
+  // Bone-cream tile, ~60px wide. Arrow rotates with fromDeg; serif
+  // number, mono "MPH" label. "Breeze" pulses to mint when the user
+  // has set an aim, hinting that wind matters for this shot.
+  return (
+    <div
+      className="map-chip w-[60px] rounded-[15px] py-2 px-2 flex flex-col items-center gap-1"
+      aria-label={`Wind ${speedMph} mph`}
+    >
+      <svg
+        width="11"
+        height="15"
+        viewBox="0 0 11 15"
+        style={{
+          transform: `rotate(${fromDeg}deg)`,
+          transformOrigin: "50% 50%",
+        }}
+      >
+        <path
+          d="M5.5 0.5 L10 13 L5.5 10 L1 13 Z"
+          fill={breeze ? "var(--mint)" : "var(--map-ink)"}
+          fillOpacity={breeze ? 0.95 : 0.92}
+        />
+      </svg>
+      <div className="font-display font-bold text-[16px] leading-none text-[var(--map-ink)] tabular-nums">
+        {Math.round(speedMph)}
+      </div>
+      <div className="font-mono text-[8px] tracking-[0.06em] uppercase text-[var(--map-mute)]">
+        MPH
+      </div>
+    </div>
+  );
+}
+
+function MovePinTile({
+  active,
+  onClick,
+}: {
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="map-chip w-[60px] rounded-[15px] py-2 px-2 flex flex-col items-center gap-1.5 active:scale-95 transition-transform"
+      aria-label={active ? "Clear aim" : "Move pin"}
+    >
+      <span
+        className="w-[30px] h-[30px] rounded-[9px] grid place-items-center"
+        style={{ background: "var(--mint)", color: "#cdebd9" }}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+          <path d="M6 21V4M6 4l11 3-11 3" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span className="font-mono text-[8.5px] tracking-[0.06em] uppercase text-[var(--map-ink)] font-semibold">
+        {active ? "CLEAR" : "MOVE PIN"}
+      </span>
+    </button>
+  );
+}
+
+function DistancePanel({
+  toPin,
+  toAim,
+  carryYds,
+  carryLabel,
+  unmapped,
+}: {
+  toPin: number | null;
+  toAim: number | null;
+  carryYds: number | null;
+  carryLabel: string | null;
+  unmapped: boolean;
+}) {
+  // Dominant TO PIN · CENTER (52px serif), with TO AIM (forest) +
+  // CARRY (default ink) stacked as a secondary pair on the right.
+  // If unmapped, render a neutral state telling the user what to do.
+  return (
+    <div className="map-chip rounded-[18px] p-[14px_16px] flex items-stretch gap-3.5">
+      <div className="flex-1 min-w-0">
+        <div className="font-mono text-[10px] tracking-[0.1em] uppercase text-[var(--map-mute)] font-semibold">
+          {unmapped ? "GREEN NEEDED" : "TO PIN · CENTER"}
+        </div>
+        <div className="font-display font-bold text-[var(--map-ink)] tabular-nums leading-none mt-1 flex items-baseline gap-0.5">
+          {unmapped ? (
+            <span className="text-[28px] leading-none">—</span>
+          ) : toPin == null ? (
+            <span className="text-[28px] leading-none text-[var(--map-mute)]">—</span>
+          ) : (
+            <>
+              <span className="text-[52px] leading-[0.9]">{Math.round(toPin)}</span>
+              <span className="text-[18px] text-[var(--map-mute)] ml-0.5">y</span>
+            </>
+          )}
+        </div>
+      </div>
+      <div
+        className="self-stretch w-px"
+        style={{ background: "var(--chip-line)" }}
+      />
+      <div className="flex flex-col gap-2 min-w-[88px]">
+        <SecondaryStat
+          label="TO AIM"
+          value={toAim != null ? Math.round(toAim) : null}
+          accent
+        />
+        <SecondaryStat
+          label={carryLabel ?? "CARRY"}
+          value={carryYds != null ? Math.round(carryYds) : null}
+        />
+      </div>
+    </div>
+  );
+}
+
+function SecondaryStat({
+  label,
+  value,
+  accent = false,
+}: {
+  label: string;
+  value: number | null;
+  accent?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-px">
+      <div className="font-mono text-[8.5px] tracking-[0.08em] uppercase text-[var(--map-mute)] font-semibold">
+        {label}
+      </div>
+      <div
+        className="font-display font-bold tabular-nums leading-none flex items-baseline gap-px"
+        style={{ color: accent ? "var(--mint)" : "var(--map-ink)" }}
+      >
+        {value == null ? (
+          <span className="text-[18px] text-[var(--map-mute)]">—</span>
+        ) : (
+          <>
+            <span className="text-[22px]">{value}</span>
+            <span className="text-[11px] text-[var(--map-mute)]">y</span>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ===== Legacy chrome (still used by HoleStudyMode preview) ==========
+//
+// These keep the old dark-glass chrome alive for the course-preview
+// view while it's awaiting its own System B redesign. Once
+// HoleStudyMode is rebuilt to match the spec, drop these.
 
 export function HolePicker({
   firstHole,
@@ -783,11 +1129,7 @@ export function HolePicker({
   scoresByHole: Record<number, number | null>;
   onPick: (h: number) => void;
 }) {
-  // Render a horizontally scrollable row of circular hole pills.
-  // The active hole is larger + white-filled; played holes show a
-  // small accent score chip beneath the number.
   const scrollerRef = useRef<HTMLDivElement>(null);
-  // Auto-center the active pill on hole change.
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
@@ -810,9 +1152,6 @@ export function HolePicker({
   return (
     <div
       ref={scrollerRef}
-      // Left padding (pl-[76px]) reserves room for the Done button
-      // anchored at top-left; without it the first hole pill rides
-      // under the exit and the two controls visually merge.
       className="pl-[76px] pr-4 flex items-center gap-2 overflow-x-auto no-scrollbar snap-x snap-mandatory"
     >
       {holesArr.map((h) => {
@@ -858,45 +1197,6 @@ export function HolePicker({
   );
 }
 
-function SetPinFab({
-  label,
-  onClick,
-}: {
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      // Solid panel + theme-aware text -- previous bg-bg/78 +
-      // text-white/92 made the label invisible on light themes
-      // (Caddie default). Bumped the chip width + label size
-      // slightly so it reads from arm's length.
-      className="absolute z-[25] right-4 top-[182px] w-[68px] h-[84px] rounded-[14px] bg-panel/90 backdrop-blur-md border border-border shadow-[0_8px_24px_-6px_rgba(0,0,0,0.55)] flex flex-col items-center justify-center gap-1.5 pt-2 pb-1.5"
-      aria-label={label}
-    >
-      <span className="w-[30px] h-[30px] rounded-lg bg-accent flex items-center justify-center">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <line
-            x1="4"
-            y1="2"
-            x2="4"
-            y2="15"
-            stroke="rgb(var(--ink-on-accent))"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-          />
-          <path d="M4 3 L13 5 L4 8 Z" fill="rgb(var(--ink-on-accent))" />
-        </svg>
-      </span>
-      <span className="font-mono text-[10.5px] tracking-[0.12em] uppercase text-ink font-semibold">
-        {label}
-      </span>
-    </button>
-  );
-}
-
 export function WindDial({
   speedMph,
   fromDeg,
@@ -908,12 +1208,6 @@ export function WindDial({
 }) {
   return (
     <div
-      // bg-panel (instead of bg-bg/55) gives the card a solid surface
-      // that doesn't bleed satellite imagery through behind the text.
-      // text-ink / text-mute swap from text-white so contrast holds on
-      // light themes (Caddie default) and dark themes (Fairway, etc).
-      // Slight size bump (52 -> 60) so the number reads at a glance
-      // from the cart.
       className="absolute z-[24] right-[22px] top-[114px] w-[60px] h-[60px] rounded-[14px] bg-panel/90 backdrop-blur-[14px] border border-border shadow-[0_4px_12px_-4px_rgba(0,0,0,0.4)] flex flex-col items-center justify-center pt-1 pb-1.5"
       aria-label={`Wind ${speedMph} mph`}
     >
@@ -946,67 +1240,7 @@ export function WindDial({
   );
 }
 
-function AimCard({
-  toAim,
-  toPin,
-  carry,
-}: {
-  toAim: number;
-  toPin: number;
-  carry: number;
-}) {
-  return (
-    <div
-      className="absolute z-[31] left-[18px] right-[18px] bottom-[120px] rounded-2xl bg-bg/80 backdrop-blur-[18px] border border-white/8 p-[14px_16px] flex items-stretch gap-0"
-    >
-      <AimCol label="To aim" value={Math.round(toAim)} unit="yds" accent />
-      <div className="w-px self-stretch bg-white/8 mx-3" />
-      <AimCol label="To pin" value={Math.round(toPin)} unit="yds" />
-      <div className="w-px self-stretch bg-white/8 mx-3" />
-      <AimCol label="Carry" value={Math.round(carry)} unit="yds" />
-    </div>
-  );
-}
-
-function AimCol({
-  label,
-  value,
-  unit,
-  accent = false,
-}: {
-  label: string;
-  value: number;
-  unit: string;
-  accent?: boolean;
-}) {
-  return (
-    <div className="flex-1 flex flex-col items-start gap-[6px]">
-      {/* Theme-aware text tokens -- this card's bg-bg/80 is light
-          bone paper on Caddie's (the default), so the previous
-          text-white / text-white/55 disappeared against the
-          background. text-ink / text-mute / text-faint read on
-          every skin. */}
-      <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-mute">
-        {label}
-      </span>
-      <div className="flex items-baseline gap-[3px]">
-        <span
-          className={
-            "font-mono font-semibold text-[28px] tabular-nums leading-none " +
-            (accent ? "text-accent" : "text-ink")
-          }
-        >
-          {value}
-        </span>
-        <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-faint">
-          {unit}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function EnterScoreCta({
+function EnterScoreButton({
   label,
   onClick,
   disabled,
@@ -1023,10 +1257,13 @@ function EnterScoreCta({
       onClick={onClick}
       disabled={disabled}
       className={
-        "w-full max-w-[320px] inline-flex items-center justify-center gap-3 rounded-full uppercase " +
+        "w-full inline-flex items-center justify-center gap-2 py-[15px] rounded-[15px] font-display font-bold text-[15px] tracking-[0.02em] uppercase transition-colors active:scale-[0.99] " +
         (pacified || disabled
-          ? "bg-bg/78 text-mute border border-white/10 font-mono text-[12px] tracking-[0.12em] font-medium py-[18px]"
-          : "bg-accent text-ink-on-accent font-display font-bold text-[17px] tracking-[0.04em] py-[18px] shadow-[0_12px_30px_-8px_rgb(var(--color-accent)/0.45),_0_0_0_1px_rgb(var(--color-accent)/0.4)]")
+          ? "map-chip text-[var(--map-mute)] font-mono text-[12px] tracking-[0.12em] font-medium"
+          : "text-[var(--map-cream)] shadow-[0_10px_24px_-10px_rgba(46,87,64,0.6)]")
+      }
+      style={
+        pacified || disabled ? undefined : { background: "var(--mint)" }
       }
     >
       <span>{label}</span>

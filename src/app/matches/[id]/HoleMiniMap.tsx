@@ -385,14 +385,16 @@ export default function HoleMiniMap({
           </>
         )}
 
-        {/* Aim play line. Solid player->aim + dashed aim->pin + 2 rings. */}
+        {/* Aim play line — cream (#F4F0E6) per System B, reads on both
+            grass and sand. Solid player->aim, dashed aim->pin, with
+            two concentric cream rings at the aim point. */}
         {pPlayer && pAim && (
           <line
             x1={pPlayer.cx}
             y1={pPlayer.cy}
             x2={pAim.cx}
             y2={pAim.cy}
-            stroke="#34d399"
+            stroke="#F4F0E6"
             strokeOpacity="0.95"
             strokeWidth={aimSolidStroke}
           />
@@ -403,8 +405,8 @@ export default function HoleMiniMap({
             y1={pAim.cy}
             x2={pGC.cx}
             y2={pGC.cy}
-            stroke="#34d399"
-            strokeOpacity="0.55"
+            stroke="#F4F0E6"
+            strokeOpacity="0.78"
             strokeWidth={aimDashedStroke}
             strokeDasharray={`${aimDashedStroke * 2.5} ${aimDashedStroke * 4}`}
           />
@@ -416,7 +418,7 @@ export default function HoleMiniMap({
               cy={pAim.cy}
               r={Math.max(18, scaleRef * 0.075)}
               fill="none"
-              stroke="#34d399"
+              stroke="#F4F0E6"
               strokeOpacity="0.6"
               strokeWidth={aimDashedStroke}
             />
@@ -425,22 +427,21 @@ export default function HoleMiniMap({
               cy={pAim.cy}
               r={Math.max(26, scaleRef * 0.1)}
               fill="none"
-              stroke="#34d399"
-              strokeOpacity="0.3"
+              stroke="#F4F0E6"
+              strokeOpacity="0.32"
               strokeWidth={aimDashedStroke * 0.8}
-              strokeDasharray={`${aimDashedStroke * 2.5} ${aimDashedStroke * 3.5}`}
             />
           </>
         )}
         {pPlayer && pGC && !pAim && (
-          // No aim yet: a quiet dashed reference line player -> pin.
+          // No aim yet: a quiet dashed cream reference line player -> pin.
           <line
             x1={pPlayer.cx}
             y1={pPlayer.cy}
             x2={pGC.cx}
             y2={pGC.cy}
-            stroke="#34d399"
-            strokeOpacity="0.45"
+            stroke="#F4F0E6"
+            strokeOpacity="0.55"
             strokeWidth={aimDashedStroke}
             strokeDasharray={`${aimDashedStroke * 2.5} ${aimDashedStroke * 3.5}`}
           />
@@ -588,40 +589,9 @@ export default function HoleMiniMap({
         </div>
       )}
 
-      {/* Aim marker -- bigger, more refined than the SVG circle alone. */}
-      {pAim && (
-        <div
-          className="absolute z-[18] pointer-events-none"
-          style={{
-            left: `${(pAim.cx / Vw) * 100}%`,
-            top: `${(pAim.cy / Vh) * 100}%`,
-            transform: "translate(-50%, -100%)",
-            filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.6))",
-          }}
-          aria-label="Aim point"
-        >
-          <svg width="28" height="34" viewBox="0 0 28 34">
-            <circle
-              cx="14"
-              cy="14"
-              r="11"
-              fill="rgba(52,211,153,0.18)"
-              stroke="#34d399"
-              strokeWidth="1.5"
-            />
-            <circle cx="14" cy="14" r="3" fill="#34d399" />
-            <line
-              x1="14"
-              y1="14"
-              x2="14"
-              y2="32"
-              stroke="#34d399"
-              strokeWidth="1.4"
-              strokeDasharray="2 3"
-            />
-          </svg>
-        </div>
-      )}
+      {/* Aim marker: under System B the SVG cream rings + the AIM
+          landmark pill carry the marker job at the aim point, so no
+          extra HTML diamond is drawn. */}
 
       {/* Yardage pills. Rendered through LandmarkLayer so pills can
           (a) consume the surrounding PinchZoom's ZoomContext and stay
@@ -1006,28 +976,54 @@ function LandmarkPill({
   const tone = l.tone ?? "white";
   const isAccent = variant === "accent";
   const isTiny = variant === "tiny";
-  const bodyBg = isAccent
-    ? "bg-accent text-ink-on-accent"
-    : tone === "sand"
-      ? "bg-white/95 text-[#3a2d10]"
-      : tone === "water"
-        ? "bg-white/95 text-[#0d2b48]"
-        : "bg-white text-[#0b0f0c]";
-  const prefixCls = isAccent
-    ? "text-ink-on-accent/55"
-    : tone === "sand"
-      ? "text-[#8a7a4f]"
-      : tone === "water"
-        ? "text-[#5d80a8]"
-        : "text-[#6b7c75]";
+  // System B palette:
+  //   accent  -> forest mint pill, cream text       (AIM)
+  //   white   -> bone-cream pill, map-ink text      (PIN, CENTER, etc.)
+  //   sand    -> tan pill, dark text                (BNK carry chips)
+  //   water   -> cool-cream pill, deep blue text    (H2O)
+  // Inline styles use the System B tokens so the colors stay fixed
+  // across all four app themes (the map below them doesn't change).
+  let bodyStyle: React.CSSProperties;
+  let prefixColor: string;
+  let tailColor: string;
+  if (isAccent) {
+    bodyStyle = { background: "var(--mint)", color: "var(--map-cream)" };
+    prefixColor = "rgba(244, 240, 230, 0.65)";
+    tailColor = "#2E5740";
+  } else if (tone === "sand") {
+    bodyStyle = {
+      background: "var(--map-sand)",
+      color: "var(--map-sand-ink)",
+    };
+    prefixColor = "var(--map-sand-mute)";
+    tailColor = "rgba(205, 185, 140, 0.92)";
+  } else if (tone === "water") {
+    bodyStyle = {
+      background: "rgba(228, 238, 248, 0.93)",
+      color: "#0D2B48",
+    };
+    prefixColor = "#5D80A8";
+    tailColor = "rgba(228, 238, 248, 0.93)";
+  } else {
+    // Default "white" tone == bone-cream PIN chip
+    bodyStyle = { background: "var(--chip)", color: "var(--map-ink)" };
+    prefixColor = "var(--mint)";
+    tailColor = "rgba(244, 240, 230, 0.93)";
+  }
   const dimCls = l.dim ? "opacity-50" : "";
   const bodySizing = isTiny
     ? "px-1.5 py-[3px] text-[11px] rounded-[7px]"
-    : "px-2.5 py-[4px] text-[15px] rounded-[10px]";
+    : "px-2.5 py-[4px] text-[14px] rounded-[10px]";
   const prefixSize = isTiny ? "text-[7.5px]" : "text-[8.5px]";
-  const tailColor = isAccent ? "#34d399" : "#ffffff";
   const tailSize = isTiny ? 4 : 5;
   const tailH = isTiny ? 5 : 6;
+  const bodyBorder = isAccent
+    ? "1px solid rgba(46, 87, 64, 0.5)"
+    : tone === "sand"
+      ? "none"
+      : tone === "water"
+        ? "1px solid rgba(120, 140, 168, 0.3)"
+        : "1px solid var(--chip-line)";
 
   // Counter-scale by 1/zoom so the pill keeps its on-screen size as
   // the satellite image grows underneath. transform-origin pins the
@@ -1066,26 +1062,29 @@ function LandmarkPill({
       )}
       <div
         className={
-          "font-mono tabular-nums font-semibold inline-flex items-baseline gap-[3px] " +
-          bodySizing +
-          " " +
-          bodyBg
+          "font-display tabular-nums font-bold inline-flex items-baseline gap-[3px] backdrop-blur-md " +
+          bodySizing
         }
+        style={{ ...bodyStyle, border: bodyBorder, boxShadow: "0 4px 14px -4px rgba(0,0,0,0.55)" }}
       >
         {l.prefix && (
           <span
             className={
-              "uppercase font-medium tracking-[0.14em] mr-[2px] " +
-              prefixSize +
-              " " +
-              prefixCls
+              "font-mono uppercase font-semibold tracking-[0.1em] mr-[2px] " +
+              prefixSize
             }
+            style={{ color: prefixColor }}
           >
             {l.prefix}
           </span>
         )}
         {Math.round(l.yds)}
-        <span className={"font-medium text-[9px] " + prefixCls}>y</span>
+        <span
+          className="font-mono font-medium text-[9px]"
+          style={{ color: prefixColor }}
+        >
+          y
+        </span>
       </div>
       {orient === "above" && (
         <div
@@ -1257,75 +1256,102 @@ function PresetChipsPortal({
     setActive("hole");
   };
 
-  // Fixed width on every chip so the row reads as a balanced strip
-  // regardless of label length (Tee=3 / Green=5 / Hole=4 / 3D=2
-  // chars). w-16 + text-center keeps the visual rhythm steady.
-  const chipCls = (on: boolean, disabled: boolean) =>
-    "w-16 py-1.5 text-[11px] font-mono font-medium tracking-[0.04em] uppercase text-center " +
-    "rounded-full backdrop-blur-sm transition-colors " +
-    (disabled
-      ? "bg-black/40 text-white/40 cursor-not-allowed"
-      : on
-        ? "bg-accent text-bg shadow-[0_0_0_1px_rgb(var(--color-accent)/0.5)]"
-        : "bg-black/70 text-white active:bg-black/85");
-
   if (!mounted) return null;
   return createPortal(
+    <SegControl
+      bottomOffsetPx={bottomOffsetPx}
+      active={active}
+      tee={tee}
+      green={green}
+      onTapTee={() => onTap("tee", tee)}
+      onTapGreen={() => onTap("green", green)}
+      onTapHole={onHole}
+      onToggle3D={onToggle3D}
+    />,
+    document.body,
+  );
+}
+
+// Bone-cream segmented control. Single map-chip container, four inner
+// segments, forest mint active state. Shared between the static-engine
+// and GL preset portals. Rendered through a body portal so it floats
+// above all bottom chrome on both surfaces.
+function SegControl({
+  bottomOffsetPx,
+  active,
+  tee,
+  green,
+  onTapTee,
+  onTapGreen,
+  onTapHole,
+  onToggle3D,
+}: {
+  bottomOffsetPx: number;
+  active: "tee" | "green" | "hole";
+  tee: unknown;
+  green: unknown;
+  onTapTee: () => void;
+  onTapGreen: () => void;
+  onTapHole: () => void;
+  onToggle3D?: () => void;
+}) {
+  const segCls = (on: boolean, disabled: boolean) =>
+    "px-3.5 py-1.5 text-[11.5px] font-mono font-semibold tracking-[0.06em] uppercase text-center " +
+    "rounded-[9px] transition-colors min-w-[52px] " +
+    (disabled
+      ? "text-[var(--map-mute)]/45 cursor-not-allowed"
+      : on
+        ? "text-[var(--map-cream)]"
+        : "text-[var(--map-mute)] active:text-[var(--map-ink)]");
+  const segStyle = (on: boolean): React.CSSProperties =>
+    on ? { background: "var(--mint)" } : {};
+
+  return (
     <div
-      // Sits above all in-app chrome (bottom cards, mobile tab bar,
-      // sheets) by anchoring to viewport bottom with a generous offset
-      // that clears the F/C/B card on the study view and the score
-      // pill on the on-course view. z-[60] beats both (mobile tab bar
-      // is z-40, sheets are z-50).
-      className="fixed left-1/2 -translate-x-1/2 z-[60] flex gap-1.5"
+      className="fixed left-1/2 -translate-x-1/2 z-[60] map-chip flex gap-[3px] p-[3px] rounded-[12px]"
       style={{
-        // Lands the chip row just above the caller's bottom chrome.
-        // bottomOffsetPx comes from the parent so study mode (small
-        // F/C/B card) and on-course mode (taller TO AIM / TO PIN /
-        // CARRY + ENTER SCORE) can each set the right clearance.
         bottom: `calc(env(safe-area-inset-bottom) + ${bottomOffsetPx}px)`,
       }}
     >
       <button
         type="button"
-        onClick={() => onTap("tee", tee)}
+        onClick={onTapTee}
         disabled={!tee}
-        className={chipCls(active === "tee", !tee)}
+        className={segCls(active === "tee", !tee)}
+        style={segStyle(active === "tee")}
         aria-pressed={active === "tee"}
       >
         Tee
       </button>
       <button
         type="button"
-        onClick={() => onTap("green", green)}
+        onClick={onTapGreen}
         disabled={!green}
-        className={chipCls(active === "green", !green)}
+        className={segCls(active === "green", !green)}
+        style={segStyle(active === "green")}
         aria-pressed={active === "green"}
       >
         Green
       </button>
       <button
         type="button"
-        onClick={onHole}
-        className={chipCls(active === "hole", false)}
+        onClick={onTapHole}
+        className={segCls(active === "hole", false)}
+        style={segStyle(active === "hole")}
         aria-pressed={active === "hole"}
       >
         Hole
       </button>
-      {/* 3D chip is a mode switch, not a zoom target -- no active
-          state (the parent unmounts the 2D map when 3D enters, so
-          this chip is unreachable in 3D mode). */}
       {onToggle3D && (
         <button
           type="button"
           onClick={onToggle3D}
-          className={chipCls(false, false)}
+          className={segCls(false, false)}
         >
           3D
         </button>
       )}
-    </div>,
-    document.body,
+    </div>
   );
 }
 
@@ -1487,64 +1513,18 @@ function PresetChipsPortalGL({
     setActive("hole");
   };
 
-  // Fixed-width chips so the row stays balanced regardless of label
-  // length (Tee=3 / Green=5 / Hole=4 / 3D=2 chars).
-  const chipCls = (on: boolean, disabled: boolean) =>
-    "w-16 py-1.5 text-[11px] font-mono font-medium tracking-[0.04em] uppercase text-center " +
-    "rounded-full backdrop-blur-sm transition-colors " +
-    (disabled
-      ? "bg-black/40 text-white/40 cursor-not-allowed"
-      : on
-        ? "bg-accent text-bg shadow-[0_0_0_1px_rgb(var(--color-accent)/0.5)]"
-        : "bg-black/70 text-white active:bg-black/85");
-
   if (!mounted) return null;
   return createPortal(
-    <div
-      className="fixed left-1/2 -translate-x-1/2 z-[60] flex gap-1.5"
-      style={{
-        bottom: `calc(env(safe-area-inset-bottom) + ${bottomOffsetPx}px)`,
-      }}
-    >
-      <button
-        type="button"
-        onClick={() => onTap("tee", tee)}
-        disabled={!tee}
-        className={chipCls(active === "tee", !tee)}
-        aria-pressed={active === "tee"}
-      >
-        Tee
-      </button>
-      <button
-        type="button"
-        onClick={() => onTap("green", green)}
-        disabled={!green}
-        className={chipCls(active === "green", !green)}
-        aria-pressed={active === "green"}
-      >
-        Green
-      </button>
-      <button
-        type="button"
-        onClick={onHole}
-        className={chipCls(active === "hole", false)}
-        aria-pressed={active === "hole"}
-      >
-        Hole
-      </button>
-      {/* 3D chip is a mode switch, not a zoom target -- no active
-          state (the parent unmounts the 2D map when 3D enters, so
-          this chip is unreachable in 3D mode). */}
-      {onToggle3D && (
-        <button
-          type="button"
-          onClick={onToggle3D}
-          className={chipCls(false, false)}
-        >
-          3D
-        </button>
-      )}
-    </div>,
+    <SegControl
+      bottomOffsetPx={bottomOffsetPx}
+      active={active}
+      tee={tee}
+      green={green}
+      onTapTee={() => onTap("tee", tee)}
+      onTapGreen={() => onTap("green", green)}
+      onTapHole={onHole}
+      onToggle3D={onToggle3D}
+    />,
     document.body,
   );
 }
