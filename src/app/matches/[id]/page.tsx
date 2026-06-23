@@ -1519,13 +1519,10 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
       content: marketContent,
     });
   }
-  if (hasSideGames) {
-    tabs.push({
-      id: "side-games",
-      label: "Side games",
-      badge: enabledKinds.length || null,
-      content: sideGamesContent,
-    });
-  }
+  // Side games used to have their own tab; the running leaderboards
+  // now live inside the Standings switcher on the scoring view (one
+  // segment per enabled game), so the dedicated tab is redundant.
+  // The Add / edit link under Standings still routes to the
+  // dedicated /side-games configuration page.
   return tabs;
 }
