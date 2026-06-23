@@ -195,6 +195,24 @@ export default function InRoundLive({
         startingHole={startingHole}
         pars={pars}
         onClose={() => setPickerTarget(null)}
+        onSaved={(savedPlayer, hole) => {
+          // Auto-advance to the next unscored player on the SAME
+          // hole so the user can rip through "5, tap, 4, tap, 4, tap"
+          // for the foursome without re-tapping cells. Cycle order
+          // follows the players[] array (seat order). Wraps once;
+          // if every other player already has a score, close.
+          const idx = players.findIndex((p) => p.id === savedPlayer.id);
+          const ordered = [
+            ...players.slice(idx + 1),
+            ...players.slice(0, idx),
+          ];
+          const next = ordered.find((p) => p.scoresByHole[hole] == null);
+          if (next) {
+            setPickerTarget({ player: next, hole });
+          } else {
+            setPickerTarget(null);
+          }
+        }}
       />
     </div>
   );
@@ -1030,12 +1048,17 @@ function ScorePicker({
   startingHole,
   pars,
   onClose,
+  onSaved,
 }: {
   target: { player: InRoundPlayer; hole: number } | null;
   matchId: string;
   startingHole: number;
   pars: number[];
   onClose: () => void;
+  // Fires after a successful save. The parent decides what comes
+  // next (auto-cycle to next unscored player on the same hole, or
+  // close).
+  onSaved: (player: InRoundPlayer, hole: number) => void;
 }) {
   const [pending, startTransition] = useTransition();
   if (!target) return null;
@@ -1056,7 +1079,7 @@ function ScorePicker({
     fd.set("strokes", String(strokes));
     startTransition(async () => {
       await logScoreAction(fd);
-      onClose();
+      onSaved(player, hole);
     });
   };
 
