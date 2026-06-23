@@ -291,66 +291,64 @@ function Hero({
           Gross · thru {holesThru}
         </div>
       </div>
-      {/* Right pane: NET spans the top (when scoring mode shows it),
-          then POSITION + HOLE stacked as the left column and FRONT 9
-          + BACK 9 as the right column. Pure 2-col grid below NET so
-          each pair reads at a glance. */}
-      <div className="flex-1 grid grid-cols-2 gap-x-3 gap-y-1 min-w-0">
-        {scoringMode !== "GROSS" && (
-          <div className="col-span-2">
+      {/* Right pane: two aligned stat columns (NET/POSITION on the
+          left, FRONT 9/BACK 9 on the right), then the current-hole
+          detail on its own line at the bottom so the par + yardage
+          never wrap into the stat rows. */}
+      <div className="flex-1 min-w-0 flex flex-col gap-2.5">
+        <div className="flex gap-4">
+          <div className="flex-1 flex flex-col gap-1.5 min-w-0 pr-3">
+            {scoringMode !== "GROSS" && (
+              <HeroStat
+                label="Net"
+                value={formatToPar(netToPar)}
+                accent={netToPar != null && netToPar < 0}
+              />
+            )}
             <HeroStat
-              label="Net"
-              value={formatToPar(netToPar)}
-              accent={netToPar != null && netToPar < 0}
+              label="Position"
+              value={
+                position == null
+                  ? "—"
+                  : (
+                      <>
+                        {position}
+                        <small className="font-mono text-[10.5px] text-mute ml-px">
+                          {ordinalSuffix(position)}
+                        </small>
+                      </>
+                    )
+              }
             />
           </div>
-        )}
-        <HeroStat
-          label="Position"
-          value={
-            position == null
-              ? "—"
-              : (
-                  <>
-                    {position}
-                    <small className="font-mono text-[10.5px] text-mute ml-px">
-                      {ordinalSuffix(position)}
-                    </small>
-                  </>
-                )
-          }
-        />
-        <HeroStat
-          label="Front 9"
-          value={formatToPar(front9ToPar)}
-          accent={front9ToPar != null && front9ToPar < 0}
-        />
-        <HeroStat
-          label="Hole"
-          value={
+          <div className="flex-1 flex flex-col gap-1.5 min-w-0 pl-3">
+            <HeroStat
+              label="Front 9"
+              value={formatToPar(front9ToPar)}
+              accent={front9ToPar != null && front9ToPar < 0}
+            />
+            {showBack9 && (
+              <HeroStat
+                label="Back 9"
+                value={formatToPar(back9ToPar)}
+                accent={back9ToPar != null && back9ToPar < 0}
+              />
+            )}
+          </div>
+        </div>
+        <div className="pt-2 border-t border-border font-mono text-[10.5px] tracking-[0.08em] uppercase text-mute font-semibold flex items-center gap-1.5">
+          <span className="text-ink font-bold tabular-nums normal-case">
+            Hole {currentHole}
+          </span>
+          <span className="text-faint">·</span>
+          <span>Par {currentPar}</span>
+          {currentYardage != null && (
             <>
-              {currentHole}
-              <small className="font-mono text-[10.5px] text-mute ml-1.5">
-                · P{currentPar}
-                {currentYardage != null && (
-                  <>
-                    {" · "}
-                    {currentYardage}y
-                  </>
-                )}
-              </small>
+              <span className="text-faint">·</span>
+              <span className="tabular-nums">{currentYardage}y</span>
             </>
-          }
-        />
-        {showBack9 ? (
-          <HeroStat
-            label="Back 9"
-            value={formatToPar(back9ToPar)}
-            accent={back9ToPar != null && back9ToPar < 0}
-          />
-        ) : (
-          <div />
-        )}
+          )}
+        </div>
       </div>
     </section>
   );
