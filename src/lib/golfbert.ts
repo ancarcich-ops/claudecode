@@ -235,7 +235,7 @@ const TEE_PRIORITY = [
   "combo",
   "hybrid",
 ];
-function pickTeebox(boxes: GBHoleTeebox[]): GBHoleTeebox | null {
+export function pickTeebox(boxes: GBHoleTeebox[]): GBHoleTeebox | null {
   if (boxes.length === 0) return null;
   for (const want of TEE_PRIORITY) {
     const m = boxes.find(
@@ -336,6 +336,25 @@ function classifySurface(
   return "other";
 }
 
+// Great-circle distance in yards. Inlined here so this client stays
+// free of any DB / app-layer deps (src/lib/course.ts owns the same
+// formula but pulls in prisma).
+function haversineYards(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number },
+): number {
+  const R = 6371000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h)) * 1.0936133;
+}
+
 // Centroid of a polygon, ignoring degeneracies. We average vertices
 // because golf-green polygons are roughly convex; this is good enough
 // to drop a single representative hazard pin per polygon.
@@ -377,8 +396,20 @@ export async function importCourseFromGolfBert(
     );
 
     const tee = pickTeebox(teeboxes);
-    const greenLat = h.flagcoords?.lat ?? null;
-    const greenLng = h.flagcoords?.long ?? null;
+    // Green position: prefer the centroid of the green polygon when
+    // we have it. h.flagcoords is unreliable on bulk-imported courses
+    // -- empirically it lands at the course's clubhouse/center for
+    // most holes (see scripts/audit-tee-boxes.ts: ~92% of courses fire
+    // with computed tee->green ~2x the published yardage, which is
+    // exactly the pattern you get when every hole's "green" is the
+    // same course-wide anchor). Polygon centroid comes from a per-hole
+    // API response, so it's correct per-hole.
+    const greenFromPoly =
+      greenPoly && greenPoly.polygon.length > 0
+        ? centroid(greenPoly.polygon)
+        : null;
+    const greenLat = greenFromPoly?.lat ?? h.flagcoords?.lat ?? null;
+    const greenLng = greenFromPoly?.lng ?? h.flagcoords?.long ?? null;
 
     const hazards: ImportedHole["hazards"] = [];
     for (const p of polygons) {
@@ -411,7 +442,35 @@ export async function importCourseFromGolfBert(
       tee?.coordinates?.lat != null && tee?.coordinates?.long != null
         ? { lat: tee.coordinates.lat, lng: tee.coordinates.long }
         : null;
+    // Sanity-check teeFromBox against tee.length. Golfbert's tee
+    // coordinates are unreliable -- on a 1239-course backfill the
+    // audit found ~13,000 holes where tee->green disagreed with the
+    // teebox's own `length` by >30y. Patterns ranged from catastrophic
+    // (Falconhead holes 4/9 with 29,000y walks because the tee was on
+    // the other side of the country) down to ~50-100y mis-placements
+    // that landed the tee in a parking lot beside the clubhouse. When
+    // the disagreement is meaningful, fall through to the vectors/
+    // range fallback below -- those points are derived from per-hole
+    // geometry and don't suffer the same default-fallback failure mode.
+    //
+    // Threshold: max(30y, 0.15 * length). Tolerance grows with hole
+    // length so legitimate dogleg slack (where straight-line tee->green
+    // is shorter than the played yardage) doesn't trip the check on
+    // long par-4s/5s, while short par-3s still get a tight bound.
     let resolvedTee: { lat: number; lng: number } | null = teeFromBox;
+    if (
+      teeFromBox != null &&
+      greenLat != null &&
+      greenLng != null &&
+      tee?.length != null
+    ) {
+      const measured = haversineYards(teeFromBox, {
+        lat: greenLat,
+        lng: greenLng,
+      });
+      const allowed = Math.max(30, tee.length * 0.15);
+      if (Math.abs(measured - tee.length) > allowed) resolvedTee = null;
+    }
     if (!resolvedTee && greenLat != null && greenLng != null) {
       const candidates: { lat: number; lng: number }[] = [];
       if (h.range?.start?.lat != null && h.range?.start?.long != null)
