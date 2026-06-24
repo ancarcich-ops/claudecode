@@ -254,12 +254,22 @@ async function main() {
     }
 
     if (args.apply) {
-      for (const p of willApply) {
-        await prisma.courseHole.update({
-          where: { id: p.holeId },
-          data: { teeLat: p.newTee.lat, teeLng: p.newTee.lng },
-        });
-        totalApplied++;
+      // Batch updates in a transaction to amortize network latency.
+      // Sequential awaits land each at ~150ms over the public internet;
+      // a single tx with 100 statements lands the whole batch in one
+      // round-trip.
+      const chunkSize = 100;
+      for (let i = 0; i < willApply.length; i += chunkSize) {
+        const chunk = willApply.slice(i, i + chunkSize);
+        await prisma.$transaction(
+          chunk.map((p) =>
+            prisma.courseHole.update({
+              where: { id: p.holeId },
+              data: { teeLat: p.newTee.lat, teeLng: p.newTee.lng },
+            }),
+          ),
+        );
+        totalApplied += chunk.length;
       }
     }
   }
