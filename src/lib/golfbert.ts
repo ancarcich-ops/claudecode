@@ -442,17 +442,21 @@ export async function importCourseFromGolfBert(
       tee?.coordinates?.lat != null && tee?.coordinates?.long != null
         ? { lat: tee.coordinates.lat, lng: tee.coordinates.long }
         : null;
-    // Sanity-check teeFromBox against tee.length. Some Golfbert holes
-    // ship a tee.coordinates that points to a different course (or a
-    // default fallback location entirely) -- e.g. Falconhead holes 4/9
-    // produced 29,000y walks because the tee was effectively on the
-    // other side of the country. If the measured tee->green distance
-    // disagrees with the box's own `length` by more than max(200y,
-    // 3 * length), treat the tee.coordinates as bogus and fall through
-    // to the vectors/range fallback below. The slack is intentionally
-    // wide -- this catches catastrophic mismatches without firing on
-    // the routine ~2x mismatches that the green-polygon fix above
-    // already addresses.
+    // Sanity-check teeFromBox against tee.length. Golfbert's tee
+    // coordinates are unreliable -- on a 1239-course backfill the
+    // audit found ~13,000 holes where tee->green disagreed with the
+    // teebox's own `length` by >30y. Patterns ranged from catastrophic
+    // (Falconhead holes 4/9 with 29,000y walks because the tee was on
+    // the other side of the country) down to ~50-100y mis-placements
+    // that landed the tee in a parking lot beside the clubhouse. When
+    // the disagreement is meaningful, fall through to the vectors/
+    // range fallback below -- those points are derived from per-hole
+    // geometry and don't suffer the same default-fallback failure mode.
+    //
+    // Threshold: max(30y, 0.15 * length). Tolerance grows with hole
+    // length so legitimate dogleg slack (where straight-line tee->green
+    // is shorter than the played yardage) doesn't trip the check on
+    // long par-4s/5s, while short par-3s still get a tight bound.
     let resolvedTee: { lat: number; lng: number } | null = teeFromBox;
     if (
       teeFromBox != null &&
@@ -464,7 +468,7 @@ export async function importCourseFromGolfBert(
         lat: greenLat,
         lng: greenLng,
       });
-      const allowed = Math.max(200, tee.length * 3);
+      const allowed = Math.max(30, tee.length * 0.15);
       if (Math.abs(measured - tee.length) > allowed) resolvedTee = null;
     }
     if (!resolvedTee && greenLat != null && greenLng != null) {
