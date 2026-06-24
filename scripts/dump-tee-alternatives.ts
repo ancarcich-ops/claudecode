@@ -33,7 +33,9 @@ async function main() {
   }
 
   const course = await prisma.course.findFirst({
-    where: { name: { contains: courseName, mode: "insensitive" } },
+    where: {
+      name: { contains: courseName, mode: "insensitive" as const },
+    } as never,
     select: { id: true, name: true, centerLat: true, centerLng: true },
   });
   if (!course) {
