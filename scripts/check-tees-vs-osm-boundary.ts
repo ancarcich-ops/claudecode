@@ -57,6 +57,7 @@ function parseArgs(argv: string[]) {
     refreshCache: false,
     markdown: false,
     top: 50,
+    maxPct: 50,
   };
   for (const a of argv.slice(2)) {
     if (a.startsWith("--course=")) flags.course = a.slice("--course=".length);
@@ -65,6 +66,9 @@ function parseArgs(argv: string[]) {
     else if (a.startsWith("--top=")) {
       const n = parseInt(a.slice("--top=".length), 10);
       if (Number.isFinite(n)) flags.top = n;
+    } else if (a.startsWith("--max-pct=")) {
+      const n = parseInt(a.slice("--max-pct=".length), 10);
+      if (Number.isFinite(n)) flags.maxPct = n;
     }
   }
   return flags;
@@ -234,10 +238,11 @@ async function main() {
       select: { hole: true, teeLat: true, teeLng: true, distanceYds: true },
       orderBy: { hole: "asc" },
     });
+    const courseHits: Hit[] = [];
     for (const h of holes) {
       const tee = { lat: h.teeLat!, lng: h.teeLng! };
       if (pointInAny(tee, entry.polygons)) continue;
-      hits.push({
+      courseHits.push({
         courseName: course.name,
         hole: h.hole,
         teeLat: tee.lat,
@@ -245,6 +250,22 @@ async function main() {
         published: h.distanceYds,
       });
     }
+    // If too many of the course's holes are flagged, the OSM polygon
+    // is almost certainly misaligned for this course (wrong polygon
+    // returned by Overpass, course relocated, polygon tracks only
+    // part of the property, etc). Suppress -- not actionable as a
+    // worklist item.
+    if (
+      holes.length > 0 &&
+      (courseHits.length / holes.length) * 100 > args.maxPct
+    ) {
+      skippedCourses.push({
+        name: course.name,
+        reason: `${courseHits.length}/${holes.length} flagged (>${args.maxPct}% -- likely OSM polygon mismatch)`,
+      });
+      continue;
+    }
+    hits.push(...courseHits);
   }
   saveCache(cache);
 
