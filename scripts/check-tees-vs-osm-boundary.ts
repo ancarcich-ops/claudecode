@@ -95,7 +95,7 @@ async function fetchBoundaryPolygons(lat: number, lng: number): Promise<LL[][]> 
   way["leisure"="golf_course"](around:${RADIUS_M},${lat},${lng});
   relation["leisure"="golf_course"](around:${RADIUS_M},${lat},${lng});
 );
-out tags;
+out body;
 >;
 out skel qt;
 `;
