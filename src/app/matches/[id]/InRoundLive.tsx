@@ -85,6 +85,8 @@ export type InRoundProps = {
     skins?: SideGameRow[];
     nassauTotal?: SideGameRow[];
     stableford?: SideGameRow[];
+    wolf?: SideGameRow[];
+    snake?: SideGameRow[];
   };
   // Whether the user can log scores (creator + seated players).
   canLogScores: boolean;
@@ -159,11 +161,13 @@ export default function InRoundLive({
   } | null>(null);
 
   // Standings switcher state.
-  type Tab = "live" | "skins" | "nassau" | "stbl";
+  type Tab = "live" | "skins" | "nassau" | "stbl" | "wolf" | "snake";
   const availableTabs: Tab[] = ["live"];
   if (sideGames.skins) availableTabs.push("skins");
   if (sideGames.nassauTotal) availableTabs.push("nassau");
   if (sideGames.stableford) availableTabs.push("stbl");
+  if (sideGames.wolf) availableTabs.push("wolf");
+  if (sideGames.snake) availableTabs.push("snake");
   const [tab, setTab] = useState<Tab>("live");
   if (!availableTabs.includes(tab)) {
     // The set of enabled side games can change between renders (e.g.
@@ -784,15 +788,17 @@ function StandingsCard({
   startingHole,
   pars,
 }: {
-  tab: "live" | "skins" | "nassau" | "stbl";
-  availableTabs: Array<"live" | "skins" | "nassau" | "stbl">;
-  onTab: (t: "live" | "skins" | "nassau" | "stbl") => void;
+  tab: "live" | "skins" | "nassau" | "stbl" | "wolf" | "snake";
+  availableTabs: Array<"live" | "skins" | "nassau" | "stbl" | "wolf" | "snake">;
+  onTab: (t: "live" | "skins" | "nassau" | "stbl" | "wolf" | "snake") => void;
   players: InRoundPlayer[];
   myMatchPlayerId: string | null;
   sideGames: {
     skins?: SideGameRow[];
     nassauTotal?: SideGameRow[];
     stableford?: SideGameRow[];
+    wolf?: SideGameRow[];
+    snake?: SideGameRow[];
   };
   currentHole: number;
   startingHole: number;
@@ -831,12 +837,17 @@ function StandingsCard({
           skins: sideValueFor(sideGames.skins),
           nassau: sideValueFor(sideGames.nassauTotal),
           stbl: sideValueFor(sideGames.stableford),
+          wolf: sideValueFor(sideGames.wolf),
+          snake: sideValueFor(sideGames.snake),
         };
       })
       .sort((a, b) => {
         if (tab === "live") return b.live - a.live;
         if (tab === "skins") return (b.skins ?? 0) - (a.skins ?? 0);
         if (tab === "nassau") return (b.nassau ?? 0) - (a.nassau ?? 0);
+        if (tab === "wolf") return (b.wolf ?? 0) - (a.wolf ?? 0);
+        // Snake: fewest snakes (3-putts) leads, so sort ascending.
+        if (tab === "snake") return (a.snake ?? 0) - (b.snake ?? 0);
         return (b.stbl ?? 0) - (a.stbl ?? 0);
       });
   }, [players, tab, sideGames, currentHole]);
@@ -865,7 +876,7 @@ function StandingsCard({
           to read as the umbrella view across all games. */}
       {availableTabs.length > 1 && (
         <div className="flex gap-[3px] p-[3px] rounded-[10px] bg-panel2 border border-border mb-2.5">
-          {(["live", "skins", "nassau", "stbl"] as const)
+          {(["live", "skins", "nassau", "stbl", "wolf", "snake"] as const)
             .filter((t) => availableTabs.includes(t))
             .map((t) => {
               const on = t === tab;
@@ -887,7 +898,11 @@ function StandingsCard({
                       ? "Skins"
                       : t === "nassau"
                         ? "Nassau"
-                        : "Stbl"}
+                        : t === "stbl"
+                          ? "Stbl"
+                          : t === "wolf"
+                            ? "Wolf"
+                            : "Snake"}
                 </button>
               );
             })}
@@ -926,6 +941,8 @@ function StandingsCard({
               skins={r.skins}
               nassau={r.nassau}
               stbl={r.stbl}
+              wolf={r.wolf}
+              snake={r.snake}
               trend={trend}
             />
           );
@@ -946,6 +963,8 @@ function StandingsRow({
   skins,
   nassau,
   stbl,
+  wolf,
+  snake,
   trend,
 }: {
   player: InRoundPlayer;
@@ -953,11 +972,13 @@ function StandingsRow({
   isLead: boolean;
   isFirst: boolean;
   toPar: number | null;
-  tab: "live" | "skins" | "nassau" | "stbl";
+  tab: "live" | "skins" | "nassau" | "stbl" | "wolf" | "snake";
   live: number;
   skins: number | null;
   nassau: number | null;
   stbl: number | null;
+  wolf: number | null;
+  snake: number | null;
   trend: "up" | "flat" | "down" | null;
 }) {
   return (
@@ -1082,6 +1103,53 @@ function StandingsRow({
                 : nassau > 0
                   ? `+$${nassau}`
                   : `-$${Math.abs(nassau)}`}
+          </span>
+        </>
+      ) : tab === "wolf" ? (
+        <>
+          <span
+            className={
+              "font-display font-bold text-[13px] tabular-nums text-right " +
+              (toPar == null
+                ? "text-mute"
+                : toPar < 0
+                  ? "text-accent"
+                  : toPar > 0
+                    ? "text-danger"
+                    : "text-mute")
+            }
+          >
+            {toPar == null ? "—" : toPar === 0 ? "E" : toPar > 0 ? `+${toPar}` : toPar}
+          </span>
+          <span className="font-display font-bold text-[14px] tabular-nums text-right text-gold">
+            {wolf != null ? `${wolf} pt${wolf === 1 ? "" : "s"}` : "—"}
+          </span>
+        </>
+      ) : tab === "snake" ? (
+        <>
+          <span
+            className={
+              "font-display font-bold text-[13px] tabular-nums text-right " +
+              (toPar == null
+                ? "text-mute"
+                : toPar < 0
+                  ? "text-accent"
+                  : toPar > 0
+                    ? "text-danger"
+                    : "text-mute")
+            }
+          >
+            {toPar == null ? "—" : toPar === 0 ? "E" : toPar > 0 ? `+${toPar}` : toPar}
+          </span>
+          {/* Snake counts 3-putts; the player holding the most (the
+              snake) is losing, so non-zero reads danger, zero reads mute. */}
+          <span
+            className={
+              "font-display font-bold text-[14px] tabular-nums text-right " +
+              (snake == null || snake === 0 ? "text-mute" : "text-danger")
+            }
+          >
+            {snake != null ? `${snake}🐍` : "—"}
           </span>
         </>
       ) : (
