@@ -18,9 +18,8 @@ type WolfHoleState = {
   isPush: boolean;
 };
 
-// Sentinel values in the partner select for the lone-wolf options.
+// Sentinel value in the partner select for the lone-wolf option.
 const LONE = "__LONE__";
-const PRE_LONE = "__PRE_LONE__";
 
 function wolfForHole(
   players: Player[],
@@ -64,7 +63,7 @@ export default function WolfEditor({
 
   const send = (
     hole: number,
-    kind: "PARTNER" | "LONE_WOLF" | "PRE_LONE_WOLF" | "HOLE_WINNER" | "PUSH",
+    kind: "PARTNER" | "LONE_WOLF" | "HOLE_WINNER" | "PUSH",
     matchPlayerId: string,
   ) => {
     const fd = new FormData();
@@ -83,8 +82,6 @@ export default function WolfEditor({
       send(hole, "PARTNER", "");
     } else if (value === LONE) {
       send(hole, "LONE_WOLF", wolf.id);
-    } else if (value === PRE_LONE) {
-      send(hole, "PRE_LONE_WOLF", wolf.id);
     } else {
       send(hole, "PARTNER", value);
     }
@@ -109,11 +106,7 @@ export default function WolfEditor({
     if (state.partnerId) wolfTeam.add(state.partnerId);
     if (state.winnerId && wolfTeam.has(state.winnerId)) {
       return {
-        label: state.isLoneWolf
-          ? state.isPreLoneWolf
-            ? "Lone Wolf · 2x"
-            : "Wolf wins"
-          : "Wolf team",
+        label: state.isLoneWolf ? "Lone Wolf" : "Wolf team",
         tone: "text-accent",
       };
     }
@@ -125,9 +118,8 @@ export default function WolfEditor({
       {Array.from({ length: holes }, (_, i) => startingHole + i).map((h) => {
         const wolf = wolfForHole(players, h, rotation, startingHole);
         const state = byHole[h];
-        const partnerValue = state?.isPreLoneWolf
-          ? PRE_LONE
-          : state?.isLoneWolf
+        const partnerValue =
+          state?.isLoneWolf || state?.isPreLoneWolf
             ? LONE
             : state?.partnerId ?? "";
         const choiceMade = !!state && (state.isLoneWolf || !!state.partnerId);
@@ -170,15 +162,13 @@ export default function WolfEditor({
               >
                 <option value="">Pick partner…</option>
                 <option value={LONE}>Lone Wolf</option>
-                <option value={PRE_LONE}>Pre-Lone Wolf (2x)</option>
-                {players.length !== 3 &&
-                  players
-                    .filter((p) => p.id !== wolf.id)
-                    .map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.displayName}
-                      </option>
-                    ))}
+                {players
+                  .filter((p) => p.id !== wolf.id)
+                  .map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.displayName}
+                    </option>
+                  ))}
               </select>
               <button
                 type="button"
