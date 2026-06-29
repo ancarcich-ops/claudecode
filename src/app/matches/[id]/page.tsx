@@ -1106,211 +1106,30 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
   );
 
   // Computed up here (rather than between scorecardContent and
-  // sideGamesContent) so the scorecard CTA can read it.
+  // sideGameEditors) so the scorecard CTA can read it.
   const hasSideGames =
     !!bbbGame || !!snakeGame || !!wolfGame || sideGameSections.length > 0;
 
-  const scorecardContent = (
-    <div className="space-y-6">
-      {!user ? (
-        <section className="card p-4">
-          <div className="text-sm text-mute">
-            Sign in to log scores during the round.
-          </div>
-        </section>
-      ) : (
-        <InRoundLive
-          matchId={match.id}
-          courseName={match.courseName}
-          holes={match.holes}
-          startingHole={matchStart}
-          pars={pars}
-          players={displayEntities.map((p) => ({
-            id: p.id,
-            displayName: p.displayName,
-            color: p.color,
-            handicap: p.handicap,
-            probability: p.probability,
-            netScore: p.netScore,
-            scoresByHole: Object.fromEntries(
-              p.scores.map((s) => [s.hole, s.strokes]),
-            ),
-            avatarSeed: p.avatarSeed,
-            avatarVariant: p.avatarVariant,
-            avatarUrl: p.avatarUrl,
-          }))}
-          myMatchPlayerId={myMatchPlayerId}
-          scoringMode={scoringMode}
-          sideGames={{
-            skins: sgSeries.skins?.rows,
-            nassauTotal: sgSeries.nassauTotal?.rows,
-            stableford: sgSeries.stableford?.rows,
-            wolf: sgSeries.wolf?.rows,
-            snake: sgSeries.snake?.rows,
-            bbb: sgSeries.bbb?.rows,
-            match: sgSeries.match?.rows,
-            sixes: sgSeries.sixes?.rows,
-          }}
-          canLogScores={canLogScores}
-          yardageByHole={yardageByHole}
-        />
-      )}
-      {/* Side-games link always visible under Standings so creators
-          can add OR edit side games in one tap. Label flips based on
-          whether any are already enabled. Players (non-creators) see
-          a quieter read-only label. */}
-      {isCreator ? (
-        <div className="text-[12px] text-mute text-center">
-          {hasSideGames
-            ? "Side games active on this round. "
-            : "No side games on this round. "}
-          <Link
-            href={`/matches/${match.id}/side-games`}
-            className="text-accent hover:underline"
-          >
-            {hasSideGames
-              ? "Add or edit →"
-              : "Add Skins / Stableford / Teams →"}
-          </Link>
-        </div>
-      ) : null}
-      {/* Creator-only configuration lives here instead of its own tab --
-          pars + Wolf rotation are tied directly to scoring, so they
-          read naturally as a continuation of the scorecard. */}
-      {isCreator && settingsContent}
-    </div>
+  // Leaderboards for games NOT shown in the Standings switcher (which
+  // covers Skins, Nassau, Stableford, Wolf, Snake, BBB, Match, Sixes).
+  // Anything else (Team vs Team, Targets) still needs a surface, so we
+  // render just those below the editors -- without duplicating what the
+  // switcher already shows.
+  const STANDINGS_SWITCHER_KINDS = new Set([
+    "SKINS",
+    "NASSAU",
+    "STABLEFORD",
+    "WOLF",
+    "SNAKE",
+    "BBB",
+    "MATCH",
+    "SIXES",
+  ]);
+  const extraLeaderboards = sideGameSections.filter(
+    (sg) => !STANDINGS_SWITCHER_KINDS.has(sg.kind),
   );
 
-  const marketContent = (
-    <div className="space-y-6">
-      <section className="card p-4">
-        <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
-          <h2 className="font-display text-base font-semibold text-ink">
-            Market
-          </h2>
-          <div className="text-[11px] sm:text-xs text-mute font-mono whitespace-nowrap">
-            model {(odds.weights.model * 100).toFixed(0)}% · crowd{" "}
-            {(odds.weights.crowd * 100).toFixed(0)}% · live{" "}
-            {(odds.weights.live * 100).toFixed(0)}%
-          </div>
-        </div>
-        <MatchChartTabs
-          oddsSeries={series}
-          oddsHoleSeries={oddsHoleSeries}
-          oddsXMode={oddsXMode}
-          players={displayEntities.map((p) => ({
-            id: p.id,
-            displayName: p.displayName,
-            color: p.color,
-          }))}
-          sideGames={sgSeries}
-        />
-        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {displayEntities.map((p) => (
-            <div key={p.id} className="border border-border rounded-md p-3">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span
-                    className="inline-block shrink-0 rounded-full overflow-hidden"
-                    style={{
-                      width: 20,
-                      height: 20,
-                      boxShadow: `0 0 0 1.5px ${p.color}`,
-                    }}
-                  >
-                    <PlayerAvatar
-                      seed={p.avatarSeed ?? p.displayName}
-                      variant={
-                        p.avatarVariant && isVariant(p.avatarVariant)
-                          ? (p.avatarVariant as AvatarVariant)
-                          : "beam"
-                      }
-                      avatarUrl={p.avatarUrl ?? null}
-                      size={20}
-                    />
-                  </span>
-                  <span className="font-medium truncate">{p.displayName}</span>
-                  {isCreator ? (
-                    <HandicapInput
-                      action={updateHandicapAction}
-                      matchId={match.id}
-                      matchPlayerId={p.id}
-                      handicap={p.handicap}
-                    />
-                  ) : (
-                    <span className="chip">
-                      {modeLabel} {p.handicap}
-                    </span>
-                  )}
-                </div>
-                <div className="font-mono tabular-nums text-lg">
-                  {formatPct(p.probability)}
-                </div>
-              </div>
-              <div className="h-1.5 mt-2 bg-panel2 rounded-full overflow-hidden">
-                <div
-                  className="h-full"
-                  style={{
-                    width: `${p.probability * 100}%`,
-                    background: p.color,
-                  }}
-                />
-              </div>
-              <div className="mt-2 flex items-center justify-between text-xs text-mute">
-                <span>
-                  {p.wagerCount} wager{p.wagerCount === 1 ? "" : "s"}
-                </span>
-                {p.netScore !== null && (
-                  <span className="font-mono">
-                    {projLabel} {p.netScore.toFixed(1)}
-                  </span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-      <section className="card p-4">
-        <h2 className="font-display text-base font-semibold text-ink mb-3">
-          Place your call
-        </h2>
-        {!user ? (
-          <div className="text-sm text-mute">
-            <a className="text-accent" href="/login">
-              Sign in
-            </a>{" "}
-            to place a call on this match.
-          </div>
-        ) : isCompleted ? (
-          <div className="text-sm text-mute">
-            Market closed. {myWager ? "Your final call is locked in." : ""}
-          </div>
-        ) : (
-          <WagerForm
-            action={placeWagerAction}
-            matchId={match.id}
-            players={displayEntities}
-            currentPickId={myWager?.pickedPlayerId ?? null}
-          />
-        )}
-        {match.wagers.length > 0 && (
-          <div className="mt-4 text-xs text-mute">
-            <span className="uppercase tracking-wider">Recent calls:</span>{" "}
-            {match.wagers
-              .slice(-8)
-              .reverse()
-              .map((w) => (
-                <span key={w.id} className="mr-2">
-                  @{w.user.username} → {w.pickedPlayer.displayName}
-                </span>
-              ))}
-          </div>
-        )}
-      </section>
-    </div>
-  );
-
-  const sideGamesContent = (
+  const sideGameEditors = (
     <div className="space-y-6">
       {bbbGame && user && (
         <section className="card p-4">
@@ -1446,13 +1265,13 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
         </section>
       )}
 
-      {sideGameSections.length > 0 && (
+      {extraLeaderboards.length > 0 && (
         <section className="card p-4">
           <h2 className="font-display text-base font-semibold text-ink mb-3">
             Side games
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {sideGameSections.map((sg) => (
+            {extraLeaderboards.map((sg) => (
               <div
                 key={sg.kind}
                 className="border border-border rounded-md p-3"
@@ -1506,6 +1325,214 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
           </div>
         </section>
       )}
+    </div>
+  );
+
+  const scorecardContent = (
+    <div className="space-y-6">
+      {!user ? (
+        <section className="card p-4">
+          <div className="text-sm text-mute">
+            Sign in to log scores during the round.
+          </div>
+        </section>
+      ) : (
+        <InRoundLive
+          matchId={match.id}
+          courseName={match.courseName}
+          holes={match.holes}
+          startingHole={matchStart}
+          pars={pars}
+          players={displayEntities.map((p) => ({
+            id: p.id,
+            displayName: p.displayName,
+            color: p.color,
+            handicap: p.handicap,
+            probability: p.probability,
+            netScore: p.netScore,
+            scoresByHole: Object.fromEntries(
+              p.scores.map((s) => [s.hole, s.strokes]),
+            ),
+            avatarSeed: p.avatarSeed,
+            avatarVariant: p.avatarVariant,
+            avatarUrl: p.avatarUrl,
+          }))}
+          myMatchPlayerId={myMatchPlayerId}
+          scoringMode={scoringMode}
+          sideGames={{
+            skins: sgSeries.skins?.rows,
+            nassauTotal: sgSeries.nassauTotal?.rows,
+            stableford: sgSeries.stableford?.rows,
+            wolf: sgSeries.wolf?.rows,
+            snake: sgSeries.snake?.rows,
+            bbb: sgSeries.bbb?.rows,
+            match: sgSeries.match?.rows,
+            sixes: sgSeries.sixes?.rows,
+          }}
+          canLogScores={canLogScores}
+          yardageByHole={yardageByHole}
+        />
+      )}
+      {/* Side-games link always visible under Standings so creators
+          can add OR edit side games in one tap. Label flips based on
+          whether any are already enabled. Players (non-creators) see
+          a quieter read-only label. */}
+      {isCreator ? (
+        <div className="text-[12px] text-mute text-center">
+          {hasSideGames
+            ? "Side games active on this round. "
+            : "No side games on this round. "}
+          <Link
+            href={`/matches/${match.id}/side-games`}
+            className="text-accent hover:underline"
+          >
+            {hasSideGames
+              ? "Add or edit →"
+              : "Add Skins / Stableford / Teams →"}
+          </Link>
+        </div>
+      ) : null}
+      {/* Per-hole side-game event entry (Snake 3-putts, Wolf partners
+          & winners, BBB points, Match presses). These editors used to
+          live on a dedicated "Side games" tab; when that tab was
+          dropped the running leaderboards moved into the Standings
+          switcher above, but the EDITORS had no home and silently
+          disappeared -- so scores couldn't be entered. They live here
+          now, right under the scorecard they annotate. */}
+      {user && sideGameEditors}
+      {/* Creator-only configuration lives here instead of its own tab --
+          pars + Wolf rotation are tied directly to scoring, so they
+          read naturally as a continuation of the scorecard. */}
+      {isCreator && settingsContent}
+    </div>
+  );
+
+  const marketContent = (
+    <div className="space-y-6">
+      <section className="card p-4">
+        <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+          <h2 className="font-display text-base font-semibold text-ink">
+            Market
+          </h2>
+          <div className="text-[11px] sm:text-xs text-mute font-mono whitespace-nowrap">
+            model {(odds.weights.model * 100).toFixed(0)}% · crowd{" "}
+            {(odds.weights.crowd * 100).toFixed(0)}% · live{" "}
+            {(odds.weights.live * 100).toFixed(0)}%
+          </div>
+        </div>
+        <MatchChartTabs
+          oddsSeries={series}
+          oddsHoleSeries={oddsHoleSeries}
+          oddsXMode={oddsXMode}
+          players={displayEntities.map((p) => ({
+            id: p.id,
+            displayName: p.displayName,
+            color: p.color,
+          }))}
+          sideGames={sgSeries}
+        />
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {displayEntities.map((p) => (
+            <div key={p.id} className="border border-border rounded-md p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span
+                    className="inline-block shrink-0 rounded-full overflow-hidden"
+                    style={{
+                      width: 20,
+                      height: 20,
+                      boxShadow: `0 0 0 1.5px ${p.color}`,
+                    }}
+                  >
+                    <PlayerAvatar
+                      seed={p.avatarSeed ?? p.displayName}
+                      variant={
+                        p.avatarVariant && isVariant(p.avatarVariant)
+                          ? (p.avatarVariant as AvatarVariant)
+                          : "beam"
+                      }
+                      avatarUrl={p.avatarUrl ?? null}
+                      size={20}
+                    />
+                  </span>
+                  <span className="font-medium truncate">{p.displayName}</span>
+                  {isCreator ? (
+                    <HandicapInput
+                      action={updateHandicapAction}
+                      matchId={match.id}
+                      matchPlayerId={p.id}
+                      handicap={p.handicap}
+                    />
+                  ) : (
+                    <span className="chip">
+                      {modeLabel} {p.handicap}
+                    </span>
+                  )}
+                </div>
+                <div className="font-mono tabular-nums text-lg">
+                  {formatPct(p.probability)}
+                </div>
+              </div>
+              <div className="h-1.5 mt-2 bg-panel2 rounded-full overflow-hidden">
+                <div
+                  className="h-full"
+                  style={{
+                    width: `${p.probability * 100}%`,
+                    background: p.color,
+                  }}
+                />
+              </div>
+              <div className="mt-2 flex items-center justify-between text-xs text-mute">
+                <span>
+                  {p.wagerCount} wager{p.wagerCount === 1 ? "" : "s"}
+                </span>
+                {p.netScore !== null && (
+                  <span className="font-mono">
+                    {projLabel} {p.netScore.toFixed(1)}
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+      <section className="card p-4">
+        <h2 className="font-display text-base font-semibold text-ink mb-3">
+          Place your call
+        </h2>
+        {!user ? (
+          <div className="text-sm text-mute">
+            <a className="text-accent" href="/login">
+              Sign in
+            </a>{" "}
+            to place a call on this match.
+          </div>
+        ) : isCompleted ? (
+          <div className="text-sm text-mute">
+            Market closed. {myWager ? "Your final call is locked in." : ""}
+          </div>
+        ) : (
+          <WagerForm
+            action={placeWagerAction}
+            matchId={match.id}
+            players={displayEntities}
+            currentPickId={myWager?.pickedPlayerId ?? null}
+          />
+        )}
+        {match.wagers.length > 0 && (
+          <div className="mt-4 text-xs text-mute">
+            <span className="uppercase tracking-wider">Recent calls:</span>{" "}
+            {match.wagers
+              .slice(-8)
+              .reverse()
+              .map((w) => (
+                <span key={w.id} className="mr-2">
+                  @{w.user.username} → {w.pickedPlayer.displayName}
+                </span>
+              ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 
