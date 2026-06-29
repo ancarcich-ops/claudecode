@@ -65,6 +65,33 @@ function PlayerBubble({
 
 export type SideGameRow = { hole: number } & Record<string, number>;
 
+// Tabs in the in-round Standings switcher: the overall win-% view plus
+// one tab per enabled side game.
+type StandingsTab =
+  | "live"
+  | "skins"
+  | "nassau"
+  | "stbl"
+  | "wolf"
+  | "snake"
+  | "bbb"
+  | "match"
+  | "sixes";
+
+// Short labels for the segmented control. "live" reads "Overall" since
+// it's the umbrella win-% view across all games.
+const STANDINGS_TAB_LABELS: Record<StandingsTab, string> = {
+  live: "Overall",
+  skins: "Skins",
+  nassau: "Nassau",
+  stbl: "Stbl",
+  wolf: "Wolf",
+  snake: "Snake",
+  bbb: "BBB",
+  match: "Match",
+  sixes: "Sixes",
+};
+
 export type InRoundProps = {
   matchId: string;
   courseName: string;
@@ -85,6 +112,11 @@ export type InRoundProps = {
     skins?: SideGameRow[];
     nassauTotal?: SideGameRow[];
     stableford?: SideGameRow[];
+    wolf?: SideGameRow[];
+    snake?: SideGameRow[];
+    bbb?: SideGameRow[];
+    match?: SideGameRow[];
+    sixes?: SideGameRow[];
   };
   // Whether the user can log scores (creator + seated players).
   canLogScores: boolean;
@@ -159,12 +191,16 @@ export default function InRoundLive({
   } | null>(null);
 
   // Standings switcher state.
-  type Tab = "live" | "skins" | "nassau" | "stbl";
-  const availableTabs: Tab[] = ["live"];
+  const availableTabs: StandingsTab[] = ["live"];
   if (sideGames.skins) availableTabs.push("skins");
   if (sideGames.nassauTotal) availableTabs.push("nassau");
   if (sideGames.stableford) availableTabs.push("stbl");
-  const [tab, setTab] = useState<Tab>("live");
+  if (sideGames.wolf) availableTabs.push("wolf");
+  if (sideGames.snake) availableTabs.push("snake");
+  if (sideGames.bbb) availableTabs.push("bbb");
+  if (sideGames.match) availableTabs.push("match");
+  if (sideGames.sixes) availableTabs.push("sixes");
+  const [tab, setTab] = useState<StandingsTab>("live");
   if (!availableTabs.includes(tab)) {
     // The set of enabled side games can change between renders (e.g.
     // creator just disabled one). Snap back to Live so we never sit
@@ -784,15 +820,20 @@ function StandingsCard({
   startingHole,
   pars,
 }: {
-  tab: "live" | "skins" | "nassau" | "stbl";
-  availableTabs: Array<"live" | "skins" | "nassau" | "stbl">;
-  onTab: (t: "live" | "skins" | "nassau" | "stbl") => void;
+  tab: StandingsTab;
+  availableTabs: StandingsTab[];
+  onTab: (t: StandingsTab) => void;
   players: InRoundPlayer[];
   myMatchPlayerId: string | null;
   sideGames: {
     skins?: SideGameRow[];
     nassauTotal?: SideGameRow[];
     stableford?: SideGameRow[];
+    wolf?: SideGameRow[];
+    snake?: SideGameRow[];
+    bbb?: SideGameRow[];
+    match?: SideGameRow[];
+    sixes?: SideGameRow[];
   };
   currentHole: number;
   startingHole: number;
@@ -831,12 +872,23 @@ function StandingsCard({
           skins: sideValueFor(sideGames.skins),
           nassau: sideValueFor(sideGames.nassauTotal),
           stbl: sideValueFor(sideGames.stableford),
+          wolf: sideValueFor(sideGames.wolf),
+          snake: sideValueFor(sideGames.snake),
+          bbb: sideValueFor(sideGames.bbb),
+          match: sideValueFor(sideGames.match),
+          sixes: sideValueFor(sideGames.sixes),
         };
       })
       .sort((a, b) => {
         if (tab === "live") return b.live - a.live;
         if (tab === "skins") return (b.skins ?? 0) - (a.skins ?? 0);
         if (tab === "nassau") return (b.nassau ?? 0) - (a.nassau ?? 0);
+        if (tab === "wolf") return (b.wolf ?? 0) - (a.wolf ?? 0);
+        // Snake: fewest snakes (3-putts) leads, so sort ascending.
+        if (tab === "snake") return (a.snake ?? 0) - (b.snake ?? 0);
+        if (tab === "bbb") return (b.bbb ?? 0) - (a.bbb ?? 0);
+        if (tab === "match") return (b.match ?? 0) - (a.match ?? 0);
+        if (tab === "sixes") return (b.sixes ?? 0) - (a.sixes ?? 0);
         return (b.stbl ?? 0) - (a.stbl ?? 0);
       });
   }, [players, tab, sideGames, currentHole]);
@@ -864,33 +916,25 @@ function StandingsCard({
           hide it. With side games present, "Live" becomes "Overall"
           to read as the umbrella view across all games. */}
       {availableTabs.length > 1 && (
-        <div className="flex gap-[3px] p-[3px] rounded-[10px] bg-panel2 border border-border mb-2.5">
-          {(["live", "skins", "nassau", "stbl"] as const)
-            .filter((t) => availableTabs.includes(t))
-            .map((t) => {
-              const on = t === tab;
-              return (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => onTab(t)}
-                  className={
-                    "flex-1 text-center py-[7px] rounded-[7px] font-mono text-[10px] tracking-[0.02em] font-semibold transition-colors whitespace-nowrap " +
-                    (on
-                      ? "bg-accent text-ink-on-accent"
-                      : "text-mute active:text-ink")
-                  }
-                >
-                  {t === "live"
-                    ? "Overall"
-                    : t === "skins"
-                      ? "Skins"
-                      : t === "nassau"
-                        ? "Nassau"
-                        : "Stbl"}
-                </button>
-              );
-            })}
+        <div className="flex gap-[3px] p-[3px] rounded-[10px] bg-panel2 border border-border mb-2.5 overflow-x-auto">
+          {availableTabs.map((t) => {
+            const on = t === tab;
+            return (
+              <button
+                key={t}
+                type="button"
+                onClick={() => onTab(t)}
+                className={
+                  "flex-1 text-center py-[7px] rounded-[7px] font-mono text-[10px] tracking-[0.02em] font-semibold transition-colors whitespace-nowrap " +
+                  (on
+                    ? "bg-accent text-ink-on-accent"
+                    : "text-mute active:text-ink")
+                }
+              >
+                {STANDINGS_TAB_LABELS[t]}
+              </button>
+            );
+          })}
         </div>
       )}
       {/* Rows */}
@@ -926,6 +970,11 @@ function StandingsCard({
               skins={r.skins}
               nassau={r.nassau}
               stbl={r.stbl}
+              wolf={r.wolf}
+              snake={r.snake}
+              bbb={r.bbb}
+              match={r.match}
+              sixes={r.sixes}
               trend={trend}
             />
           );
@@ -946,6 +995,11 @@ function StandingsRow({
   skins,
   nassau,
   stbl,
+  wolf,
+  snake,
+  bbb,
+  match,
+  sixes,
   trend,
 }: {
   player: InRoundPlayer;
@@ -953,13 +1007,37 @@ function StandingsRow({
   isLead: boolean;
   isFirst: boolean;
   toPar: number | null;
-  tab: "live" | "skins" | "nassau" | "stbl";
+  tab: StandingsTab;
   live: number;
   skins: number | null;
   nassau: number | null;
   stbl: number | null;
+  wolf: number | null;
+  snake: number | null;
+  bbb: number | null;
+  match: number | null;
+  sixes: number | null;
   trend: "up" | "flat" | "down" | null;
 }) {
+  // To-par cell is shown on every side-game tab (the live tab renders
+  // its own toPar inside the win-% layout). Build it once.
+  const toParCell = (
+    <span
+      className={
+        "font-display font-bold text-[13px] tabular-nums text-right " +
+        (toPar == null
+          ? "text-mute"
+          : toPar < 0
+            ? "text-accent"
+            : toPar > 0
+              ? "text-danger"
+              : "text-mute")
+      }
+    >
+      {toPar == null ? "—" : toPar === 0 ? "E" : toPar > 0 ? `+${toPar}` : toPar}
+    </span>
+  );
+
   return (
     <div
       className={
@@ -986,20 +1064,7 @@ function StandingsRow({
       </span>
       {tab === "live" ? (
         <>
-          <span
-            className={
-              "font-display font-bold text-[13px] tabular-nums text-right " +
-              (toPar == null
-                ? "text-mute"
-                : toPar < 0
-                  ? "text-accent"
-                  : toPar > 0
-                    ? "text-danger"
-                    : "text-mute")
-            }
-          >
-            {toPar == null ? "—" : toPar === 0 ? "E" : toPar > 0 ? `+${toPar}` : toPar}
-          </span>
+          {toParCell}
           <span className="h-[7px] rounded-[4px] bg-panel2 border border-border overflow-hidden relative">
             <span
               className="absolute inset-y-0 left-0 rounded-[4px]"
@@ -1027,85 +1092,149 @@ function StandingsRow({
             {trend === "up" ? "▲" : trend === "down" ? "▼" : "—"}
           </span>
         </>
-      ) : tab === "skins" ? (
-        <>
-          <span
-            className={
-              "font-display font-bold text-[13px] tabular-nums text-right " +
-              (toPar == null
-                ? "text-mute"
-                : toPar < 0
-                  ? "text-accent"
-                  : toPar > 0
-                    ? "text-danger"
-                    : "text-mute")
-            }
-          >
-            {toPar == null ? "—" : toPar === 0 ? "E" : toPar > 0 ? `+${toPar}` : toPar}
-          </span>
-          <span className="font-display font-bold text-[14px] tabular-nums text-right text-gold">
-            {skins != null ? skins : "—"}
-          </span>
-        </>
-      ) : tab === "nassau" ? (
-        <>
-          <span
-            className={
-              "font-display font-bold text-[13px] tabular-nums text-right " +
-              (toPar == null
-                ? "text-mute"
-                : toPar < 0
-                  ? "text-accent"
-                  : toPar > 0
-                    ? "text-danger"
-                    : "text-mute")
-            }
-          >
-            {toPar == null ? "—" : toPar === 0 ? "E" : toPar > 0 ? `+${toPar}` : toPar}
-          </span>
-          <span
-            className={
-              "font-display font-bold text-[13px] tabular-nums text-right " +
-              (nassau == null
-                ? "text-mute"
-                : nassau > 0
-                  ? "text-accent"
-                  : nassau < 0
-                    ? "text-danger"
-                    : "text-mute")
-            }
-          >
-            {nassau == null
-              ? "—"
-              : nassau === 0
-                ? "$0"
-                : nassau > 0
-                  ? `+$${nassau}`
-                  : `-$${Math.abs(nassau)}`}
-          </span>
-        </>
       ) : (
         <>
-          <span
-            className={
-              "font-display font-bold text-[13px] tabular-nums text-right " +
-              (toPar == null
-                ? "text-mute"
-                : toPar < 0
-                  ? "text-accent"
-                  : toPar > 0
-                    ? "text-danger"
-                    : "text-mute")
-            }
-          >
-            {toPar == null ? "—" : toPar === 0 ? "E" : toPar > 0 ? `+${toPar}` : toPar}
-          </span>
-          <span className="font-display font-bold text-[13px] tabular-nums text-right text-ink">
-            {stbl != null ? stbl : "—"}
-          </span>
+          {toParCell}
+          <SideValueCell
+            tab={tab}
+            skins={skins}
+            nassau={nassau}
+            stbl={stbl}
+            wolf={wolf}
+            snake={snake}
+            bbb={bbb}
+            match={match}
+            sixes={sixes}
+          />
         </>
       )}
     </div>
+  );
+}
+
+// The single value cell shown to the right of to-par on every
+// side-game tab. Each game has its own format and "good direction":
+//   skins/wolf/bbb/sixes -> points/units won, gold, higher is better
+//   nassau/match         -> signed (dollars / holes up), green up / red down
+//   stableford           -> points, neutral ink
+//   snake                -> 3-putt count, red when you're holding any
+function SideValueCell({
+  tab,
+  skins,
+  nassau,
+  stbl,
+  wolf,
+  snake,
+  bbb,
+  match,
+  sixes,
+}: {
+  tab: Exclude<StandingsTab, "live">;
+  skins: number | null;
+  nassau: number | null;
+  stbl: number | null;
+  wolf: number | null;
+  snake: number | null;
+  bbb: number | null;
+  match: number | null;
+  sixes: number | null;
+}) {
+  if (tab === "skins") {
+    return (
+      <span className="font-display font-bold text-[14px] tabular-nums text-right text-gold">
+        {skins != null ? skins : "—"}
+      </span>
+    );
+  }
+  if (tab === "nassau") {
+    return (
+      <span
+        className={
+          "font-display font-bold text-[13px] tabular-nums text-right " +
+          (nassau == null
+            ? "text-mute"
+            : nassau > 0
+              ? "text-accent"
+              : nassau < 0
+                ? "text-danger"
+                : "text-mute")
+        }
+      >
+        {nassau == null
+          ? "—"
+          : nassau === 0
+            ? "$0"
+            : nassau > 0
+              ? `+$${nassau}`
+              : `-$${Math.abs(nassau)}`}
+      </span>
+    );
+  }
+  if (tab === "wolf") {
+    return (
+      <span className="font-display font-bold text-[14px] tabular-nums text-right text-gold">
+        {wolf != null ? `${wolf} pt${wolf === 1 ? "" : "s"}` : "—"}
+      </span>
+    );
+  }
+  if (tab === "snake") {
+    // Snake counts 3-putts; whoever holds the most is losing, so a
+    // non-zero count reads danger and zero reads mute.
+    return (
+      <span
+        className={
+          "font-display font-bold text-[14px] tabular-nums text-right " +
+          (snake == null || snake === 0 ? "text-mute" : "text-danger")
+        }
+      >
+        {snake != null ? `${snake}🐍` : "—"}
+      </span>
+    );
+  }
+  if (tab === "bbb") {
+    return (
+      <span className="font-display font-bold text-[14px] tabular-nums text-right text-gold">
+        {bbb != null ? `${bbb} pt${bbb === 1 ? "" : "s"}` : "—"}
+      </span>
+    );
+  }
+  if (tab === "match") {
+    // Match play status: holes up (positive) / down (negative).
+    return (
+      <span
+        className={
+          "font-display font-bold text-[13px] tabular-nums text-right " +
+          (match == null
+            ? "text-mute"
+            : match > 0
+              ? "text-accent"
+              : match < 0
+                ? "text-danger"
+                : "text-mute")
+        }
+      >
+        {match == null
+          ? "—"
+          : match === 0
+            ? "AS"
+            : match > 0
+              ? `${match} up`
+              : `${Math.abs(match)} dn`}
+      </span>
+    );
+  }
+  if (tab === "sixes") {
+    return (
+      <span className="font-display font-bold text-[14px] tabular-nums text-right text-gold">
+        {sixes != null ? sixes : "—"}
+      </span>
+    );
+  }
+  // stableford
+  return (
+    <span className="font-display font-bold text-[13px] tabular-nums text-right text-ink">
+      {stbl != null ? stbl : "—"}
+    </span>
   );
 }
 
