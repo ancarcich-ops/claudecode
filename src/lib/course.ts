@@ -211,21 +211,49 @@ export function deriveGreenDistances(
       : null;
   if (!c) return { front: null, center: null, back: null };
   const center = distanceYards(player, c);
-  // Front: prefer user-set; else center - 8y along the player->green line
-  const front =
+
+  // Front/back distance priority:
+  //   1. Admin-marked greenFront / greenBack points (most precise).
+  //   2. Nearest / farthest vertex of the green polygon -- this is the
+  //      real green depth from where the player stands, which is what a
+  //      golf GPS shows. Most imported courses have a polygon but no
+  //      hand-marked front/back points.
+  //   3. center -/+ 8y, a last-resort guess when we have neither (a flat
+  //      16y-deep green) so the panel still shows *something*.
+  const explicitFront =
     geo.greenFrontLat != null && geo.greenFrontLng != null
       ? distanceYards(player, {
           lat: geo.greenFrontLat,
           lng: geo.greenFrontLng,
         })
-      : Math.max(0, center - 8);
-  // Back: prefer user-set; else center + 8y
-  const back =
+      : null;
+  const explicitBack =
     geo.greenBackLat != null && geo.greenBackLng != null
       ? distanceYards(player, {
           lat: geo.greenBackLat,
           lng: geo.greenBackLng,
         })
-      : center + 8;
+      : null;
+
+  let polyFront: number | null = null;
+  let polyBack: number | null = null;
+  if (
+    (explicitFront == null || explicitBack == null) &&
+    geo.greenPolygon &&
+    geo.greenPolygon.length >= 3
+  ) {
+    let min = Infinity;
+    let max = -Infinity;
+    for (const v of geo.greenPolygon) {
+      const d = distanceYards(player, v);
+      if (d < min) min = d;
+      if (d > max) max = d;
+    }
+    if (Number.isFinite(min)) polyFront = min;
+    if (Number.isFinite(max)) polyBack = max;
+  }
+
+  const front = explicitFront ?? polyFront ?? Math.max(0, center - 8);
+  const back = explicitBack ?? polyBack ?? center + 8;
   return { front, center, back };
 }
