@@ -747,28 +747,44 @@ export default async function MatchPage({
       {canLogScores && (
         <div>
           {match.status === "UPCOMING" ? (
-            <HoleStudyMode
-              holes={match.holes}
-              matchStartingHole={matchStart}
-              startingHole={onCourseStartingHole}
-              pars={pars}
-              scoresByHole={
-                myMatchPlayer
-                  ? Object.fromEntries(
-                      myMatchPlayer.scores.map((s) => [s.hole, s.strokes]),
-                    )
-                  : undefined
-              }
-              holeGeoByHole={holeGeoByHole}
-              hazardsByHole={hazardsByHole}
-              wind={
-                wind
-                  ? { speedMph: wind.speedMph, fromDeg: wind.fromDeg }
-                  : null
-              }
-              launcherLabel="Preview the course →"
-              launcherClassName="w-full inline-flex items-center justify-center py-3.5 rounded-[13px] bg-accent text-ink-on-accent font-display font-bold text-[14px] tracking-[0.02em] active:scale-[0.99]"
-            />
+            <div className="space-y-2.5">
+              <HoleStudyMode
+                holes={match.holes}
+                matchStartingHole={matchStart}
+                startingHole={onCourseStartingHole}
+                pars={pars}
+                scoresByHole={
+                  myMatchPlayer
+                    ? Object.fromEntries(
+                        myMatchPlayer.scores.map((s) => [s.hole, s.strokes]),
+                      )
+                    : undefined
+                }
+                holeGeoByHole={holeGeoByHole}
+                hazardsByHole={hazardsByHole}
+                wind={
+                  wind
+                    ? { speedMph: wind.speedMph, fromDeg: wind.fromDeg }
+                    : null
+                }
+                launcherLabel="Preview the course →"
+                launcherClassName="w-full inline-flex items-center justify-center py-3.5 rounded-[13px] bg-accent text-ink-on-accent font-display font-bold text-[14px] tracking-[0.02em] active:scale-[0.99]"
+              />
+              {/* Start the round inline -- it used to live only under the
+                  ⋯ menu, which players struggled to find. Creator only,
+                  mirroring the menu's "Start match" action. */}
+              {isCreator && (
+                <form action={startMatchAction}>
+                  <input type="hidden" name="matchId" value={match.id} />
+                  <button
+                    type="submit"
+                    className="w-full inline-flex items-center justify-center py-3.5 rounded-[13px] border-2 border-accent text-accent font-display font-bold text-[14px] tracking-[0.02em] active:scale-[0.99]"
+                  >
+                    Start round →
+                  </button>
+                </form>
+              )}
+            </div>
           ) : (
             <OnCourseMode
               matchId={match.id}
