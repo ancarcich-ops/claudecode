@@ -1147,6 +1147,9 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
             stableford: sgSeries.stableford?.rows,
             wolf: sgSeries.wolf?.rows,
             snake: sgSeries.snake?.rows,
+            bbb: sgSeries.bbb?.rows,
+            match: sgSeries.match?.rows,
+            sixes: sgSeries.sixes?.rows,
           }}
           canLogScores={canLogScores}
           yardageByHole={yardageByHole}
