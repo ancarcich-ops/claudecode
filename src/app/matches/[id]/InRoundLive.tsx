@@ -1019,8 +1019,9 @@ function StandingsRow({
   sixes: number | null;
   trend: "up" | "flat" | "down" | null;
 }) {
-  // To-par cell is shown on every side-game tab (the live tab renders
-  // its own toPar inside the win-% layout). Build it once.
+  // To-par cell, shown only on the Overall (live) tab. Side-game tabs
+  // show just that game's score -- the overall match position is noise
+  // when you're looking at, say, Wolf points.
   const toParCell = (
     <span
       className={
@@ -1048,7 +1049,7 @@ function StandingsRow({
       style={
         tab === "live"
           ? { gridTemplateColumns: "18px 1fr 32px 1fr 44px 16px" }
-          : { gridTemplateColumns: "18px 1fr auto 56px" }
+          : { gridTemplateColumns: "18px 1fr auto" }
       }
     >
       <PlayerBubble player={player} size={18} />
@@ -1093,27 +1094,25 @@ function StandingsRow({
           </span>
         </>
       ) : (
-        <>
-          {toParCell}
-          <SideValueCell
-            tab={tab}
-            skins={skins}
-            nassau={nassau}
-            stbl={stbl}
-            wolf={wolf}
-            snake={snake}
-            bbb={bbb}
-            match={match}
-            sixes={sixes}
-          />
-        </>
+        <SideValueCell
+          tab={tab}
+          skins={skins}
+          nassau={nassau}
+          stbl={stbl}
+          wolf={wolf}
+          snake={snake}
+          bbb={bbb}
+          match={match}
+          sixes={sixes}
+        />
       )}
     </div>
   );
 }
 
-// The single value cell shown to the right of to-par on every
-// side-game tab. Each game has its own format and "good direction":
+// The single value cell shown on every side-game tab -- that game's
+// score and nothing else. Each game has its own format and "good
+// direction":
 //   skins/wolf/bbb/sixes -> points/units won, gold, higher is better
 //   nassau/match         -> signed (dollars / holes up), green up / red down
 //   stableford           -> points, neutral ink
