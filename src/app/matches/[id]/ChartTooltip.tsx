@@ -41,15 +41,16 @@ export default function ChartTooltip({
   return (
     <div
       style={{
-        backgroundColor: "#161f1b",
-        border: "1px solid #1f2a25",
+        backgroundColor: "rgb(var(--color-panel))",
+        border: "1px solid rgb(var(--color-border))",
         borderRadius: 8,
         padding: "8px 10px",
         fontSize: 12,
         minWidth: 140,
+        boxShadow: "0 6px 20px rgba(0,0,0,0.12)",
       }}
     >
-      <div style={{ color: "#8aa094", marginBottom: 4 }}>
+      <div style={{ color: "rgb(var(--color-mute))", marginBottom: 4 }}>
         {labelFormatter(label)}
       </div>
       {unique.map((item) => {
@@ -68,8 +69,16 @@ export default function ChartTooltip({
               lineHeight: "18px",
             }}
           >
-            <span style={{ color: item.color ?? "#e8f0ea" }}>{name}</span>
-            <span style={{ fontFamily: "ui-monospace, monospace" }}>
+            <span style={{ color: item.color ?? "rgb(var(--color-ink))" }}>
+              {name}
+            </span>
+            <span
+              style={{
+                fontFamily: "ui-monospace, monospace",
+                fontWeight: 600,
+                color: "rgb(var(--color-ink))",
+              }}
+            >
               {val}
             </span>
           </div>
