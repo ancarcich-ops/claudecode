@@ -55,7 +55,13 @@ type OsmTee = { lat: number; lng: number; ref: number | null };
 type TeeCache = Record<string, { fetchedAt: string; tees: OsmTee[] }>;
 
 function parseArgs(argv: string[]) {
-  const flags = { apply: false, course: "", minShift: 40, refreshCache: false };
+  const flags = {
+    apply: false,
+    course: "",
+    minShift: 40,
+    refreshCache: false,
+    debug: false,
+  };
   for (const a of argv.slice(2)) {
     if (a === "--apply") flags.apply = true;
     else if (a.startsWith("--course=")) flags.course = a.slice("--course=".length);
@@ -63,6 +69,7 @@ function parseArgs(argv: string[]) {
       const n = parseInt(a.slice("--min-shift=".length), 10);
       if (Number.isFinite(n)) flags.minShift = n;
     } else if (a === "--refresh-cache") flags.refreshCache = true;
+    else if (a === "--debug") flags.debug = true;
   }
   return flags;
 }
@@ -336,6 +343,18 @@ async function main() {
     const doneHoles = new Set(plans.map((p) => p.holeId));
     type Cand = { h: (typeof eligible)[number]; t: OsmTee; fit: number };
     const cands: Cand[] = [];
+    // --debug: per-hole trace of every OSM tee inside a loose 100y fit
+    // window and why it was or wasn't usable. Printed for unmatched
+    // holes so gate thresholds can be tuned from data.
+    const debugLog = new Map<number, string[]>();
+    const dbg = (hole: number, msg: string) => {
+      if (!args.debug) return;
+      const list = debugLog.get(hole) ?? [];
+      list.push(msg);
+      debugLog.set(hole, list);
+    };
+    const teeLabel = (t: OsmTee) =>
+      `${t.lat.toFixed(5)},${t.lng.toFixed(5)}${t.ref != null ? ` ref=${t.ref}` : ""}`;
     for (const h of eligible) {
       if (doneHoles.has(h.id)) continue;
       const green = { lat: h.greenLat!, lng: h.greenLng! };
@@ -344,15 +363,33 @@ async function main() {
       const fairway = fairwayByHole.get(h.hole) ?? null;
       const prevGreen = greenByHole.get(h.hole - 1) ?? null;
       for (const t of entry.tees) {
-        if (claimed.has(t)) continue;
         const fit = Math.abs(distanceYards(green, t) - published);
-        if (fit > tol) continue;
-        if (fairway && fairway.length >= 3) {
-          if (distToNearestVertex(t, fairway) > 120) continue;
-        } else if (prevGreen) {
-          if (distanceYards(t, prevGreen) > 350) continue;
+        if (fit > tol) {
+          if (fit <= 100) dbg(h.hole, `  ${teeLabel(t)} fit=±${Math.round(fit)}y REJECT fit>tol(${Math.round(tol)})`);
+          continue;
         }
+        if (claimed.has(t)) {
+          dbg(h.hole, `  ${teeLabel(t)} fit=±${Math.round(fit)}y REJECT claimed by ref pass`);
+          continue;
+        }
+        if (fairway && fairway.length >= 3) {
+          const fw = distToNearestVertex(t, fairway);
+          if (fw > 120) {
+            dbg(h.hole, `  ${teeLabel(t)} fit=±${Math.round(fit)}y REJECT fairway gate (${Math.round(fw)}y from own fairway)`);
+            continue;
+          }
+        } else if (prevGreen) {
+          const walk = distanceYards(t, prevGreen);
+          if (walk > 350) {
+            dbg(h.hole, `  ${teeLabel(t)} fit=±${Math.round(fit)}y REJECT prev-green gate (${Math.round(walk)}y walk from hole ${h.hole - 1} green)`);
+            continue;
+          }
+        }
+        dbg(h.hole, `  ${teeLabel(t)} fit=±${Math.round(fit)}y CANDIDATE`);
         cands.push({ h, t, fit });
+      }
+      if (args.debug && !debugLog.has(h.hole)) {
+        dbg(h.hole, `  (no OSM tee within ±100y of published ${published}y)`);
       }
     }
     cands.sort((a, b) => a.fit - b.fit);
@@ -372,6 +409,10 @@ async function main() {
       if (rival) {
         resolvedIds.add(c.h.id); // don't retry with the rival either
         totalAmbiguous++;
+        dbg(
+          c.h.hole,
+          `  AMBIGUOUS: ${teeLabel(c.t)} (±${Math.round(c.fit)}y) vs ${teeLabel(rival.t)} (±${Math.round(rival.fit)}y), ${Math.round(distanceYards(c.t, rival.t))}y apart`,
+        );
         continue;
       }
       resolvedIds.add(c.h.id);
@@ -394,9 +435,11 @@ async function main() {
       });
     }
 
-    if (plans.length === 0) continue;
-    coursesTouched++;
-    totalPlanned += plans.length;
+    if (plans.length === 0 && !args.debug) continue;
+    if (plans.length > 0) {
+      coursesTouched++;
+      totalPlanned += plans.length;
+    }
     plans.sort((a, b) => a.hole - b.hole);
     console.log(
       `${course.name}  (${plans.length} tee${plans.length === 1 ? "" : "s"} from OSM, ${entry.tees.length} features nearby)`,
@@ -405,6 +448,18 @@ async function main() {
       console.log(
         `  hole ${p.hole.toString().padStart(2)}: -> ${p.newTee.lat.toFixed(5)},${p.newTee.lng.toFixed(5)}  shift=${p.shift == null ? "new" : `${p.shift}y`}  via=${p.via} fit=±${p.fit}y`,
       );
+    }
+    if (args.debug) {
+      const matchedHoles = new Set(plans.map((p) => p.hole));
+      for (const h of eligible) {
+        if (matchedHoles.has(h.hole)) continue;
+        console.log(`  [debug] hole ${h.hole} (published ${h.distanceYds}y) unmatched:`);
+        for (const line of debugLog.get(h.hole) ?? [
+          "  (no OSM tee inside the ±100y fit window)",
+        ]) {
+          console.log(`  ${line}`);
+        }
+      }
     }
 
     if (args.apply) {
