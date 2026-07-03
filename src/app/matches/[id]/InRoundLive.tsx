@@ -1388,6 +1388,21 @@ function ScorePicker({
     });
   };
 
+  // Clear a mis-entered score. logScoreAction treats empty strokes as
+  // a delete. Close (don't advance) -- the user is cleaning up, not
+  // score-keeping forward.
+  const clear = () => {
+    const fd = new FormData();
+    fd.set("matchId", matchId);
+    fd.set("matchPlayerId", player.id);
+    fd.set("hole", String(hole));
+    fd.set("strokes", "");
+    startTransition(async () => {
+      await logScoreAction(fd);
+      onClose();
+    });
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 backdrop-blur-[2px]"
@@ -1445,15 +1460,28 @@ function ScorePicker({
           })}
         </div>
         {/* Skip: move to the next player on this hole without logging
-            a score (don't know it / not entering it). */}
-        <button
-          type="button"
-          disabled={pending}
-          onClick={() => onAdvance(player, hole)}
-          className="w-full mt-2.5 py-2.5 rounded-[12px] border border-border bg-panel2 text-mute font-mono text-[11px] tracking-[0.12em] uppercase font-semibold active:text-ink disabled:opacity-60"
-        >
-          Skip · next player →
-        </button>
+            a score (don't know it / not entering it). Clear only shows
+            when there's a score to remove (fixing a wrong-hole entry). */}
+        <div className="flex gap-2 mt-2.5">
+          {current != null && (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={clear}
+              className="flex-1 py-2.5 rounded-[12px] border border-danger/40 bg-panel2 text-danger font-mono text-[11px] tracking-[0.12em] uppercase font-semibold active:opacity-80 disabled:opacity-60"
+            >
+              Clear score
+            </button>
+          )}
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => onAdvance(player, hole)}
+            className="flex-1 py-2.5 rounded-[12px] border border-border bg-panel2 text-mute font-mono text-[11px] tracking-[0.12em] uppercase font-semibold active:text-ink disabled:opacity-60"
+          >
+            Skip · next player →
+          </button>
+        </div>
       </div>
     </div>
   );
