@@ -424,9 +424,33 @@ async function main() {
       }
       if (scored.length === 0) continue;
       scored.sort((a, b) => a.score - b.score);
-      const best = scored[0];
-      const runnerUp = scored[1];
-      if (runnerUp && runnerUp.score - best.score < 15) {
+      // Stability rule: if the stored tee already sits on (or right
+      // next to) a gated candidate box, that box corroborates the
+      // stored position -- keep it rather than hopping to a different
+      // box on a marginal score edge. Without this, a hole whose tee
+      // was already correct (stored 16y from its OSM box) can get
+      // yanked 100y+ to a similar-scoring rival.
+      let best = scored[0];
+      const stored =
+        h.teeLat != null && h.teeLng != null
+          ? { lat: h.teeLat, lng: h.teeLng }
+          : null;
+      if (stored) {
+        const corroborating = scored
+          .filter((s) => distanceYards(stored, s.t) <= 25)
+          .sort((a, b) => a.fit - b.fit)[0];
+        if (corroborating) {
+          if (corroborating !== best) {
+            dbg(
+              h.hole,
+              `  STABILITY: keeping ${teeLabel(corroborating.t)} (stored tee within 25y) over score-winner ${teeLabel(best.t)}`,
+            );
+          }
+          best = corroborating;
+        }
+      }
+      const runnerUp = scored.find((s) => s !== best);
+      if (best === scored[0] && runnerUp && runnerUp.score - best.score < 15) {
         // Angular separation as seen from the green: same complex or a
         // genuine fork?
         const angle = bearingDiffDeg(green, best.t, runnerUp.t);
