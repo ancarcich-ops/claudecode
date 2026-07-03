@@ -162,6 +162,7 @@ model Match {
   wagers       Wager[]
   oddsSnapshots OddsSnapshot[]
   sideGames    SideGame[]
+  roundShares  RoundShare[]
 
   @@index([tournamentId, roundNumber])
 }
@@ -381,4 +382,31 @@ model CourseHole {
 
   @@unique([courseId, hole])
   @@index([courseId])
+}
+
+// Share-my-round: an opt-in update stream for one player's live round.
+// Each row is one recipient config -- who gets emailed, at which
+// milestones, with or without scores, and an optional destination for
+// the ETA-home estimate. `token` is the public read-only share-link id
+// (/r/[token]) -- unguessable, revoked by deleting the row.
+model RoundShare {
+  id             String   @id @default(cuid())
+  matchId        String
+  match          Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  // Whose round is narrated (pace + scores). One of the match's players.
+  matchPlayerId  String
+  createdById    String
+  token          String   @unique
+  recipientEmail String?
+  includeScores  Boolean  @default(true)
+  // Comma list of milestone keys: FRONT9, EVERY6, FINISH.
+  milestones     String   @default("FRONT9,FINISH")
+  destAddress    String?
+  destLat        Float?
+  destLng        Float?
+  // Highest milestone already emailed (prevents duplicate sends).
+  sentMilestones String   @default("")
+  createdAt      DateTime @default(now())
+
+  @@index([matchId])
 }

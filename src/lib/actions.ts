@@ -13,6 +13,7 @@ import {
 import { hashPassword, verifyPassword, passwordError } from "./password";
 import { sendEmail, passwordResetEmail, appUrl } from "./email";
 import { recordOddsSnapshot } from "./match";
+import { checkRoundShares } from "./roundShare";
 import { computeAndPersistMatchWinners } from "./matchWinners";
 import { defaultPars } from "./odds";
 import {
@@ -1503,6 +1504,9 @@ export async function logScoreAction(formData: FormData) {
   }
 
   await recordOddsSnapshot(matchId);
+  // Share-my-round: milestone emails (front 9 / finish) ride the same
+  // score-write path. Errors must never break score logging.
+  await checkRoundShares(matchId).catch(() => {});
   revalidatePath(`/matches/${matchId}`);
   // The home feed's LIVE card reads the same per-hole score data, so
   // it needs to refresh too -- otherwise a score logged on the match
