@@ -837,7 +837,7 @@ export default async function MatchPage({
             id: p.id,
             displayName: p.displayName,
           }))}
-          myMatchPlayerId={myMatchPlayerId}
+          myMatchPlayerId={myMatchPlayer?.id ?? null}
           shares={roundShares.map((s) => ({
             id: s.id,
             matchPlayerId: s.matchPlayerId,
