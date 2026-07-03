@@ -145,6 +145,15 @@ function parseRef(tag: string | undefined): number | null {
   return Number.isFinite(n) && n >= 1 && n <= 36 ? n : null;
 }
 
+// Public Overpass instances. The main .de instance rate-limits
+// sustained crawls (429) and times out under load (504); kumi.systems
+// mirrors the same data with a higher throughput allowance. Retries
+// rotate across them.
+const OVERPASS_ENDPOINTS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+];
+
 async function fetchOsmTees(lat: number, lng: number): Promise<OsmTee[]> {
   const query = `
 [out:json][timeout:30];
@@ -156,16 +165,37 @@ out body;
 >;
 out skel qt;
 `;
-  const res = await fetch("https://overpass-api.de/api/interpreter", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      "User-Agent": USER_AGENT,
-    },
-    body: "data=" + encodeURIComponent(query),
-  });
-  if (!res.ok) throw new Error(`Overpass ${res.status}`);
-  const data = (await res.json()) as { elements?: OverpassEl[] };
+  // Up to 4 attempts with growing backoff (5s / 15s / 45s) across
+  // rotating endpoints. 429/504/network errors are transient server
+  // pressure -- backing off recovers them; anything else rethrows.
+  let lastErr: unknown = null;
+  let data: { elements?: OverpassEl[] } | null = null;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    if (attempt > 0) await sleep(5000 * Math.pow(3, attempt - 1));
+    const endpoint = OVERPASS_ENDPOINTS[attempt % OVERPASS_ENDPOINTS.length];
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "User-Agent": USER_AGENT,
+        },
+        body: "data=" + encodeURIComponent(query),
+      });
+      if (res.status === 429 || res.status === 504 || res.status === 502) {
+        lastErr = new Error(`Overpass ${res.status}`);
+        continue;
+      }
+      if (!res.ok) throw new Error(`Overpass ${res.status}`);
+      data = (await res.json()) as { elements?: OverpassEl[] };
+      break;
+    } catch (e) {
+      // Network-level failures (fetch failed, aborted) are retryable.
+      lastErr = e;
+      continue;
+    }
+  }
+  if (!data) throw lastErr ?? new Error("Overpass unavailable");
   const els = data.elements ?? [];
   const nodesById = new Map<number, OverpassNode>();
   const ways: OverpassWay[] = [];
@@ -236,13 +266,16 @@ async function main() {
         entry = { fetchedAt: new Date().toISOString(), tees };
         cache[course.id] = entry;
         fetched++;
-        if (fetched % 25 === 0) saveCache(cache);
-        await sleep(1100); // Overpass politeness: 1 req/sec
+        if (fetched % 10 === 0) saveCache(cache);
+        await sleep(2000); // Overpass politeness between courses
       } catch (e) {
         fetchErrors++;
         console.error(
           `  ! ${course.name}: Overpass error: ${e instanceof Error ? e.message : String(e)}`,
         );
+        // Back off after a hard failure too -- plowing straight into
+        // the next request is what digs the 429 hole deeper.
+        await sleep(5000);
         continue;
       }
     }
