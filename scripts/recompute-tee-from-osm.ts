@@ -228,6 +228,29 @@ async function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+// The Overpass sleeps/backoffs mean minutes can pass between DB
+// queries, long enough for hosted Postgres to kill the idle
+// connection (P1017 "Server has closed the connection"). Retry with a
+// disconnect between attempts -- Prisma re-establishes the connection
+// lazily on the next query.
+async function dbRetry<T>(fn: () => Promise<T>): Promise<T> {
+  let lastErr: unknown;
+  for (let i = 0; i < 3; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      const code = (e as { code?: string })?.code;
+      if (code !== "P1017" && code !== "P1001" && code !== "P1002") throw e;
+      lastErr = e;
+      try {
+        await prisma.$disconnect();
+      } catch {}
+      await sleep(2000 * (i + 1));
+    }
+  }
+  throw lastErr;
+}
+
 async function main() {
   const args = parseArgs(process.argv);
   const cache: TeeCache = args.refreshCache ? {} : loadCache();
@@ -284,28 +307,30 @@ async function main() {
       continue;
     }
 
-    const holes = await prisma.courseHole.findMany({
-      where: {
-        courseId: course.id,
-        source: "golfbert",
-        greenLat: { not: null },
-        greenLng: { not: null },
-        distanceYds: { not: null },
-      },
-      select: {
-        id: true,
-        hole: true,
-        teeLat: true,
-        teeLng: true,
-        greenLat: true,
-        greenLng: true,
-        greenFrontLat: true,
-        greenBackLat: true,
-        distanceYds: true,
-        fairwayPolygonJson: true,
-      },
-      orderBy: { hole: "asc" },
-    });
+    const holes = await dbRetry(() =>
+      prisma.courseHole.findMany({
+        where: {
+          courseId: course.id,
+          source: "golfbert",
+          greenLat: { not: null },
+          greenLng: { not: null },
+          distanceYds: { not: null },
+        },
+        select: {
+          id: true,
+          hole: true,
+          teeLat: true,
+          teeLng: true,
+          greenLat: true,
+          greenLng: true,
+          greenFrontLat: true,
+          greenBackLat: true,
+          distanceYds: true,
+          fairwayPolygonJson: true,
+        },
+        orderBy: { hole: "asc" },
+      }),
+    );
 
     // Trusted geometry used to disambiguate candidates: each hole's
     // own fairway polygon, and the previous hole's green (for the
@@ -547,12 +572,14 @@ async function main() {
       const chunkSize = 100;
       for (let i = 0; i < plans.length; i += chunkSize) {
         const chunk = plans.slice(i, i + chunkSize);
-        await prisma.$transaction(
-          chunk.map((p) =>
-            prisma.courseHole.update({
-              where: { id: p.holeId },
-              data: { teeLat: p.newTee.lat, teeLng: p.newTee.lng },
-            }),
+        await dbRetry(() =>
+          prisma.$transaction(
+            chunk.map((p) =>
+              prisma.courseHole.update({
+                where: { id: p.holeId },
+                data: { teeLat: p.newTee.lat, teeLng: p.newTee.lng },
+              }),
+            ),
           ),
         );
         totalApplied += chunk.length;
