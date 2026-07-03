@@ -6,7 +6,7 @@ experience. Match creation, side-game config, admin, and stats stay on
 the web app.
 
 Backend: the existing Next.js deployment. All endpoints below are live
-under `https://<YOUR-DOMAIN>/api/mobile/`. Auth is a Bearer token.
+under `https://sticks-golf.vercel.app/api/mobile/`. Auth is a Bearer token.
 
 ---
 
@@ -29,7 +29,7 @@ screen is generated against the real data shapes.
 
 ## API contract
 
-Base URL: `https://<YOUR-DOMAIN>/api/mobile`
+Base URL: `https://sticks-golf.vercel.app/api/mobile`
 All authenticated requests send `Authorization: Bearer <token>`.
 All bodies are JSON. Errors are `{ "error": string }` with 400/401/403/404.
 
