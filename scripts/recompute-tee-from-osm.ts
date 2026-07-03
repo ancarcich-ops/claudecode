@@ -67,6 +67,31 @@ function parseArgs(argv: string[]) {
   return flags;
 }
 
+function parsePoly(json: string | null): LL[] | null {
+  if (!json) return null;
+  try {
+    const arr = JSON.parse(json);
+    if (!Array.isArray(arr)) return null;
+    const pts: LL[] = [];
+    for (const p of arr) {
+      if (typeof p?.lat === "number" && typeof p?.lng === "number")
+        pts.push({ lat: p.lat, lng: p.lng });
+    }
+    return pts.length > 0 ? pts : null;
+  } catch {
+    return null;
+  }
+}
+
+function distToNearestVertex(p: LL, poly: LL[]): number {
+  let best = Number.POSITIVE_INFINITY;
+  for (const q of poly) {
+    const d = distanceYards(p, q);
+    if (d < best) best = d;
+  }
+  return best;
+}
+
 function loadCache(): TeeCache {
   if (!existsSync(CACHE_PATH)) return {};
   try {
@@ -224,9 +249,20 @@ async function main() {
         greenFrontLat: true,
         greenBackLat: true,
         distanceYds: true,
+        fairwayPolygonJson: true,
       },
       orderBy: { hole: "asc" },
     });
+
+    // Trusted geometry used to disambiguate candidates: each hole's
+    // own fairway polygon, and the previous hole's green (for the
+    // walk-distance signal on par 3s, which have no fairway).
+    const greenByHole = new Map<number, LL>(
+      holes.map((h) => [h.hole, { lat: h.greenLat!, lng: h.greenLng! }]),
+    );
+    const fairwayByHole = new Map<number, LL[] | null>(
+      holes.map((h) => [h.hole, parsePoly(h.fairwayPolygonJson)]),
+    );
 
     type Plan = {
       holeId: string;
@@ -284,9 +320,19 @@ async function main() {
       });
     }
 
-    // Pass 2: distance-fit for holes not resolved by ref. Tightest fits
-    // are assigned first so a well-matched hole can't lose its tee to a
-    // sloppier neighbor.
+    // Pass 2: distance-fit for holes not resolved by ref. Distance
+    // alone is ambiguous on a dense property (86 tee features on an
+    // 18-hole course means some OTHER hole's box often sits at a
+    // similar distance from this green), so each candidate must also
+    // pass a geometric gate built from geometry we already trust:
+    //   - holes with a fairway polygon: the tee must sit within 120y
+    //     of the hole's OWN fairway (rival holes' tees hug THEIR
+    //     fairway, not this one's)
+    //   - par 3s (no fairway): the tee must be a plausible walk
+    //     (<= 350y) from the PREVIOUS hole's green
+    //   - neither available: distance-fit only, as before
+    // Tightest fits are assigned first so a well-matched hole can't
+    // lose its tee to a sloppier neighbor.
     const doneHoles = new Set(plans.map((p) => p.holeId));
     type Cand = { h: (typeof eligible)[number]; t: OsmTee; fit: number };
     const cands: Cand[] = [];
@@ -295,10 +341,18 @@ async function main() {
       const green = { lat: h.greenLat!, lng: h.greenLng! };
       const published = h.distanceYds!;
       const tol = Math.max(20, published * 0.12);
+      const fairway = fairwayByHole.get(h.hole) ?? null;
+      const prevGreen = greenByHole.get(h.hole - 1) ?? null;
       for (const t of entry.tees) {
         if (claimed.has(t)) continue;
         const fit = Math.abs(distanceYards(green, t) - published);
-        if (fit <= tol) cands.push({ h, t, fit });
+        if (fit > tol) continue;
+        if (fairway && fairway.length >= 3) {
+          if (distToNearestVertex(t, fairway) > 120) continue;
+        } else if (prevGreen) {
+          if (distanceYards(t, prevGreen) > 350) continue;
+        }
+        cands.push({ h, t, fit });
       }
     }
     cands.sort((a, b) => a.fit - b.fit);
