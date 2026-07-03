@@ -3,35 +3,34 @@ name: Sync iOS Foundations from Rork
 on:
   workflow_dispatch:
 
-  jobs:
-    sync-ios:
-        runs-on: ubuntu-latest
-            steps:
-                  - name: Checkout claudecode rork/ios branch
-                          uses: actions/checkout@v4
-                                  with:
-                                            token: ${{ secrets.GITHUB_TOKEN }}
-                                                      ref: rork/ios
-                                                                path: claudecode
+jobs:
+  sync-ios:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout claudecode rork/ios branch
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: rork/ios
+          path: claudecode
 
-                                                                      - name: Checkout Rork iOS source
-                                                                              uses: actions/checkout@v4
-                                                                                      with:
-                                                                                                repository: ancarcich-ops/ancarcich-ops-claudecode-813
-                                                                                                          token: ${{ secrets.GITHUB_TOKEN }}
-                                                                                                                    path: rork-ios-source
-                                                                                                                    
-                                                                                                                          - name: Copy iOS code to rork/ios branch
-                                                                                                                                  run: |
-                                                                                                                                            cp -r rork-ios-source/ios claudecode/
-                                                                                                                                                      cp rork-ios-source/rork.json claudecode/ 2>/dev/null || true
-                                                                                                                                                                cp rork-ios-source/.gitignore claudecode/.gitignore-rork 2>/dev/null || true
-                                                                                                                                                                
-                                                                                                                                                                      - name: Commit and push iOS foundations
-                                                                                                                                                                              working-directory: claudecode
-                                                                                                                                                                                      run: |
-                                                                                                                                                                                                git config user.name "github-actions[bot]"
-                                                                                                                                                                                                          git config user.email "github-actions[bot]@users.noreply.github.com"
-                                                                                                                                                                                                                    git add ios/ rork.json .gitignore-rork 2>/dev/null || git add ios/
-                                                                                                                                                                                                                              git diff --staged --quiet || git commit -m "Add iOS foundations from Rork (Sticks Golf app)"
-                                                                                                                                                                                                                                        git push origin rork/ios
+      - name: Checkout Rork iOS source
+        uses: actions/checkout@v4
+        with:
+          repository: ancarcich-ops/ancarcich-ops-claudecode-813
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: rork-ios-source
+
+      - name: Copy iOS code to rork/ios branch
+        run: |
+          cp -r rork-ios-source/ios claudecode/
+          cp rork-ios-source/rork.json claudecode/ 2>/dev/null || true
+
+      - name: Commit and push iOS foundations
+        working-directory: claudecode
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ios/ rork.json 2>/dev/null || git add ios/
+          git diff --staged --quiet || git commit -m "Add iOS foundations from Rork (Sticks Golf app)"
+          git push origin rork/ios
