@@ -58,7 +58,9 @@ function parseArgs(argv: string[]) {
   const flags = {
     apply: false,
     course: "",
-    minShift: 40,
+    // 15y, not 40: OSM boxes are surveyed positions, so even a ~25y
+    // correction (stored tee just off the real box) is worth taking.
+    minShift: 15,
     refreshCache: false,
     debug: false,
   };
@@ -88,6 +90,17 @@ function parsePoly(json: string | null): LL[] | null {
   } catch {
     return null;
   }
+}
+
+// Angle between two points as seen from `origin`, in degrees [0, 180].
+// Flat-earth approximation, fine at hole scale.
+function bearingDiffDeg(origin: LL, a: LL, b: LL): number {
+  const lngScale = Math.cos((origin.lat * Math.PI) / 180);
+  const bearing = (p: LL) =>
+    (Math.atan2((p.lng - origin.lng) * lngScale, p.lat - origin.lat) * 180) /
+    Math.PI;
+  const diff = Math.abs(bearing(a) - bearing(b)) % 360;
+  return diff > 180 ? 360 - diff : diff;
 }
 
 function distToNearestVertex(p: LL, poly: LL[]): number {
@@ -327,22 +340,32 @@ async function main() {
       });
     }
 
-    // Pass 2: distance-fit for holes not resolved by ref. Distance
-    // alone is ambiguous on a dense property (86 tee features on an
-    // 18-hole course means some OTHER hole's box often sits at a
-    // similar distance from this green), so each candidate must also
-    // pass a geometric gate built from geometry we already trust:
-    //   - holes with a fairway polygon: the tee must sit within 120y
-    //     of the hole's OWN fairway (rival holes' tees hug THEIR
-    //     fairway, not this one's)
+    // Pass 2: distance-fit + routing for holes not resolved by ref.
+    // Distance alone is ambiguous on a dense property (86 tee features
+    // on an 18-hole course means some OTHER hole's box often sits at a
+    // similar distance from this green). Trump National debug traces
+    // shaped these rules:
+    //
+    //   Gate (per candidate):
+    //   - holes with a fairway polygon: the tee must sit within 200y
+    //     of the hole's OWN fairway. 200 (not 120) because canyon-
+    //     carry holes routinely put the back tee 130-170y behind the
+    //     first fairway vertex.
     //   - par 3s (no fairway): the tee must be a plausible walk
-    //     (<= 350y) from the PREVIOUS hole's green
-    //   - neither available: distance-fit only, as before
-    // Tightest fits are assigned first so a well-matched hole can't
-    // lose its tee to a sloppier neighbor.
+    //     (<= 350y) from the PREVIOUS hole's green.
+    //
+    //   Selection (per hole): score = fit + 0.3 * walkFromPrevGreen.
+    //   The walk term picks the candidate that fits the course's
+    //   routing -- the real hole-15 tee is a 55y walk from green 14,
+    //   the impostor 194y -- while staying subordinate to fit.
+    //
+    //   Ambiguity: only when the top two scores are close (<15) AND
+    //   the candidates sit in genuinely different directions from the
+    //   green (>25 degrees apart). Two boxes of the same complex on a
+    //   long hole can be 140y apart yet ~15 degrees -- same answer
+    //   either way. Two different par-3 tees 123y apart at a 131y
+    //   radius are ~56 degrees -- a real fork, so skip.
     const doneHoles = new Set(plans.map((p) => p.holeId));
-    type Cand = { h: (typeof eligible)[number]; t: OsmTee; fit: number };
-    const cands: Cand[] = [];
     // --debug: per-hole trace of every OSM tee inside a loose 100y fit
     // window and why it was or wasn't usable. Printed for unmatched
     // holes so gate thresholds can be tuned from data.
@@ -362,6 +385,9 @@ async function main() {
       const tol = Math.max(20, published * 0.12);
       const fairway = fairwayByHole.get(h.hole) ?? null;
       const prevGreen = greenByHole.get(h.hole - 1) ?? null;
+
+      type Scored = { t: OsmTee; fit: number; walk: number | null; score: number };
+      const scored: Scored[] = [];
       for (const t of entry.tees) {
         const fit = Math.abs(distanceYards(green, t) - published);
         if (fit > tol) {
@@ -369,12 +395,12 @@ async function main() {
           continue;
         }
         if (claimed.has(t)) {
-          dbg(h.hole, `  ${teeLabel(t)} fit=±${Math.round(fit)}y REJECT claimed by ref pass`);
+          dbg(h.hole, `  ${teeLabel(t)} fit=±${Math.round(fit)}y REJECT claimed by earlier hole`);
           continue;
         }
         if (fairway && fairway.length >= 3) {
           const fw = distToNearestVertex(t, fairway);
-          if (fw > 120) {
+          if (fw > 200) {
             dbg(h.hole, `  ${teeLabel(t)} fit=±${Math.round(fit)}y REJECT fairway gate (${Math.round(fw)}y from own fairway)`);
             continue;
           }
@@ -385,53 +411,51 @@ async function main() {
             continue;
           }
         }
-        dbg(h.hole, `  ${teeLabel(t)} fit=±${Math.round(fit)}y CANDIDATE`);
-        cands.push({ h, t, fit });
+        const walk = prevGreen ? distanceYards(t, prevGreen) : null;
+        const score = fit + (walk != null ? 0.3 * walk : 0);
+        dbg(
+          h.hole,
+          `  ${teeLabel(t)} fit=±${Math.round(fit)}y walk=${walk != null ? `${Math.round(walk)}y` : "—"} score=${Math.round(score)} CANDIDATE`,
+        );
+        scored.push({ t, fit, walk, score });
       }
       if (args.debug && !debugLog.has(h.hole)) {
         dbg(h.hole, `  (no OSM tee within ±100y of published ${published}y)`);
       }
-    }
-    cands.sort((a, b) => a.fit - b.fit);
-    const resolvedIds = new Set<string>();
-    for (const c of cands) {
-      if (resolvedIds.has(c.h.id) || claimed.has(c.t)) continue;
-      // Ambiguity guard: a nearly-as-good runner-up far from this tee
-      // means two plausible answers -- skip rather than guess.
-      const rival = cands.find(
-        (o) =>
-          o !== c &&
-          o.h.id === c.h.id &&
-          !claimed.has(o.t) &&
-          o.fit - c.fit <= 10 &&
-          distanceYards(c.t, o.t) > 80,
-      );
-      if (rival) {
-        resolvedIds.add(c.h.id); // don't retry with the rival either
-        totalAmbiguous++;
-        dbg(
-          c.h.hole,
-          `  AMBIGUOUS: ${teeLabel(c.t)} (±${Math.round(c.fit)}y) vs ${teeLabel(rival.t)} (±${Math.round(rival.fit)}y), ${Math.round(distanceYards(c.t, rival.t))}y apart`,
-        );
+      if (scored.length === 0) continue;
+      scored.sort((a, b) => a.score - b.score);
+      const best = scored[0];
+      const runnerUp = scored[1];
+      if (runnerUp && runnerUp.score - best.score < 15) {
+        // Angular separation as seen from the green: same complex or a
+        // genuine fork?
+        const angle = bearingDiffDeg(green, best.t, runnerUp.t);
+        if (angle > 25) {
+          totalAmbiguous++;
+          dbg(
+            h.hole,
+            `  AMBIGUOUS: ${teeLabel(best.t)} (score ${Math.round(best.score)}) vs ${teeLabel(runnerUp.t)} (score ${Math.round(runnerUp.score)}), ${Math.round(angle)}° apart from green`,
+          );
+          continue;
+        }
+      }
+      claimed.add(best.t);
+      const newTee = { lat: best.t.lat, lng: best.t.lng };
+      const shift =
+        h.teeLat != null && h.teeLng != null
+          ? Math.round(distanceYards({ lat: h.teeLat, lng: h.teeLng }, newTee))
+          : null;
+      if (shift != null && shift < args.minShift) {
+        dbg(h.hole, `  SETTLED: stored tee already within ${shift}y of ${teeLabel(best.t)} (< min-shift ${args.minShift})`);
         continue;
       }
-      resolvedIds.add(c.h.id);
-      claimed.add(c.t);
-      const newTee = { lat: c.t.lat, lng: c.t.lng };
-      const shift =
-        c.h.teeLat != null && c.h.teeLng != null
-          ? Math.round(
-              distanceYards({ lat: c.h.teeLat, lng: c.h.teeLng }, newTee),
-            )
-          : null;
-      if (shift != null && shift < args.minShift) continue;
       plans.push({
-        holeId: c.h.id,
-        hole: c.h.hole,
+        holeId: h.id,
+        hole: h.hole,
         newTee,
         shift,
         via: "distance",
-        fit: Math.round(c.fit),
+        fit: Math.round(best.fit),
       });
     }
 
