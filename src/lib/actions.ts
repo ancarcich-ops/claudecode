@@ -34,7 +34,7 @@ import {
   type WolfConfig,
   type WolfPushRule,
 } from "./sideGames";
-import { findOrCreateCourseByName } from "./course";
+import { findOrCreateCourseByName, distanceYards } from "./course";
 import { assignHoles, fetchOsmGolfFeatures, geocodeCourse } from "./osm";
 
 // Same-origin relative redirect guard (avoids open-redirect abuse).
@@ -1940,12 +1940,22 @@ export async function refreshCourseFromOsmAction(formData: FormData) {
 }
 
 // Mark the tee box for a hole. Mirrors markGreenCenterAction.
-export async function markTeeAction(formData: FormData) {
+// Set a hole's tee from the caller's GPS position. Returns a result
+// object rather than throwing on plausibility failures so the on-course
+// UI can surface the reason inline ("you're 90y short of the scorecard
+// distance") instead of crashing the transition.
+export async function markTeeAction(
+  formData: FormData,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
   const user = await requireUser();
   const courseName = String(formData.get("courseName") ?? "").trim();
   const hole = Number(formData.get("hole"));
   const lat = Number(formData.get("lat"));
   const lng = Number(formData.get("lng"));
+  // Optional GPS accuracy (yards). Provided by the on-course crowdfix
+  // flow; absent from other callers.
+  const accuracyRaw = formData.get("accuracyYd");
+  const accuracyYd = accuracyRaw == null ? null : Number(accuracyRaw);
   if (!courseName) throw new Error("Course name required");
   if (!Number.isFinite(hole) || hole < 1 || hole > 36) {
     throw new Error("Invalid hole number");
@@ -1958,10 +1968,42 @@ export async function markTeeAction(formData: FormData) {
   ) {
     throw new Error("Invalid coordinates");
   }
+  if (accuracyYd != null && Number.isFinite(accuracyYd) && accuracyYd > 35) {
+    return {
+      ok: false,
+      reason: `GPS accuracy is ±${Math.round(accuracyYd)}y right now — wait for a tighter lock and try again.`,
+    };
+  }
   const course = await findOrCreateCourseByName(courseName);
   const existing = await prisma.courseHole.findUnique({
     where: { courseId_hole: { courseId: course.id, hole } },
   });
+  // Plausibility: when the hole has a mapped green and a scorecard
+  // distance, the new tee must be consistent with both -- this is what
+  // makes crowd-set tees safe. Tolerance max(30y, 15%) absorbs GPS
+  // noise and tee-box-vs-plate differences while rejecting taps from
+  // the cart path, the fairway, or the wrong hole.
+  if (
+    existing?.greenLat != null &&
+    existing?.greenLng != null &&
+    existing?.distanceYds != null &&
+    existing.distanceYds > 0
+  ) {
+    const measured = Math.round(
+      distanceYards(
+        { lat, lng },
+        { lat: existing.greenLat, lng: existing.greenLng },
+      ),
+    );
+    const published = existing.distanceYds;
+    const tolerance = Math.max(30, published * 0.15);
+    if (Math.abs(measured - published) > tolerance) {
+      return {
+        ok: false,
+        reason: `From here it's ${measured}y to the green — the scorecard says ${published}y. Stand on the tee box and try again.`,
+      };
+    }
+  }
   if (existing) {
     await prisma.courseHole.update({
       where: { id: existing.id },
@@ -1978,6 +2020,7 @@ export async function markTeeAction(formData: FormData) {
       },
     });
   }
+  return { ok: true };
 }
 
 // Mark a course hazard with the user's current GPS. v1 stores a single

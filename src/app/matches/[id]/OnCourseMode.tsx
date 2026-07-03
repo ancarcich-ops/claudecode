@@ -115,6 +115,14 @@ export default function OnCourseMode({
   useEffect(() => {
     setMode3d(false);
   }, [hole]);
+  // Fix-tee (GPS crowdfix) confirm card. Reset when the hole changes
+  // so a card opened on one hole can't write another hole's tee.
+  const [fixTeeOpen, setFixTeeOpen] = useState(false);
+  const [fixTeeError, setFixTeeError] = useState<string | null>(null);
+  useEffect(() => {
+    setFixTeeOpen(false);
+    setFixTeeError(null);
+  }, [hole]);
   // Cycle-through-group preference. "unset" = never been asked; show
   // the prompt after the first save. "enabled" = cycle through every
   // player after each save. "disabled" = log only the signed-in
@@ -579,7 +587,38 @@ export default function OnCourseMode({
     fd.set("lat", String(pos.coords.latitude));
     fd.set("lng", String(pos.coords.longitude));
     startTransition(async () => {
-      await markTeeAction(fd);
+      const res = await markTeeAction(fd);
+      if (res && res.ok === false) {
+        // Surface the rejection through the fix-tee card so the user
+        // sees why (bad GPS lock, wrong spot).
+        setFixTeeError(res.reason);
+        setFixTeeOpen(true);
+        return;
+      }
+      router.refresh();
+    });
+  };
+
+  // Crowdfix flow: player standing on the tee box sets the stored tee
+  // from their GPS. Confirm-first (an accidental tap must not move
+  // course data), and the server action verifies the position against
+  // the scorecard distance before accepting.
+  const confirmFixTee = () => {
+    if (!pos) return;
+    const fd = new FormData();
+    fd.set("courseName", courseName);
+    fd.set("hole", String(hole));
+    fd.set("lat", String(pos.coords.latitude));
+    fd.set("lng", String(pos.coords.longitude));
+    if (accuracyYd != null) fd.set("accuracyYd", String(accuracyYd));
+    startTransition(async () => {
+      const res = await markTeeAction(fd);
+      if (res && res.ok === false) {
+        setFixTeeError(res.reason);
+        return;
+      }
+      setFixTeeError(null);
+      setFixTeeOpen(false);
       router.refresh();
     });
   };
@@ -765,6 +804,18 @@ export default function OnCourseMode({
             />
           )
         )}
+        {/* GPS crowdfix: visible to seated players when the hole is
+            mapped and GPS is locked. The mapped-tee data is wrong
+            often enough (imported courses) that self-serve repair
+            from the tee box is the long-term fix. */}
+        {!mode3d && greenSet && myMatchPlayerId != null && pos != null && (
+          <FixTeeTile
+            onClick={() => {
+              setFixTeeError(null);
+              setFixTeeOpen(true);
+            }}
+          />
+        )}
       </div>
 
       {/* Bottom — dominant distance + ENTER SCORE. The preset chip
@@ -793,6 +844,54 @@ export default function OnCourseMode({
           pacified={!greenSet}
         />
       </div>
+
+      {/* Fix-tee confirm card. Sits above the bottom panel; confirm
+          writes the player's GPS position as the hole's tee (server
+          verifies against the scorecard distance first). */}
+      {fixTeeOpen && (
+        <div className="absolute inset-x-0 bottom-0 z-[40] px-3 pb-[max(env(safe-area-inset-bottom),14px)]">
+          <div className="map-chip rounded-[15px] p-4 flex flex-col gap-2.5">
+            <div className="font-mono text-[10px] tracking-[0.08em] uppercase text-[var(--map-ink)] font-semibold">
+              Fix tee · Hole {hole}
+            </div>
+            {fixTeeError ? (
+              <div className="text-[13px] leading-snug text-danger">
+                {fixTeeError}
+              </div>
+            ) : (
+              <div className="text-[13px] leading-snug text-[var(--map-ink)]">
+                Stand on the tee box you play from, then confirm — hole{" "}
+                {hole}&apos;s tee marker moves to your position
+                {accuracyYd != null ? ` (GPS ±${accuracyYd}y)` : ""}.
+                {center != null && yardage != null
+                  ? ` From here it's ${Math.round(center)}y to the green · scorecard ${yardage}y.`
+                  : ""}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setFixTeeOpen(false);
+                  setFixTeeError(null);
+                }}
+                className="flex-1 h-10 rounded-[10px] border border-[var(--map-ink)]/25 text-[13px] font-semibold text-[var(--map-ink)]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmFixTee}
+                disabled={pending || !pos}
+                className="flex-1 h-10 rounded-[10px] text-[13px] font-semibold disabled:opacity-60"
+                style={{ background: "var(--mint)", color: "#0b2c1c" }}
+              >
+                {fixTeeError ? "Try again" : "Set tee here"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Score-entry sheet */}
       <ScoreSheet
@@ -1168,6 +1267,40 @@ function MovePinTile({
       </span>
       <span className="font-mono text-[8.5px] tracking-[0.06em] uppercase text-[var(--map-ink)] font-semibold">
         {active ? "CLEAR" : "MOVE PIN"}
+      </span>
+    </button>
+  );
+}
+
+// GPS crowdfix entry point: a small tile matching MovePinTile's
+// language. Tapping opens a confirm card -- it never writes directly.
+function FixTeeTile({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="map-chip w-[60px] rounded-[15px] py-2 px-2 flex flex-col items-center gap-1.5 active:scale-95 transition-transform"
+      aria-label="Fix this hole's tee using my location"
+    >
+      <span
+        className="w-[30px] h-[30px] rounded-[9px] grid place-items-center"
+        style={{ background: "var(--mint)", color: "#cdebd9" }}
+      >
+        {/* Golf tee glyph: ball on a tee */}
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+        >
+          <circle cx="12" cy="6" r="3" />
+          <path d="M7 11h10M12 11v9" strokeLinecap="round" />
+        </svg>
+      </span>
+      <span className="font-mono text-[8.5px] tracking-[0.06em] uppercase text-[var(--map-ink)] font-semibold">
+        FIX TEE
       </span>
     </button>
   );
