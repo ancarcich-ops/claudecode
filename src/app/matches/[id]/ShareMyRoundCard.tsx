@@ -81,18 +81,20 @@ export default function ShareMyRoundCard({
         <h2 className="font-display text-base font-semibold text-ink">
           Share my round
         </h2>
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="text-accent text-sm hover:underline"
-        >
-          {open ? "Close" : "+ Create link"}
-        </button>
+        {myMatchPlayerId != null && (
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="text-accent text-sm hover:underline"
+          >
+            {open ? "Close" : "+ Create link"}
+          </button>
+        )}
       </div>
       <p className="text-[12px] text-mute mb-3">
-        A live link you can text to whoever&apos;s waiting on you — pace,
-        estimated finish, ETA home, and (optionally) your score. It updates
-        itself while you play.
+        A live link to your round you can text to whoever&apos;s waiting on
+        you — pace, estimated finish, ETA home, and (optionally) your
+        score. It updates itself while you play.
       </p>
 
       {shares.length > 0 && (
@@ -137,33 +139,17 @@ export default function ShareMyRoundCard({
       {open && (
         <form ref={formRef} action={submit} className="space-y-2.5">
           <input type="hidden" name="matchId" value={matchId} />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <label className="block">
-              <span className="text-[11px] text-mute">Whose round</span>
-              <select
-                name="matchPlayerId"
-                defaultValue={myMatchPlayerId ?? players[0]?.id}
-                className="input w-full h-9 text-sm"
-              >
-                {players.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.displayName}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block">
-              <span className="text-[11px] text-mute">
-                Heading somewhere after? (for ETA — optional)
-              </span>
-              <input
-                name="destAddress"
-                type="text"
-                placeholder="123 Main St, Los Angeles"
-                className="input w-full h-9 text-sm"
-              />
-            </label>
-          </div>
+          <label className="block">
+            <span className="text-[11px] text-mute">
+              Heading somewhere after? (for ETA — optional)
+            </span>
+            <input
+              name="destAddress"
+              type="text"
+              placeholder="123 Main St, Los Angeles"
+              className="input w-full h-9 text-sm"
+            />
+          </label>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
             <label className="inline-flex items-center gap-1.5 text-sm">
               <input type="checkbox" name="includeScores" defaultChecked />

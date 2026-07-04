@@ -14,7 +14,6 @@ const VALID_MILESTONES = new Set(["FRONT9", "EVERY6", "FINISH"]);
 export async function createRoundShareAction(formData: FormData) {
   const user = await requireUser();
   const matchId = String(formData.get("matchId") ?? "");
-  const matchPlayerId = String(formData.get("matchPlayerId") ?? "");
   const includeScores = formData.get("includeScores") === "on";
   const destAddress = String(formData.get("destAddress") ?? "").trim();
   // Private cushion: clamp to something sane so a typo can't push the
@@ -28,7 +27,7 @@ export async function createRoundShareAction(formData: FormData) {
     .map(String)
     .filter((m) => VALID_MILESTONES.has(m));
 
-  if (!matchId || !matchPlayerId) throw new Error("Missing match/player");
+  if (!matchId) throw new Error("Missing match");
   // Milestones are dormant until SMS delivery lands -- keep sane
   // defaults on the row so it lights up without a backfill.
   if (milestones.length === 0) milestones.push("FRONT9", "FINISH");
@@ -38,12 +37,13 @@ export async function createRoundShareAction(formData: FormData) {
     select: { createdById: true, players: { select: { id: true, userId: true } } },
   });
   if (!match) throw new Error("Match not found");
-  const isCreator = match.createdById === user.id;
-  const isSeated = match.players.some((p) => p.userId === user.id);
-  if (!isCreator && !isSeated) throw new Error("Not your match");
-  if (!match.players.some((p) => p.id === matchPlayerId)) {
-    throw new Error("That player is not in this match");
+  // You can only share YOUR OWN round -- the shared seat is derived
+  // from the caller's link to a seat, never taken from the form.
+  const mySeat = match.players.find((p) => p.userId === user.id);
+  if (!mySeat) {
+    throw new Error("You're not playing in this match");
   }
+  const matchPlayerId = mySeat.id;
 
   // Geocode the destination once at save time; a failed geocode just
   // means no ETA line in the updates (address kept for display).
