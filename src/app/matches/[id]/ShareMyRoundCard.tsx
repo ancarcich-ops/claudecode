@@ -19,6 +19,7 @@ export type RoundShareRow = {
   includeScores: boolean;
   milestones: string;
   destAddress: string | null;
+  bufferMin: number;
   token: string;
 };
 
@@ -108,6 +109,7 @@ export default function ShareMyRoundCard({
                 <div className="text-[11px] text-mute truncate">
                   {s.includeScores ? "with score" : "no score"}
                   {s.destAddress ? ` · ETA to ${s.destAddress}` : ""}
+                  {s.bufferMin > 0 ? ` · +${s.bufferMin}m cushion` : ""}
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -162,10 +164,26 @@ export default function ShareMyRoundCard({
               />
             </label>
           </div>
-          <label className="inline-flex items-center gap-1.5 text-sm">
-            <input type="checkbox" name="includeScores" defaultChecked />
-            Include score
-          </label>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+            <label className="inline-flex items-center gap-1.5 text-sm">
+              <input type="checkbox" name="includeScores" defaultChecked />
+              Include score
+            </label>
+            <label className="inline-flex items-center gap-1.5 text-sm">
+              <span className="text-mute">Cushion</span>
+              <select name="bufferMin" defaultValue="0" className="input h-8 text-sm">
+                <option value="0">None</option>
+                <option value="15">+15 min</option>
+                <option value="30">+30 min</option>
+                <option value="45">+45 min</option>
+                <option value="60">+1 hour</option>
+              </select>
+            </label>
+          </div>
+          <p className="text-[11px] text-faint -mt-1">
+            Cushion pads the finish &amp; ETA they see — quietly. For the
+            clubhouse beer.
+          </p>
           {error && <p className="text-danger text-[12px]">{error}</p>}
           <button
             type="submit"

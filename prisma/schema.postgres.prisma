@@ -404,6 +404,9 @@ model RoundShare {
   destAddress    String?
   destLat        Float?
   destLng        Float?
+  // Private cushion (minutes) silently baked into the projected finish
+  // and ETA the recipient sees. Never labelled on the public page.
+  bufferMin      Int      @default(0)
   // Highest milestone already emailed (prevents duplicate sends).
   sentMilestones String   @default("")
   createdAt      DateTime @default(now())

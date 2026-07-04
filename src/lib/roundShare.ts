@@ -179,6 +179,13 @@ export async function checkRoundShares(matchId: string): Promise<void> {
       (m) => !already.has(m),
     );
     if (due.length === 0) continue;
+    // Apply the sharer's private cushion to everything time-shaped the
+    // recipient will read.
+    if (pace.projectedFinish && share.bufferMin > 0) {
+      pace.projectedFinish = new Date(
+        pace.projectedFinish.getTime() + share.bufferMin * 60_000,
+      );
+    }
     // Send only the most advanced due milestone (scores can arrive in
     // bursts -- one email, not three).
     const milestone = due[due.length - 1];
