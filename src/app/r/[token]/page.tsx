@@ -12,6 +12,32 @@ import { computePace, driveMinutes } from "@/lib/roundShare";
 
 export const dynamic = "force-dynamic";
 
+// Link-preview metadata: when the share link is texted, iMessage /
+// WhatsApp render "Andrew's round status" + course instead of a bare
+// token URL.
+export async function generateMetadata({
+  params,
+}: {
+  params: { token: string };
+}) {
+  const share = await prisma.roundShare.findUnique({
+    where: { token: params.token },
+    include: {
+      match: { select: { courseName: true, players: { select: { id: true, displayName: true } } } },
+    },
+  });
+  const player = share?.match.players.find((p) => p.id === share.matchPlayerId);
+  if (!share || !player) return { title: "Sticks" };
+  const title = `${player.displayName}\u2019s round status`;
+  const description = `Live from ${share.match.courseName} \u2014 pace, estimated finish, and ETA. Updates while the round is on.`;
+  return {
+    title,
+    description,
+    openGraph: { title, description, siteName: "Sticks" },
+    twitter: { card: "summary", title, description },
+  };
+}
+
 function fmtTime(d: Date): string {
   return d.toLocaleTimeString("en-US", {
     hour: "numeric",
