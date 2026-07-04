@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { computeOdds, formatPct, parseParData } from "@/lib/odds";
 import { getCurrentUser } from "@/lib/auth";
+import { autoCompleteStaleMatches } from "@/lib/autoComplete";
 import { getActiveGroupId, visibleMatchWhere } from "@/lib/groups";
 import AutoRefresh from "@/components/AutoRefresh";
 import LiveCardStats from "@/components/LiveCardStats";
@@ -67,6 +68,10 @@ async function loadMatches(where: any, orderBy: any, take?: number) {
 
 export default async function HomePage() {
   const user = await getCurrentUser();
+  // Close any finished-but-never-submitted rounds (all holes logged,
+  // 1h+ idle) before building the feed, so they render as Final
+  // instead of a permanent LIVE card.
+  await autoCompleteStaleMatches().catch(() => {});
   const activeGroupId = getActiveGroupId();
   const groupWhere = await visibleMatchWhere(user?.id ?? null, activeGroupId);
 

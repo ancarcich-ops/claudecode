@@ -14,6 +14,7 @@ import { hashPassword, verifyPassword, passwordError } from "./password";
 import { sendEmail, passwordResetEmail, appUrl } from "./email";
 import { recordOddsSnapshot } from "./match";
 import { checkRoundShares } from "./roundShare";
+import { rollupTournamentCompletion } from "./autoComplete";
 import { computeAndPersistMatchWinners } from "./matchWinners";
 import { defaultPars } from "./odds";
 import {
@@ -1414,35 +1415,8 @@ export async function completeMatchAction(formData: FormData) {
   // to COMPLETED. This handles the multi-foursome model correctly: a
   // round with 4 foursomes only "counts" once everyone has signed off.
   if (completed.tournamentId) {
-    const tournament = await prisma.tournament.findUnique({
-      where: { id: completed.tournamentId },
-      select: {
-        roundsPlanned: true,
-        status: true,
-        matches: {
-          select: { status: true, roundNumber: true },
-        },
-      },
-    });
-    if (tournament && tournament.status !== "COMPLETED") {
-      const byRound = new Map<number, { total: number; done: number }>();
-      for (const m of tournament.matches) {
-        if (m.roundNumber == null) continue;
-        const cur = byRound.get(m.roundNumber) ?? { total: 0, done: 0 };
-        cur.total += 1;
-        if (m.status === "COMPLETED") cur.done += 1;
-        byRound.set(m.roundNumber, cur);
-      }
-      const fullyCompleteRounds = Array.from(byRound.values()).filter(
-        (r) => r.total > 0 && r.total === r.done,
-      ).length;
-      if (fullyCompleteRounds >= tournament.roundsPlanned) {
-        await prisma.tournament.update({
-          where: { id: completed.tournamentId },
-          data: { status: "COMPLETED", completedAt: new Date() },
-        });
-      }
-    }
+    // Shared with the auto-completion sweep (src/lib/autoComplete.ts).
+    await rollupTournamentCompletion(completed.tournamentId);
     revalidatePath(`/tournaments/${completed.tournamentId}`);
   }
 

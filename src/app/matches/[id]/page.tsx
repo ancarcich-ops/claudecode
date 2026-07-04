@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import { autoCompleteStaleMatches } from "@/lib/autoComplete";
 import { loadMatchWithOdds } from "@/lib/match";
 import { prisma } from "@/lib/db";
 import { canViewMatch } from "@/lib/groups";
@@ -76,6 +77,10 @@ export default async function MatchPage({
   params: { id: string };
 }) {
   const user = await getCurrentUser();
+  // Auto-close this match if it's fully scored and idle for 1h+ (the
+  // "played 18, never tapped Mark final" case) BEFORE loading it, so
+  // this render already shows it as Final.
+  await autoCompleteStaleMatches(params.id).catch(() => {});
   const loaded = await loadMatchWithOdds(params.id);
   if (!loaded) notFound();
   const { match, odds, pars } = loaded;
