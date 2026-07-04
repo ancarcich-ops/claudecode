@@ -96,6 +96,13 @@ Body: `{ "matchPlayerId": "…", "hole": 7, "strokes": 5 }`
 200: `{ "ok": true }`. Server auto-flips an UPCOMING match to
 IN_PROGRESS on the first score.
 
+### POST /matches/:id/complete
+No body. Marks the match COMPLETED (same as the web's "Mark final").
+200: `{ "ok": true }` -- idempotent; safe to call on an already-completed
+match. Use for the FINISH ROUND button: show it on the GPS screen when
+every player has a score on every hole, above ENTER SCORE (which
+relabels to "Edit a score"); on success, exit to match detail.
+
 ### POST /matches/:id/tee   (FIX TEE crowdfix)
 Body: `{ "hole": 7, "lat": …, "lng": …, "accuracyYd": 8 }`
 200: `{ "ok": true }` or `{ "ok": false, "reason": "…" }` — when
