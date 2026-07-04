@@ -23,6 +23,7 @@ struct OnCourseGPSView: View {
     @State private var holeIndex = 0
     @State private var aim: CLLocationCoordinate2D?
     @State private var scoreCell: ScoreCellSelection?
+    @State private var showFixTee = false
     @State private var hasInitialized = false
 
     /// Where distances are measured from.
@@ -52,7 +53,21 @@ struct OnCourseGPSView: View {
         }
         .onDisappear { locationService.stop() }
         .sheet(item: $scoreCell) { cell in
-            ScoreEntryPlaceholderSheet(cell: cell)
+            ScoreEntryView(cell: cell, viewModel: viewModel, session: session) {
+                advanceHole()
+            }
+        }
+        .sheet(isPresented: $showFixTee) {
+            if let detail = viewModel.detail {
+                let hole = detail.holeNumber(at: holeIndex)
+                FixTeeView(
+                    viewModel: viewModel,
+                    session: session,
+                    locationService: locationService,
+                    hole: hole,
+                    geo: viewModel.response?.holeGeo[hole]
+                )
+            }
         }
     }
 
@@ -76,7 +91,13 @@ struct OnCourseGPSView: View {
             }
         }
         .safeAreaInset(edge: .top, spacing: 0) {
-            HoleRailView(detail: detail, scores: myScores(detail), selectedIndex: $holeIndex)
+            VStack(alignment: .trailing, spacing: 10) {
+                HoleRailView(detail: detail, scores: myScores(detail), selectedIndex: $holeIndex)
+                if let wind = viewModel.response?.wind {
+                    WindTile(wind: wind)
+                        .padding(.trailing, 12)
+                }
+            }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             bottomPanel(detail: detail, geo: geo, anchor: anchor)
@@ -162,7 +183,7 @@ struct OnCourseGPSView: View {
                 aimRow(anchor: anchor, aim: aim, green: geo?.greenCoordinate)
             }
 
-            statusLine(anchor: anchor)
+            statusRow(detail: detail, anchor: anchor)
 
             if detail.canEnterScores {
                 Button {
@@ -262,7 +283,7 @@ struct OnCourseGPSView: View {
         return "\(originName) → AIM \(toAim)"
     }
 
-    private func statusLine(anchor: DistanceAnchor?) -> some View {
+    private func statusRow(detail: MatchDetail, anchor: DistanceAnchor?) -> some View {
         HStack(spacing: 6) {
             Circle()
                 .fill(anchor?.isPlayer == true ? Color.green : Color.orange)
@@ -271,7 +292,43 @@ struct OnCourseGPSView: View {
                 .font(SticksFont.label(10))
                 .kerning(1)
                 .foregroundStyle(.white.opacity(0.6))
+
+            if canFixTee(detail) {
+                Spacer()
+                fixTeeButton
+            }
         }
+    }
+
+    /// FIX TEE appears only when the caller is seated in the match AND
+    /// live GPS accuracy is ±35y or better (the server rejects worse).
+    private func canFixTee(_ detail: MatchDetail) -> Bool {
+        guard detail.myMatchPlayerId != nil,
+              locationService.coordinate != nil,
+              let accuracy = locationService.horizontalAccuracyYards else { return false }
+        return accuracy <= GolfGeo.maxTeeFixAccuracyYards
+    }
+
+    private var fixTeeButton: some View {
+        Button {
+            showFixTee = true
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "smallcircle.filled.circle")
+                    .font(.system(size: 10, weight: .bold))
+                Text("FIX TEE")
+                    .font(SticksFont.label(10, weight: .bold))
+                    .kerning(1.2)
+            }
+            .foregroundStyle(.white.opacity(0.85))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(.white.opacity(0.14))
+            .clipShape(Capsule())
+            .overlay(Capsule().stroke(.white.opacity(0.25), lineWidth: 1))
+        }
+        .buttonStyle(PressableButtonStyle())
     }
 
     private func statusText(anchor: DistanceAnchor?) -> String {
@@ -369,11 +426,57 @@ struct OnCourseGPSView: View {
         }
     }
 
+    /// Advances to the next hole after the score sheet completes a hole.
+    /// The hole-index change re-frames the camera and clears the aim point.
+    private func advanceHole() {
+        guard let detail = viewModel.detail, holeIndex < detail.holes - 1 else { return }
+        withAnimation { holeIndex += 1 }
+    }
+
     private func openScoreSheet(_ detail: MatchDetail, hole: Int) {
         let player = detail.players.first { $0.id == detail.myMatchPlayerId }
             ?? viewModel.sortedPlayers.first
         guard let player else { return }
         scoreCell = ScoreCellSelection(player: player, hole: hole, par: detail.par(at: holeIndex))
+    }
+}
+
+// MARK: - Wind tile
+
+/// Wind speed + direction, matching the web app: MPH with an arrow
+/// rotated to `fromDeg` (the direction the wind blows FROM).
+private struct WindTile: View {
+    let wind: Wind
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "arrow.up")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(.white)
+                .rotationEffect(.degrees(wind.fromDeg))
+            VStack(alignment: .leading, spacing: 0) {
+                Text("\(Int(wind.speedMph.rounded()))")
+                    .font(SticksFont.display(18))
+                    .foregroundStyle(.white)
+                    .monospacedDigit()
+                Text("MPH")
+                    .font(SticksFont.label(8))
+                    .kerning(1.2)
+                    .foregroundStyle(.white.opacity(0.6))
+            }
+        }
+        .padding(.horizontal, 11)
+        .padding(.vertical, 7)
+        .background(.black.opacity(0.55))
+        .background(.ultraThinMaterial)
+        .clipShape(.rect(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(.white.opacity(0.14), lineWidth: 1)
+        )
+        .environment(\.colorScheme, .dark)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Wind \(Int(wind.speedMph.rounded())) miles per hour from \(Int(wind.fromDeg)) degrees")
     }
 }
 

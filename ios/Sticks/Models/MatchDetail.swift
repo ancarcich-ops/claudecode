@@ -40,6 +40,13 @@ nonisolated struct Hazard: Codable, Hashable {
     let lng: Double?
 }
 
+/// Course wind conditions — null when unavailable.
+nonisolated struct Wind: Codable, Hashable {
+    let speedMph: Double
+    /// Compass direction the wind blows FROM, in degrees.
+    let fromDeg: Double
+}
+
 /// Per-hole GPS geometry. ANY field can be null.
 nonisolated struct HoleGeo: Codable, Hashable {
     let hole: Int?
@@ -66,7 +73,8 @@ nonisolated struct MatchDetailPlayer: Identifiable, Hashable {
     let seat: Int?
     let team: String?
     /// Hole number → strokes (converted from the server's string keys).
-    let scoresByHole: [Int: Int]
+    /// Mutable so score posts can update the scorecard optimistically.
+    var scoresByHole: [Int: Int]
 }
 
 extension MatchDetailPlayer: Decodable {
@@ -115,7 +123,7 @@ nonisolated struct MatchDetail: Decodable, Identifiable, Hashable {
     let isCreator: Bool
     let myMatchPlayerId: String?
     let pars: [Int]
-    let players: [MatchDetailPlayer]
+    var players: [MatchDetailPlayer]
 
     /// Score entry is allowed if the caller is seated or created the match.
     var canEnterScores: Bool { myMatchPlayerId != nil || isCreator }
@@ -134,14 +142,16 @@ nonisolated struct MatchDetail: Decodable, Identifiable, Hashable {
 }
 
 nonisolated struct MatchDetailResponse: Decodable {
-    let match: MatchDetail
+    var match: MatchDetail
     /// Keyed by absolute hole number (converted from string keys).
     let holeGeo: [Int: HoleGeo]
     /// Keyed by absolute hole number; holes without hazards are absent.
     let hazards: [Int: [Hazard]]
+    /// Wind conditions — nil when the server has none.
+    let wind: Wind?
 
     private enum CodingKeys: String, CodingKey {
-        case match, holeGeo, hazards
+        case match, holeGeo, hazards, wind
     }
 
     init(from decoder: Decoder) throws {
@@ -157,5 +167,7 @@ nonisolated struct MatchDetailResponse: Decodable {
         hazards = Dictionary(uniqueKeysWithValues: rawHazards.compactMap { key, value in
             Int(key).map { ($0, value) }
         })
+
+        wind = try container.decodeIfPresent(Wind.self, forKey: .wind)
     }
 }
