@@ -59,6 +59,7 @@ import { getCourseHazardsByName, getCourseHolesByName } from "@/lib/course";
 import { getWindForCoord } from "@/lib/weather";
 import AutoRefresh from "@/components/AutoRefresh";
 import InRoundLive from "./InRoundLive";
+import ShareMyRoundCard from "./ShareMyRoundCard";
 import PlayerAvatar, { isVariant, type AvatarVariant } from "@/components/Avatar";
 import WagerForm from "./WagerForm";
 import ParsEditor from "./ParsEditor";
@@ -117,6 +118,10 @@ export default async function MatchPage({
   const isLinkedPlayer =
     !!user && match.players.some((p) => p.userId === user.id);
   const canLogScores = !isCompleted && (isCreator || isLinkedPlayer);
+  const roundShares = await prisma.roundShare.findMany({
+    where: { matchId: match.id },
+    orderBy: { createdAt: "asc" },
+  });
 
   type Row = { t: number } & Record<string, number>;
   const rowMap = new Map<number, Row>();
@@ -820,6 +825,29 @@ export default async function MatchPage({
             />
           )}
         </div>
+      )}
+
+      {/* Share my round: opt-in email updates (pace / ETA / score)
+          with a public live link. Seated players + creator, live
+          rounds only. */}
+      {canLogScores && (
+        <ShareMyRoundCard
+          matchId={match.id}
+          players={match.players.map((p) => ({
+            id: p.id,
+            displayName: p.displayName,
+          }))}
+          myMatchPlayerId={myMatchPlayer?.id ?? null}
+          shares={roundShares.map((s) => ({
+            id: s.id,
+            matchPlayerId: s.matchPlayerId,
+            recipientEmail: s.recipientEmail,
+            includeScores: s.includeScores,
+            milestones: s.milestones,
+            destAddress: s.destAddress,
+            token: s.token,
+          }))}
+        />
       )}
 
       <MatchTabs
