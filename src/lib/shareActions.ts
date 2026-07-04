@@ -17,6 +17,12 @@ export async function createRoundShareAction(formData: FormData) {
   const matchPlayerId = String(formData.get("matchPlayerId") ?? "");
   const includeScores = formData.get("includeScores") === "on";
   const destAddress = String(formData.get("destAddress") ?? "").trim();
+  // Private cushion: clamp to something sane so a typo can't push the
+  // ETA into next week.
+  const bufferRaw = Number(formData.get("bufferMin") ?? 0);
+  const bufferMin = Number.isFinite(bufferRaw)
+    ? Math.max(0, Math.min(180, Math.round(bufferRaw)))
+    : 0;
   const milestones = formData
     .getAll("milestones")
     .map(String)
@@ -63,6 +69,7 @@ export async function createRoundShareAction(formData: FormData) {
       destAddress: destAddress || null,
       destLat,
       destLng,
+      bufferMin,
     },
   });
   revalidatePath(`/matches/${matchId}`);

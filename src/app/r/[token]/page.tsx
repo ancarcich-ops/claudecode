@@ -95,9 +95,15 @@ export default async function ShareRoundPage({
     scoresByHole,
   });
   const finished = pace.holesPlayed >= match.holes;
+  // The sharer's private cushion rides inside the projection itself so
+  // the public page stays internally consistent (finish + drive = ETA)
+  // with no visible padding.
+  const paddedFinish = pace.projectedFinish
+    ? new Date(pace.projectedFinish.getTime() + share.bufferMin * 60_000)
+    : null;
 
   let etaHome: Date | null = null;
-  if (!finished && pace.projectedFinish && share.destLat != null && share.destLng != null) {
+  if (!finished && paddedFinish && share.destLat != null && share.destLng != null) {
     const course = await prisma.course.findUnique({
       where: { name: match.courseName },
       select: { centerLat: true, centerLng: true },
@@ -108,7 +114,7 @@ export default async function ShareRoundPage({
         { lat: share.destLat, lng: share.destLng },
       );
       if (mins != null) {
-        etaHome = new Date(pace.projectedFinish.getTime() + mins * 60_000);
+        etaHome = new Date(paddedFinish.getTime() + mins * 60_000);
       }
     }
   }
@@ -156,8 +162,8 @@ export default async function ShareRoundPage({
                     ? match.completedAt
                       ? fmtTime(match.completedAt)
                       : "Just now"
-                    : pace.projectedFinish
-                      ? fmtTime(pace.projectedFinish)
+                    : paddedFinish
+                      ? fmtTime(paddedFinish)
                       : "—"
                 }
               />

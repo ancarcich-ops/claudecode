@@ -853,6 +853,7 @@ export default async function MatchPage({
             includeScores: r.includeScores,
             milestones: r.milestones,
             destAddress: r.destAddress,
+            bufferMin: r.bufferMin,
             token: r.token,
           })),
           sideGameSections,
