@@ -1,8 +1,9 @@
 "use client";
 
-// Share-my-round settings card. Lives under the scorecard for seated
-// players: add a recipient (email + milestones + optional destination
-// for ETA-home), see active shares, copy the live link, revoke.
+// Share-my-round settings card, link-first: create a live share link
+// (pace / projected finish / ETA-home / optional score) and text it to
+// whoever's waiting on you. Email delivery was cut -- nobody wants
+// golf email -- and SMS delivery will plug into the same rows later.
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -84,12 +85,13 @@ export default function ShareMyRoundCard({
           onClick={() => setOpen((v) => !v)}
           className="text-accent text-sm hover:underline"
         >
-          {open ? "Close" : "+ Add recipient"}
+          {open ? "Close" : "+ Create link"}
         </button>
       </div>
       <p className="text-[12px] text-mute mb-3">
-        Email someone updates while you play — pace, estimated finish, and
-        (optionally) your score, plus a live link they can follow.
+        A live link you can text to whoever&apos;s waiting on you — pace,
+        estimated finish, ETA home, and (optionally) your score. It updates
+        itself while you play.
       </p>
 
       {shares.length > 0 && (
@@ -100,21 +102,12 @@ export default function ShareMyRoundCard({
               className="border border-border rounded-md p-2.5 flex items-center justify-between gap-2 text-sm"
             >
               <div className="min-w-0">
-                <div className="font-medium truncate">{s.recipientEmail}</div>
+                <div className="font-medium truncate">
+                  {nameFor(s.matchPlayerId)}&apos;s round
+                </div>
                 <div className="text-[11px] text-mute truncate">
-                  {nameFor(s.matchPlayerId)} ·{" "}
-                  {s.milestones
-                    .split(",")
-                    .map((m) =>
-                      m === "FRONT9"
-                        ? "after 9"
-                        : m === "EVERY6"
-                          ? "every 6"
-                          : "finish",
-                    )
-                    .join(" + ")}
-                  {s.includeScores ? " · with score" : " · no score"}
-                  {s.destAddress ? " · ETA on" : ""}
+                  {s.includeScores ? "with score" : "no score"}
+                  {s.destAddress ? ` · ETA to ${s.destAddress}` : ""}
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -144,16 +137,6 @@ export default function ShareMyRoundCard({
           <input type="hidden" name="matchId" value={matchId} />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <label className="block">
-              <span className="text-[11px] text-mute">Their email</span>
-              <input
-                name="recipientEmail"
-                type="email"
-                required
-                placeholder="wife@example.com"
-                className="input w-full h-9 text-sm"
-              />
-            </label>
-            <label className="block">
               <span className="text-[11px] text-mute">Whose round</span>
               <select
                 name="matchPlayerId"
@@ -167,43 +150,29 @@ export default function ShareMyRoundCard({
                 ))}
               </select>
             </label>
+            <label className="block">
+              <span className="text-[11px] text-mute">
+                Heading somewhere after? (for ETA — optional)
+              </span>
+              <input
+                name="destAddress"
+                type="text"
+                placeholder="123 Main St, Los Angeles"
+                className="input w-full h-9 text-sm"
+              />
+            </label>
           </div>
-          <label className="block">
-            <span className="text-[11px] text-mute">
-              Heading somewhere after? (address for ETA — optional)
-            </span>
-            <input
-              name="destAddress"
-              type="text"
-              placeholder="123 Main St, Los Angeles"
-              className="input w-full h-9 text-sm"
-            />
+          <label className="inline-flex items-center gap-1.5 text-sm">
+            <input type="checkbox" name="includeScores" defaultChecked />
+            Include score
           </label>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm">
-            <label className="inline-flex items-center gap-1.5">
-              <input type="checkbox" name="milestones" value="FRONT9" defaultChecked />
-              After 9
-            </label>
-            <label className="inline-flex items-center gap-1.5">
-              <input type="checkbox" name="milestones" value="EVERY6" />
-              Every 6
-            </label>
-            <label className="inline-flex items-center gap-1.5">
-              <input type="checkbox" name="milestones" value="FINISH" defaultChecked />
-              When done
-            </label>
-            <label className="inline-flex items-center gap-1.5">
-              <input type="checkbox" name="includeScores" defaultChecked />
-              Include score
-            </label>
-          </div>
           {error && <p className="text-danger text-[12px]">{error}</p>}
           <button
             type="submit"
             disabled={pending}
             className="btn btn-primary w-full sm:w-auto disabled:opacity-60"
           >
-            {pending ? "Saving…" : "Start sharing"}
+            {pending ? "Creating…" : "Create link"}
           </button>
         </form>
       )}
