@@ -827,29 +827,6 @@ export default async function MatchPage({
         </div>
       )}
 
-      {/* Share my round: opt-in email updates (pace / ETA / score)
-          with a public live link. Seated players + creator, live
-          rounds only. */}
-      {canLogScores && (
-        <ShareMyRoundCard
-          matchId={match.id}
-          players={match.players.map((p) => ({
-            id: p.id,
-            displayName: p.displayName,
-          }))}
-          myMatchPlayerId={myMatchPlayer?.id ?? null}
-          shares={roundShares.map((s) => ({
-            id: s.id,
-            matchPlayerId: s.matchPlayerId,
-            recipientEmail: s.recipientEmail,
-            includeScores: s.includeScores,
-            milestones: s.milestones,
-            destAddress: s.destAddress,
-            token: s.token,
-          }))}
-        />
-      )}
-
       <MatchTabs
         defaultTabId="scorecard"
         tabs={buildMatchTabs({
@@ -869,6 +846,15 @@ export default async function MatchPage({
           oddsHoleSeries,
           oddsXMode,
           sgSeries,
+          roundShares: roundShares.map((r) => ({
+            id: r.id,
+            matchPlayerId: r.matchPlayerId,
+            recipientEmail: r.recipientEmail,
+            includeScores: r.includeScores,
+            milestones: r.milestones,
+            destAddress: r.destAddress,
+            token: r.token,
+          })),
           sideGameSections,
           sideGameLabel,
           enabledKinds,
@@ -921,6 +907,10 @@ function creatorActions(
   if (status === "IN_PROGRESS") {
     out.push({ label: "Mark final", action: fns.completeMatchAction });
   }
+  if (status !== "COMPLETED") {
+    // Jumps to the card at the bottom of the scorecard tab.
+    out.push({ label: "Share my round", href: "#share-my-round" });
+  }
   if (status === "COMPLETED") {
     out.push({ label: "Reopen", action: fns.reopenMatchAction });
   }
@@ -965,6 +955,7 @@ function StatusBadge({ status }: { status: string }) {
 // pre-computed values in keeps this helper a pure function of the
 // match snapshot.
 type BuildMatchTabsArgs = {
+  roundShares: import("./ShareMyRoundCard").RoundShareRow[];
   match: {
     id: string;
     courseName: string;
@@ -1084,6 +1075,7 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
     oddsHoleSeries,
     oddsXMode,
     sgSeries,
+    roundShares,
     sideGameSections,
     sideGameLabel,
     enabledKinds,
@@ -1447,6 +1439,22 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
       {/* Creator-only configuration lives here instead of its own tab --
           pars + Wolf rotation are tied directly to scoring, so they
           read naturally as a continuation of the scorecard. */}
+      {/* Share my round: live link (pace / ETA / optional score).
+          Bottom of the stack under Standings, above Course pars. The
+          #share-my-round anchor is the target of the ... menu entry. */}
+      {canLogScores && (
+        <div id="share-my-round">
+          <ShareMyRoundCard
+            matchId={match.id}
+            players={match.players.map((p) => ({
+              id: p.id,
+              displayName: p.displayName,
+            }))}
+            myMatchPlayerId={myMatchPlayerId}
+            shares={roundShares}
+          />
+        </div>
+      )}
       {isCreator && settingsContent}
     </div>
   );
