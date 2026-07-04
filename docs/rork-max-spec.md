@@ -84,7 +84,8 @@ Most recent first, max 50.
   "hazards": {                       // keyed by hole; may be missing holes
     "7": [ { "kind": "WATER"|"SAND"|"OOB"|"OTHER",
              "label": "Bunker", "lat": …, "lng": … } ]
-  }
+  },
+  "wind": { "speedMph": 8, "fromDeg": 220 }   // null when unavailable
 }
 ```
 Any geo field can be null — the UI must degrade (see On-course screen).
@@ -143,6 +144,8 @@ Full-screen MapKit satellite (or Mapbox if easier) centered per hole:
 - live blue-dot from CoreLocation (best accuracy, ~1s updates)
 - top: hole rail (1–18 chips w/ par + the player's score) to switch holes
 - dominant readout: **TO PIN · CENTER** big serif; FRONT/BACK smaller
+- wind tile (top-right): speed in MPH + an arrow rotated to `fromDeg`
+  (direction the wind blows FROM); hidden when `wind` is null
 - tap anywhere on the map = AIM point: shows player→aim and aim→green;
   while an aim is set, a small CLEAR AIM chip appears (no idle button)
 - ENTER SCORE button → score sheet

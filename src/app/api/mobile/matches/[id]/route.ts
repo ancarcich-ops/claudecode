@@ -11,6 +11,7 @@ import {
   getCourseHolesByName,
   getCourseHazardsByName,
 } from "@/lib/course";
+import { getWindForCoord } from "@/lib/weather";
 
 export const dynamic = "force-dynamic";
 
@@ -50,10 +51,23 @@ export async function GET(
     pars = Array(match.holes).fill(4);
   }
 
-  const [holeGeo, hazards] = await Promise.all([
+  const [holeGeo, hazards, course] = await Promise.all([
     getCourseHolesByName(match.courseName),
     getCourseHazardsByName(match.courseName),
+    prisma.course.findUnique({
+      where: { name: match.courseName },
+      select: { centerLat: true, centerLng: true },
+    }),
   ]);
+  // Wind at the course center (cached server-side). Null when the
+  // course has no coordinates or the weather fetch fails -- the client
+  // hides its wind tile in that case.
+  const wind =
+    course?.centerLat != null && course?.centerLng != null
+      ? await getWindForCoord(course.centerLat, course.centerLng).catch(
+          () => null,
+        )
+      : null;
 
   return NextResponse.json({
     match: {
@@ -84,5 +98,8 @@ export async function GET(
     // Keyed by absolute hole number. Polygons are arrays of {lat,lng}.
     holeGeo,
     hazards,
+    // { speedMph, fromDeg } | null -- fromDeg is the direction the wind
+    // blows FROM, degrees clockwise from north.
+    wind: wind ? { speedMph: wind.speedMph, fromDeg: wind.fromDeg } : null,
   });
 }
