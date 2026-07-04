@@ -15,7 +15,6 @@ export async function createRoundShareAction(formData: FormData) {
   const user = await requireUser();
   const matchId = String(formData.get("matchId") ?? "");
   const matchPlayerId = String(formData.get("matchPlayerId") ?? "");
-  const recipientEmail = String(formData.get("recipientEmail") ?? "").trim();
   const includeScores = formData.get("includeScores") === "on";
   const destAddress = String(formData.get("destAddress") ?? "").trim();
   const milestones = formData
@@ -24,9 +23,8 @@ export async function createRoundShareAction(formData: FormData) {
     .filter((m) => VALID_MILESTONES.has(m));
 
   if (!matchId || !matchPlayerId) throw new Error("Missing match/player");
-  if (!recipientEmail || !recipientEmail.includes("@")) {
-    throw new Error("Enter the recipient's email address");
-  }
+  // Milestones are dormant until SMS delivery lands -- keep sane
+  // defaults on the row so it lights up without a backfill.
   if (milestones.length === 0) milestones.push("FRONT9", "FINISH");
 
   const match = await prisma.match.findUnique({
@@ -59,7 +57,7 @@ export async function createRoundShareAction(formData: FormData) {
       matchPlayerId,
       createdById: user.id,
       token: randomBytes(16).toString("hex"),
-      recipientEmail,
+      recipientEmail: null,
       includeScores,
       milestones: milestones.join(","),
       destAddress: destAddress || null,
