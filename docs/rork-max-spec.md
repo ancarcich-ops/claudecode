@@ -143,7 +143,8 @@ Full-screen MapKit satellite (or Mapbox if easier) centered per hole:
 - live blue-dot from CoreLocation (best accuracy, ~1s updates)
 - top: hole rail (1–18 chips w/ par + the player's score) to switch holes
 - dominant readout: **TO PIN · CENTER** big serif; FRONT/BACK smaller
-- tap anywhere on the map = AIM point: shows player→aim and aim→green
+- tap anywhere on the map = AIM point: shows player→aim and aim→green;
+  while an aim is set, a small CLEAR AIM chip appears (no idle button)
 - ENTER SCORE button → score sheet
 - Advance to next hole automatically when a score is saved
 - Degradation: if a hole has no green (`greenLat` null) show "GREEN

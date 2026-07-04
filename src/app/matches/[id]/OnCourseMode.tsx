@@ -795,13 +795,13 @@ export default function OnCourseMode({
             </span>
           </button>
         ) : (
-          greenSet && (
-            <MovePinTile
-              active={aimPoint != null}
-              onClick={() => {
-                if (aimPoint) setAimPoint(null);
-              }}
-            />
+          // The aim gesture is tapping the map (the bottom hint teaches
+          // it); this tile only exists while an aim is set, as the way
+          // to clear it. The old always-visible "MOVE PIN" state was a
+          // dead button -- tapping it with no aim did nothing.
+          greenSet &&
+          aimPoint != null && (
+            <ClearAimTile onClick={() => setAimPoint(null)} />
           )
         )}
         {/* GPS crowdfix: visible to seated players when the hole is
@@ -1243,19 +1243,13 @@ export function WindTile({
   );
 }
 
-function MovePinTile({
-  active,
-  onClick,
-}: {
-  active: boolean;
-  onClick: () => void;
-}) {
+function ClearAimTile({ onClick }: { onClick: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className="map-chip w-[60px] rounded-[15px] py-2 px-2 flex flex-col items-center gap-1.5 active:scale-95 transition-transform"
-      aria-label={active ? "Clear aim" : "Move pin"}
+      aria-label="Clear aim"
     >
       <span
         className="w-[30px] h-[30px] rounded-[9px] grid place-items-center"
@@ -1266,7 +1260,7 @@ function MovePinTile({
         </svg>
       </span>
       <span className="font-mono text-[8.5px] tracking-[0.06em] uppercase text-[var(--map-ink)] font-semibold">
-        {active ? "CLEAR" : "MOVE PIN"}
+        CLEAR AIM
       </span>
     </button>
   );
