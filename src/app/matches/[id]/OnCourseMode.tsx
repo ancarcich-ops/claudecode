@@ -13,6 +13,7 @@ import {
   logScoreAction,
   markGreenCenterAction,
   markTeeAction,
+  completeMatchAction,
 } from "@/lib/actions";
 import HoleMiniMap, { type Landmark } from "./HoleMiniMap";
 import HolePreview3D from "@/components/HolePreview3D";
@@ -429,6 +430,31 @@ export default function OnCourseMode({
 
   // Score helpers ---------------------------------------------------
   const isLastHole = hole >= lastHole;
+
+  // The round is done when every player has a score on every hole.
+  // Drives the FINISH ROUND CTA -- without it, closing the match
+  // requires knowing to exit GPS and find "Mark final" in the ⋯ menu,
+  // which nobody discovers on the 18th green.
+  const roundComplete =
+    playerList.length > 0 &&
+    playerList.every((p) => {
+      for (let h = firstHole; h <= lastHole; h++) {
+        if (typeof p.scoresByHole[h] !== "number") return false;
+      }
+      return true;
+    });
+
+  const finishRound = () => {
+    const fd = new FormData();
+    fd.set("matchId", matchId);
+    startTransition(async () => {
+      await completeMatchAction(fd);
+      // Exit the GPS view -- the refreshed match page renders the
+      // Final state (and the win celebration).
+      setActive(false);
+      router.refresh();
+    });
+  };
   const nextHole = isLastHole ? null : hole + 1;
 
   // Find the next un-scored player in the cycle after a given index.
@@ -831,6 +857,20 @@ export default function OnCourseMode({
           carryLabel={carryHazard ? (carryHazard.kind === "WATER" ? "CARRY H₂O" : "CARRY BNK") : null}
           unmapped={!greenSet}
         />
+        {/* All 18 in the book: surface round-close right here instead
+            of hiding it behind exit-GPS -> ⋯ menu -> Mark final. Enter
+            Score stays available underneath for last-second edits. */}
+        {roundComplete && myMatchPlayerId && (
+          <button
+            type="button"
+            onClick={finishRound}
+            disabled={pending}
+            className="w-full inline-flex items-center justify-center py-3.5 rounded-[13px] font-display font-bold text-[15px] tracking-[0.02em] active:scale-[0.99] disabled:opacity-60"
+            style={{ background: "var(--gold, #b08d2f)", color: "#241c06" }}
+          >
+            {pending ? "Closing…" : "Finish round · make it official →"}
+          </button>
+        )}
         <EnterScoreButton
           disabled={!myMatchPlayerId || !greenSet}
           label={
@@ -838,7 +878,9 @@ export default function OnCourseMode({
               ? "Watching only"
               : !greenSet
                 ? "Map the hole first"
-                : "Enter Score"
+                : roundComplete
+                  ? "Edit a score"
+                  : "Enter Score"
           }
           onClick={() => setSheetOpen(true)}
           pacified={!greenSet}
