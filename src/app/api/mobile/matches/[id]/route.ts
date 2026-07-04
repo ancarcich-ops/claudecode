@@ -1,12 +1,15 @@
 // GET /api/mobile/matches/:id
 // Auth: Bearer token (must be the creator or a seated player).
 // The one-call payload the on-course native client needs: match meta,
-// per-hole pars, every player's scores, and the course geometry
+// per-hole pars, every player's scores + avatar, win probabilities,
+// side-game leaderboards, and the course geometry
 // (tee/green/front/back/polygons) plus hazards keyed by hole.
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserFromBearer, unauthorized } from "@/lib/mobileAuth";
+import { loadMatchWithOdds } from "@/lib/match";
+import { computeSideGameSectionsForMatch } from "@/lib/sideGameSections";
 import {
   getCourseHolesByName,
   getCourseHazardsByName,
@@ -22,34 +25,34 @@ export async function GET(
   const user = await getUserFromBearer(req);
   if (!user) return unauthorized();
 
-  const match = await prisma.match.findUnique({
-    where: { id: params.id },
-    include: {
-      players: {
-        orderBy: { seat: "asc" },
-        include: { scores: { select: { hole: true, strokes: true } } },
-      },
-    },
-  });
-  if (!match) {
+  const loaded = await loadMatchWithOdds(params.id);
+  if (!loaded) {
     return NextResponse.json({ error: "Match not found" }, { status: 404 });
   }
+  const { match, odds, pars } = loaded;
   const isCreator = match.createdById === user.id;
   const isSeated = match.players.some((p) => p.userId === user.id);
   if (!isCreator && !isSeated) {
     return NextResponse.json({ error: "Not your match" }, { status: 403 });
   }
 
-  // Pars: the match snapshot wins (set at creation / by the editor);
-  // fall back to all-4s so the client always gets `holes` entries.
-  let pars: number[] = [];
-  try {
-    const parsed = match.parData ? JSON.parse(match.parData) : null;
-    if (Array.isArray(parsed)) pars = parsed.map((p) => Number(p) || 4);
-  } catch {}
-  if (pars.length !== match.holes) {
-    pars = Array(match.holes).fill(4);
-  }
+  // Win probabilities keyed by matchPlayerId. Scramble matches price
+  // teams ("team-0"/"team-1"); mirror each team's probability onto its
+  // players -- same rule as recordOddsSnapshot.
+  const isScramble = match.format === "SCRAMBLE";
+  const probabilities = Object.fromEntries(
+    match.players.map((p) => {
+      const prob = isScramble
+        ? p.team === 0 || p.team === 1
+          ? odds.probabilities[`team-${p.team}`] ?? 0
+          : 0
+        : odds.probabilities[p.id] ?? 0;
+      return [p.id, prob];
+    }),
+  );
+
+  // Side-game leaderboards -- identical assembly to the web match page.
+  const sideGames = computeSideGameSectionsForMatch(match, pars);
 
   const [holeGeo, hazards, course] = await Promise.all([
     getCourseHolesByName(match.courseName),
@@ -90,6 +93,13 @@ export async function GET(
         handicap: p.handicap,
         seat: p.seat,
         team: p.team,
+        // Avatar: photo URL when the user uploaded one; otherwise the
+        // client renders an initials bubble (the web's generated
+        // boring-avatars can't be reproduced natively -- conscious
+        // deviation). Seed/variant travel anyway for future use.
+        avatarUrl: p.user?.avatarUrl ?? null,
+        avatarSeed: p.user?.avatarSeed ?? null,
+        avatarVariant: p.user?.avatarVariant ?? null,
         scoresByHole: Object.fromEntries(
           p.scores.map((s) => [s.hole, s.strokes]),
         ),
@@ -101,5 +111,13 @@ export async function GET(
     // { speedMph, fromDeg } | null -- fromDeg is the direction the wind
     // blows FROM, degrees clockwise from north.
     wind: wind ? { speedMph: wind.speedMph, fromDeg: wind.fromDeg } : null,
+    // Win probability per matchPlayerId (0..1). The client derives the
+    // trend arrow the same way the web does: >=0.4 up, >=0.2 flat,
+    // else down.
+    odds: { probabilities },
+    // [{ kind, leaderboards: [{ key, kind, title, subtitle?, rows:
+    //    [{ playerId, player, value, numeric, isLeader }] }] }]
+    // Empty array when the match has no side games.
+    sideGames,
   });
 }

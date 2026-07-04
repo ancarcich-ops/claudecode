@@ -46,10 +46,19 @@ Call on app launch to validate the stored token.
 
 ### GET /matches
 200: `{ "matches": [ { "id", "courseName", "scheduledAt" (ISO),
+  "completedAt" (ISO|null),
   "status" ("UPCOMING"|"IN_PROGRESS"|"COMPLETED"), "holes" (9|18),
   "startingHole", "scoringMode" ("GROSS"|"NET"|"CUSTOM"), "format",
-  "players": [ { "id", "displayName", "seat" } ] } ] }`
-Most recent first, max 50.
+  "pars": [4,4,3,…],             // exactly `holes` entries
+  "myMatchPlayerId": "…"|null,
+  "players": [ { "id", "userId", "displayName", "seat", "handicap",
+    "avatarUrl"|null, "avatarSeed"|null, "avatarVariant"|null,
+    "scoresByHole": { "1": 5 } } ] } ] }`
+Most recent first, max 50. Carries pars + everyone's scores so home
+match cards can render the colored hole dot-row, to-par, and standings
+context without a per-match fetch. Avatar rule: render `avatarUrl`
+when set; otherwise an initials bubble (the web's generated avatars
+aren't reproducible natively).
 
 ### GET /matches/:id
 200:
@@ -65,6 +74,7 @@ Most recent first, max 50.
     "players": [
       { "id": "…", "userId": "…", "displayName": "Tj",
         "handicap": 9, "seat": 1, "team": null,
+        "avatarUrl": null, "avatarSeed": null, "avatarVariant": null,
         "scoresByHole": { "1": 5, "2": 4 } }   // keys are hole numbers
     ]
   },
@@ -85,10 +95,25 @@ Most recent first, max 50.
     "7": [ { "kind": "WATER"|"SAND"|"OOB"|"OTHER",
              "label": "Bunker", "lat": …, "lng": … } ]
   },
-  "wind": { "speedMph": 8, "fromDeg": 220 }   // null when unavailable
+  "wind": { "speedMph": 8, "fromDeg": 220 },  // null when unavailable
+  "odds": {                          // win probability per matchPlayerId, 0..1
+    "probabilities": { "<matchPlayerId>": 0.67 }
+  },
+  "sideGames": [                     // [] when the match has none
+    { "kind": "SKINS"|"STABLEFORD"|"NASSAU"|"WOLF"|"SNAKE"|"BBB"|
+              "MATCH"|"SIXES"|"TEAM_VS_TEAM"|"TARGETS",
+      "leaderboards": [
+        { "key": "SKINS", "kind": "SKINS", "title": "Skins",
+          "subtitle": "…",           // optional
+          "rows": [ { "playerId", "player", "value" (display string),
+                      "numeric", "isLeader" } ] }
+      ] }
+  ]
 }
 ```
 Any geo field can be null — the UI must degrade (see On-course screen).
+Standings trend arrow is client-derived from the live probability:
+≥0.40 up (▲ accent), ≥0.20 flat (— faint), else down (▼ danger).
 
 ### POST /matches/:id/score
 Body: `{ "matchPlayerId": "…", "hole": 7, "strokes": 5 }`
