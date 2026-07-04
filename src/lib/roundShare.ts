@@ -51,6 +51,19 @@ export function computePace(input: {
   }
   const elapsedMin = (now.getTime() - input.startedAt.getTime()) / 60_000;
   const minPerHole = elapsedMin / played;
+  // Sanity: nobody plays 40+ minutes a hole. A pace that slow means a
+  // stale/abandoned round (started yesterday, scores added today) --
+  // showing "3019 min round / finish tomorrow" reads as broken, so
+  // suppress the projections and keep the factual fields.
+  if (minPerHole > 40) {
+    return {
+      holesPlayed: played,
+      elapsedMin,
+      minPerHole: null,
+      projectedFinish: null,
+      toPar,
+    };
+  }
   const remaining = Math.max(0, input.holes - played);
   const projectedFinish = new Date(
     now.getTime() + remaining * minPerHole * 60_000,
@@ -96,7 +109,12 @@ export async function driveMinutes(
     if (!res.ok) return null;
     const data = (await res.json()) as { routes?: { duration?: number }[] };
     const secs = data.routes?.[0]?.duration;
-    return typeof secs === "number" ? secs / 60 : null;
+    if (typeof secs !== "number") return null;
+    const mins = secs / 60;
+    // Sanity: a 5h+ "drive home" almost always means the destination
+    // address geocoded to the wrong city/state. Better no ETA than a
+    // next-day one rendered as a bare clock time.
+    return mins > 300 ? null : mins;
   } catch {
     return null;
   }
