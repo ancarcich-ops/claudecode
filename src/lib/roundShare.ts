@@ -10,6 +10,7 @@
 
 import { prisma } from "./db";
 import { sendEmail, appUrl } from "./email";
+import { sendSms, SMS_OPTED_OUT_CODE } from "./sms";
 
 export type MilestoneKey = "FRONT9" | "EVERY6_6" | "EVERY6_12" | "FINISH";
 
@@ -137,7 +138,10 @@ function fmtToPar(toPar: number | null): string {
 // ---- The check-and-send pass ---------------------------------------
 
 export async function checkRoundShares(matchId: string): Promise<void> {
-  const shares = await prisma.roundShare.findMany({ where: { matchId } });
+  const shares = await prisma.roundShare.findMany({
+    where: { matchId },
+    include: { subscribers: { where: { optedOutAt: null } } },
+  });
   if (shares.length === 0) return;
 
   const match = await prisma.match.findUnique({
@@ -233,6 +237,22 @@ export async function checkRoundShares(matchId: string): Promise<void> {
       await sendEmail({ to: share.recipientEmail, subject, html, text }).catch(
         () => {},
       );
+    }
+    // SMS to everyone who self-subscribed on the share page. A STOP
+    // reply is enforced by Twilio at the carrier level; when a send
+    // bounces with the opted-out code we mirror that locally so we
+    // stop attempting.
+    const smsText = `${text}\nReply STOP to opt out.`;
+    for (const sub of share.subscribers) {
+      const res = await sendSms(sub.phone, smsText);
+      if (!res.ok && res.code === SMS_OPTED_OUT_CODE) {
+        await prisma.roundShareSubscriber
+          .update({
+            where: { id: sub.id },
+            data: { optedOutAt: new Date() },
+          })
+          .catch(() => {});
+      }
     }
     await prisma.roundShare.update({
       where: { id: share.id },

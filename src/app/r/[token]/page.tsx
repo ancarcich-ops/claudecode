@@ -9,6 +9,7 @@
 
 import { prisma } from "@/lib/db";
 import { computePace, driveMinutes } from "@/lib/roundShare";
+import { subscribeToRoundShareAction } from "@/lib/subscribeActions";
 
 export const dynamic = "force-dynamic";
 
@@ -53,8 +54,10 @@ function fmtToPar(toPar: number | null): string {
 
 export default async function ShareRoundPage({
   params,
+  searchParams,
 }: {
   params: { token: string };
+  searchParams?: { sms?: string };
 }) {
   const share = await prisma.roundShare.findUnique({
     where: { token: params.token },
@@ -203,6 +206,66 @@ export default async function ShareRoundPage({
             </table>
           </section>
         )}
+
+        {/* SMS opt-in. The recipient subscribes THEMSELVES here -- this
+            page is the express-consent point for carrier compliance,
+            so the language below matters; don't trim it. */}
+        <section className="card p-4">
+          <div className="font-mono text-[10px] tracking-[0.12em] uppercase text-mute mb-1.5">
+            Text me updates
+          </div>
+          {searchParams?.sms === "on" ? (
+            <p className="text-sm text-ink">
+              You&apos;re subscribed. Updates will arrive as the round
+              progresses. Reply STOP any time to opt out.
+            </p>
+          ) : (
+            <>
+              <p className="text-[12px] text-mute mb-2.5">
+                Get a text when {player.displayName} makes the turn and
+                when the round wraps up — pace, estimated finish, and ETA.
+              </p>
+              <form
+                action={subscribeToRoundShareAction}
+                className="flex gap-2"
+              >
+                <input type="hidden" name="token" value={share.token} />
+                <input
+                  name="phone"
+                  type="tel"
+                  required
+                  placeholder="(555) 555-1234"
+                  className="input h-10 text-sm flex-1"
+                  aria-label="Mobile number for text updates"
+                />
+                <button
+                  type="submit"
+                  className="btn btn-primary h-10 px-4 text-sm shrink-0"
+                >
+                  Sign up
+                </button>
+              </form>
+              {searchParams?.sms === "invalid" && (
+                <p className="text-danger text-[12px] mt-1.5">
+                  That doesn&apos;t look like a valid US mobile number.
+                </p>
+              )}
+              {searchParams?.sms === "full" && (
+                <p className="text-danger text-[12px] mt-1.5">
+                  This link already has the maximum number of subscribers.
+                </p>
+              )}
+              <p className="text-[11px] text-faint mt-2.5 leading-snug">
+                By signing up, you agree to receive automated SMS updates
+                about this golf round from Sticks. Message frequency
+                varies (typically 2–3 messages per round). Message &amp;
+                data rates may apply. Reply STOP to opt out at any time,
+                or HELP for help. Consent is not a condition of any
+                purchase.
+              </p>
+            </>
+          )}
+        </section>
 
         <p className="text-[11px] text-faint text-center pb-6">
           Updates automatically while the round is live.
