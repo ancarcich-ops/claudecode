@@ -21,10 +21,15 @@ const SPINE_COLORS = [
   "#9B5A6B", // rose (identity set)
 ];
 
+// FNV-1a (64-bit) — matches the iOS app's GroupIdentity hash exactly,
+// so a group keeps the SAME identity color on web and phone.
 function hashId(id: string): number {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
-  return h;
+  let h = 0xcbf29ce484222325n;
+  for (const byte of new TextEncoder().encode(id)) {
+    h ^= BigInt(byte);
+    h = (h * 0x100000001b3n) & 0xffffffffffffffffn;
+  }
+  return Number(h % BigInt(SPINE_COLORS.length));
 }
 
 function initialsOf(name: string): string {
