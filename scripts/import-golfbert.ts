@@ -243,6 +243,20 @@ async function findCandidates(
     candidates = await searchOnce(stripped, city, state);
     if (candidates.length > 0) return candidates;
   }
+  // Disambiguation parentheticals ("Oakmont Country Club (Glendale)")
+  // exist to dodge the unique-name constraint in OUR table, not to
+  // match Golfbert's naming -- retry without them. City+state stay in
+  // the query, which is what disambiguates on Golfbert's side.
+  const noParen = preset.name.replace(/\s*\([^)]*\)\s*$/, "").trim();
+  if (noParen && noParen !== preset.name) {
+    candidates = await searchOnce(noParen, city, state);
+    if (candidates.length > 0) return candidates;
+    const strippedNoParen = stripSuffix(noParen);
+    if (strippedNoParen !== noParen) {
+      candidates = await searchOnce(strippedNoParen, city, state);
+      if (candidates.length > 0) return candidates;
+    }
+  }
   candidates = await searchOnce(preset.name, city, null);
   return candidates;
 }
