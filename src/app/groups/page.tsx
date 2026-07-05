@@ -1,13 +1,17 @@
+// Groups page -- redesigned per the "Groups Redesign" handoff
+// (Caddie's Notebook). Title + lede, section header with a mono count,
+// spine-colored group cards with a Leaderboard/invite-ticket footer,
+// then the Create and Join action cards. The site-wide app bar and
+// bottom tab bar are shared chrome and stay as they are.
+
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { listUserGroups } from "@/lib/groups";
+import GroupCard from "@/components/GroupCard";
 import {
-  createGroupAction,
-  joinGroupAction,
-  leaveGroupAction,
-} from "@/lib/actions";
-import CopyInvite from "@/components/CopyInvite";
+  CreateGroupCard,
+  JoinGroupCard,
+} from "@/components/GroupsActionCards";
 import EmptyIllustration from "@/components/EmptyIllustration";
 
 export const dynamic = "force-dynamic";
@@ -63,108 +67,57 @@ export default async function GroupsPage({
   })();
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      {banner && <Banner tone={banner.tone}>{banner.msg}</Banner>}
-      <div>
-        <h1 className="text-xl font-semibold mb-1">Groups</h1>
-        <p className="text-sm text-mute">
-          A group is a private feed. Matches you post to a group are only
-          visible to other members. Share an invite code to add friends.
-        </p>
-      </div>
+    <div className="mx-auto max-w-2xl">
+      {banner && <div className="mb-5"><Banner tone={banner.tone}>{banner.msg}</Banner></div>}
 
-      <section className="card p-5">
-        <h2 className="font-display text-base font-semibold text-ink mb-3">
+      <h1 className="font-display text-[40px] font-bold tracking-[-0.02em] leading-none text-ink">
+        Groups
+      </h1>
+      <p className="text-[14.5px] leading-normal text-mute mt-2.5 max-w-[34ch]">
+        A group is a private feed. Matches you post are seen only by
+        members. Share an invite code to add friends.
+      </p>
+
+      <div className="flex items-baseline justify-between mt-[30px] mb-[13px] px-0.5">
+        <h2 className="font-display text-[19px] font-semibold tracking-[-0.01em] text-ink whitespace-nowrap">
           Your groups
         </h2>
-        {groups.length === 0 ? (
+        <span className="font-mono text-[12px] tracking-[0.04em] uppercase text-faint">
+          {groups.length} group{groups.length === 1 ? "" : "s"}
+        </span>
+      </div>
+
+      {groups.length === 0 ? (
+        <section className="rounded-[16px] border border-border bg-panel p-5">
           <EmptyIllustration
             kind="noGroups"
             title="No groups yet."
             body="Spin one up below or drop in an invite code from a friend."
           />
-        ) : (
-          <ul className="space-y-2">
-            {groups.map((g) => (
-              <li
-                key={g.id}
-                className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2 hover:border-accent/40 transition-colors"
-              >
-                <Link
-                  href={`/groups/${g.slug ?? g.id}`}
-                  className="min-w-0 flex-1 -mx-1 -my-1 px-1 py-1 rounded"
-                >
-                  <div className="text-sm font-medium truncate">
-                    {g.name}{" "}
-                    <span className="text-mute text-xs font-normal">→</span>
-                  </div>
-                  <div className="text-xs text-mute">
-                    {g._count.members} member{g._count.members === 1 ? "" : "s"}{" "}
-                    · {g._count.matches} match
-                    {g._count.matches === 1 ? "" : "es"}
-                  </div>
-                </Link>
-                <div className="flex items-center gap-2 shrink-0">
-                  <Link
-                    href={`/groups/${g.slug ?? g.id}/leaderboard`}
-                    className="btn btn-ghost text-xs px-2.5 py-1.5 whitespace-nowrap"
-                    aria-label={`${g.name} leaderboard`}
-                  >
-                    Leaderboard →
-                  </Link>
-                  <CopyInvite code={g.inviteCode} />
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+        </section>
+      ) : (
+        <div className="space-y-[13px]">
+          {groups.map((g) => (
+            <GroupCard
+              key={g.id}
+              id={g.id}
+              name={g.name}
+              slug={g.slug}
+              inviteCode={g.inviteCode}
+              memberCount={g._count.members}
+              matchCount={g._count.matches}
+              memberNames={g.members.map(
+                (m) => m.user.displayName || m.user.username,
+              )}
+            />
+          ))}
+        </div>
+      )}
 
-      <section className="card p-5">
-        <h2 className="font-display text-base font-semibold text-ink mb-3">
-          Create a group
-        </h2>
-        <form action={createGroupAction} className="flex gap-2">
-          <input
-            name="name"
-            className="input flex-1 min-w-0"
-            placeholder="Saturday foursome, College buddies, ..."
-            maxLength={40}
-            required
-          />
-          <button type="submit" className="btn btn-primary shrink-0">
-            Create
-          </button>
-        </form>
-        <p className="text-xs text-mute mt-2">
-          You&apos;ll get an invite code to share. Anyone with the code can
-          join.
-        </p>
-      </section>
-
-      <section className="card p-5">
-        <h2 className="font-display text-base font-semibold text-ink mb-3">
-          Join with an invite code
-        </h2>
-        <form action={joinGroupAction} className="flex gap-2">
-          <input
-            name="inviteCode"
-            className="input flex-1 min-w-0 font-mono uppercase tracking-widest"
-            placeholder="ABC123"
-            maxLength={12}
-            required
-            defaultValue={(searchParams.code ?? "").toUpperCase()}
-          />
-          <button type="submit" className="btn btn-primary shrink-0">
-            Join
-          </button>
-        </form>
-        <p className="text-xs text-mute mt-2">
-          Ask a group member to share theirs &mdash; tap{" "}
-          <span className="text-ink">Copy link</span> next to any group
-          above and the code rides along with the URL.
-        </p>
-      </section>
+      <div className="mt-[14px] space-y-[14px]">
+        <CreateGroupCard />
+        <JoinGroupCard initialCode={searchParams.code} />
+      </div>
     </div>
   );
 }

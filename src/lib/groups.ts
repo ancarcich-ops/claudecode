@@ -30,7 +30,18 @@ export async function listUserGroups(userId: string) {
     return await prisma.group.findMany({
       where: { members: { some: { userId } } },
       orderBy: { createdAt: "asc" },
-      include: { _count: { select: { members: true, matches: true } } },
+      include: {
+        _count: { select: { members: true, matches: true } },
+        // First few members for the group card's avatar stack --
+        // initials chips only, so display names are all we need.
+        members: {
+          orderBy: { joinedAt: "asc" },
+          take: 4,
+          select: {
+            user: { select: { displayName: true, username: true } },
+          },
+        },
+      },
     });
   } catch {
     // If the Group table isn't there yet (mid-deploy or unmigrated DB),
