@@ -14,7 +14,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserFromBearer, unauthorized } from "@/lib/mobileAuth";
-import { parseParData } from "@/lib/odds";
+import { computeOdds, parseParData, type ScoringMode } from "@/lib/odds";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +50,7 @@ export async function GET(req: Request) {
           displayName: true,
           seat: true,
           handicap: true,
+          _count: { select: { wagers: true } },
           scores: { select: { hole: true, strokes: true } },
           user: {
             select: {
@@ -64,7 +65,44 @@ export async function GET(req: Request) {
   });
 
   return NextResponse.json({
-    matches: matches.map((m) => ({
+    matches: matches.map((m) => {
+      const pars = parseParData(m.parData, m.holes);
+      // Win probability per matchPlayerId -- same engine as the web
+      // home feed's cards. Scramble matches price teams, which needs
+      // side-game config this endpoint doesn't load; they get {} and
+      // the client hides the Win column (like solo matches).
+      let probabilities: Record<string, number> = {};
+      if (m.format !== "SCRAMBLE" && m.players.length > 1) {
+        try {
+          const scoringMode: ScoringMode =
+            m.scoringMode === "GROSS"
+              ? "GROSS"
+              : m.scoringMode === "CUSTOM"
+                ? "CUSTOM"
+                : "NET";
+          const odds = computeOdds({
+            status: m.status as "UPCOMING" | "IN_PROGRESS" | "COMPLETED",
+            holes: m.holes,
+            startingHole: m.startingHole ?? 1,
+            pars,
+            scoringMode,
+            players: m.players.map((p) => ({
+              id: p.id,
+              handicap: p.handicap,
+              wagerCount: p._count.wagers,
+              scoresByHole: Object.fromEntries(
+                p.scores.map((s) => [s.hole, s.strokes]),
+              ),
+            })),
+          });
+          probabilities = Object.fromEntries(
+            m.players.map((p) => [p.id, odds.probabilities[p.id] ?? 0]),
+          );
+        } catch {
+          // Odds are decoration on a list card -- never fail the feed.
+        }
+      }
+      return {
       id: m.id,
       courseName: m.courseName,
       scheduledAt: m.scheduledAt,
@@ -74,7 +112,8 @@ export async function GET(req: Request) {
       startingHole: m.startingHole,
       scoringMode: m.scoringMode,
       format: m.format,
-      pars: parseParData(m.parData, m.holes),
+      pars,
+      probabilities,
       myMatchPlayerId:
         m.players.find((p) => p.userId === user.id)?.id ?? null,
       players: m.players.map((p) => ({
@@ -90,6 +129,7 @@ export async function GET(req: Request) {
           p.scores.map((s) => [s.hole, s.strokes]),
         ),
       })),
-    })),
+      };
+    }),
   });
 }
