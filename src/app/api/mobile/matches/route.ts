@@ -41,6 +41,7 @@ export async function GET(req: Request) {
       startingHole: true,
       scoringMode: true,
       format: true,
+      groupId: true,
       parData: true,
       players: {
         orderBy: { seat: "asc" },
@@ -112,6 +113,7 @@ export async function GET(req: Request) {
       startingHole: m.startingHole,
       scoringMode: m.scoringMode,
       format: m.format,
+      groupId: m.groupId,
       pars,
       probabilities,
       myMatchPlayerId:

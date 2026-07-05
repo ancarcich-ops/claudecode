@@ -128,6 +128,25 @@ match. Use for the FINISH ROUND button: show it on the GPS screen when
 every player has a score on every hole, above ENTER SCORE (which
 relabels to "Edit a score"); on success, exit to match detail.
 
+### GET /groups
+200: `{ "groups": [ { "id", "name", "slug"|null, "inviteCode" (6 chars),
+  "memberCount", "matchCount",
+  "memberNames": ["Tj","Seuss.md", …],   // first 4, for avatar stacks
+  "createdAt" (ISO) } ] }`
+
+### POST /groups
+Body: `{ "name": "Saturday foursome" }` (≤40 chars)
+200: `{ "group": { …same shape as GET } }` — creator is seated as owner.
+400: `{ "error": "…" }` for empty/too-long names.
+
+### POST /groups/join
+Body: `{ "code": "ABC123" }` (case-insensitive; server uppercases)
+200: `{ "group": { … } }` — idempotent, already-a-member is success.
+404: `{ "error": "Code ABC123 doesn't match any group…" }` — show verbatim.
+
+`GET /matches` items also carry `groupId` (string|null) so a group's
+match feed is a client-side filter of the existing list.
+
 ### POST /matches/:id/tee   (FIX TEE crowdfix)
 Body: `{ "hole": 7, "lat": …, "lng": …, "accuracyYd": 8 }`
 200: `{ "ok": true }` or `{ "ok": false, "reason": "…" }` — when
