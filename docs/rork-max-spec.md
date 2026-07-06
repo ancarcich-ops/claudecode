@@ -147,6 +147,24 @@ Body: `{ "code": "ABC123" }` (case-insensitive; server uppercases)
 `GET /matches` items also carry `groupId` (string|null) so a group's
 match feed is a client-side filter of the existing list.
 
+### GET /groups/:id/leaderboard   (:id = group id or slug)
+200: `{ "leaderboard": {
+  "rows": [ { "userId", "username", "displayName"|null,
+    "avatarUrl"|null, "avatarSeed"|null, "avatarVariant"|null,
+    "matchesPlayed", "mainWins", "stablefordWins", "skinsWins",
+    "nassauWins", "bbbWins", "snakeWins", "wolfWins", "totalWins" } ],
+  "completedMatches": 12,
+  "hasMain"|"hasStableford"|"hasSkins"|"hasNassau"|"hasBbb"|
+    "hasSnake"|"hasWolf": bool,      // hide all-zero columns
+  "courseRecords": [ { "courseName", "bestDisplayName", "gross",
+    "net", "scheduledAt" } ],
+  "champions": [ { "kind", "label", "winners": [{ "displayName" }],
+    "courseName", "scheduledAt" } ],
+  "streaks": [ { "displayName", "currentMainStreak",
+    "bestMainStreak" } ]
+} }`
+403 when the caller isn't a member; 404 unknown group.
+
 ### POST /matches/:id/tee   (FIX TEE crowdfix)
 Body: `{ "hole": 7, "lat": …, "lng": …, "accuracyYd": 8 }`
 200: `{ "ok": true }` or `{ "ok": false, "reason": "…" }` — when
