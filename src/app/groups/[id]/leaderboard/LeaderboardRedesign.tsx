@@ -150,8 +150,10 @@ export default function LeaderboardRedesign({
       const d = sortValue(b, sortKey) - sortValue(a, sortKey);
       if (d !== 0) return d;
       if (b.totalWins !== a.totalWins) return b.totalWins - a.totalWins;
-      if (b.matchesPlayed !== a.matchesPlayed)
-        return b.matchesPlayed - a.matchesPlayed;
+      // Fewer games played ranks higher on a double tie -- same rule as
+      // the iOS leaderboard, so medal order matches across platforms.
+      if (a.matchesPlayed !== b.matchesPlayed)
+        return a.matchesPlayed - b.matchesPlayed;
       return (a.displayName ?? a.username).localeCompare(
         b.displayName ?? b.username,
       );
