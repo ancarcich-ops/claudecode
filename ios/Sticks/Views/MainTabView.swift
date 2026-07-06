@@ -2,10 +2,10 @@
 //  MainTabView.swift
 //  Sticks
 //
-//  Slice 12: the signed-in root — a 3-tab structure (Home / Groups /
-//  Settings) with a custom cream tab bar. Each tab keeps its own
-//  NavigationStack alive across switches; the bar lives on each tab's
-//  ROOT screen only, so pushed screens (match detail, GPS) stay
+//  Slice 12/15: the signed-in root — a 4-tab structure (Home / Groups /
+//  Stats / Settings) with a custom cream tab bar. Each tab keeps its
+//  own NavigationStack alive across switches; the bar lives on each
+//  tab's ROOT screen only, so pushed screens (match detail, GPS) stay
 //  full-bleed exactly as before.
 //
 
@@ -15,6 +15,7 @@ import UIKit
 enum SticksTab: Hashable {
     case home
     case groups
+    case stats
     case settings
 }
 
@@ -36,10 +37,26 @@ struct MainTabView: View {
                 .allowsHitTesting(selection == .groups)
                 .accessibilityHidden(selection != .groups)
 
+            StatsView(user: user, session: session, tabSelection: $selection)
+                .opacity(selection == .stats ? 1 : 0)
+                .allowsHitTesting(selection == .stats)
+                .accessibilityHidden(selection != .stats)
+
             SettingsView(user: user, session: session, tabSelection: $selection)
                 .opacity(selection == .settings ? 1 : 0)
                 .allowsHitTesting(selection == .settings)
                 .accessibilityHidden(selection != .settings)
+        }
+        // Slice 13: hidden tabs stay mounted, so an open GPS screen on a
+        // match with NO active round would keep foreground location
+        // running after switching tabs. Stop it when HOME hides; resume
+        // when HOME returns with the GPS screen still visible.
+        .onChange(of: selection) { oldValue, newValue in
+            if oldValue == .home {
+                RoundSessionService.shared.homeTabHidden()
+            } else if newValue == .home {
+                RoundSessionService.shared.homeTabShown()
+            }
         }
     }
 }
@@ -55,6 +72,7 @@ struct SticksTabBar: View {
         HStack(spacing: 0) {
             tabButton(.home, icon: "house", label: "Home")
             tabButton(.groups, icon: "person.2", label: "Groups")
+            tabButton(.stats, icon: "chart.bar", label: "Stats")
             tabButton(.settings, icon: "gearshape", label: "Settings")
         }
         .padding(.top, 8)
