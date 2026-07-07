@@ -121,3 +121,32 @@ export async function GET(
     sideGames,
   });
 }
+
+// DELETE /api/mobile/matches/:id -- remove a logged round entirely.
+// Creator only (same rule as the web's delete): seated players who
+// didn't create the match can't delete it. Cascades take the players,
+// scores, side games, and shares with it.
+// 200: { "ok": true }
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } },
+) {
+  const user = await getUserFromBearer(req);
+  if (!user) return unauthorized();
+
+  const match = await prisma.match.findUnique({
+    where: { id: params.id },
+    select: { id: true, createdById: true },
+  });
+  if (!match) {
+    return NextResponse.json({ error: "Match not found" }, { status: 404 });
+  }
+  if (match.createdById !== user.id) {
+    return NextResponse.json(
+      { error: "Only the round's creator can delete it." },
+      { status: 403 },
+    );
+  }
+  await prisma.match.delete({ where: { id: match.id } });
+  return NextResponse.json({ ok: true });
+}

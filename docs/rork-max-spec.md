@@ -165,6 +165,32 @@ match feed is a client-side filter of the existing list.
 } }`
 403 when the caller isn't a member; 404 unknown group.
 
+### GET /courses?q=…&lat=…&lng=…
+Course picker for start-a-round. `q` searches the catalog by
+name/city; `lat`+`lng` with no `q` = nearest courses. Max 20.
+200: `{ "courses": [{ "id", "name", "city", "holes" (9|18),
+  "access", "distanceMi"|null }] }`
+
+### GET /players/suggest?q=…
+No `q`: `{ "players": [recent partners, most recent first, with
+  "lastHandicap"], "myLastHandicap": 11.6|null }`.
+With `q`: `{ "players": [user search, "lastHandicap": null] }`.
+Player shape: `{ "userId", "username", "displayName",
+  "avatarUrl"|null, "lastHandicap"|null }`.
+
+### POST /matches   (start a round)
+Body: `{ "courseName" (must match the catalog), "scheduledAt" (ISO,
+default now), "holes" (9|18), "startingHole" (1|10, 10 only for 9),
+"scoringMode" ("NET"|"GROSS"|"CUSTOM"), "players": [{ "displayName",
+"handicap", "userId"? }] (1–8), "sideGames": [kinds]?, "groupId"? }`
+200: `{ "match": { "id" } }` — open the new match's detail.
+400/403 `{ "error" }` — show verbatim. Pars resolve server-side.
+INDIVIDUAL format only; scramble + tournament rounds stay on the web.
+
+### DELETE /matches/:id
+Creator only. 200 `{ "ok": true }`; 403 for non-creators (show the
+server's message). Removes the round and everything attached.
+
 ### POST /matches/:id/tee   (FIX TEE crowdfix)
 Body: `{ "hole": 7, "lat": …, "lng": …, "accuracyYd": 8 }`
 200: `{ "ok": true }` or `{ "ok": false, "reason": "…" }` — when
