@@ -190,8 +190,13 @@ export default function GroupCard({
           className="flex-[1.15] h-[46px] flex items-center justify-center gap-2"
           aria-label={`Copy invite code ${inviteCode}`}
         >
-          <span className="font-mono font-medium text-[13.5px] tracking-[0.14em] text-ink">
-            {inviteCode}
+          <span className="flex flex-col items-center leading-none">
+            <span className="font-mono text-[8.5px] tracking-[0.14em] uppercase text-faint">
+              Invite code
+            </span>
+            <span className="font-mono font-medium text-[13.5px] tracking-[0.14em] text-ink mt-[3px]">
+              {inviteCode}
+            </span>
           </span>
           <span
             className={
