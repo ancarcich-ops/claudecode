@@ -15,6 +15,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserFromBearer, unauthorized } from "@/lib/mobileAuth";
 import { computeOdds, parseParData, type ScoringMode } from "@/lib/odds";
+import { defaultPars } from "@/lib/odds";
+import { COURSE_PRESETS } from "@/lib/courses";
+import { isSideGameKind } from "@/lib/sideGames";
 
 export const dynamic = "force-dynamic";
 
@@ -134,4 +137,218 @@ export async function GET(req: Request) {
       };
     }),
   });
+}
+
+// POST /api/mobile/matches -- start a round from the iOS app.
+// Body: {
+//   "courseName": "...",              // must match the course catalog
+//   "scheduledAt": "ISO"?,            // default: now
+//   "holes": 9 | 18,                  // default 18
+//   "startingHole": 1 | 10,           // 10 only valid for 9-hole rounds
+//   "scoringMode": "NET"|"GROSS"|"CUSTOM",   // default NET
+//   "players": [{ "displayName", "handicap", "userId"? }],  // >= 1
+//   "sideGames": ["SKINS", ...]?,     // recognized kinds; NASSAU needs 18
+//   "groupId": "..."?                 // must be a group the caller is in
+// }
+// INDIVIDUAL format only (scramble/tournament rounds stay on the web).
+// Mirrors the web createMatchAction's validations; pars resolve
+// server-side: catalog preset -> course master pars -> default layout.
+// 200: { "match": { "id" } }   400/403: { "error": "..." }
+export async function POST(req: Request) {
+  const user = await getUserFromBearer(req);
+  if (!user) return unauthorized();
+
+  let body: {
+    courseName?: unknown;
+    scheduledAt?: unknown;
+    holes?: unknown;
+    startingHole?: unknown;
+    scoringMode?: unknown;
+    players?: unknown;
+    sideGames?: unknown;
+    groupId?: unknown;
+  };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Bad request" }, { status: 400 });
+  }
+
+  const courseName = String(body.courseName ?? "").trim();
+  const preset = COURSE_PRESETS.find(
+    (p) => p.name.toLowerCase() === courseName.toLowerCase(),
+  );
+  if (!preset) {
+    return NextResponse.json(
+      {
+        error:
+          "Course not in catalog. Pick from the list, or reach out to support to add it.",
+      },
+      { status: 400 },
+    );
+  }
+
+  const holes: 9 | 18 = Number(body.holes) === 9 ? 9 : 18;
+  const startingHole =
+    holes === 9 && Number(body.startingHole) === 10 ? 10 : 1;
+  const scoringModeRaw = String(body.scoringMode ?? "NET");
+  const scoringMode: "NET" | "GROSS" | "CUSTOM" =
+    scoringModeRaw === "GROSS" || scoringModeRaw === "CUSTOM"
+      ? scoringModeRaw
+      : "NET";
+  const scheduledAt = body.scheduledAt
+    ? new Date(String(body.scheduledAt))
+    : new Date();
+  if (Number.isNaN(scheduledAt.getTime())) {
+    return NextResponse.json({ error: "Bad tee time" }, { status: 400 });
+  }
+
+  const playersRaw = Array.isArray(body.players) ? body.players : [];
+  const drafts = playersRaw
+    .map((p) => ({
+      displayName: String((p as { displayName?: unknown })?.displayName ?? "")
+        .trim()
+        .slice(0, 40),
+      handicap: Number((p as { handicap?: unknown })?.handicap ?? NaN),
+      explicitUserId:
+        String((p as { userId?: unknown })?.userId ?? "").trim() || null,
+    }))
+    .filter((p) => p.displayName.length > 0);
+  if (drafts.length < 1) {
+    return NextResponse.json(
+      { error: "Need at least one player" },
+      { status: 400 },
+    );
+  }
+  if (drafts.length > 8) {
+    return NextResponse.json({ error: "Too many players" }, { status: 400 });
+  }
+  if (drafts.some((p) => Number.isNaN(p.handicap))) {
+    return NextResponse.json(
+      { error: "Handicaps must be numbers" },
+      { status: 400 },
+    );
+  }
+  // Each linked Sticks account can only fill one seat.
+  const linkedSet = new Set<string>();
+  for (const d of drafts) {
+    if (!d.explicitUserId) continue;
+    if (linkedSet.has(d.explicitUserId)) {
+      return NextResponse.json(
+        {
+          error:
+            "Same player is in this round twice. Each linked account can only fill one slot.",
+        },
+        { status: 400 },
+      );
+    }
+    linkedSet.add(d.explicitUserId);
+  }
+
+  // Side games: recognized kinds only; Nassau needs 18 holes.
+  const sideGameKinds = Array.from(
+    new Set(
+      (Array.isArray(body.sideGames) ? body.sideGames : [])
+        .map((k) => String(k))
+        .filter(isSideGameKind)
+        .filter((k) => !(k === "NASSAU" && holes !== 18)),
+    ),
+  );
+
+  // Group scoping: must be a group the caller belongs to, else 403 --
+  // the app offers only the caller's own groups, so a mismatch is a
+  // real error, not something to silently drop.
+  let groupId: string | null = null;
+  const groupIdRaw = String(body.groupId ?? "").trim();
+  if (groupIdRaw) {
+    const membership = await prisma.groupMember.findUnique({
+      where: { groupId_userId: { groupId: groupIdRaw, userId: user.id } },
+      select: { id: true },
+    });
+    if (!membership) {
+      return NextResponse.json({ error: "Not your group" }, { status: 403 });
+    }
+    groupId = groupIdRaw;
+  }
+
+  // Pars: catalog preset -> course master pars -> default layout.
+  let pars: number[] | null =
+    preset.holes === holes && Array.isArray(preset.pars)
+      ? preset.pars.slice(0, holes)
+      : null;
+  if (pars && pars.length !== holes) pars = null;
+  if (!pars) {
+    const master = await prisma.course.findUnique({
+      where: { name: preset.name },
+      select: { parData: true },
+    });
+    if (master?.parData) {
+      try {
+        const parsed = JSON.parse(master.parData);
+        if (
+          Array.isArray(parsed) &&
+          parsed.length === holes &&
+          parsed.every((v) => Number.isFinite(v) && v >= 3 && v <= 6)
+        ) {
+          pars = parsed.map((v) => Math.round(v));
+        }
+      } catch {}
+    }
+  }
+  if (!pars) pars = defaultPars(holes);
+
+  // Resolve linked accounts: explicit userId first, then the web's
+  // username == displayName fallback for hand-typed names.
+  const explicitIds = drafts
+    .map((d) => d.explicitUserId)
+    .filter((v): v is string => !!v);
+  const lookup = await prisma.user.findMany({
+    where: {
+      OR: [
+        { id: { in: explicitIds } },
+        {
+          username: {
+            in: drafts.map((d) => d.displayName.toLowerCase()),
+          },
+        },
+      ],
+    },
+    select: { id: true, username: true },
+  });
+  const userById = new Map(lookup.map((u) => [u.id, u]));
+  const userByName = new Map(lookup.map((u) => [u.username.toLowerCase(), u]));
+
+  const match = await prisma.match.create({
+    data: {
+      courseName: preset.name,
+      scheduledAt,
+      holes,
+      startingHole,
+      parData: JSON.stringify(pars),
+      scoringMode,
+      format: "INDIVIDUAL",
+      createdById: user.id,
+      groupId,
+      players: {
+        create: drafts.map((p, i) => {
+          const explicit = p.explicitUserId
+            ? userById.get(p.explicitUserId)
+            : undefined;
+          const byName = userByName.get(p.displayName.toLowerCase());
+          const linked = explicit ?? byName;
+          return {
+            displayName: p.displayName,
+            handicap: p.handicap,
+            seat: i,
+            userId: linked?.id,
+            team: null,
+          };
+        }),
+      },
+      sideGames: { create: sideGameKinds.map((kind) => ({ kind })) },
+    },
+    select: { id: true },
+  });
+
+  return NextResponse.json({ match: { id: match.id } });
 }
