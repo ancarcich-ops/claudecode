@@ -24,6 +24,9 @@ model User {
   avatarVariant String?
   avatarUrl     String?
   ghinNumber  String?
+  // Personal goal handicap index -- drives the "TARGET 9.0 · 2.6 TO
+  // GO" line in the stats hero. Null = no goal set.
+  targetIndex Float?
   createdAt   DateTime @default(now())
 
   createdMatches      Match[]            @relation("MatchCreator")
