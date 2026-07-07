@@ -193,6 +193,14 @@ server's message). Removes the round and everything attached.
 `GET /stats` rounds each carry `createdByMe` (bool) so the logged-
 rounds list can show the delete affordance only on your own rounds.
 
+### DELETE /matches/:id/my-scores
+Any seated player (creator or not). Removes ONLY the caller's own
+scores — the round drops out of *your* stats, the match and every
+other player's scores are untouched. 200 `{ "ok": true, "removed": N }`;
+403 if you're not a player in the round. Use this for "remove my score"
+on rounds you didn't create; use DELETE /matches/:id (creator only)
+to delete the whole round.
+
 ### POST /matches/:id/tee   (FIX TEE crowdfix)
 Body: `{ "hole": 7, "lat": …, "lng": …, "accuracyYd": 8 }`
 200: `{ "ok": true }` or `{ "ok": false, "reason": "…" }` — when
