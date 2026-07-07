@@ -190,6 +190,8 @@ INDIVIDUAL format only; scramble + tournament rounds stay on the web.
 ### DELETE /matches/:id
 Creator only. 200 `{ "ok": true }`; 403 for non-creators (show the
 server's message). Removes the round and everything attached.
+`GET /stats` rounds each carry `createdByMe` (bool) so the logged-
+rounds list can show the delete affordance only on your own rounds.
 
 ### POST /matches/:id/tee   (FIX TEE crowdfix)
 Body: `{ "hole": 7, "lat": …, "lng": …, "accuracyYd": 8 }`

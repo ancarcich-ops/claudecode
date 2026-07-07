@@ -32,6 +32,20 @@ export async function GET(req: Request) {
     select: { ghinNumber: true, targetIndex: true },
   });
 
+  // Which logged rounds the caller created -- gates the delete
+  // affordance in the iOS logged-rounds list (creator-only, same as
+  // the DELETE endpoint's rule). One batch query over the round ids.
+  const roundMatchIds = stats.rounds.map((r) => r.matchId);
+  const creatorRows = roundMatchIds.length
+    ? await prisma.match.findMany({
+        where: { id: { in: roundMatchIds } },
+        select: { id: true, createdById: true },
+      })
+    : [];
+  const createdByMe = new Map(
+    creatorRows.map((m) => [m.id, m.createdById === user.id]),
+  );
+
   return NextResponse.json({
     stats: {
       username: stats.username,
@@ -48,7 +62,11 @@ export async function GET(req: Request) {
       avg18Gross: stats.avg18Gross,
       bestRound: stats.bestRound,
       // Rounds-over-time chart + logged rounds list (same source).
-      rounds: stats.rounds,
+      // createdByMe gates the delete affordance per round.
+      rounds: stats.rounds.map((r) => ({
+        ...r,
+        createdByMe: createdByMe.get(r.matchId) ?? false,
+      })),
       // Scoring analysis
       par3: stats.par3,
       par4: stats.par4,
