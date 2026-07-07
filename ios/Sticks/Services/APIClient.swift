@@ -60,6 +60,26 @@ nonisolated struct OkResponse: Decodable {
     let ok: Bool
 }
 
+/// Body for POST /me/target-index. `targetIndex: null` clears the goal,
+/// so nil MUST encode as an explicit JSON null.
+nonisolated struct TargetIndexRequest: Encodable {
+    let targetIndex: Double?
+
+    private enum CodingKeys: String, CodingKey {
+        case targetIndex
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(targetIndex, forKey: .targetIndex)
+    }
+}
+
+nonisolated struct TargetIndexResponse: Decodable {
+    let ok: Bool
+    let targetIndex: Double?
+}
+
 /// Body for POST /groups.
 nonisolated struct CreateGroupRequest: Encodable {
     let name: String
@@ -198,6 +218,21 @@ nonisolated struct APIClient {
         return try await perform(request)
     }
 
+    /// POST /me/target-index — sets (or clears, with nil) the player's
+    /// index goal.
+    func setTargetIndex(_ targetIndex: Double?, token: String) async throws -> TargetIndexResponse {
+        var request = makeRequest(path: "me/target-index", method: "POST", token: token)
+        request.httpBody = try encoder.encode(TargetIndexRequest(targetIndex: targetIndex))
+        return try await perform(request)
+    }
+
+    /// DELETE /matches/:id — removes a round. 403 (non-creator) carries
+    /// a server message shown verbatim.
+    func deleteMatch(id: String, token: String) async throws {
+        let request = makeRequest(path: "matches/\(id)", method: "DELETE", token: token)
+        let _: OkResponse = try await perform(request)
+    }
+
     /// GET /groups/:id/leaderboard — group standings, champions, course
     /// records and streaks. 403 (not a member) and 404 (unknown group)
     /// carry server messages shown verbatim.
@@ -206,10 +241,62 @@ nonisolated struct APIClient {
         return try await perform(request)
     }
 
+    /// GET /courses?q= — course search by name.
+    func searchCourses(query: String, token: String) async throws -> CoursesResponse {
+        let request = makeRequest(
+            path: "courses",
+            method: "GET",
+            queryItems: [URLQueryItem(name: "q", value: query)],
+            token: token
+        )
+        return try await perform(request)
+    }
+
+    /// GET /courses?lat=&lng= — nearest courses first, with distanceMi.
+    func nearbyCourses(lat: Double, lng: Double, token: String) async throws -> CoursesResponse {
+        let request = makeRequest(
+            path: "courses",
+            method: "GET",
+            queryItems: [
+                URLQueryItem(name: "lat", value: String(lat)),
+                URLQueryItem(name: "lng", value: String(lng)),
+            ],
+            token: token
+        )
+        return try await perform(request)
+    }
+
+    /// GET /players/suggest — recent partners (nil query, carries
+    /// lastHandicap + myLastHandicap) or a name search (?q=).
+    func suggestPlayers(query: String?, token: String) async throws -> PlayerSuggestResponse {
+        let items = query.map { [URLQueryItem(name: "q", value: $0)] } ?? []
+        let request = makeRequest(path: "players/suggest", method: "GET", queryItems: items, token: token)
+        return try await perform(request)
+    }
+
+    /// POST /matches — creates a round. 400/403 carry server messages
+    /// shown verbatim.
+    func createMatch(_ body: CreateMatchRequest, token: String) async throws -> CreateMatchResponse {
+        var request = makeRequest(path: "matches", method: "POST", token: token)
+        request.httpBody = try encoder.encode(body)
+        return try await perform(request)
+    }
+
     // MARK: - Plumbing
 
-    private func makeRequest(path: String, method: String, token: String? = nil) -> URLRequest {
-        var request = URLRequest(url: baseURL.appendingPathComponent(path))
+    private func makeRequest(
+        path: String,
+        method: String,
+        queryItems: [URLQueryItem] = [],
+        token: String? = nil
+    ) -> URLRequest {
+        var url = baseURL.appendingPathComponent(path)
+        if !queryItems.isEmpty,
+           var components = URLComponents(url: url, resolvingAgainstBaseURL: false) {
+            components.queryItems = queryItems
+            url = components.url ?? url
+        }
+        var request = URLRequest(url: url)
         request.httpMethod = method
         request.timeoutInterval = 20
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
