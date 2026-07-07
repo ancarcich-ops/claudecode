@@ -178,6 +178,17 @@ With `q`: `{ "players": [user search, "lastHandicap": null] }`.
 Player shape: `{ "userId", "username", "displayName",
   "avatarUrl"|null, "lastHandicap"|null }`.
 
+### GET /me/profile   (Settings tab)
+200: `{ "profile": { "username", "displayName"|null, "ghin"|null,
+  "avatarUrl"|null, "targetIndex"|null, "computedIndex"|null (the
+  auto Sticks Index, read-only), "indexFromRounds", "totalRounds" } }`
+
+### POST /me/profile
+Body: any of `{ "displayName", "ghinNumber" }` (only sent keys change).
+Rules (verbatim errors): name ≤ 40 chars, empty clears (falls back to
+@username); GHIN 6–10 digits, empty clears. 200: `{ "profile": {…} }`.
+Goal index has its own setter: `POST /me/target-index`.
+
 ### POST /matches   (start a round)
 Body: `{ "courseName" (must match the catalog), "scheduledAt" (ISO,
 default now), "holes" (9|18), "startingHole" (1|10, 10 only for 9),
