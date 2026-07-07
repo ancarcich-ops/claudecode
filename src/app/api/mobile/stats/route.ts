@@ -29,7 +29,7 @@ export async function GET(req: Request) {
   const trend = computeIndexTrend(stats.rounds);
   const profile = await prisma.user.findUnique({
     where: { id: user.id },
-    select: { ghinNumber: true },
+    select: { ghinNumber: true, targetIndex: true },
   });
 
   return NextResponse.json({
@@ -43,6 +43,8 @@ export async function GET(req: Request) {
       indexTrajectory: trend.trajectory,
       roundsCompleted: stats.rounds.length,
       ghin: profile?.ghinNumber ?? null,
+      // Personal goal index -- "TARGET 9.0 · 2.6 TO GO" in the hero.
+      targetIndex: profile?.targetIndex ?? null,
       avg18Gross: stats.avg18Gross,
       bestRound: stats.bestRound,
       // Rounds-over-time chart + logged rounds list (same source).
