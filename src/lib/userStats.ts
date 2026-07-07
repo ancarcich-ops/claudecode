@@ -48,6 +48,12 @@ export type RoundSummary = {
   holesPlayed: number;
   vsPar: number;
   gross: number;
+  // Course Rating + Slope for this round, for the WHS differential.
+  // Priority: the player's snapshotted tee -> the course default ->
+  // null (handicap falls back to the score-only model). Null on
+  // 9-hole rounds and unrated courses.
+  rating: number | null;
+  slope: number | null;
 };
 
 // Lowest-vs-par round across the user's history. Used for the "Best"
@@ -155,6 +161,20 @@ export async function computeUserStats(userId: string): Promise<UserStats | null
     },
   });
 
+  // Course-default Course Rating + Slope, keyed by course name, for
+  // rounds whose player seat has no per-tee snapshot. One query over the
+  // distinct courses in this history.
+  const courseNames = Array.from(new Set(matches.map((m) => m.courseName)));
+  const courseRatings = courseNames.length
+    ? await prisma.course.findMany({
+        where: { name: { in: courseNames } },
+        select: { name: true, rating: true, slope: true },
+      })
+    : [];
+  const ratingByCourse = new Map(
+    courseRatings.map((c) => [c.name, { rating: c.rating, slope: c.slope }]),
+  );
+
   const stats: UserStats = {
     userId: user.id,
     username: user.username,
@@ -234,6 +254,11 @@ export async function computeUserStats(userId: string): Promise<UserStats | null
       }
 
       const myGross = me.scores.reduce((a, x) => a + x.strokes, 0);
+      // Rating/slope for the WHS differential: the player's snapshotted
+      // tee wins, else the course default, else null (score-only model).
+      const courseDefault = ratingByCourse.get(match.courseName);
+      const roundRating = me.courseRating ?? courseDefault?.rating ?? null;
+      const roundSlope = me.slope ?? courseDefault?.slope ?? null;
       stats.rounds.push({
         matchId: match.id,
         courseName: match.courseName,
@@ -241,6 +266,8 @@ export async function computeUserStats(userId: string): Promise<UserStats | null
         holesPlayed: me.scores.length,
         vsPar: roundVsPar,
         gross: myGross,
+        rating: roundRating,
+        slope: roundSlope,
       });
 
       // Course best (lowest gross). Tiebreak by net. Aliased course names
