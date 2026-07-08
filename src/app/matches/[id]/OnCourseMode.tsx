@@ -3,12 +3,8 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import {
-  deriveGreenDistances,
-  distanceYards,
-  type HazardGeo,
-  type HoleGeo,
-} from "@/lib/course";
+import { deriveGreenDistances, distanceYards } from "@/lib/geo";
+import type { HazardGeo, HoleGeo } from "@/lib/course";
 import {
   logScoreAction,
   markGreenCenterAction,
