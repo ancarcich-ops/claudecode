@@ -27,6 +27,7 @@ type Row = {
   name: string;
   holes: number | null;
   teeName: string;
+  gender: string; // "M" | "W" -- part of the tee identity (ratings differ)
   rating: number | null;
   slope: number | null;
   yardage: number | null;
@@ -77,11 +78,15 @@ function num(s: string | undefined): number | null {
 
 const DEFAULT_TEE = /\b(regular|white|middle|club|member|blue)\b/i;
 
+// The course's default tee (used when a round carries no per-player tee
+// snapshot) is a men's regular/middle set -- we don't track player
+// gender, so men's is the neutral default.
 function pickDefault(tees: Row[]): Row {
-  const named = tees.find((t) => DEFAULT_TEE.test(t.teeName));
+  const mens = tees.filter((t) => t.gender === "M");
+  const pool = mens.length ? mens : tees;
+  const named = pool.find((t) => DEFAULT_TEE.test(t.teeName));
   if (named) return named;
-  // Median by rating -- a sensible middle set.
-  const sorted = [...tees].sort((a, b) => (a.rating ?? 0) - (b.rating ?? 0));
+  const sorted = [...pool].sort((a, b) => (a.rating ?? 0) - (b.rating ?? 0));
   return sorted[Math.floor(sorted.length / 2)];
 }
 
@@ -99,6 +104,7 @@ async function main() {
   const iName = col("name");
   const iHoles = col("holes");
   const iTee = col("tee_name");
+  const iGender = col("gender");
   const iRating = col("rating");
   const iSlope = col("slope");
   const iYards = col("yardage");
@@ -115,10 +121,13 @@ async function main() {
     if (!name) continue;
     const rating = num(r[iRating]);
     const slope = num(r[iSlope]);
+    const genderRaw = (iGender >= 0 ? r[iGender] ?? "" : "").trim().toUpperCase();
     const row: Row = {
       name,
       holes: iHoles >= 0 ? num(r[iHoles]) : null,
       teeName: (r[iTee] ?? "").trim() || "Default",
+      // "F" and "L"(adies) normalize to "W"; anything else defaults to men's.
+      gender: genderRaw === "W" || genderRaw === "F" || genderRaw === "L" ? "W" : "M",
       rating,
       slope,
       yardage: iYards >= 0 ? num(r[iYards]) : null,
@@ -145,7 +154,7 @@ async function main() {
     );
     for (const t of tees) {
       plan.push(
-        `    · ${t.teeName.padEnd(14)} ${String(t.rating).padStart(5)} / ${String(t.slope).padStart(3)}${t.yardage ? ` / ${t.yardage}y` : ""}`,
+        `    · ${t.teeName.padEnd(14)} ${t.gender} ${String(t.rating).padStart(5)} / ${String(t.slope).padStart(3)}${t.yardage ? ` / ${t.yardage}y` : ""}`,
       );
     }
   }
@@ -172,7 +181,13 @@ async function main() {
     });
     for (const t of tees) {
       await prisma.courseTee.upsert({
-        where: { courseId_name: { courseId: course.id, name: t.teeName } },
+        where: {
+          courseId_name_gender: {
+            courseId: course.id,
+            name: t.teeName,
+            gender: t.gender,
+          },
+        },
         update: {
           rating: t.rating!,
           slope: Math.round(t.slope!),
@@ -182,6 +197,7 @@ async function main() {
         create: {
           courseId: course.id,
           name: t.teeName,
+          gender: t.gender,
           rating: t.rating!,
           slope: Math.round(t.slope!),
           yardage: t.yardage ?? null,

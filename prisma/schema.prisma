@@ -364,7 +364,7 @@ model CourseTee {
   courseId  String
   course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
   name      String // e.g. "Blue", "White", "Red" (tee color / set)
-  gender    String? // "M" | "F" | null (unisex/unknown)
+  gender    String  @default("M") // "M" | "W" -- rating differs by gender, so it is part of the tee identity
   rating    Float // Course Rating for this tee
   slope     Int // Slope Rating for this tee
   yardage   Int? // total yardage
@@ -373,7 +373,7 @@ model CourseTee {
   // measured -- lets the UI show which tees carry an official rating.
   estimated Boolean @default(true)
 
-  @@unique([courseId, name])
+  @@unique([courseId, name, gender])
   @@index([courseId])
 }
 

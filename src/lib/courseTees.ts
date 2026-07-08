@@ -11,6 +11,7 @@ import { prisma } from "./db";
 
 export type TeeOption = {
   name: string;
+  gender: string; // "M" | "W"
   rating: number;
   slope: number;
   yardage: number | null;
@@ -38,6 +39,7 @@ export async function getCourseTeeSet(
       tees: {
         select: {
           name: true,
+          gender: true,
           rating: true,
           slope: true,
           yardage: true,
@@ -50,6 +52,7 @@ export async function getCourseTeeSet(
 
   let tees: TeeOption[] = course.tees.map((t) => ({
     name: t.name,
+    gender: t.gender,
     rating: t.rating,
     slope: t.slope,
     yardage: t.yardage,
@@ -62,6 +65,7 @@ export async function getCourseTeeSet(
     tees = [
       {
         name: "Default",
+        gender: "M",
         rating: course.rating,
         slope: course.slope,
         yardage: course.yardage,
@@ -73,15 +77,20 @@ export async function getCourseTeeSet(
   // Longest (hardest) first -- reads like a scorecard, tips at the top.
   tees.sort((a, b) => (b.yardage ?? b.rating) - (a.yardage ?? a.rating));
 
-  // Default: the tee matching the course's stored default rating, else
-  // a regular/middle-named set, else the first.
-  const byRating = tees.find(
+  // Default: a men's tee matching the course's stored default rating,
+  // else a men's regular/middle-named set, else the first men's tee,
+  // else the first tee. (We don't track player gender, so men's is the
+  // neutral default; a player picks their own tee anyway.)
+  const mens = tees.filter((t) => t.gender === "M");
+  const pool = mens.length ? mens : tees;
+  const byRating = pool.find(
     (t) => course.rating != null && Math.abs(t.rating - course.rating) < 0.05,
   );
-  const named = tees.find((t) =>
+  const named = pool.find((t) =>
     /\b(regular|white|middle|club|member|blue)\b/i.test(t.name),
   );
-  const defaultTeeName = (byRating ?? named ?? tees[0])?.name ?? null;
+  const defaultTee = byRating ?? named ?? pool[0];
+  const defaultTeeName = defaultTee?.name ?? null;
 
   return { courseName, tees, defaultTeeName };
 }
@@ -93,21 +102,27 @@ export type TeeSnapshot = {
 };
 
 /**
- * Resolve a chosen tee name to the rating/slope snapshot to store on a
- * MatchPlayer at round-creation time. Null when the course has no
- * rating data at all (the handicap calc then falls back to the
- * score-only model for that round).
+ * Resolve a chosen tee (name + optional gender) to the rating/slope
+ * snapshot stored on a MatchPlayer at round-creation time. Null when
+ * the course has no rating data at all (the handicap calc then falls
+ * back to the score-only model for that round).
  */
 export async function resolveTeeSnapshot(
   courseName: string,
   teeName: string | null,
+  gender?: string | null,
 ): Promise<TeeSnapshot | null> {
   const { tees, defaultTeeName } = await getCourseTeeSet(courseName);
   if (tees.length === 0) return null;
-  const wanted = teeName ?? defaultTeeName;
+  const wanted = (teeName ?? defaultTeeName ?? "").toLowerCase();
+  const g = gender === "W" ? "W" : gender === "M" ? "M" : null;
   const tee =
-    tees.find((t) => t.name.toLowerCase() === (wanted ?? "").toLowerCase()) ??
-    tees.find((t) => t.name === defaultTeeName) ??
+    // exact name + gender when a gender was given
+    (g && tees.find((t) => t.name.toLowerCase() === wanted && t.gender === g)) ||
+    // name match, preferring men's
+    tees.find((t) => t.name.toLowerCase() === wanted && t.gender === "M") ||
+    tees.find((t) => t.name.toLowerCase() === wanted) ||
+    tees.find((t) => t.name === defaultTeeName) ||
     tees[0];
   return { teeName: tee.name, courseRating: tee.rating, slope: tee.slope };
 }
