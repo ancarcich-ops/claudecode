@@ -18,6 +18,7 @@ import { computeOdds, parseParData, type ScoringMode } from "@/lib/odds";
 import { defaultPars } from "@/lib/odds";
 import { COURSE_PRESETS } from "@/lib/courses";
 import { isSideGameKind } from "@/lib/sideGames";
+import { getCourseTeeSet } from "@/lib/courseTees";
 
 export const dynamic = "force-dynamic";
 
@@ -212,6 +213,11 @@ export async function POST(req: Request) {
       handicap: Number((p as { handicap?: unknown })?.handicap ?? NaN),
       explicitUserId:
         String((p as { userId?: unknown })?.userId ?? "").trim() || null,
+      // Tee the player played, for the WHS rating snapshot. Optional --
+      // when absent the course default tee is used.
+      teeName: String((p as { teeName?: unknown })?.teeName ?? "").trim() || null,
+      teeGender:
+        String((p as { teeGender?: unknown })?.teeGender ?? "").trim() || null,
     }))
     .filter((p) => p.displayName.length > 0);
   if (drafts.length < 1) {
@@ -318,6 +324,30 @@ export async function POST(req: Request) {
   const userById = new Map(lookup.map((u) => [u.id, u]));
   const userByName = new Map(lookup.map((u) => [u.username.toLowerCase(), u]));
 
+  // Snapshot each player's tee rating/slope from the course's tee set
+  // once (fetched a single time, resolved per player in-memory) so the
+  // round's handicap differential is fixed to the tee actually played.
+  const teeSet = await getCourseTeeSet(preset.name);
+  const snapshotFor = (teeName: string | null, gender: string | null) => {
+    if (teeSet.tees.length === 0) return null;
+    const wanted = (teeName ?? teeSet.defaultTeeName ?? "").toLowerCase();
+    const g = gender === "W" ? "W" : gender === "M" ? "M" : null;
+    const tee =
+      (g &&
+        teeSet.tees.find(
+          (t) => t.name.toLowerCase() === wanted && t.gender === g,
+        )) ||
+      teeSet.tees.find(
+        (t) => t.name.toLowerCase() === wanted && t.gender === "M",
+      ) ||
+      teeSet.tees.find((t) => t.name.toLowerCase() === wanted) ||
+      teeSet.tees.find((t) => t.name === teeSet.defaultTeeName) ||
+      teeSet.tees[0];
+    return tee
+      ? { teeName: tee.name, courseRating: tee.rating, slope: tee.slope }
+      : null;
+  };
+
   const match = await prisma.match.create({
     data: {
       courseName: preset.name,
@@ -336,12 +366,16 @@ export async function POST(req: Request) {
             : undefined;
           const byName = userByName.get(p.displayName.toLowerCase());
           const linked = explicit ?? byName;
+          const tee = snapshotFor(p.teeName, p.teeGender);
           return {
             displayName: p.displayName,
             handicap: p.handicap,
             seat: i,
             userId: linked?.id,
             team: null,
+            teeName: tee?.teeName ?? null,
+            courseRating: tee?.courseRating ?? null,
+            slope: tee?.slope ?? null,
           };
         }),
       },
