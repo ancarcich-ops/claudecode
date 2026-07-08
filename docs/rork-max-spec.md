@@ -189,6 +189,12 @@ Rules (verbatim errors): name ≤ 40 chars, empty clears (falls back to
 @username); GHIN 6–10 digits, empty clears. 200: `{ "profile": {…} }`.
 Goal index has its own setter: `POST /me/target-index`.
 
+### POST /me/avatar   (profile photo)
+Raw image bytes as the body; `Content-Type: image/jpeg` (or png/heic).
+Max 4 MB. 200: `{ "avatarUrl": "https://…" }`. 400 non-image/too
+large; 503 if uploads aren't configured. ### DELETE /me/avatar clears
+it → `{ "ok": true, "avatarUrl": null }` (falls back to initials).
+
 ### POST /matches   (start a round)
 Body: `{ "courseName" (must match the catalog), "scheduledAt" (ISO,
 default now), "holes" (9|18), "startingHole" (1|10, 10 only for 9),
