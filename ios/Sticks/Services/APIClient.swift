@@ -101,6 +101,12 @@ nonisolated struct UpdateProfileRequest: Encodable {
     }
 }
 
+/// Response for POST/DELETE /me/avatar — the new avatar URL (nil after
+/// a delete).
+nonisolated struct AvatarResponse: Decodable {
+    let avatarUrl: String?
+}
+
 /// Body for POST /groups.
 nonisolated struct CreateGroupRequest: Encodable {
     let name: String
@@ -204,6 +210,14 @@ nonisolated struct APIClient {
         let _: OkResponse = try await perform(request)
     }
 
+    /// POST /matches/:id/reopen — reverts a COMPLETED round so scoring
+    /// can resume (IN_PROGRESS, or UPCOMING if no scores). Creator-only;
+    /// a 403 carries a server message shown verbatim.
+    func postReopen(matchId: String, token: String) async throws {
+        let request = makeRequest(path: "matches/\(matchId)/reopen", method: "POST", token: token)
+        let _: OkResponse = try await perform(request)
+    }
+
     /// POST /matches/:id/tee — crowdfix the tee position from live GPS.
     func postTee(matchId: String, hole: Int, lat: Double, lng: Double, accuracyYd: Int, token: String) async throws -> TeeResponse {
         var request = makeRequest(path: "matches/\(matchId)/tee", method: "POST", token: token)
@@ -253,6 +267,23 @@ nonisolated struct APIClient {
             UpdateProfileRequest(displayName: displayName, ghinNumber: ghinNumber)
         )
         return try await perform(request)
+    }
+
+    /// POST /me/avatar — uploads raw JPEG bytes (max 4 MB, downscaled
+    /// client-side). 400/503 carry server messages shown verbatim.
+    func uploadAvatar(jpegData: Data, token: String) async throws -> AvatarResponse {
+        var request = makeRequest(path: "me/avatar", method: "POST", token: token)
+        request.setValue("image/jpeg", forHTTPHeaderField: "Content-Type")
+        request.httpBody = jpegData
+        request.timeoutInterval = 60
+        return try await perform(request)
+    }
+
+    /// DELETE /me/avatar — removes the photo; the profile falls back to
+    /// the initials bubble.
+    func deleteAvatar(token: String) async throws {
+        let request = makeRequest(path: "me/avatar", method: "DELETE", token: token)
+        let _: AvatarResponse = try await perform(request)
     }
 
     /// POST /me/target-index — sets (or clears, with nil) the player's
@@ -336,6 +367,15 @@ nonisolated struct APIClient {
     /// shown verbatim.
     func createMatch(_ body: CreateMatchRequest, token: String) async throws -> CreateMatchResponse {
         var request = makeRequest(path: "matches", method: "POST", token: token)
+        request.httpBody = try encoder.encode(body)
+        return try await perform(request)
+    }
+
+    /// PATCH /matches/:id — creator-only edit of an UPCOMING round with
+    /// no scores logged; same body shape as POST /matches. 400 (edit
+    /// window closed) and 403 carry server messages shown verbatim.
+    func updateMatch(id: String, _ body: CreateMatchRequest, token: String) async throws -> CreateMatchResponse {
+        var request = makeRequest(path: "matches/\(id)", method: "PATCH", token: token)
         request.httpBody = try encoder.encode(body)
         return try await perform(request)
     }
