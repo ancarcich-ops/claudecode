@@ -195,6 +195,22 @@ Max 4 MB. 200: `{ "avatarUrl": "https://…" }`. 400 non-image/too
 large; 503 if uploads aren't configured. ### DELETE /me/avatar clears
 it → `{ "ok": true, "avatarUrl": null }` (falls back to initials).
 
+### POST /matches/:id/pars   (edit pars)
+Creator only, any status. Body `{ "pars": [4,5,3,…] }` (exactly `holes`,
+each 3–6). 200 `{ "ok": true, "pars": [...] }`.
+
+### POST /matches/:id/side-games   (enable/disable side games)
+Creator only, not when COMPLETED. Body `{ "kinds": ["SKINS", …] }`
+(recognized kinds; NASSAU needs 18). Reconciles rows. 200
+`{ "ok": true, "kinds": [...] }`. Advanced config (Wolf/stakes) is web-only.
+
+### GET/POST /matches/:id/shares   (Share My Round)
+GET → `{ "shares": [{ id, token, url, includeScores, destAddress|null,
+bufferMin }] }` (your own live links). POST (own round only) body
+`{ "includeScores"?: true, "destAddress"?: "…", "bufferMin"?: 30 }` →
+`{ "share": {…} }`; the public `url` is `.../r/{token}`.
+### DELETE /shares/:id — stop a link you created → `{ "ok": true }`.
+
 ### POST /matches   (start a round)
 Body: `{ "courseName" (must match the catalog), "scheduledAt" (ISO,
 default now), "holes" (9|18), "startingHole" (1|10, 10 only for 9),
