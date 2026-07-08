@@ -204,6 +204,12 @@ default now), "holes" (9|18), "startingHole" (1|10, 10 only for 9),
 400/403 `{ "error" }` — show verbatim. Pars resolve server-side.
 INDIVIDUAL format only; scramble + tournament rounds stay on the web.
 
+### PATCH /matches/:id   (edit a round before it starts)
+Creator only, and only while UPCOMING with NO scores logged (400
+otherwise). Body = same shape as POST /matches. Players reconciled by
+seat (ids preserved). 200 `{ "match": { "id" } }`. Use for "Edit
+details" on the match screen; once play begins, only DELETE is allowed.
+
 ### DELETE /matches/:id
 Creator only. 200 `{ "ok": true }`; 403 for non-creators (show the
 server's message). Removes the round and everything attached.
