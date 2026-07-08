@@ -333,13 +333,17 @@ export async function createMatchAction(formData: FormData) {
   // only honoured server-side when format === SCRAMBLE. Anything not
   // 0 or 1 silently coerces to 0.
   const teamsRaw = formData.getAll("playerTeam").map((v) => Number(v));
+  // Tee played, for the WHS rating snapshot. Parallel hidden inputs
+  // ("Blue|M"). Empty = use the course default tee.
+  const teesRaw = formData.getAll("playerTee").map((v) => String(v));
 
-  const drafts: (PlayerDraft & { team: 0 | 1 })[] = names
+  const drafts: (PlayerDraft & { team: 0 | 1; tee: string | null })[] = names
     .map((name, i) => ({
       displayName: name,
       handicap: hcps[i],
       explicitUserId: explicitUserIds[i] || null,
       team: (teamsRaw[i] === 1 ? 1 : 0) as 0 | 1,
+      tee: teesRaw[i]?.trim() || null,
     }))
     .filter((p) => p.displayName.length > 0);
 
@@ -465,6 +469,29 @@ export async function createMatchAction(formData: FormData) {
   const userById = new Map(lookup.map((u) => [u.id, u]));
   const userByName = new Map(lookup.map((u) => [u.username.toLowerCase(), u]));
 
+  // Tee rating/slope snapshot per player, from the course tee set
+  // (fetched once). The form posts "Blue|M"; empty -> course default.
+  const { getCourseTeeSet } = await import("./courseTees");
+  const teeSet = await getCourseTeeSet(courseName);
+  const teeSnapshot = (raw: string | null) => {
+    if (teeSet.tees.length === 0) return null;
+    const [rawName, rawGender] = (raw ?? "").split("|");
+    const wanted = (rawName?.trim() || teeSet.defaultTeeName || "").toLowerCase();
+    const g = rawGender === "W" ? "W" : rawGender === "M" ? "M" : null;
+    const tee =
+      (g &&
+        teeSet.tees.find(
+          (t) => t.name.toLowerCase() === wanted && t.gender === g,
+        )) ||
+      teeSet.tees.find((t) => t.name.toLowerCase() === wanted && t.gender === "M") ||
+      teeSet.tees.find((t) => t.name.toLowerCase() === wanted) ||
+      teeSet.tees.find((t) => t.name === teeSet.defaultTeeName) ||
+      teeSet.tees[0];
+    return tee
+      ? { teeName: tee.name, courseRating: tee.rating, slope: tee.slope }
+      : null;
+  };
+
   // Tournament binding. When `tournamentId` is in the form, the new
   // match is round N of that tournament. roundNumber is either
   // supplied explicitly or auto-computed as max(existing) + 1. We
@@ -536,6 +563,7 @@ export async function createMatchAction(formData: FormData) {
             : undefined;
           const byName = userByName.get(p.displayName.toLowerCase());
           const linked = explicit ?? byName;
+          const tee = teeSnapshot(p.tee);
           return {
             displayName: p.displayName,
             handicap: p.handicap,
@@ -545,6 +573,9 @@ export async function createMatchAction(formData: FormData) {
             // keeps the DB clean + queries on individual matches don't
             // need to filter by team.
             team: format === "SCRAMBLE" ? p.team : null,
+            teeName: tee?.teeName ?? null,
+            courseRating: tee?.courseRating ?? null,
+            slope: tee?.slope ?? null,
           };
         }),
       },
