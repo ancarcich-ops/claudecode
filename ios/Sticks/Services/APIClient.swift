@@ -80,6 +80,27 @@ nonisolated struct TargetIndexResponse: Decodable {
     let targetIndex: Double?
 }
 
+/// Body for POST /me/profile — only sent keys change server-side, so
+/// nil fields must be OMITTED entirely (an empty string clears a field).
+nonisolated struct UpdateProfileRequest: Encodable {
+    let displayName: String?
+    let ghinNumber: String?
+
+    private enum CodingKeys: String, CodingKey {
+        case displayName, ghinNumber
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        if let displayName {
+            try container.encode(displayName, forKey: .displayName)
+        }
+        if let ghinNumber {
+            try container.encode(ghinNumber, forKey: .ghinNumber)
+        }
+    }
+}
+
 /// Body for POST /groups.
 nonisolated struct CreateGroupRequest: Encodable {
     let name: String
@@ -218,6 +239,22 @@ nonisolated struct APIClient {
         return try await perform(request)
     }
 
+    /// GET /me/profile — the caller's editable profile.
+    func profile(token: String) async throws -> ProfileResponse {
+        let request = makeRequest(path: "me/profile", method: "GET", token: token)
+        return try await perform(request)
+    }
+
+    /// POST /me/profile — updates only the keys provided (nil = untouched,
+    /// empty string = cleared). 400s carry server messages shown verbatim.
+    func updateProfile(displayName: String? = nil, ghinNumber: String? = nil, token: String) async throws -> ProfileResponse {
+        var request = makeRequest(path: "me/profile", method: "POST", token: token)
+        request.httpBody = try encoder.encode(
+            UpdateProfileRequest(displayName: displayName, ghinNumber: ghinNumber)
+        )
+        return try await perform(request)
+    }
+
     /// POST /me/target-index — sets (or clears, with nil) the player's
     /// index goal.
     func setTargetIndex(_ targetIndex: Double?, token: String) async throws -> TargetIndexResponse {
@@ -230,6 +267,14 @@ nonisolated struct APIClient {
     /// a server message shown verbatim.
     func deleteMatch(id: String, token: String) async throws {
         let request = makeRequest(path: "matches/\(id)", method: "DELETE", token: token)
+        let _: OkResponse = try await perform(request)
+    }
+
+    /// DELETE /matches/:id/my-scores — removes only the caller's scores
+    /// from a round; other players keep theirs. 403 (not a player)
+    /// carries a server message shown verbatim.
+    func removeMyScores(matchId: String, token: String) async throws {
+        let request = makeRequest(path: "matches/\(matchId)/my-scores", method: "DELETE", token: token)
         let _: OkResponse = try await perform(request)
     }
 
@@ -261,6 +306,19 @@ nonisolated struct APIClient {
                 URLQueryItem(name: "lat", value: String(lat)),
                 URLQueryItem(name: "lng", value: String(lng)),
             ],
+            token: token
+        )
+        return try await perform(request)
+    }
+
+    /// GET /courses/tees?name= — the rated tee sets for a course plus
+    /// its default tee name. An empty tees array means the course has no
+    /// rating yet — the create flow hides the picker entirely.
+    func courseTees(name: String, token: String) async throws -> CourseTeesResponse {
+        let request = makeRequest(
+            path: "courses/tees",
+            method: "GET",
+            queryItems: [URLQueryItem(name: "name", value: name)],
             token: token
         )
         return try await perform(request)
