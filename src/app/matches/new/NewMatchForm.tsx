@@ -466,6 +466,49 @@ export default function NewMatchForm({
 
   const matchedPreset = presetByName.get(courseName.trim().toLowerCase());
 
+  // Tee sets for the matched course, for the per-player tee picker.
+  // Fetched from the DB (CourseTee) whenever the matched course changes;
+  // empty when the course has no rating data yet (picker hides, rounds
+  // post without a tee -> score-only handicap fallback).
+  const [courseTees, setCourseTees] = useState<{
+    tees: {
+      name: string;
+      gender: string;
+      rating: number;
+      slope: number;
+      yardage: number | null;
+    }[];
+    defaultTeeName: string | null;
+  }>({ tees: [], defaultTeeName: null });
+  useEffect(() => {
+    const name = matchedPreset?.name;
+    if (!name) {
+      setCourseTees({ tees: [], defaultTeeName: null });
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/courses/tees?name=${encodeURIComponent(name)}`)
+      .then((r) => (r.ok ? r.json() : { tees: [], defaultTeeName: null }))
+      .then((d) => {
+        if (!cancelled) setCourseTees(d);
+      })
+      .catch(() => {
+        if (!cancelled) setCourseTees({ tees: [], defaultTeeName: null });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [matchedPreset?.name]);
+
+  // The default tee's "Name|Gender" value (men's default), for the
+  // per-row select's initial selection.
+  const defaultTeeValue = (() => {
+    const d = courseTees.tees.find(
+      (t) => t.name === courseTees.defaultTeeName && t.gender === "M",
+    ) ?? courseTees.tees.find((t) => t.name === courseTees.defaultTeeName);
+    return d ? `${d.name}|${d.gender}` : "";
+  })();
+
   const parsToSubmit = (() => {
     if (!matchedPreset) return null;
     if (matchedPreset.holes === holes) return matchedPreset.pars;
@@ -2002,6 +2045,34 @@ export default function NewMatchForm({
                   format=SCRAMBLE). The visible Team A/B chips only
                   render when scramble is active. */}
               <input type="hidden" name="playerTeam" value={String(p.team)} />
+              {/* Per-player tee. One playerTee is always submitted (in
+                  row order) to stay parallel with playerHandicap: a
+                  <select> when the course has tees, else an empty
+                  hidden input so the server falls back to the course
+                  default. Keyed on course so it re-defaults on change. */}
+              {courseTees.tees.length > 0 ? (
+                <div className="flex items-center gap-1.5 pl-1">
+                  <span className="text-[10px] uppercase tracking-wider text-mute font-mono">
+                    Tee
+                  </span>
+                  <select
+                    key={matchedPreset?.name ?? "none"}
+                    name="playerTee"
+                    defaultValue={defaultTeeValue}
+                    className="input py-1 text-xs max-w-[16rem]"
+                    aria-label={`Tee for ${p.name || `player ${i + 1}`}`}
+                  >
+                    {courseTees.tees.map((t) => (
+                      <option key={`${t.name}|${t.gender}`} value={`${t.name}|${t.gender}`}>
+                        {t.name} · {t.gender} · {t.rating.toFixed(1)}/{t.slope}
+                        {t.yardage ? ` · ${t.yardage}y` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <input type="hidden" name="playerTee" value="" />
+              )}
               {(format === "SCRAMBLE" || sideGames.has("TEAM_VS_TEAM")) && (
                 <div className="flex items-center gap-1.5 pl-1">
                   <span className="text-[10px] uppercase tracking-wider text-mute font-mono">
