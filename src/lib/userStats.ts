@@ -446,11 +446,13 @@ export async function computeUserStats(userId: string): Promise<UserStats | null
       ? null
       : eighteens.reduce((s, r) => s + r.gross, 0) / eighteens.length;
 
-  // Personal best round = lowest vs-par across the entire history.
-  // Tiebreak by gross (then most recent) so two -3 rounds prefer the one
-  // shot on the harder par.
-  if (stats.rounds.length > 0) {
-    const sorted = [...stats.rounds].sort(
+  // Personal best round = lowest vs-par among FULL 18-hole rounds only.
+  // A 9-hole round's vs-par is naturally smaller in magnitude, so mixing
+  // them in would let a half round masquerade as your best. Null until
+  // there's an 18-hole round (same rule as avg18Gross). Tiebreak by gross
+  // (then most recent) so two equal rounds prefer the one on harder par.
+  if (eighteens.length > 0) {
+    const sorted = [...eighteens].sort(
       (a, b) =>
         a.vsPar - b.vsPar ||
         a.gross - b.gross ||
