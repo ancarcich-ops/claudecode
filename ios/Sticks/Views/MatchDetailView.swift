@@ -10,6 +10,16 @@
 //  UPCOMING, no scores), Mark final (in progress), Reopen (creator,
 //  completed), Delete round (creator, any status).
 //
+//  The same actions also render as a visible "Round actions" card at
+//  the bottom of the page (the ⋯ menu alone was too easy to miss),
+//  plus a prominent gold FINISH ROUND button once every score is in.
+//
+//  Slice 29: web parity — the GPS launcher moves to the TOP (right
+//  under the header, "Resume/Start on-course GPS →"), Edit pars on the
+//  scorecard card (creator, any status), an Edit side games CTA
+//  (creator, not completed), and the Share my round card (any seated
+//  player).
+//
 
 import SwiftUI
 import UIKit
@@ -24,6 +34,8 @@ struct MatchDetailView: View {
     @State private var selectedCell: ScoreCellSelection?
     @State private var showsGPS = false
     @State private var showsEdit = false
+    @State private var showsEditPars = false
+    @State private var showsEditSideGames = false
     @State private var showsDeleteConfirm = false
     @State private var showsFinalConfirm = false
     @State private var showsReopenConfirm = false
@@ -51,6 +63,11 @@ struct MatchDetailView: View {
                         failedCard(message)
                     case .loaded:
                         if let detail = viewModel.detail {
+                            // Web order: the GPS launcher is the first
+                            // thing under the header.
+                            if detail.status != .completed {
+                                gpsButton(detail)
+                            }
                             if detail.status == .inProgress {
                                 if detail.myMatchPlayerId != nil {
                                     MatchHeroCard(
@@ -66,14 +83,23 @@ struct MatchDetailView: View {
                                 )
                             }
                             scorecardCard(detail)
-                            if detail.status != .completed {
-                                gpsButton
+                            if showsFinishCTA {
+                                finishRoundButton
+                            }
+                            if canEditSideGames {
+                                editSideGamesButton
+                            }
+                            if detail.myMatchPlayerId != nil {
+                                ShareRoundCard(viewModel: viewModel, session: session)
                             }
                             if !detail.canEnterScores {
                                 Text("You're viewing as a spectator — only seated players or the match creator can enter scores.")
                                     .font(SticksFont.sans(12))
                                     .foregroundStyle(Color.sticksMuted)
                                     .padding(.horizontal, 4)
+                            }
+                            if hasMenuActions {
+                                roundActionsCard
                             }
                         }
                     }
@@ -101,6 +127,21 @@ struct MatchDetailView: View {
         }
         .sheet(item: $selectedCell) { cell in
             ScoreEntryView(cell: cell, viewModel: viewModel, session: session)
+        }
+        .sheet(isPresented: $showsEditPars) {
+            if let detail = viewModel.detail {
+                EditParsSheet(detail: detail, viewModel: viewModel, session: session)
+            }
+        }
+        .sheet(isPresented: $showsEditSideGames) {
+            if let detail = viewModel.detail {
+                EditSideGamesSheet(
+                    detail: detail,
+                    currentKinds: viewModel.response?.sideGames.map(\.kind) ?? [],
+                    viewModel: viewModel,
+                    session: session
+                )
+            }
         }
         .fullScreenCover(isPresented: $showsEdit) {
             if let detail = viewModel.detail, let user = session.user {
@@ -191,6 +232,11 @@ struct MatchDetailView: View {
 
     private var hasMenuActions: Bool {
         canEditDetails || canMarkFinal || canReopen || canDelete
+    }
+
+    /// The big gold FINISH ROUND moment — live round, every hole scored.
+    private var showsFinishCTA: Bool {
+        canMarkFinal && viewModel.isRoundComplete
     }
 
     private var actionsMenu: some View {
@@ -333,12 +379,39 @@ struct MatchDetailView: View {
     // MARK: - Scorecard
 
     private func scorecardCard(_ detail: MatchDetail) -> some View {
-        ScorecardGrid(
-            detail: detail,
-            players: viewModel.sortedPlayers,
-            currentHoleIndex: currentHoleIndex(detail),
-            onSelect: { cell in selectedCell = cell }
-        )
+        VStack(alignment: .leading, spacing: 0) {
+            ScorecardGrid(
+                detail: detail,
+                players: viewModel.sortedPlayers,
+                currentHoleIndex: currentHoleIndex(detail),
+                onSelect: { cell in selectedCell = cell }
+            )
+
+            // Slice 29: compact creator-only par editing, any status.
+            if detail.isCreator {
+                Rectangle()
+                    .fill(Color.sticksHairline.opacity(0.6))
+                    .frame(height: 1)
+                    .padding(.top, 12)
+
+                Button {
+                    showsEditPars = true
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 11, weight: .semibold))
+                        Text("EDIT PARS")
+                            .font(SticksFont.mono(10.5))
+                            .kerning(1)
+                    }
+                    .foregroundStyle(Color.sticksGreen)
+                    .padding(.top, 11)
+                    .contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Edit pars")
+            }
+        }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.sticksCard)
@@ -369,16 +442,138 @@ struct MatchDetailView: View {
         return detail.holes - 1
     }
 
+    // MARK: - Visible round actions
+
+    /// All scores are in — the one moment marking final is THE next step,
+    /// so it gets a full-width gold CTA instead of hiding in the ⋯ menu.
+    private var finishRoundButton: some View {
+        Button {
+            showsFinalConfirm = true
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "flag.checkered")
+                    .font(.system(size: 15, weight: .semibold))
+                Text("Finish Round — Mark Final")
+                    .font(SticksFont.sans(16, weight: .semibold))
+            }
+            .foregroundStyle(Color.sticksCream)
+            .frame(maxWidth: .infinity)
+            .frame(height: 54)
+            .background(Color.sticksGold)
+            .clipShape(.rect(cornerRadius: 14))
+        }
+        .buttonStyle(PressableButtonStyle())
+    }
+
+    /// The ⋯ menu's actions as visible, labeled rows at the bottom of
+    /// the page — discoverable by scrolling, no hidden gestures.
+    private var roundActionsCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("ROUND ACTIONS")
+                .font(SticksFont.label(11, weight: .semibold))
+                .kerning(1.4)
+                .foregroundStyle(Color.sticksFaint)
+                .padding(.horizontal, 4)
+
+            VStack(spacing: 0) {
+                if canEditDetails {
+                    actionRow(
+                        icon: "pencil",
+                        title: "Edit details",
+                        subtitle: "Course, tee time, players — until scoring starts"
+                    ) { showsEdit = true }
+                    if canMarkFinal || canReopen || canDelete { actionDivider }
+                }
+                if canMarkFinal {
+                    actionRow(
+                        icon: "flag.checkered",
+                        title: "Mark final",
+                        subtitle: "Lock scores and move the round to Recent"
+                    ) { showsFinalConfirm = true }
+                    if canReopen || canDelete { actionDivider }
+                }
+                if canReopen {
+                    actionRow(
+                        icon: "arrow.uturn.backward",
+                        title: "Reopen round",
+                        subtitle: "Unlock scoring — it won't count until finished again"
+                    ) { showsReopenConfirm = true }
+                    if canDelete { actionDivider }
+                }
+                if canDelete {
+                    actionRow(
+                        icon: "trash",
+                        title: "Delete round",
+                        subtitle: "Removes it for everyone — can't be undone",
+                        isDestructive: true
+                    ) { showsDeleteConfirm = true }
+                }
+            }
+            .background(Color.sticksCard)
+            .clipShape(.rect(cornerRadius: SticksMetrics.cardRadius))
+            .overlay(
+                RoundedRectangle(cornerRadius: SticksMetrics.cardRadius)
+                    .stroke(Color.sticksHairline, lineWidth: 1)
+            )
+        }
+        .padding(.top, 6)
+    }
+
+    private var actionDivider: some View {
+        Rectangle()
+            .fill(Color.sticksHairline.opacity(0.6))
+            .frame(height: 1)
+            .padding(.leading, 58)
+    }
+
+    private func actionRow(
+        icon: String,
+        title: String,
+        subtitle: String,
+        isDestructive: Bool = false,
+        action: @escaping () -> Void
+    ) -> some View {
+        let tint: Color = isDestructive ? .sticksError : .sticksGreen
+        return Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(tint)
+                    .frame(width: 32, height: 32)
+                    .background(tint.opacity(0.1))
+                    .clipShape(.circle)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(SticksFont.sans(15, weight: .semibold))
+                        .foregroundStyle(isDestructive ? Color.sticksError : Color.sticksInk)
+                    Text(subtitle)
+                        .font(SticksFont.sans(12))
+                        .foregroundStyle(Color.sticksMuted)
+                        .multilineTextAlignment(.leading)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.sticksFaint)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .disabled(isDeleting)
+    }
+
     // MARK: - CTA
 
-    private var gpsButton: some View {
+    private func gpsButton(_ detail: MatchDetail) -> some View {
         Button {
             showsGPS = true
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: "location.fill")
                     .font(.system(size: 15, weight: .semibold))
-                Text("On-course GPS")
+                Text(detail.status == .inProgress ? "Resume on-course GPS" : "Start on-course GPS")
                     .font(SticksFont.sans(16, weight: .semibold))
                 Image(systemName: "arrow.right")
                     .font(.system(size: 14, weight: .bold))
@@ -390,6 +585,56 @@ struct MatchDetailView: View {
             .clipShape(.rect(cornerRadius: 14))
         }
         .buttonStyle(PressableButtonStyle())
+    }
+
+    /// Slice 29: creator-only side-game add/remove, hidden once the
+    /// round is completed.
+    private var canEditSideGames: Bool {
+        guard let detail = viewModel.detail else { return false }
+        return detail.isCreator && detail.status != .completed
+    }
+
+    private var editSideGamesButton: some View {
+        Button {
+            showsEditSideGames = true
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "dice")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color.sticksGreen)
+                    .frame(width: 32, height: 32)
+                    .background(Color.sticksGreen.opacity(0.1))
+                    .clipShape(.circle)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Edit side games")
+                        .font(SticksFont.sans(15, weight: .semibold))
+                        .foregroundStyle(Color.sticksInk)
+                    Text("Skins, Wolf, Snake and more — on or off any time")
+                        .font(SticksFont.sans(12))
+                        .foregroundStyle(Color.sticksMuted)
+                        .multilineTextAlignment(.leading)
+                }
+
+                Spacer(minLength: 8)
+
+                Image(systemName: "arrow.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color.sticksGreen)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.sticksCard)
+            .clipShape(.rect(cornerRadius: SticksMetrics.cardRadius))
+            .overlay(
+                RoundedRectangle(cornerRadius: SticksMetrics.cardRadius)
+                    .stroke(Color.sticksHairline, lineWidth: 1)
+            )
+            .contentShape(.rect)
+        }
+        .buttonStyle(PressableButtonStyle())
+        .accessibilityLabel("Edit side games")
     }
 
     // MARK: - States
