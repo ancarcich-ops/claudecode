@@ -240,6 +240,35 @@ other player's scores are untouched. 200 `{ "ok": true, "removed": N }`;
 on rounds you didn't create; use DELETE /matches/:id (creator only)
 to delete the whole round.
 
+### POST /matches/:id/pars   (edit per-hole pars)
+Creator only; allowed at ANY status (fixing a wrong par mid-round is
+legitimate). Body: `{ "pars": [4,5,3, …] }` — exactly `holes` entries,
+each 3–6. Re-records an odds snapshot server-side. 200:
+`{ "ok": true, "pars": [...] }`; 403 non-creator, 400 wrong length /
+out-of-range (show the server message).
+
+### POST /matches/:id/side-games   (add/remove side games)
+Creator only; blocked once the round is COMPLETED. Body:
+`{ "kinds": ["SKINS","STABLEFORD", …] }` — the full desired set.
+Reconciles: removed kinds are dropped, added kinds created. NASSAU is
+ignored on 9-hole rounds; a configured TEAM_VS_TEAM row is preserved
+regardless (its team assignments can't be rebuilt from mobile).
+Advanced per-game config (Wolf rotation, stakes) stays on the web.
+200: `{ "ok": true, "kinds": [...] }`.
+
+### GET /matches/:id/shares · POST /matches/:id/shares · DELETE /shares/:id
+Live "share my round" links, own-seat only (the server derives your
+seat — you can only share a round you're playing in).
+- GET → `{ "shares": [ { id, token, url, includeScores,
+  destAddress|null, bufferMin } ] }` (your own links for this round).
+- POST body `{ "includeScores"?: true, "destAddress"?: "123 Main St",
+  "bufferMin"?: 30 }` → `{ "share": { id, token, url, … } }`. Default
+  `includeScores:true`; destination is geocoded at save; `bufferMin`
+  clamped 0–180; milestones default FRONT9+FINISH. `url` is the public
+  `https://sticks-golf.vercel.app/r/{token}` link to text to whoever's
+  waiting on you.
+- DELETE /shares/:id → `{ "ok": true }` (own share only) — stops the link.
+
 ### POST /matches/:id/tee   (FIX TEE crowdfix)
 Body: `{ "hole": 7, "lat": …, "lng": …, "accuracyYd": 8 }`
 200: `{ "ok": true }` or `{ "ok": false, "reason": "…" }` — when
