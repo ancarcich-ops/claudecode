@@ -19,6 +19,7 @@ import { COURSE_PRESETS } from "@/lib/courses";
 import { defaultPars } from "@/lib/odds";
 import { isSideGameKind } from "@/lib/sideGames";
 import { getCourseTeeSet } from "@/lib/courseTees";
+import { buildOddsSeries } from "@/lib/oddsSeries";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +54,19 @@ export async function GET(
         : odds.probabilities[p.id] ?? 0;
       return [p.id, prob];
     }),
+  );
+
+  // Hole-bucketed win-probability history for the odds graph -- same
+  // shape the web match page feeds its OddsChart.
+  const oddsSeries = buildOddsSeries(
+    match.players.map((p) => ({
+      id: p.id,
+      team: p.team,
+      scores: p.scores.map((s) => ({ hole: s.hole, createdAt: s.createdAt })),
+    })),
+    match.oddsSnapshots,
+    odds.probabilities,
+    isScramble,
   );
 
   // Side-game leaderboards -- identical assembly to the web match page.
@@ -118,7 +132,10 @@ export async function GET(
     // Win probability per matchPlayerId (0..1). The client derives the
     // trend arrow the same way the web does: >=0.4 up, >=0.2 flat,
     // else down.
-    odds: { probabilities },
+    // `series` is the hole-bucketed history for the odds graph: one row
+    // per holes-played bucket, { hole, "<matchPlayerId>": prob }. null
+    // until the round has a score (pre-round has no hole axis yet).
+    odds: { probabilities, series: oddsSeries.holeSeries },
     // [{ kind, leaderboards: [{ key, kind, title, subtitle?, rows:
     //    [{ playerId, player, value, numeric, isLeader }] }] }]
     // Empty array when the match has no side games.
