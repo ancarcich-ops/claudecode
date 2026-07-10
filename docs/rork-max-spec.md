@@ -97,7 +97,12 @@ aren't reproducible natively).
   },
   "wind": { "speedMph": 8, "fromDeg": 220 },  // null when unavailable
   "odds": {                          // win probability per matchPlayerId, 0..1
-    "probabilities": { "<matchPlayerId>": 0.67 }
+    "probabilities": { "<matchPlayerId>": 0.67 },
+    "series": [                       // hole-bucketed history for the odds graph;
+                                      //   null until the round has a score
+      { "hole": 1, "<matchPlayerId>": 0.5, "<matchPlayerId2>": 0.5 },
+      { "hole": 2, "<matchPlayerId>": 0.62, "<matchPlayerId2>": 0.38 }
+    ]
   },
   "sideGames": [                     // [] when the match has none
     { "kind": "SKINS"|"STABLEFORD"|"NASSAU"|"WOLF"|"SNAKE"|"BBB"|
