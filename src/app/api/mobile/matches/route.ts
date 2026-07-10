@@ -19,6 +19,7 @@ import { defaultPars } from "@/lib/odds";
 import { COURSE_PRESETS } from "@/lib/courses";
 import { isSideGameKind } from "@/lib/sideGames";
 import { getCourseTeeSet } from "@/lib/courseTees";
+import { visibleMatchWhere, type GroupFilter } from "@/lib/groups";
 
 export const dynamic = "force-dynamic";
 
@@ -26,13 +27,21 @@ export async function GET(req: Request) {
   const user = await getUserFromBearer(req);
   if (!user) return unauthorized();
 
+  // Group scoping identical to the web home feed (visibleMatchWhere):
+  //   ?group absent | "all" | ""  -> public + your groups + any round
+  //                                   involving a member of one of your groups
+  //   ?group=public               -> only ungrouped ("public") rounds
+  //   ?group=<groupId>            -> rounds posted to that group OR involving
+  //                                   any of its members (cross-group visibility)
+  // This is what makes a group's feed show every round a member played, not
+  // just rounds explicitly posted to the group.
+  const groupParam = new URL(req.url).searchParams.get("group");
+  const filter: GroupFilter =
+    !groupParam || groupParam === "all" ? "" : groupParam;
+  const where = await visibleMatchWhere(user.id, filter);
+
   const matches = await prisma.match.findMany({
-    where: {
-      OR: [
-        { createdById: user.id },
-        { players: { some: { userId: user.id } } },
-      ],
-    },
+    where,
     orderBy: { scheduledAt: "desc" },
     take: 50,
     select: {
