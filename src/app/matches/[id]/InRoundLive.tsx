@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { logScoreAction } from "@/lib/actions";
+import { strokesGivenForHole } from "@/lib/netScoring";
 import PlayerAvatar, { isVariant, type AvatarVariant } from "@/components/Avatar";
 
 // In-round scoring view per IN_ROUND_SCREENS_SPEC.md §1. Replaces the
@@ -233,6 +234,7 @@ export default function InRoundLive({
         players={players}
         myMatchPlayerId={myMatchPlayerId}
         canLogScores={canLogScores}
+        scoringMode={scoringMode}
         showCoach={showCoach}
         onDismissCoach={dismissCoach}
         onPickCell={(player, hole) => {
@@ -433,6 +435,7 @@ function ScorecardGrid({
   players,
   myMatchPlayerId,
   canLogScores,
+  scoringMode,
   showCoach,
   onDismissCoach,
   onPickCell,
@@ -445,6 +448,7 @@ function ScorecardGrid({
   players: InRoundPlayer[];
   myMatchPlayerId: string | null;
   canLogScores: boolean;
+  scoringMode: "GROSS" | "NET" | "CUSTOM";
   showCoach: boolean;
   onDismissCoach: () => void;
   onPickCell: (player: InRoundPlayer, hole: number) => void;
@@ -454,6 +458,12 @@ function ScorecardGrid({
   // auto-centered on mount + whenever it advances.
   const lastHole = startingHole + holes - 1;
   const allHoles = Array.from({ length: holes }, (_, i) => startingHole + i);
+
+  // Gross vs Net cell display. Only offered on NET rounds; defaults to
+  // gross so scoring/entry reads exactly as before until the user opts
+  // into the handicap-adjusted view.
+  const [view, setView] = useState<"gross" | "net">("gross");
+  const netAware = scoringMode === "NET";
 
   const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -498,9 +508,31 @@ function ScorecardGrid({
   return (
     <section className="card p-[13px_6px_14px] relative">
       <div className="flex items-center justify-between px-[11px] mb-2.5">
-        <h2 className="font-display text-[13px] font-bold text-ink">
-          Scorecard
-        </h2>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <h2 className="font-display text-[13px] font-bold text-ink">
+            Scorecard
+          </h2>
+          {netAware && (
+            <div className="inline-flex rounded-full border border-border bg-panel2 p-0.5 text-[9px] font-mono uppercase tracking-[0.06em]">
+              {(["gross", "net"] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setView(v)}
+                  aria-pressed={view === v}
+                  className={
+                    "px-2 py-0.5 rounded-full transition-colors " +
+                    (view === v
+                      ? "bg-accent text-white font-bold"
+                      : "text-mute hover:text-ink")
+                  }
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="font-mono text-[10px] tracking-[0.05em] uppercase text-mute font-semibold">
           {halfLabel && `${halfLabel} · `}
           <span className={meToPar != null && meToPar < 0 ? "text-accent font-bold" : "text-accent font-bold"}>
@@ -609,6 +641,7 @@ function ScorecardGrid({
                 pars={pars}
                 canLogScores={canLogScores}
                 onPick={onPickCell}
+                view={netAware ? view : "gross"}
               />
             ))}
           </div>
@@ -654,6 +687,7 @@ function ScorecardRow({
   pars,
   canLogScores,
   onPick,
+  view,
 }: {
   player: InRoundPlayer;
   currentHole: number;
@@ -662,6 +696,7 @@ function ScorecardRow({
   pars: number[];
   canLogScores: boolean;
   onPick: (player: InRoundPlayer, hole: number) => void;
+  view: "gross" | "net";
 }) {
   const onTap = (hole: number) => {
     if (!canLogScores) return;
@@ -673,13 +708,20 @@ function ScorecardRow({
       {windowHoles.map((h) => {
         const par = pars[h - startingHole] ?? 4;
         const score = player.scoresByHole[h];
+        // In net view the cell shows gross minus the strokes this player
+        // receives on the hole; coloring follows the displayed (net) value.
+        const received =
+          view === "net" && score != null
+            ? strokesGivenForHole(player.handicap, h - startingHole, pars.length)
+            : 0;
+        const display = score != null ? score - received : null;
         const isCur = h === currentHole;
-        const rel = score != null ? score - par : null;
+        const rel = display != null ? display - par : null;
         const isPlayed = score != null;
         const isFuture = h > currentHole;
 
         const baseCls =
-          "h-[30px] rounded-[8px] grid place-items-center font-display font-bold text-[13px] leading-none tabular-nums transition-colors ";
+          "relative h-[30px] rounded-[8px] grid place-items-center font-display font-bold text-[13px] leading-none tabular-nums transition-colors ";
         // Variant styling
         let style: React.CSSProperties = {};
         let inner: React.ReactNode = "";
@@ -704,7 +746,7 @@ function ScorecardRow({
               border: "1px solid rgb(var(--color-border))",
             };
           }
-          inner = score;
+          inner = display;
         } else if (isCur) {
           // Active column treatment. If the player has a score, show
           // it inside a forest ring; otherwise show the "+" affordance
@@ -715,7 +757,7 @@ function ScorecardRow({
               background: "rgb(var(--color-bg))",
               border: "1.5px solid rgb(var(--color-accent))",
             };
-            inner = score;
+            inner = display;
           } else {
             extraCls = "text-accent font-sans text-[16px]";
             style = {
@@ -759,10 +801,21 @@ function ScorecardRow({
             }
           >
             {inner}
+            {received > 0 && (
+              <span
+                className="absolute top-[3px] right-[3px] w-[3px] h-[3px] rounded-full bg-accent/70"
+                aria-hidden
+              />
+            )}
           </button>
         );
       })}
-      <TotalCell player={player} startingHole={startingHole} pars={pars} />
+      <TotalCell
+        player={player}
+        startingHole={startingHole}
+        pars={pars}
+        view={view}
+      />
     </>
   );
 }
@@ -771,13 +824,16 @@ function TotalCell({
   player,
   startingHole,
   pars,
+  view,
 }: {
   player: InRoundPlayer;
   startingHole: number;
   pars: number[];
+  view: "gross" | "net";
 }) {
   let strokes = 0;
   let toPar = 0;
+  let received = 0;
   let any = false;
   for (let i = 0; i < pars.length; i++) {
     const h = startingHole + i;
@@ -786,7 +842,14 @@ function TotalCell({
     any = true;
     strokes += s;
     toPar += s - pars[i];
+    if (view === "net") {
+      received += strokesGivenForHole(player.handicap, i, pars.length);
+    }
   }
+  // Net totals subtract the strokes received on the holes played so far,
+  // so the column agrees with the per-cell net values above.
+  strokes -= received;
+  toPar -= received;
   const tone =
     !any
       ? "text-faint"
