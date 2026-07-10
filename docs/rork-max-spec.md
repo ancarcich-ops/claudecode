@@ -149,8 +149,17 @@ Body: `{ "code": "ABC123" }` (case-insensitive; server uppercases)
 200: `{ "group": { … } }` — idempotent, already-a-member is success.
 404: `{ "error": "Code ABC123 doesn't match any group…" }` — show verbatim.
 
-`GET /matches` items also carry `groupId` (string|null) so a group's
-match feed is a client-side filter of the existing list.
+`GET /matches` accepts `?group=` to scope the feed exactly like the web
+home feed (server-side, cross-group visibility):
+- absent / `all` / empty → public rounds + every group you're in + any
+  round involving a member of one of your groups.
+- `public` → only ungrouped ("public") rounds.
+- `<groupId>` → rounds posted to that group **OR involving any of its
+  members** — so a group's feed shows every round a member played, not
+  just rounds posted to the group. **Re-fetch with the new `group` value
+  when the switcher changes** (this can't be done as a pure client-side
+  filter — the client doesn't know other groups' memberships). Items
+  still carry `groupId` (string|null).
 
 ### GET /groups/:id/leaderboard   (:id = group id or slug)
 200: `{ "leaderboard": {
