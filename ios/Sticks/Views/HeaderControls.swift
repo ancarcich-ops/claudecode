@@ -2,67 +2,74 @@
 //  HeaderControls.swift
 //  Sticks
 //
-//  Slice 31: the shared trailing header cluster — the group switcher
-//  chip, the + New round capsule, and the avatar menu — used by all
-//  four tabs so the controls sit in the same place everywhere.
-//  TabHeaderBar wraps the cluster with a leading title for the
-//  non-Home tabs.
+//  Slice 31: the shared trailing header cluster used by all four tabs
+//  so the controls sit in the same place everywhere. TabHeaderBar wraps
+//  the cluster with a leading title for the non-Home tabs.
+//  Slice 33: web-parity — [+ New round] first, then the group switcher,
+//  which now doubles as the account menu (groups + "Signed in as
+//  @username" + Sign out); the standalone avatar circle is gone.
+//  Slice 37: the menu matches the website's switcher — View (All my
+//  groups / Public only) and My groups sections with headers, nav
+//  links (leaderboard / Personal stats / Manage groups / Settings)
+//  when a tab binding is available, then the account section.
 //
 
 import SwiftUI
+
+extension Notification.Name {
+    /// Posted by the switcher's "{group} leaderboard" link; the Groups
+    /// tab listens and pushes that group's leaderboard.
+    static let sticksOpenGroupLeaderboard = Notification.Name("sticksOpenGroupLeaderboard")
+}
 
 struct HeaderControls: View {
     let user: User
     let session: SessionStore
     @Binding var showsCreate: Bool
+    /// Drives the menu's nav links (Personal stats / Manage groups /
+    /// Settings / leaderboard). nil on pushed screens without a tab
+    /// binding (match detail) — those links are omitted there.
+    var tabSelection: Binding<SticksTab>? = nil
 
     private var filter: GroupFilterStore { .shared }
 
     var body: some View {
-        HStack(spacing: 8) {
-            groupSwitcher
-
+        HStack(spacing: 9) {
             newRoundButton
                 .layoutPriority(1)
 
-            avatarMenu
+            groupSwitcher
                 .layoutPriority(1)
         }
     }
 
-    // MARK: - Group switcher
+    // MARK: - Group switcher (+ account menu)
 
-    /// "All my groups ▾" (or the active group's name) — a light capsule
-    /// chip opening the group menu. The active row carries a checkmark.
+    /// The capsule chip opening the switcher menu — sectioned like the
+    /// website: View (All my groups / Public only), My groups, nav
+    /// links, then the account ("Signed in as @username" + Sign out).
     private var groupSwitcher: some View {
         Menu {
-            Button {
-                filter.setActiveGroup(nil)
-            } label: {
-                if filter.activeGroupId == nil {
-                    Label("All my groups", systemImage: "checkmark")
-                } else {
-                    Text("All my groups")
-                }
+            viewSection
+
+            if !filter.groups.isEmpty {
+                myGroupsSection
             }
 
-            ForEach(filter.groups) { group in
-                Button {
-                    filter.setActiveGroup(group.id)
+            if let tabSelection {
+                navSection(tabSelection)
+            }
+
+            Section("Signed in as @\(user.username)") {
+                Button(role: .destructive) {
+                    session.signOut()
                 } label: {
-                    if filter.activeGroupId == group.id {
-                        Label(group.name, systemImage: "checkmark")
-                    } else {
-                        Text(group.name)
-                    }
+                    Label("Sign out", systemImage: "rectangle.portrait.and.arrow.right")
                 }
             }
         } label: {
             HStack(spacing: 4) {
-                Text(filter.activeGroupName ?? "All my groups")
-                    .font(SticksFont.sans(11.5, weight: .semibold))
-                    .foregroundStyle(Color.sticksInk)
-                    .lineLimit(1)
+                switcherLabel
 
                 Image(systemName: "chevron.down")
                     .font(.system(size: 8, weight: .semibold))
@@ -75,7 +82,106 @@ struct HeaderControls: View {
             .overlay(Capsule().stroke(Color.sticksHairline, lineWidth: 1))
             .contentShape(.capsule)
         }
-        .accessibilityLabel("Group filter")
+        .accessibilityLabel("Group filter and account menu")
+    }
+
+    /// VIEW — the two scope rows; the active one carries a checkmark.
+    private var viewSection: some View {
+        Section("View") {
+            Button {
+                filter.setMode(.all)
+            } label: {
+                if filter.mode == .all {
+                    Label("All my groups", systemImage: "checkmark")
+                } else {
+                    Text("All my groups")
+                }
+            }
+
+            Button {
+                filter.setMode(.publicOnly)
+            } label: {
+                if filter.isPublicOnly {
+                    Label("Public only", systemImage: "checkmark")
+                } else {
+                    Text("Public only")
+                }
+            }
+        }
+    }
+
+    /// MY GROUPS — one row per group, checkmark on the active one.
+    private var myGroupsSection: some View {
+        Section("My groups") {
+            ForEach(filter.groups) { group in
+                Button {
+                    filter.setMode(.group(group.id))
+                } label: {
+                    if filter.activeGroupId == group.id {
+                        Label(group.name, systemImage: "checkmark")
+                    } else {
+                        Text(group.name)
+                    }
+                }
+            }
+        }
+    }
+
+    /// Nav links — {active group} leaderboard (when one is selected),
+    /// Personal stats, Manage groups, Settings.
+    private func navSection(_ tabSelection: Binding<SticksTab>) -> some View {
+        Section {
+            if let group = filter.activeGroup {
+                Button {
+                    tabSelection.wrappedValue = .groups
+                    NotificationCenter.default.post(
+                        name: .sticksOpenGroupLeaderboard,
+                        object: nil,
+                        userInfo: ["groupId": group.id]
+                    )
+                } label: {
+                    Label("\(group.name) leaderboard", systemImage: "chart.bar")
+                }
+            }
+
+            Button {
+                tabSelection.wrappedValue = .stats
+            } label: {
+                Label("Personal stats", systemImage: "chart.line.uptrend.xyaxis")
+            }
+
+            Button {
+                tabSelection.wrappedValue = .groups
+            } label: {
+                Label("Manage groups", systemImage: "person.2")
+            }
+
+            Button {
+                tabSelection.wrappedValue = .settings
+            } label: {
+                Label("Settings", systemImage: "gearshape")
+            }
+        }
+    }
+
+    /// The default "All my groups" never truncates (fixedSize); an
+    /// active group's name may tail-truncate past ~140pt.
+    @ViewBuilder private var switcherLabel: some View {
+        if let name = filter.activeGroupName {
+            Text(name)
+                .font(SticksFont.sans(11.5, weight: .semibold))
+                .foregroundStyle(Color.sticksInk)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .frame(maxWidth: 140)
+                .fixedSize(horizontal: false, vertical: true)
+        } else {
+            Text(filter.isPublicOnly ? "Public only" : "All my groups")
+                .font(SticksFont.sans(11.5, weight: .semibold))
+                .foregroundStyle(Color.sticksInk)
+                .lineLimit(1)
+                .fixedSize()
+        }
     }
 
     // MARK: - New round
@@ -100,33 +206,6 @@ struct HeaderControls: View {
         .accessibilityLabel("New round")
     }
 
-    // MARK: - Avatar menu
-
-    private var avatarMenu: some View {
-        Menu {
-            Section("@\(user.username)") {
-                Button(role: .destructive) {
-                    session.signOut()
-                } label: {
-                    Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
-                }
-            }
-        } label: {
-            Text(initials(of: user.displayName))
-                .font(SticksFont.label(13, weight: .bold))
-                .foregroundStyle(Color.sticksCream)
-                .frame(width: 36, height: 36)
-                .background(Color.sticksGreen)
-                .clipShape(.circle)
-        }
-        .accessibilityLabel("Account menu")
-    }
-
-    private func initials(of name: String) -> String {
-        let parts = name.split(separator: " ").prefix(2)
-        let letters = parts.compactMap { $0.first.map(String.init) }
-        return letters.isEmpty ? "?" : letters.joined().uppercased()
-    }
 }
 
 // MARK: - Tab header bar
@@ -139,6 +218,7 @@ struct TabHeaderBar: View {
     let user: User
     let session: SessionStore
     @Binding var showsCreate: Bool
+    @Binding var tabSelection: SticksTab
 
     var body: some View {
         HStack(alignment: .center, spacing: 10) {
@@ -152,12 +232,20 @@ struct TabHeaderBar: View {
 
             Spacer(minLength: 6)
 
-            HeaderControls(user: user, session: session, showsCreate: $showsCreate)
+            HeaderControls(
+                user: user,
+                session: session,
+                showsCreate: $showsCreate,
+                tabSelection: $tabSelection
+            )
         }
         .padding(.horizontal, 20)
         .padding(.top, 8)
         .padding(.bottom, 12)
-        .background(Color.sticksBg.opacity(0.97))
+        .background(Color.sticksBg)
+        .overlay(alignment: .bottom) {
+            Color.sticksHairline.frame(height: 1)
+        }
     }
 }
 

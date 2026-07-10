@@ -12,6 +12,7 @@ import SwiftUI
 struct MatchListView: View {
     let user: User
     let session: SessionStore
+    @Binding var tabSelection: SticksTab
 
     @State private var viewModel = MatchListViewModel()
     @State private var path = NavigationPath()
@@ -31,10 +32,19 @@ struct MatchListView: View {
                     failedView(message)
                 case .loaded:
                     if visibleMatches.isEmpty {
-                        if groupFilter.activeGroupId != nil {
-                            groupEmptyView
-                        } else {
+                        switch groupFilter.mode {
+                        case .all:
                             emptyView
+                        case .publicOnly:
+                            filterEmptyView(
+                                title: "No public rounds yet.",
+                                subtitle: "Rounds without a group show here. Start\none with + New round, or switch the filter up top."
+                            )
+                        case .group:
+                            filterEmptyView(
+                                title: "No rounds in this group yet.",
+                                subtitle: "Start one with + New round, or switch\nback to All my groups up top."
+                            )
                         }
                     } else {
                         matchList
@@ -54,10 +64,17 @@ struct MatchListView: View {
             }
         }
         .task {
-            await viewModel.load(session: session)
+            await viewModel.load(session: session, group: groupFilter.groupQueryValue)
+        }
+        // Slice 38: the switcher drives the fetch — the server computes
+        // cross-group visibility (a group's feed includes rounds its
+        // members played elsewhere), which the client can't replicate.
+        // The previous list keeps showing while the refetch is in flight.
+        .onChange(of: groupFilter.mode) { _, _ in
+            Task { await viewModel.load(session: session, group: groupFilter.groupQueryValue) }
         }
         .onReceive(NotificationCenter.default.publisher(for: .sticksMatchesDidChange)) { _ in
-            Task { await viewModel.load(session: session) }
+            Task { await viewModel.load(session: session, group: groupFilter.groupQueryValue) }
         }
         // A round created from a non-Home tab: reload and push its detail,
         // exactly like Home's own create flow.
@@ -67,24 +84,27 @@ struct MatchListView: View {
         }
     }
 
-    // MARK: - Group filter
+    // MARK: - Feed scope
 
-    /// Slice 31: the header switcher scopes the feed — nil shows all.
-    private func filtered(_ matches: [MatchSummary]) -> [MatchSummary] {
-        guard let groupId = groupFilter.activeGroupId else { return matches }
-        return matches.filter { $0.groupId == groupId }
-    }
-
-    private var visibleMatches: [MatchSummary] { filtered(viewModel.matches) }
-    private var liveMatches: [MatchSummary] { filtered(viewModel.liveMatches) }
-    private var upcomingMatches: [MatchSummary] { filtered(viewModel.upcomingMatches) }
-    private var recentMatches: [MatchSummary] { filtered(viewModel.recentMatches) }
+    // Slice 38: no client-side group filtering — GET /matches?group=
+    // already returns the exact set the website shows for the active
+    // scope, so the view model's lists render as-is.
+    private var visibleMatches: [MatchSummary] { viewModel.matches }
+    private var liveMatches: [MatchSummary] { viewModel.liveMatches }
+    private var upcomingMatches: [MatchSummary] { viewModel.upcomingMatches }
+    private var recentMatches: [MatchSummary] { viewModel.recentMatches }
 
     /// After a successful POST /matches: refresh the list and push the
-    /// new match's detail so the GPS screen is one tap away.
+    /// new match's detail so the GPS screen is one tap away. If the
+    /// active scope excludes the new round (e.g. Public only + a group
+    /// round), a one-off unscoped fetch still finds it to open.
     private func openCreatedMatch(id: String) async {
-        await viewModel.load(session: session)
+        await viewModel.load(session: session, group: groupFilter.groupQueryValue)
         if let match = viewModel.matches.first(where: { $0.id == id }) {
+            path.append(match)
+        } else if let token = session.token,
+                  let match = (try? await APIClient.shared.matches(token: token))?
+                      .matches.first(where: { $0.id == id }) {
             path.append(match)
         }
     }
@@ -106,12 +126,20 @@ struct MatchListView: View {
 
             Spacer(minLength: 6)
 
-            HeaderControls(user: user, session: session, showsCreate: $showsCreate)
+            HeaderControls(
+                user: user,
+                session: session,
+                showsCreate: $showsCreate,
+                tabSelection: $tabSelection
+            )
         }
         .padding(.horizontal, 20)
         .padding(.top, 8)
         .padding(.bottom, 12)
-        .background(Color.sticksBg.opacity(0.97))
+        .background(Color.sticksBg)
+        .overlay(alignment: .bottom) {
+            Color.sticksHairline.frame(height: 1)
+        }
     }
 
     // MARK: - List
@@ -138,7 +166,7 @@ struct MatchListView: View {
             .padding(.bottom, 32)
         }
         .refreshable {
-            await viewModel.load(session: session)
+            await viewModel.load(session: session, group: groupFilter.groupQueryValue)
         }
     }
 
@@ -197,18 +225,18 @@ struct MatchListView: View {
         .padding(.horizontal, 40)
     }
 
-    /// The active group has no rounds — the switcher stays up top so
+    /// The active filter has no rounds — the switcher stays up top so
     /// the user can flip back to "All my groups".
-    private var groupEmptyView: some View {
+    private func filterEmptyView(title: String, subtitle: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "flag.slash")
                 .font(.system(size: 34, weight: .medium))
                 .foregroundStyle(Color.sticksMuted)
-            Text("No rounds in this group yet.")
+            Text(title)
                 .font(SticksFont.display(22))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(Color.sticksInk)
-            Text("Start one with + New round, or switch\nback to All my groups up top.")
+            Text(subtitle)
                 .font(SticksFont.sans(14))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(Color.sticksMuted)
@@ -227,7 +255,7 @@ struct MatchListView: View {
                 .foregroundStyle(Color.sticksInk)
                 .padding(.horizontal, 40)
             Button {
-                Task { await viewModel.load(session: session) }
+                Task { await viewModel.load(session: session, group: groupFilter.groupQueryValue) }
             } label: {
                 Text("Try Again")
                     .font(SticksFont.sans(15, weight: .semibold))
@@ -269,6 +297,7 @@ private struct MatchCardButtonStyle: ButtonStyle {
 #Preview {
     MatchListView(
         user: User(id: "1", username: "tj", displayName: "Tj"),
-        session: SessionStore()
+        session: SessionStore(),
+        tabSelection: .constant(.home)
     )
 }

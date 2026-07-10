@@ -33,7 +33,7 @@ struct MainTabView: View {
 
     var body: some View {
         ZStack {
-            MatchListView(user: user, session: session)
+            MatchListView(user: user, session: session, tabSelection: $selection)
                 .opacity(selection == .home ? 1 : 0)
                 .allowsHitTesting(selection == .home)
                 .accessibilityHidden(selection != .home)
@@ -82,6 +82,12 @@ struct MainTabView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .sticksGroupsDidChange)) { _ in
             Task { await GroupFilterStore.shared.load(session: session) }
+        }
+        // Slice 36: a round created from the match-detail header (or any
+        // screen without a tab binding) still lands on Home, which owns
+        // the push-to-new-match flow.
+        .onReceive(NotificationCenter.default.publisher(for: .sticksOpenMatch)) { _ in
+            selection = .home
         }
     }
 }
