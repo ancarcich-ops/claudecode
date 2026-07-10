@@ -228,11 +228,17 @@ bufferMin }] }` (your own live links). POST (own round only) body
 ### POST /matches   (start a round)
 Body: `{ "courseName" (must match the catalog), "scheduledAt" (ISO,
 default now), "holes" (9|18), "startingHole" (1|10, 10 only for 9),
-"scoringMode" ("NET"|"GROSS"|"CUSTOM"), "players": [{ "displayName",
-"handicap", "userId"? }] (1–8), "sideGames": [kinds]?, "groupId"? }`
+"scoringMode" ("NET"|"GROSS"|"CUSTOM"),
+"format" ("INDIVIDUAL"|"SCRAMBLE"|"BOTH", default INDIVIDUAL),
+"players": [{ "displayName", "handicap", "userId"?, "team"? }] (1–8),
+"sideGames": [kinds]?, "groupId"? }`
 200: `{ "match": { "id" } }` — open the new match's detail.
 400/403 `{ "error" }` — show verbatim. Pars resolve server-side.
-INDIVIDUAL format only; scramble + tournament rounds stay on the web.
+Format: **INDIVIDUAL** = all-vs-all. **SCRAMBLE** = one ball per team;
+send each player a `team` (0|1), both teams non-empty. **BOTH** =
+individual play *plus* a team-vs-team match (seeded to Best Ball); also
+send `team` per player. `team` is ignored for INDIVIDUAL. Advanced
+scramble-handicap and team-rule tuning stays on the web.
 
 ### PATCH /matches/:id   (edit a round before it starts)
 Creator only, and only while UPCOMING with NO scores logged (400

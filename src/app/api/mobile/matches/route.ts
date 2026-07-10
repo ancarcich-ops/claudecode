@@ -156,11 +156,15 @@ export async function GET(req: Request) {
 //   "holes": 9 | 18,                  // default 18
 //   "startingHole": 1 | 10,           // 10 only valid for 9-hole rounds
 //   "scoringMode": "NET"|"GROSS"|"CUSTOM",   // default NET
-//   "players": [{ "displayName", "handicap", "userId"? }],  // >= 1
+//   "format": "INDIVIDUAL"|"SCRAMBLE"|"BOTH", // default INDIVIDUAL
+//   "players": [{ "displayName", "handicap", "userId"?, "team"? }], // >=1
+//                                     // team 0|1 required for SCRAMBLE/BOTH
 //   "sideGames": ["SKINS", ...]?,     // recognized kinds; NASSAU needs 18
 //   "groupId": "..."?                 // must be a group the caller is in
 // }
-// INDIVIDUAL format only (scramble/tournament rounds stay on the web).
+// SCRAMBLE = one ball per team; BOTH = individual play + a team-vs-team
+// match (default Best Ball). Advanced scramble-handicap / team-rule
+// tuning stays on the web.
 // Mirrors the web createMatchAction's validations; pars resolve
 // server-side: catalog preset -> course master pars -> default layout.
 // 200: { "match": { "id" } }   400/403: { "error": "..." }
@@ -174,6 +178,7 @@ export async function POST(req: Request) {
     holes?: unknown;
     startingHole?: unknown;
     scoringMode?: unknown;
+    format?: unknown;
     players?: unknown;
     sideGames?: unknown;
     groupId?: unknown;
@@ -206,6 +211,21 @@ export async function POST(req: Request) {
     scoringModeRaw === "GROSS" || scoringModeRaw === "CUSTOM"
       ? scoringModeRaw
       : "NET";
+  // Game type / format. Mirrors the web: "SCRAMBLE" = one ball per team
+  // (format stored as SCRAMBLE, team on each player). "BOTH" = everyone
+  // plays their own ball AND a team-vs-team match runs on top -- stored
+  // as INDIVIDUAL format + a TEAM_VS_TEAM side game whose config holds
+  // the teams. "INDIVIDUAL" = all-vs-all.
+  const formatRaw = String(body.format ?? "INDIVIDUAL").toUpperCase();
+  const uiFormat: "INDIVIDUAL" | "SCRAMBLE" | "BOTH" =
+    formatRaw === "SCRAMBLE"
+      ? "SCRAMBLE"
+      : formatRaw === "BOTH"
+        ? "BOTH"
+        : "INDIVIDUAL";
+  const dbFormat: "INDIVIDUAL" | "SCRAMBLE" =
+    uiFormat === "SCRAMBLE" ? "SCRAMBLE" : "INDIVIDUAL";
+  const usesTeams = uiFormat === "SCRAMBLE" || uiFormat === "BOTH";
   const scheduledAt = body.scheduledAt
     ? new Date(String(body.scheduledAt))
     : new Date();
@@ -227,6 +247,8 @@ export async function POST(req: Request) {
       teeName: String((p as { teeName?: unknown })?.teeName ?? "").trim() || null,
       teeGender:
         String((p as { teeGender?: unknown })?.teeGender ?? "").trim() || null,
+      // 0 = Team A, 1 = Team B. Only honored when the format uses teams.
+      team: (Number((p as { team?: unknown })?.team) === 1 ? 1 : 0) as 0 | 1,
     }))
     .filter((p) => p.displayName.length > 0);
   if (drafts.length < 1) {
@@ -243,6 +265,24 @@ export async function POST(req: Request) {
       { error: "Handicaps must be numbers" },
       { status: 400 },
     );
+  }
+  // Team formats need both sides populated, or the odds engine and team
+  // scoring break (one team with no players).
+  if (usesTeams) {
+    if (drafts.length < 2) {
+      return NextResponse.json(
+        { error: "Team formats need at least 2 players" },
+        { status: 400 },
+      );
+    }
+    const teamA = drafts.filter((d) => d.team === 0).length;
+    const teamB = drafts.filter((d) => d.team === 1).length;
+    if (teamA === 0 || teamB === 0) {
+      return NextResponse.json(
+        { error: "Each team needs at least one player" },
+        { status: 400 },
+      );
+    }
   }
   // Each linked Sticks account can only fill one seat.
   const linkedSet = new Set<string>();
@@ -266,7 +306,10 @@ export async function POST(req: Request) {
       (Array.isArray(body.sideGames) ? body.sideGames : [])
         .map((k) => String(k))
         .filter(isSideGameKind)
-        .filter((k) => !(k === "NASSAU" && holes !== 18)),
+        .filter((k) => !(k === "NASSAU" && holes !== 18))
+        // TEAM_VS_TEAM is driven by the "Both" format below, not picked
+        // as a manual side game.
+        .filter((k) => k !== "TEAM_VS_TEAM"),
     ),
   );
 
@@ -365,7 +408,11 @@ export async function POST(req: Request) {
       startingHole,
       parData: JSON.stringify(pars),
       scoringMode,
-      format: "INDIVIDUAL",
+      format: dbFormat,
+      scrambleConfig:
+        dbFormat === "SCRAMBLE"
+          ? JSON.stringify({ handicapMode: "GROSS" })
+          : null,
       createdById: user.id,
       groupId,
       players: {
@@ -381,7 +428,9 @@ export async function POST(req: Request) {
             handicap: p.handicap,
             seat: i,
             userId: linked?.id,
-            team: null,
+            // Team lives on the player only for SCRAMBLE (one ball per
+            // team). For "Both" the teams live in the TEAM_VS_TEAM config.
+            team: dbFormat === "SCRAMBLE" ? p.team : null,
             teeName: tee?.teeName ?? null,
             courseRating: tee?.courseRating ?? null,
             slope: tee?.slope ?? null,
@@ -390,8 +439,27 @@ export async function POST(req: Request) {
       },
       sideGames: { create: sideGameKinds.map((kind) => ({ kind })) },
     },
-    select: { id: true },
+    select: { id: true, players: { select: { id: true, seat: true } } },
   });
+
+  // "Both" = individual play + a team-vs-team match. Now that the players
+  // exist we can build the TEAM_VS_TEAM config from their real ids and
+  // seed a default Best Ball rule (finer rule/stake tuning stays on web).
+  if (uiFormat === "BOTH") {
+    const idBySeat = new Map(match.players.map((p) => [p.seat, p.id]));
+    const teams: { 0: string[]; 1: string[] } = { 0: [], 1: [] };
+    drafts.forEach((d, i) => {
+      const pid = idBySeat.get(i);
+      if (pid) teams[d.team].push(pid);
+    });
+    await prisma.sideGame.create({
+      data: {
+        matchId: match.id,
+        kind: "TEAM_VS_TEAM",
+        config: JSON.stringify({ teams, rules: [{ rule: "BEST_BALL" }] }),
+      },
+    });
+  }
 
   return NextResponse.json({ match: { id: match.id } });
 }
