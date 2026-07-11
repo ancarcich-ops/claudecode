@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "./db";
+import { writeSideGameEvent } from "./sideGameEvents";
 import { randomBytes } from "node:crypto";
 import {
   clearSession,
@@ -1633,82 +1634,7 @@ export async function recordSideGameEventAction(formData: FormData) {
     throw new Error("Only players in this match can record events");
   }
 
-  if (bbb) {
-    // Single-award kinds: delete any existing rows for this (game, hole, kind)
-    // and create the new one if a player was picked.
-    await prisma.sideGameEvent.deleteMany({
-      where: { sideGameId, hole, kind },
-    });
-    if (matchPlayerId) {
-      await prisma.sideGameEvent.create({
-        data: { sideGameId, hole, kind, matchPlayerId },
-      });
-    }
-  } else if (snake) {
-    // Multi-player toggle: each (hole, player) is independent. Submitting
-    // without a player is a no-op (we wouldn't know who to toggle).
-    if (!matchPlayerId) throw new Error("Player required for snake event");
-    const existing = await prisma.sideGameEvent.findFirst({
-      where: { sideGameId, hole, kind, matchPlayerId },
-      select: { id: true },
-    });
-    if (existing) {
-      await prisma.sideGameEvent.delete({ where: { id: existing.id } });
-    } else {
-      await prisma.sideGameEvent.create({
-        data: { sideGameId, hole, kind, matchPlayerId },
-      });
-    }
-  } else if (wolf) {
-    // Wolf: PARTNER and LONE_WOLF are mutually exclusive per hole (only one
-    // Wolf choice can be active). HOLE_WINNER is its own single-award kind.
-    if (kind === "PARTNER" || kind === "LONE_WOLF" || kind === "PRE_LONE_WOLF") {
-      await prisma.sideGameEvent.deleteMany({
-        where: {
-          sideGameId,
-          hole,
-          kind: { in: ["PARTNER", "LONE_WOLF", "PRE_LONE_WOLF"] },
-        },
-      });
-      if (matchPlayerId) {
-        await prisma.sideGameEvent.create({
-          data: { sideGameId, hole, kind, matchPlayerId },
-        });
-      }
-    } else if (kind === "HOLE_WINNER" || kind === "PUSH") {
-      // Wolf hole outcome: one of WIN (HOLE_WINNER) / PUSH / nothing.
-      // Mutex across both kinds -- setting either clears both first.
-      await prisma.sideGameEvent.deleteMany({
-        where: { sideGameId, hole, kind: { in: ["HOLE_WINNER", "PUSH"] } },
-      });
-      if (kind === "HOLE_WINNER" && matchPlayerId) {
-        await prisma.sideGameEvent.create({
-          data: { sideGameId, hole, kind, matchPlayerId },
-        });
-      } else if (kind === "PUSH" && matchPlayerId) {
-        // PUSH carries no real matchPlayerId; the caller uses a non-empty
-        // marker (e.g. "push") to flag "create" vs "" to flag "clear".
-        await prisma.sideGameEvent.create({
-          data: { sideGameId, hole, kind },
-        });
-      }
-    }
-  } else if (matchEvt) {
-    // Match PRESS: pair-wide toggle, one event per hole. matchPlayerId
-    // is unused for press semantics; the press affects the entire pair.
-    const existing = await prisma.sideGameEvent.findFirst({
-      where: { sideGameId, hole, kind },
-      select: { id: true },
-    });
-    if (existing) {
-      await prisma.sideGameEvent.delete({ where: { id: existing.id } });
-    } else {
-      await prisma.sideGameEvent.create({
-        data: { sideGameId, hole, kind },
-      });
-    }
-  }
-
+  await writeSideGameEvent({ sideGameId, hole, kind, matchPlayerId });
   revalidatePath(`/matches/${sg.matchId}`);
 }
 

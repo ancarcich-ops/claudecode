@@ -90,6 +90,24 @@ export async function GET(
   // Side-game leaderboards -- identical assembly to the web match page.
   const sideGames = computeSideGameSectionsForMatch(match, pars);
 
+  // Raw per-hole events + config for the event-driven games, so the
+  // native editors can render current toggle state (who 3-putted, who
+  // got bingo/bango/bongo, the wolf's pick, presses) and Wolf/Skins/etc.
+  // settings. Events are recorded via POST /matches/:id/side-game-event.
+  const sideGameEvents = (match.sideGames ?? []).flatMap((sg) =>
+    (sg.events ?? []).map((e) => ({
+      gameKind: sg.kind,
+      hole: e.hole,
+      kind: e.kind,
+      matchPlayerId: e.matchPlayerId ?? null,
+    })),
+  );
+  const sideGameConfigs: Record<string, string> = Object.fromEntries(
+    (match.sideGames ?? [])
+      .filter((sg) => sg.config)
+      .map((sg) => [sg.kind, sg.config as string]),
+  );
+
   const [holeGeo, hazards, course] = await Promise.all([
     getCourseHolesByName(match.courseName),
     getCourseHazardsByName(match.courseName),
@@ -171,6 +189,12 @@ export async function GET(
     //    [{ playerId, player, value, numeric, isLeader }] }] }]
     // Empty array when the match has no side games.
     sideGames,
+    // Raw events for the event-driven editors: [{ gameKind, hole, kind,
+    // matchPlayerId|null }]. gameKind is SNAKE|BBB|WOLF|MATCH.
+    sideGameEvents,
+    // Per-game config JSON strings, keyed by game kind (WOLF rotation,
+    // SKINS carryover, TARGETS, etc.); absent kinds have no config.
+    sideGameConfigs,
   });
 }
 
