@@ -96,13 +96,19 @@ aren't reproducible natively).
              "label": "Bunker", "lat": …, "lng": … } ]
   },
   "wind": { "speedMph": 8, "fromDeg": 220 },  // null when unavailable
-  "odds": {                          // win probability per matchPlayerId, 0..1
-    "probabilities": { "<matchPlayerId>": 0.67 },
-    "series": [                       // hole-bucketed history for the odds graph;
+  "odds": {                          // the live Market
+    "probabilities": { "<matchPlayerId>": 0.67 },   // blended win %, 0..1
+    "series": [                       // hole-bucketed history for the graph;
                                       //   null until the round has a score
       { "hole": 1, "<matchPlayerId>": 0.5, "<matchPlayerId2>": 0.5 },
       { "hole": 2, "<matchPlayerId>": 0.62, "<matchPlayerId2>": 0.38 }
-    ]
+    ],
+    "weights": { "model": 0.29, "crowd": 0.0, "live": 0.71 }, // blend, sums ~1
+    "wagerCounts": { "<matchPlayerId>": 3 },        // crowd "calls" per player
+    "projNet": { "<matchPlayerId>": 53.2 },         // projected net (null early)
+    "totalCalls": 5,
+    "myCall": "<matchPlayerId>" ,      // the caller's current call, or null
+    "open": true                       // false once the match is COMPLETED
   },
   "sideGames": [                     // [] when the match has none
     { "kind": "SKINS"|"STABLEFORD"|"NASSAU"|"WOLF"|"SNAKE"|"BBB"|
@@ -259,6 +265,17 @@ other player's scores are untouched. 200 `{ "ok": true, "removed": N }`;
 403 if you're not a player in the round. Use this for "remove my score"
 on rounds you didn't create; use DELETE /matches/:id (creator only)
 to delete the whole round.
+
+### POST /matches/:id/call   (place a crowd "call")
+The Market's crowd bet: pick who you think wins. One call per user per
+match. Body `{ "pickedPlayerId": "<matchPlayerId>" }` to call that
+player, or `{ "pickedPlayerId": null }` to withdraw. 200:
+`{ "ok": true, "myCall": "<matchPlayerId>"|null, "wagerCounts":
+{ "<matchPlayerId>": n }, "totalCalls": n }` — apply these immediately
+(no full refetch needed). 400 when the market is closed (match
+COMPLETED) or the player isn't in the round. Mirrors the web
+"Place your call" / placeWagerAction; re-prices the crowd component so
+the odds graph moves.
 
 ### POST /matches/:id/pars   (edit per-hole pars)
 Creator only; allowed at ANY status (fixing a wrong par mid-round is

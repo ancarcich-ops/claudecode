@@ -56,6 +56,24 @@ export async function GET(
     }),
   );
 
+  // Market extras for the "Live odds" view -- the model/crowd/live blend
+  // weights, per-player call (wager) counts + projected net, the caller's
+  // own call, and the total call count. Everything the web Market card
+  // shows. netScores are keyed the same way probabilities are (team-N
+  // for scramble), so resolve per player the same way.
+  const oddsKeyFor = (p: (typeof match.players)[number]) =>
+    isScramble && (p.team === 0 || p.team === 1) ? `team-${p.team}` : p.id;
+  const wagerCounts = Object.fromEntries(
+    match.players.map((p) => [p.id, p._count?.wagers ?? 0]),
+  );
+  const projNet = Object.fromEntries(
+    match.players.map((p) => [p.id, odds.meta.netScores[oddsKeyFor(p)] ?? null]),
+  );
+  const myWager = await prisma.wager.findUnique({
+    where: { matchId_userId: { matchId: match.id, userId: user.id } },
+    select: { pickedPlayerId: true },
+  });
+
   // Hole-bucketed win-probability history for the odds graph -- same
   // shape the web match page feeds its OddsChart.
   const oddsSeries = buildOddsSeries(
@@ -135,7 +153,20 @@ export async function GET(
     // `series` is the hole-bucketed history for the odds graph: one row
     // per holes-played bucket, { hole, "<matchPlayerId>": prob }. null
     // until the round has a score (pre-round has no hole axis yet).
-    odds: { probabilities, series: oddsSeries.holeSeries },
+    odds: {
+      probabilities,
+      series: oddsSeries.holeSeries,
+      // Blend weights shown as "model 29% · crowd 0% · live 71%".
+      weights: odds.weights,
+      // Per matchPlayerId: how many crowd calls, and the projected net.
+      wagerCounts,
+      projNet,
+      totalCalls: odds.meta.totalWagers,
+      // The caller's own current call (pickedPlayerId), or null.
+      myCall: myWager?.pickedPlayerId ?? null,
+      // The market closes when the match is COMPLETED.
+      open: match.status !== "COMPLETED",
+    },
     // [{ kind, leaderboards: [{ key, kind, title, subtitle?, rows:
     //    [{ playerId, player, value, numeric, isLeader }] }] }]
     // Empty array when the match has no side games.
