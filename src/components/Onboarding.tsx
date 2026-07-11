@@ -328,8 +328,8 @@ function WelcomeStep() {
       <div className="mt-6 space-y-2">
         <FeatureRow
           icon={<LiveDot />}
-          title="Live odds"
-          body="Match win probabilities reprice as your group picks sides and as scores come in during the round."
+          title="A live betting market"
+          body="Every player's win odds blend the model, the crowd, and live scores — repricing on every shot. Tap Place your call to back who you think takes it."
         />
         <FeatureRow
           icon={<GamesIcon />}
@@ -343,8 +343,8 @@ function WelcomeStep() {
         />
         <FeatureRow
           icon={<ChartIcon />}
-          title="Personal stats"
-          body="Auto-tracked Sticks index, performance by par 3 / 4 / 5, birdie-through-double distribution, and how you stack up vs the handicap you target."
+          title="Course-fair handicaps & stats"
+          body="A true WHS index with course rating & slope for every tee, so net scoring is fair anywhere you play. Plus par 3/4/5 splits, your birdie-through-double shape, and progress toward your target index."
         />
         <FeatureRow
           icon={<GpsIcon />}
@@ -355,6 +355,11 @@ function WelcomeStep() {
           icon={<FlyoverIcon />}
           title="3D course preview + flyover"
           body="Photorealistic 3D mesh of every hole — see real terrain, tree height, slopes, and bunker shapes. Camera flies tee → fairway → green so you can pre-round the line."
+        />
+        <FeatureRow
+          icon={<ShareIcon />}
+          title="Share any round"
+          body="Send a live link anyone can open — no account needed. They follow your pace, projected finish, and (if you allow it) live scores. Stop it any time."
         />
       </div>
     </div>
@@ -371,10 +376,12 @@ function FeatureRow({
   body: string;
 }) {
   return (
-    <div className="flex items-start gap-3 rounded-md border border-border bg-panel2 px-3 py-2.5 text-left">
-      <span className="text-accent shrink-0 mt-0.5">{icon}</span>
-      <div>
-        <div className="text-sm font-medium text-ink leading-tight">
+    <div className="flex items-start gap-3 rounded-lg border border-border bg-panel2 px-3 py-3 text-left">
+      <span className="text-accent shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-lg bg-accent/10">
+        {icon}
+      </span>
+      <div className="min-w-0">
+        <div className="text-sm font-semibold text-ink leading-tight">
           {title}
         </div>
         <div className="text-[11px] text-mute mt-0.5 leading-snug">
@@ -694,7 +701,7 @@ function CardGuideStep() {
             </span>
           }
           label="Win probability"
-          body="Live odds based on scores + group calls. The arrow shows the last move (▲ rising, ▼ falling, • flat)."
+          body="The live market — a blend of the model, the crowd's calls, and live scores. The arrow shows the last move (▲ rising, ▼ falling, • flat)."
         />
 
         <Legend
@@ -847,7 +854,8 @@ function LaunchStep({
       </h2>
       <p className="text-sm text-mute mt-3 max-w-sm mx-auto leading-relaxed">
         Post your tee time, pick the players, and the round starts.
-        Score during the round; everyone watching sees the line move.
+        Score as you play — everyone watching sees the line move, and you
+        can share a live link with anyone, no account needed.
       </p>
 
       <div className="mt-6 flex flex-col gap-2">
@@ -970,6 +978,28 @@ function ChartIcon() {
       <line x1="18" y1="20" x2="18" y2="10" />
       <line x1="12" y1="20" x2="12" y2="4" />
       <line x1="6" y1="20" x2="6" y2="14" />
+    </svg>
+  );
+}
+
+function ShareIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <line x1="8.6" y1="13.5" x2="15.4" y2="17.5" />
+      <line x1="15.4" y1="6.5" x2="8.6" y2="10.5" />
     </svg>
   );
 }
