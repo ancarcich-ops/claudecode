@@ -51,9 +51,14 @@ Call on app launch to validate the stored token.
   "startingHole", "scoringMode" ("GROSS"|"NET"|"CUSTOM"), "format",
   "pars": [4,4,3,…],             // exactly `holes` entries
   "myMatchPlayerId": "…"|null,
+  "probabilities": { "<matchPlayerId>": 0.74 },   // blended win %, {} solo/scramble
+  "tickerItems": ["SEUSS.MD 74%","LEADER -1 THRU 9","5 WAGERS"],
   "players": [ { "id", "userId", "displayName", "seat", "handicap",
     "avatarUrl"|null, "avatarSeed"|null, "avatarVariant"|null,
     "scoresByHole": { "1": 5 } } ] } ] }`
+`tickerItems` is the scrolling home-card marquee (live odds + leader +
+wagers); render it as a right-to-left scrolling strip **only on LIVE /
+UPCOMING** cards (empty otherwise).
 Most recent first, max 50. Carries pars + everyone's scores so home
 match cards can render the colored hole dot-row, to-par, and standings
 context without a per-match fetch. Avatar rule: render `avatarUrl`

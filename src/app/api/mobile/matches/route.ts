@@ -20,6 +20,7 @@ import { COURSE_PRESETS } from "@/lib/courses";
 import { isSideGameKind } from "@/lib/sideGames";
 import { getCourseTeeSet } from "@/lib/courseTees";
 import { visibleMatchWhere, type GroupFilter } from "@/lib/groups";
+import { buildMatchTickerItems } from "@/lib/matchTicker";
 
 export const dynamic = "force-dynamic";
 
@@ -116,6 +117,32 @@ export async function GET(req: Request) {
           // Odds are decoration on a list card -- never fail the feed.
         }
       }
+
+      // Scrolling header ticker items for LIVE/UPCOMING cards (the
+      // native marquee renders these verbatim).
+      const scoringModeForTicker: ScoringMode =
+        m.scoringMode === "GROSS"
+          ? "GROSS"
+          : m.scoringMode === "CUSTOM"
+            ? "CUSTOM"
+            : "NET";
+      const tickerItems = buildMatchTickerItems({
+        players: m.players.map((p) => ({
+          name: p.displayName,
+          winProbability: probabilities[p.id] ?? 0,
+          handicap: p.handicap,
+          scoresByHole: Object.fromEntries(
+            p.scores.map((s) => [s.hole, s.strokes]),
+          ),
+        })),
+        status: m.status as "UPCOMING" | "IN_PROGRESS" | "COMPLETED",
+        holes: m.holes,
+        startingHole: m.startingHole ?? 1,
+        pars,
+        scoringMode: scoringModeForTicker,
+        totalWagers: m.players.reduce((sum, p) => sum + p._count.wagers, 0),
+      });
+
       return {
       id: m.id,
       courseName: m.courseName,
@@ -129,6 +156,8 @@ export async function GET(req: Request) {
       groupId: m.groupId,
       pars,
       probabilities,
+      // Scrolling ticker strings; render only on LIVE/UPCOMING cards.
+      tickerItems,
       myMatchPlayerId:
         m.players.find((p) => p.userId === user.id)?.id ?? null,
       players: m.players.map((p) => ({
