@@ -256,12 +256,12 @@ export default async function ShareRoundPage({
                 </p>
               )}
               <p className="text-[11px] text-faint mt-2.5 leading-snug">
-                By signing up, you agree to receive automated SMS updates
-                about this golf round from Sticks. Message frequency
-                varies (typically 2–3 messages per round). Message &amp;
-                data rates may apply. Reply STOP to opt out at any time,
-                or HELP for help. Consent is not a condition of any
-                purchase.
+                By signing up, you agree to receive recurring automated
+                SMS updates about this golf round from Sticks. Message
+                frequency varies (typically 2–3 messages per round).
+                Message &amp; data rates may apply. Reply STOP to opt out
+                at any time, or HELP for help. Consent is not a condition
+                of any purchase.
               </p>
             </>
           )}
