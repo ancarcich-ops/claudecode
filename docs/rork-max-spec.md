@@ -279,6 +279,26 @@ other player's scores are untouched. 200 `{ "ok": true, "removed": N }`;
 on rounds you didn't create; use DELETE /matches/:id (creator only)
 to delete the whole round.
 
+### POST /matches/:id/side-game-event   (event-driven games)
+Record/toggle a per-hole event for Snake / BBB / Wolf / Match (the
+games that need tap-in events, unlike score-derived Skins/Stableford/
+Nassau/Sixes). Body `{ "kind": "…", "hole": 7, "matchPlayerId"?: "…" }`:
+- **SNAKE** `kind:"THREE_PUTT"`, matchPlayerId = who 3-putted (toggles).
+- **BBB** `kind:"BINGO"|"BANGO"|"BONGO"`, matchPlayerId = who (single
+  award per hole; omit matchPlayerId to clear).
+- **WOLF** `kind:"PARTNER"|"LONE_WOLF"|"PRE_LONE_WOLF"` (mutex per hole),
+  `"HOLE_WINNER"` (matchPlayerId) | `"PUSH"` (send any marker) (mutex).
+- **MATCH** `kind:"PRESS"` (pair-wide toggle; no matchPlayerId).
+The game must already be enabled (POST /side-games). Creator or any
+seated player. 200 `{ "ok": true }`; 400 if the game isn't on / bad
+kind. Re-fetch the match to see the updated leaderboard + events.
+
+`GET /matches/:id` also returns, for these editors:
+- `sideGameEvents: [{ gameKind, hole, kind, matchPlayerId|null }]` — the
+  current events, so an editor can render toggle state.
+- `sideGameConfigs: { "<gameKind>": "<config JSON string>" }` — per-game
+  config (Wolf rotation, Skins carryover, Targets, …); absent = none.
+
 ### POST /matches/:id/call   (place a crowd "call")
 The Market's crowd bet: pick who you think wins. One call per user per
 match. Body `{ "pickedPlayerId": "<matchPlayerId>" }` to call that
