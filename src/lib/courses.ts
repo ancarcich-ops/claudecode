@@ -1125,6 +1125,11 @@ export const COURSE_PRESETS: CoursePreset[] = [
   { id: "poipu-bay", name: "Poipu Bay Golf Course", city: "Koloa, HI", region: "HI", access: "resort", holes: 18, pars: [4, 5, 3, 4, 4, 5, 3, 4, 4, 4, 3, 4, 4, 5, 4, 4, 3, 5] },
   { id: "kauai-lagoons", name: "Ocean Course at Hokuala (Kauai Lagoons)", city: "Lihue, HI", region: "HI", access: "public", holes: 18, pars: p(18, 72) },
   { id: "ko-olina", name: "Ko Olina Golf Club", city: "Kapolei, HI", region: "HI", access: "resort", holes: 18, pars: [4, 4, 4, 3, 5, 4, 4, 3, 4, 4, 4, 3, 5, 5, 4, 3, 4, 4] },
+  // Real pars + tee ratings from the course scorecard (Apr 2019):
+  // front 36 + back 36 = 72; Gold 74.3/136, Black 71.9/132,
+  // White 69.4/125, Red (ladies) 72.4/127. Tee data lives in
+  // scripts/course-ratings.csv.
+  { id: "kapolei-golf-club", name: "Kapolei Golf Club", city: "Kapolei, HI", region: "HI", access: "public", holes: 18, pars: [5, 4, 4, 4, 3, 4, 5, 3, 4, 4, 4, 3, 4, 5, 4, 3, 5, 4] },
   { id: "turtle-bay-palmer", name: "Turtle Bay Resort - Palmer Course", city: "Kahuku, HI", region: "HI", access: "resort", holes: 18, pars: p(18, 72) },
   { id: "turtle-bay-fazio", name: "Turtle Bay Resort - Fazio Course", city: "Kahuku, HI", region: "HI", access: "resort", holes: 18, pars: p(18, 71) },
 
