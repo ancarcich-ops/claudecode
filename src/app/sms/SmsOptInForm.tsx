@@ -60,11 +60,14 @@ export default function SmsOptInForm() {
       </div>
 
       <label className="flex items-start gap-3 cursor-pointer">
-        {/* Unchecked by default -- express, affirmative opt-in. */}
+        {/* Unchecked by default and `required` -- the browser blocks
+            submission until the user actively checks it (express,
+            affirmative opt-in). Server-side validation backs this up. */}
         <input
           type="checkbox"
           name="consent"
           value="on"
+          required
           className="mt-1 h-4 w-4 shrink-0 accent-accent"
         />
         <span className="text-[13px] leading-relaxed text-mute">
