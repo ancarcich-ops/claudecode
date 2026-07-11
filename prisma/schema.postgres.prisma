@@ -467,3 +467,19 @@ model RoundShareSubscriber {
 
   @@unique([roundShareId, phone])
 }
+
+// General SMS opt-in captured on the public, always-live /sms page --
+// a stable consent form (for toll-free verification and a standing
+// consent record). Per-share RECIPIENT consent lives on
+// RoundShareSubscriber; this is the general marketing/transactional
+// opt-in the carrier reviewer can visit any time.
+model SmsConsent {
+  id          String   @id @default(cuid())
+  phone       String // E.164
+  consentText String // the exact language shown at opt-in time
+  source      String   @default("web-opt-in")
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([phone])
+}

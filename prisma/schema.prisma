@@ -464,3 +464,16 @@ model RoundShareSubscriber {
 
   @@unique([roundShareId, phone])
 }
+
+// General SMS opt-in captured on the public, always-live /sms page.
+// See the postgres schema for the full note.
+model SmsConsent {
+  id          String   @id @default(cuid())
+  phone       String
+  consentText String
+  source      String   @default("web-opt-in")
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([phone])
+}
