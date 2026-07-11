@@ -40,6 +40,14 @@ Body: `{ "identifier": "<username or email>", "password": "..." }`
 Store the token in the Keychain. It's long-lived (1 year); no refresh
 flow. A 401 from any endpoint means signed out → return to login.
 
+### POST /auth/signup
+Body: `{ "username", "email", "password", "displayName"? }`
+Rules: username 2–20 chars (letters, numbers, `. _ -`); valid email;
+password ≥ 8 chars. 200: `{ "token", "user": { "id","username",
+"displayName" } }` — same shape as login, so store the token and drop
+straight in. 400: `{ "error" }` (validation, or "That username is
+taken." / "An account with that email already exists.") — show verbatim.
+
 ### GET /me
 200: `{ "user": { "id", "username", "displayName" } }`
 Call on app launch to validate the stored token.
