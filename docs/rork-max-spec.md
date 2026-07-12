@@ -310,6 +310,21 @@ COMPLETED) or the player isn't in the round. Mirrors the web
 "Place your call" / placeWagerAction; re-prices the crowd component so
 the odds graph moves.
 
+### POST /matches/:id/side-game-config   (game settings)
+Set a side game's config (Wolf rotation/push rule, Targets stat+target,
+Skins carryover, Match press/stakes, Sixes stake, Team-vs-Team rules).
+**Creator only.** Body `{ "kind": "WOLF"|"TARGETS"|"SKINS"|"MATCH"|
+"SIXES"|"TEAM_VS_TEAM", "config": { … } }`. Config shapes:
+- **WOLF** `{ rotation?: [matchPlayerId…], pushRule?: "CARRY"|"NO_CARRY" }`
+- **TARGETS** `{ stat, target (number), ante? }` (stat + target required)
+- **SKINS** `{ pushRule?: "CARRYOVER"|"NO_CARRY" }`
+- **MATCH** `{ strokesMode, manualStrokes?, autoPress?, autoPressThreshold?, stake? }`
+- **SIXES** `{ stake? }`
+- **TEAM_VS_TEAM** `{ teams:{0:[…],1:[…]}, rules:[{rule,stake?,vegas?}], teamNames? }`
+The game must be enabled first; config is sanitized server-side. 200
+`{ ok:true, kind, config }`; 400 invalid/not-enabled; 403 non-creator.
+`GET /matches/:id` returns current config in `sideGameConfigs`.
+
 ### POST /matches/:id/pars   (edit per-hole pars)
 Creator only; allowed at ANY status (fixing a wrong par mid-round is
 legitimate). Body: `{ "pars": [4,5,3, …] }` — exactly `holes` entries,
