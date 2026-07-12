@@ -21,12 +21,28 @@ export function appUrl(): string {
   return raw.replace(/\/+$/, "");
 }
 
-export async function sendEmail(opts: {
+// Detailed send result -- lets callers (and the diagnostics route) see
+// exactly why an email didn't go out: no key configured (skipped), a
+// Resend API rejection (status + body, e.g. "domain not verified" or a
+// from-address that isn't allowed), or a network error.
+export type EmailResult = {
+  ok: boolean;
+  // True when we deliberately didn't attempt a send (no API key). Not
+  // an error -- the app degrades gracefully -- but nothing was sent.
+  skipped?: boolean;
+  status?: number;
+  error?: string;
+  // The From we used, so a diagnostic can flag the onboarding fallback
+  // (which only delivers to the Resend account owner).
+  from: string;
+};
+
+export async function sendEmailResult(opts: {
   to: string;
   subject: string;
   html: string;
   text: string;
-}): Promise<boolean> {
+}): Promise<EmailResult> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.RESEND_FROM || "Sticks <onboarding@resend.dev>";
   if (!apiKey) {
@@ -35,7 +51,7 @@ export async function sendEmail(opts: {
     console.warn(
       `[email] RESEND_API_KEY unset -- would have sent "${opts.subject}" to ${opts.to}`,
     );
-    return false;
+    return { ok: false, skipped: true, from };
   }
   try {
     const res = await fetch(RESEND_ENDPOINT, {
@@ -55,13 +71,23 @@ export async function sendEmail(opts: {
     if (!res.ok) {
       const body = await res.text().catch(() => "");
       console.error(`[email] Resend ${res.status}: ${body}`);
-      return false;
+      return { ok: false, status: res.status, error: body, from };
     }
-    return true;
+    return { ok: true, status: res.status, from };
   } catch (err) {
-    console.error("[email] send failed:", (err as Error).message);
-    return false;
+    const error = (err as Error).message;
+    console.error("[email] send failed:", error);
+    return { ok: false, error, from };
   }
+}
+
+export async function sendEmail(opts: {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+}): Promise<boolean> {
+  return (await sendEmailResult(opts)).ok;
 }
 
 export function passwordResetEmail(resetUrl: string): {
