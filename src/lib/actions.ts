@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "./db";
+import { writeSideGameEvent } from "./sideGameEvents";
 import { randomBytes } from "node:crypto";
 import {
   clearSession,
@@ -13,6 +14,8 @@ import {
 import { hashPassword, verifyPassword, passwordError } from "./password";
 import { sendEmail, passwordResetEmail, appUrl } from "./email";
 import { recordOddsSnapshot } from "./match";
+import { checkRoundShares } from "./roundShare";
+import { rollupTournamentCompletion } from "./autoComplete";
 import { computeAndPersistMatchWinners } from "./matchWinners";
 import { defaultPars } from "./odds";
 import {
@@ -331,13 +334,17 @@ export async function createMatchAction(formData: FormData) {
   // only honoured server-side when format === SCRAMBLE. Anything not
   // 0 or 1 silently coerces to 0.
   const teamsRaw = formData.getAll("playerTeam").map((v) => Number(v));
+  // Tee played, for the WHS rating snapshot. Parallel hidden inputs
+  // ("Blue|M"). Empty = use the course default tee.
+  const teesRaw = formData.getAll("playerTee").map((v) => String(v));
 
-  const drafts: (PlayerDraft & { team: 0 | 1 })[] = names
+  const drafts: (PlayerDraft & { team: 0 | 1; tee: string | null })[] = names
     .map((name, i) => ({
       displayName: name,
       handicap: hcps[i],
       explicitUserId: explicitUserIds[i] || null,
       team: (teamsRaw[i] === 1 ? 1 : 0) as 0 | 1,
+      tee: teesRaw[i]?.trim() || null,
     }))
     .filter((p) => p.displayName.length > 0);
 
@@ -463,6 +470,29 @@ export async function createMatchAction(formData: FormData) {
   const userById = new Map(lookup.map((u) => [u.id, u]));
   const userByName = new Map(lookup.map((u) => [u.username.toLowerCase(), u]));
 
+  // Tee rating/slope snapshot per player, from the course tee set
+  // (fetched once). The form posts "Blue|M"; empty -> course default.
+  const { getCourseTeeSet } = await import("./courseTees");
+  const teeSet = await getCourseTeeSet(courseName);
+  const teeSnapshot = (raw: string | null) => {
+    if (teeSet.tees.length === 0) return null;
+    const [rawName, rawGender] = (raw ?? "").split("|");
+    const wanted = (rawName?.trim() || teeSet.defaultTeeName || "").toLowerCase();
+    const g = rawGender === "W" ? "W" : rawGender === "M" ? "M" : null;
+    const tee =
+      (g &&
+        teeSet.tees.find(
+          (t) => t.name.toLowerCase() === wanted && t.gender === g,
+        )) ||
+      teeSet.tees.find((t) => t.name.toLowerCase() === wanted && t.gender === "M") ||
+      teeSet.tees.find((t) => t.name.toLowerCase() === wanted) ||
+      teeSet.tees.find((t) => t.name === teeSet.defaultTeeName) ||
+      teeSet.tees[0];
+    return tee
+      ? { teeName: tee.name, courseRating: tee.rating, slope: tee.slope }
+      : null;
+  };
+
   // Tournament binding. When `tournamentId` is in the form, the new
   // match is round N of that tournament. roundNumber is either
   // supplied explicitly or auto-computed as max(existing) + 1. We
@@ -534,6 +564,7 @@ export async function createMatchAction(formData: FormData) {
             : undefined;
           const byName = userByName.get(p.displayName.toLowerCase());
           const linked = explicit ?? byName;
+          const tee = teeSnapshot(p.tee);
           return {
             displayName: p.displayName,
             handicap: p.handicap,
@@ -543,6 +574,9 @@ export async function createMatchAction(formData: FormData) {
             // keeps the DB clean + queries on individual matches don't
             // need to filter by team.
             team: format === "SCRAMBLE" ? p.team : null,
+            teeName: tee?.teeName ?? null,
+            courseRating: tee?.courseRating ?? null,
+            slope: tee?.slope ?? null,
           };
         }),
       },
@@ -1413,35 +1447,8 @@ export async function completeMatchAction(formData: FormData) {
   // to COMPLETED. This handles the multi-foursome model correctly: a
   // round with 4 foursomes only "counts" once everyone has signed off.
   if (completed.tournamentId) {
-    const tournament = await prisma.tournament.findUnique({
-      where: { id: completed.tournamentId },
-      select: {
-        roundsPlanned: true,
-        status: true,
-        matches: {
-          select: { status: true, roundNumber: true },
-        },
-      },
-    });
-    if (tournament && tournament.status !== "COMPLETED") {
-      const byRound = new Map<number, { total: number; done: number }>();
-      for (const m of tournament.matches) {
-        if (m.roundNumber == null) continue;
-        const cur = byRound.get(m.roundNumber) ?? { total: 0, done: 0 };
-        cur.total += 1;
-        if (m.status === "COMPLETED") cur.done += 1;
-        byRound.set(m.roundNumber, cur);
-      }
-      const fullyCompleteRounds = Array.from(byRound.values()).filter(
-        (r) => r.total > 0 && r.total === r.done,
-      ).length;
-      if (fullyCompleteRounds >= tournament.roundsPlanned) {
-        await prisma.tournament.update({
-          where: { id: completed.tournamentId },
-          data: { status: "COMPLETED", completedAt: new Date() },
-        });
-      }
-    }
+    // Shared with the auto-completion sweep (src/lib/autoComplete.ts).
+    await rollupTournamentCompletion(completed.tournamentId);
     revalidatePath(`/tournaments/${completed.tournamentId}`);
   }
 
@@ -1503,6 +1510,9 @@ export async function logScoreAction(formData: FormData) {
   }
 
   await recordOddsSnapshot(matchId);
+  // Share-my-round: milestone emails (front 9 / finish) ride the same
+  // score-write path. Errors must never break score logging.
+  await checkRoundShares(matchId).catch(() => {});
   revalidatePath(`/matches/${matchId}`);
   // The home feed's LIVE card reads the same per-hole score data, so
   // it needs to refresh too -- otherwise a score logged on the match
@@ -1624,82 +1634,7 @@ export async function recordSideGameEventAction(formData: FormData) {
     throw new Error("Only players in this match can record events");
   }
 
-  if (bbb) {
-    // Single-award kinds: delete any existing rows for this (game, hole, kind)
-    // and create the new one if a player was picked.
-    await prisma.sideGameEvent.deleteMany({
-      where: { sideGameId, hole, kind },
-    });
-    if (matchPlayerId) {
-      await prisma.sideGameEvent.create({
-        data: { sideGameId, hole, kind, matchPlayerId },
-      });
-    }
-  } else if (snake) {
-    // Multi-player toggle: each (hole, player) is independent. Submitting
-    // without a player is a no-op (we wouldn't know who to toggle).
-    if (!matchPlayerId) throw new Error("Player required for snake event");
-    const existing = await prisma.sideGameEvent.findFirst({
-      where: { sideGameId, hole, kind, matchPlayerId },
-      select: { id: true },
-    });
-    if (existing) {
-      await prisma.sideGameEvent.delete({ where: { id: existing.id } });
-    } else {
-      await prisma.sideGameEvent.create({
-        data: { sideGameId, hole, kind, matchPlayerId },
-      });
-    }
-  } else if (wolf) {
-    // Wolf: PARTNER and LONE_WOLF are mutually exclusive per hole (only one
-    // Wolf choice can be active). HOLE_WINNER is its own single-award kind.
-    if (kind === "PARTNER" || kind === "LONE_WOLF" || kind === "PRE_LONE_WOLF") {
-      await prisma.sideGameEvent.deleteMany({
-        where: {
-          sideGameId,
-          hole,
-          kind: { in: ["PARTNER", "LONE_WOLF", "PRE_LONE_WOLF"] },
-        },
-      });
-      if (matchPlayerId) {
-        await prisma.sideGameEvent.create({
-          data: { sideGameId, hole, kind, matchPlayerId },
-        });
-      }
-    } else if (kind === "HOLE_WINNER" || kind === "PUSH") {
-      // Wolf hole outcome: one of WIN (HOLE_WINNER) / PUSH / nothing.
-      // Mutex across both kinds -- setting either clears both first.
-      await prisma.sideGameEvent.deleteMany({
-        where: { sideGameId, hole, kind: { in: ["HOLE_WINNER", "PUSH"] } },
-      });
-      if (kind === "HOLE_WINNER" && matchPlayerId) {
-        await prisma.sideGameEvent.create({
-          data: { sideGameId, hole, kind, matchPlayerId },
-        });
-      } else if (kind === "PUSH" && matchPlayerId) {
-        // PUSH carries no real matchPlayerId; the caller uses a non-empty
-        // marker (e.g. "push") to flag "create" vs "" to flag "clear".
-        await prisma.sideGameEvent.create({
-          data: { sideGameId, hole, kind },
-        });
-      }
-    }
-  } else if (matchEvt) {
-    // Match PRESS: pair-wide toggle, one event per hole. matchPlayerId
-    // is unused for press semantics; the press affects the entire pair.
-    const existing = await prisma.sideGameEvent.findFirst({
-      where: { sideGameId, hole, kind },
-      select: { id: true },
-    });
-    if (existing) {
-      await prisma.sideGameEvent.delete({ where: { id: existing.id } });
-    } else {
-      await prisma.sideGameEvent.create({
-        data: { sideGameId, hole, kind },
-      });
-    }
-  }
-
+  await writeSideGameEvent({ sideGameId, hole, kind, matchPlayerId });
   revalidatePath(`/matches/${sg.matchId}`);
 }
 

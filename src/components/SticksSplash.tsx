@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import styles from "./SticksSplash.module.css";
 
 // Locked Sticks brandmark -- three club silhouettes (heads at top,
@@ -54,7 +55,13 @@ export default function SticksSplash() {
   // on already-seen sessions.
   const [mount, setMount] = useState<null | "showing" | "fading">(null);
 
+  // Chrome-less embed routes (e.g. the iOS 3D-flyover WebView) must
+  // never flash the brand splash over their canvas.
+  const pathname = usePathname() ?? "";
+  const isEmbed = pathname.startsWith("/embed");
+
   useEffect(() => {
+    if (isEmbed) return;
     let seen = false;
     try {
       seen = sessionStorage.getItem(SESSION_KEY) === "1";
@@ -76,7 +83,7 @@ export default function SticksSplash() {
       window.clearTimeout(fadeT);
       window.clearTimeout(removeT);
     };
-  }, []);
+  }, [isEmbed]);
 
   if (mount === null) return null;
 

@@ -30,7 +30,7 @@ import {
   type CameraKeyframe,
   type HoleEndpoints,
 } from "@/lib/holeFlightPath";
-import { distanceYards } from "@/lib/course";
+import { distanceYards } from "@/lib/geo";
 
 const TILESET_URL = "https://tile.googleapis.com/v1/3dtiles/root.json";
 // Raised from 400 -- normal panning + zooming chews through tiles

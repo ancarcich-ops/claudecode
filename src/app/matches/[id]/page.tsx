@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import { autoCompleteStaleMatches } from "@/lib/autoComplete";
 import { loadMatchWithOdds } from "@/lib/match";
 import { prisma } from "@/lib/db";
 import { canViewMatch } from "@/lib/groups";
@@ -59,6 +60,7 @@ import { getCourseHazardsByName, getCourseHolesByName } from "@/lib/course";
 import { getWindForCoord } from "@/lib/weather";
 import AutoRefresh from "@/components/AutoRefresh";
 import InRoundLive from "./InRoundLive";
+import ShareMyRoundCard from "./ShareMyRoundCard";
 import PlayerAvatar, { isVariant, type AvatarVariant } from "@/components/Avatar";
 import WagerForm from "./WagerForm";
 import ParsEditor from "./ParsEditor";
@@ -75,6 +77,10 @@ export default async function MatchPage({
   params: { id: string };
 }) {
   const user = await getCurrentUser();
+  // Auto-close this match if it's fully scored and idle for 1h+ (the
+  // "played 18, never tapped Mark final" case) BEFORE loading it, so
+  // this render already shows it as Final.
+  await autoCompleteStaleMatches(params.id).catch(() => {});
   const loaded = await loadMatchWithOdds(params.id);
   if (!loaded) notFound();
   const { match, odds, pars } = loaded;
@@ -117,6 +123,10 @@ export default async function MatchPage({
   const isLinkedPlayer =
     !!user && match.players.some((p) => p.userId === user.id);
   const canLogScores = !isCompleted && (isCreator || isLinkedPlayer);
+  const roundShares = await prisma.roundShare.findMany({
+    where: { matchId: match.id },
+    orderBy: { createdAt: "asc" },
+  });
 
   type Row = { t: number } & Record<string, number>;
   const rowMap = new Map<number, Row>();
@@ -841,6 +851,16 @@ export default async function MatchPage({
           oddsHoleSeries,
           oddsXMode,
           sgSeries,
+          roundShares: roundShares.map((r) => ({
+            id: r.id,
+            matchPlayerId: r.matchPlayerId,
+            recipientEmail: r.recipientEmail,
+            includeScores: r.includeScores,
+            milestones: r.milestones,
+            destAddress: r.destAddress,
+            bufferMin: r.bufferMin,
+            token: r.token,
+          })),
           sideGameSections,
           sideGameLabel,
           enabledKinds,
@@ -893,6 +913,10 @@ function creatorActions(
   if (status === "IN_PROGRESS") {
     out.push({ label: "Mark final", action: fns.completeMatchAction });
   }
+  if (status !== "COMPLETED") {
+    // Jumps to the card at the bottom of the scorecard tab.
+    out.push({ label: "Share my round", href: "#share-my-round" });
+  }
   if (status === "COMPLETED") {
     out.push({ label: "Reopen", action: fns.reopenMatchAction });
   }
@@ -937,6 +961,7 @@ function StatusBadge({ status }: { status: string }) {
 // pre-computed values in keeps this helper a pure function of the
 // match snapshot.
 type BuildMatchTabsArgs = {
+  roundShares: import("./ShareMyRoundCard").RoundShareRow[];
   match: {
     id: string;
     courseName: string;
@@ -1056,6 +1081,7 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
     oddsHoleSeries,
     oddsXMode,
     sgSeries,
+    roundShares,
     sideGameSections,
     sideGameLabel,
     enabledKinds,
@@ -1419,6 +1445,22 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
       {/* Creator-only configuration lives here instead of its own tab --
           pars + Wolf rotation are tied directly to scoring, so they
           read naturally as a continuation of the scorecard. */}
+      {/* Share my round: live link (pace / ETA / optional score).
+          Bottom of the stack under Standings, above Course pars. The
+          #share-my-round anchor is the target of the ... menu entry. */}
+      {canLogScores && (
+        <div id="share-my-round">
+          <ShareMyRoundCard
+            matchId={match.id}
+            players={match.players.map((p) => ({
+              id: p.id,
+              displayName: p.displayName,
+            }))}
+            myMatchPlayerId={myMatchPlayerId}
+            shares={roundShares}
+          />
+        </div>
+      )}
       {isCreator && settingsContent}
     </div>
   );

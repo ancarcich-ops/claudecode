@@ -1,12 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  deriveGreenDistances,
-  distanceYards,
-  type HazardGeo,
-  type HoleGeo,
-} from "@/lib/course";
+import { deriveGreenDistances, distanceYards } from "@/lib/geo";
+import type { HazardGeo, HoleGeo } from "@/lib/course";
 import HoleMiniMap, { type Landmark } from "./HoleMiniMap";
 import HolePreview3D from "@/components/HolePreview3D";
 import { useMapEngine } from "./useMapEngine";

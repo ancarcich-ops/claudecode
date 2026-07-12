@@ -1,28 +1,9 @@
 import { prisma } from "./db";
-
-// Great-circle distance between two WGS84 coordinates, in yards. Uses the
-// haversine formula -- plenty accurate at golf scale (sub-yard error over
-// short distances). Returns 0 for identical points.
-export function distanceYards(
-  a: { lat: number; lng: number },
-  b: { lat: number; lng: number },
-): number {
-  const R = 6371000; // Earth radius in meters
-  const dLat = toRad(b.lat - a.lat);
-  const dLng = toRad(b.lng - a.lng);
-  const lat1 = toRad(a.lat);
-  const lat2 = toRad(b.lat);
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
-  const meters = R * c;
-  return meters * 1.0936133;
-}
-
-function toRad(deg: number): number {
-  return (deg * Math.PI) / 180;
-}
+// distanceYards + deriveGreenDistances live in the Prisma-free ./geo
+// module so client components can import them without pulling the DB
+// client into the browser bundle. Re-exported here for server callers.
+import { distanceYards } from "./geo";
+export { distanceYards, deriveGreenDistances } from "./geo";
 
 // Find-or-create a Course row by the free-text name used on Match.courseName.
 // Idempotent. Caller usually has the matchId in hand and is about to write a
@@ -191,69 +172,4 @@ export function distanceToLayup(
   const meters = Math.sqrt(projX * projX + projY * projY);
   const yards = meters * 1.0936133;
   return Math.max(0, yards - bufferYards);
-}
-
-// Compute the three working green distances. If front/back coords aren't
-// user-set, we derive them from the center along the player->green axis
-// (±8 yards each side) so the UI always shows three numbers once at least
-// the center is mapped.
-//
-// Returns null entries when the corresponding coord can't be computed
-// (no center, no player position, etc).
-export function deriveGreenDistances(
-  player: { lat: number; lng: number } | null,
-  geo: HoleGeo | null | undefined,
-): { front: number | null; center: number | null; back: number | null } {
-  if (!geo || !player) return { front: null, center: null, back: null };
-  const c =
-    geo.greenLat != null && geo.greenLng != null
-      ? { lat: geo.greenLat, lng: geo.greenLng }
-      : null;
-  if (!c) return { front: null, center: null, back: null };
-  const center = distanceYards(player, c);
-
-  // Front/back distance priority:
-  //   1. Admin-marked greenFront / greenBack points (most precise).
-  //   2. Nearest / farthest vertex of the green polygon -- this is the
-  //      real green depth from where the player stands, which is what a
-  //      golf GPS shows. Most imported courses have a polygon but no
-  //      hand-marked front/back points.
-  //   3. center -/+ 8y, a last-resort guess when we have neither (a flat
-  //      16y-deep green) so the panel still shows *something*.
-  const explicitFront =
-    geo.greenFrontLat != null && geo.greenFrontLng != null
-      ? distanceYards(player, {
-          lat: geo.greenFrontLat,
-          lng: geo.greenFrontLng,
-        })
-      : null;
-  const explicitBack =
-    geo.greenBackLat != null && geo.greenBackLng != null
-      ? distanceYards(player, {
-          lat: geo.greenBackLat,
-          lng: geo.greenBackLng,
-        })
-      : null;
-
-  let polyFront: number | null = null;
-  let polyBack: number | null = null;
-  if (
-    (explicitFront == null || explicitBack == null) &&
-    geo.greenPolygon &&
-    geo.greenPolygon.length >= 3
-  ) {
-    let min = Infinity;
-    let max = -Infinity;
-    for (const v of geo.greenPolygon) {
-      const d = distanceYards(player, v);
-      if (d < min) min = d;
-      if (d > max) max = d;
-    }
-    if (Number.isFinite(min)) polyFront = min;
-    if (Number.isFinite(max)) polyBack = max;
-  }
-
-  const front = explicitFront ?? polyFront ?? Math.max(0, center - 8);
-  const back = explicitBack ?? polyBack ?? center + 8;
-  return { front, center, back };
 }

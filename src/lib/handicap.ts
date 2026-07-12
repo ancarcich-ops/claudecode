@@ -12,6 +12,7 @@
 // be useful inside the app -- and updates the moment a round is logged.
 
 import type { RoundSummary } from "./userStats";
+import { scoreDifferential } from "./courseRating";
 
 // USGA's WHS table: given N rounds in the scoring record (capped at 20),
 // take the lowest `count` differentials and subtract `adjust` strokes
@@ -48,7 +49,20 @@ export function computeHandicapIndex(
   const diffs: number[] = [];
   for (const r of recent) {
     if (r.holesPlayed <= 0) continue;
-    diffs.push((r.vsPar / r.holesPlayed) * 18);
+    // WHS Score Differential when the round carries a Course Rating +
+    // Slope (18-hole rounds only for now -- 9-hole WHS needs 9-hole
+    // rating/slope we don't source yet). Otherwise fall back to the
+    // score-only model: 18-hole-equivalent strokes over par.
+    if (
+      r.holesPlayed === 18 &&
+      r.rating != null &&
+      r.slope != null &&
+      r.slope > 0
+    ) {
+      diffs.push(scoreDifferential(r.gross, r.rating, r.slope));
+    } else {
+      diffs.push((r.vsPar / r.holesPlayed) * 18);
+    }
   }
   if (diffs.length < 3) return null;
   diffs.sort((a, b) => a - b);

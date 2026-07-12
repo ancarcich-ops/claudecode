@@ -13,6 +13,8 @@ import ShareButton from "@/components/ShareButton";
 import BaselinePicker from "./BaselinePicker";
 import RoundHistoryChart from "./RoundHistoryChart";
 import RoundsList from "./RoundsList";
+import HeroIndex from "./HeroIndex";
+import { computeIndexTrend } from "@/lib/indexTrend";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +28,8 @@ export default async function PersonalStatsPage({
 
   const stats = await computeUserStats(user.id);
   if (!stats) redirect("/");
+
+  const trend = computeIndexTrend(stats.rounds);
 
   // Pull the GHIN # alongside computed stats so we can render the chip on
   // the page header next to the auto-calc index.
@@ -46,11 +50,6 @@ export default async function PersonalStatsPage({
   const ghin = profile?.ghinNumber ?? null;
   const avg18 = stats.avg18Gross;
   const best = stats.bestRound;
-  const formatIndex = (n: number) =>
-    n >= 0 ? `+${n.toFixed(1)}` : n.toFixed(1);
-  const formatVsPar = (n: number) =>
-    n === 0 ? "E" : n > 0 ? `+${n}` : `${n}`;
-
   // Baseline handicap for the comparison view. Default 10 -- a fair middle
   // for casual players that mirrors the screenshot we modeled this on.
   const rawVs = Number(searchParams.vs);
@@ -77,87 +76,6 @@ export default async function PersonalStatsPage({
             />
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0 w-full justify-center flex-wrap sm:w-auto sm:justify-end">
-          {handicap ? (
-            <Link
-              href="/settings"
-              className="rounded-md border border-accent/30 bg-accent/10 px-2.5 py-1.5 text-center hover:border-accent/50 transition-colors"
-              title="Auto-computed from your last 20 rounds"
-            >
-              <div className="text-[9px] uppercase tracking-wider text-accent/80 leading-none">
-                Sticks idx
-              </div>
-              <div className="font-display font-semibold text-lg tabular-nums text-accent leading-tight">
-                {formatIndex(handicap.index)}
-              </div>
-            </Link>
-          ) : (
-            <div
-              className="rounded-md border border-dashed border-border bg-panel2 px-2.5 py-1.5 text-center"
-              title="Log 3+ rounds to unlock your auto-computed index"
-            >
-              <div className="text-[9px] uppercase tracking-wider text-mute leading-none">
-                Sticks idx
-              </div>
-              <div className="font-display italic font-medium text-sm text-mute leading-tight mt-0.5">
-                pending
-              </div>
-              <div className="text-[9px] text-mute leading-none mt-0.5">
-                {Math.min(stats.rounds.length, 3)}/3 rounds
-              </div>
-            </div>
-          )}
-          {avg18 != null && (
-            <div
-              className="rounded-md border border-border bg-panel2 px-2.5 py-1.5 text-center"
-              title="Average gross score across your 18-hole rounds"
-            >
-              <div className="text-[9px] uppercase tracking-wider text-mute leading-none">
-                Avg 18
-              </div>
-              <div className="font-display font-semibold text-lg tabular-nums text-ink leading-tight mt-0.5">
-                {avg18.toFixed(1)}
-              </div>
-            </div>
-          )}
-          {best && (
-            <div
-              className="rounded-md border border-border bg-panel2 px-2.5 py-1.5 text-center"
-              title={`${best.courseName} · ${best.gross} on ${new Date(
-                best.scheduledAt,
-              ).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`}
-            >
-              <div className="text-[9px] uppercase tracking-wider text-mute leading-none">
-                Best
-              </div>
-              <div
-                className={
-                  "font-display font-semibold text-lg tabular-nums leading-tight mt-0.5 " +
-                  (best.vsPar < 0
-                    ? "text-accent"
-                    : best.vsPar === 0
-                      ? "text-gold"
-                      : "text-ink")
-                }
-              >
-                {formatVsPar(best.vsPar)}
-              </div>
-            </div>
-          )}
-          {ghin && (
-            <div
-              className="rounded-md border border-border bg-panel2 px-2.5 py-1.5 text-center"
-              title="Your USGA GHIN number"
-            >
-              <div className="text-[9px] uppercase tracking-wider text-mute leading-none">
-                GHIN
-              </div>
-              <div className="font-mono tabular-nums text-sm text-ink leading-tight mt-0.5">
-                #{ghin}
-              </div>
-            </div>
-          )}
-        </div>
       </div>
 
       {!hasAnyData ? (
@@ -173,6 +91,17 @@ export default async function PersonalStatsPage({
         />
       ) : (
         <>
+          <HeroIndex
+            index={handicap?.index ?? null}
+            pendingRounds={Math.min(stats.rounds.length, 3)}
+            delta30={trend.delta30}
+            trajectory={trend.trajectory}
+            roundsCompleted={stats.rounds.length}
+            ghin={ghin}
+            avg18={avg18}
+            bestVsPar={best?.vsPar ?? null}
+            bestCourse={best?.courseName ?? null}
+          />
           {/* Round-by-round vs par. Promoted to the top so the page
               opens with the chart that answers "am I getting better?"
               -- counters and side-game tallies follow as supporting

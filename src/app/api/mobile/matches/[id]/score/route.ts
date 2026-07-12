@@ -9,6 +9,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserFromBearer, unauthorized } from "@/lib/mobileAuth";
 import { recordOddsSnapshot } from "@/lib/match";
+import { checkRoundShares } from "@/lib/roundShare";
 import { revalidatePath } from "next/cache";
 
 export const dynamic = "force-dynamic";
@@ -97,6 +98,8 @@ export async function POST(
     });
   }
   await recordOddsSnapshot(match.id);
+  // Share-my-round milestone emails ride the same write path.
+  await checkRoundShares(match.id).catch(() => {});
   // Keep any open web views of this match fresh.
   revalidatePath(`/matches/${match.id}`);
   revalidatePath("/");

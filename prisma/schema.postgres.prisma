@@ -11,31 +11,34 @@ datasource db {
 }
 
 model User {
-  id          String   @id @default(cuid())
-  username    String   @unique
+  id            String   @id @default(cuid())
+  username      String   @unique
   // Email + password for proper auth. Nullable at the DB level so the
   // column can be added to an existing table without a destructive
   // migration, but REQUIRED at the application layer (signup always
   // sets both). email is unique among non-null values.
-  email        String?  @unique
-  passwordHash String?
-  displayName String?
+  email         String?  @unique
+  passwordHash  String?
+  displayName   String?
   avatarSeed    String?
   avatarVariant String?
   avatarUrl     String?
-  ghinNumber  String?
-  createdAt   DateTime @default(now())
+  ghinNumber    String?
+  // Personal goal handicap index -- drives the "TARGET 9.0 · 2.6 TO
+  // GO" line in the stats hero. Null = no goal set.
+  targetIndex   Float?
+  createdAt     DateTime @default(now())
 
-  createdMatches      Match[]            @relation("MatchCreator")
-  playerSeats         MatchPlayer[]
-  wagers              Wager[]
-  createdGroups       Group[]            @relation("GroupCreator")
-  groupMemberships    GroupMember[]
-  sessions            Session[]
-  passwordResets      PasswordResetToken[]
-  passkeys            Passkey[]
-  createdTournaments  Tournament[]       @relation("TournamentCreator")
-  tournamentEntries   TournamentPlayer[]
+  createdMatches     Match[]              @relation("MatchCreator")
+  playerSeats        MatchPlayer[]
+  wagers             Wager[]
+  createdGroups      Group[]              @relation("GroupCreator")
+  groupMemberships   GroupMember[]
+  sessions           Session[]
+  passwordResets     PasswordResetToken[]
+  passkeys           Passkey[]
+  createdTournaments Tournament[]         @relation("TournamentCreator")
+  tournamentEntries  TournamentPlayer[]
 }
 
 // WebAuthn / passkey credentials. Each row is one device (Face ID on
@@ -100,13 +103,13 @@ model Session {
 }
 
 model Group {
-  id          String        @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
-  slug        String?       @unique
-  inviteCode  String        @unique
+  slug        String?  @unique
+  inviteCode  String   @unique
   createdById String
-  createdBy   User          @relation("GroupCreator", fields: [createdById], references: [id])
-  createdAt   DateTime      @default(now())
+  createdBy   User     @relation("GroupCreator", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
 
   members     GroupMember[]
   matches     Match[]
@@ -126,42 +129,43 @@ model GroupMember {
 }
 
 model Match {
-  id           String      @id @default(cuid())
-  courseName   String
-  scheduledAt  DateTime
-  holes        Int         @default(18)
-  startingHole Int         @default(1)
-  status       String      @default("UPCOMING")
-  scoringMode  String      @default("NET")
+  id             String      @id @default(cuid())
+  courseName     String
+  scheduledAt    DateTime
+  holes          Int         @default(18)
+  startingHole   Int         @default(1)
+  status         String      @default("UPCOMING")
+  scoringMode    String      @default("NET")
   // "INDIVIDUAL" (every player against every player) or "SCRAMBLE"
   // (2 teams; one score per team per hole). Default INDIVIDUAL to
   // keep existing matches unchanged.
-  format       String      @default("INDIVIDUAL")
+  format         String      @default("INDIVIDUAL")
   // Scramble-only settings JSON: handicapMode + optional teamNames.
   // Null for INDIVIDUAL matches.
   scrambleConfig String?
-  parData      String?
-  createdById  String
-  createdBy    User        @relation("MatchCreator", fields: [createdById], references: [id])
-  groupId      String?
-  group        Group?      @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  parData        String?
+  createdById    String
+  createdBy      User        @relation("MatchCreator", fields: [createdById], references: [id])
+  groupId        String?
+  group          Group?      @relation(fields: [groupId], references: [id], onDelete: SetNull)
   // When this match is round N of a tournament, both columns are set.
   // Null on standalone (non-tournament) matches. SetNull on tournament
   // delete so the play history isn't lost.
-  tournamentId String?
-  tournament   Tournament? @relation(fields: [tournamentId], references: [id], onDelete: SetNull)
-  roundNumber  Int?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @default(now()) @updatedAt
-  startedAt    DateTime?
-  completedAt  DateTime?
-  notes        String?
-  winnerSummary String?
+  tournamentId   String?
+  tournament     Tournament? @relation(fields: [tournamentId], references: [id], onDelete: SetNull)
+  roundNumber    Int?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @default(now()) @updatedAt
+  startedAt      DateTime?
+  completedAt    DateTime?
+  notes          String?
+  winnerSummary  String?
 
-  players      MatchPlayer[]
-  wagers       Wager[]
+  players       MatchPlayer[]
+  wagers        Wager[]
   oddsSnapshots OddsSnapshot[]
-  sideGames    SideGame[]
+  sideGames     SideGame[]
+  roundShares   RoundShare[]
 
   @@index([tournamentId, roundNumber])
 }
@@ -172,7 +176,7 @@ model Match {
 // MVP: no cuts, scoring mode applies to every round, players can be
 // linked Sticks users or free-typed names (same as MatchPlayer).
 model Tournament {
-  id               String   @id @default(cuid())
+  id               String    @id @default(cuid())
   name             String
   // Share code anyone can join with -- mirrors Group.inviteCode.
   // Tournaments aren't tied to a group, so this is how the creator
@@ -190,27 +194,27 @@ model Tournament {
   // summed). Same mode applied to every round; child matches still
   // carry their own scoringMode but the leaderboard rolls up using
   // this one.
-  scoringMode      String   @default("NET")
+  scoringMode      String    @default("NET")
   // Soft target -- the creator can add more rounds later. Actual
   // rounds tracked via the matches[] relation; this is just so the
   // detail page can render "Round 3 of 4" expected progress.
-  roundsPlanned    Int      @default(2)
+  roundsPlanned    Int       @default(2)
   scheduledStartAt DateTime?
   // UPCOMING / IN_PROGRESS / COMPLETED.
-  status           String   @default("UPCOMING")
+  status           String    @default("UPCOMING")
   createdById      String
-  createdBy        User     @relation("TournamentCreator", fields: [createdById], references: [id])
+  createdBy        User      @relation("TournamentCreator", fields: [createdById], references: [id])
   // Group scope. "public" is a real Group row so this is required
   // semantically; we keep it nullable for parity with Match.
   groupId          String?
-  group            Group?   @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @default(now()) @updatedAt
+  group            Group?    @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @default(now()) @updatedAt
   completedAt      DateTime?
   notes            String?
 
-  matches          Match[]
-  roster           TournamentPlayer[]
+  matches Match[]
+  roster  TournamentPlayer[]
 
   @@index([groupId, createdAt])
   @@index([inviteCode])
@@ -235,8 +239,8 @@ model TournamentPlayer {
   handicapAtStart Float?
   createdAt       DateTime   @default(now())
 
-  @@index([tournamentId])
   @@unique([tournamentId, displayName])
+  @@index([tournamentId])
 }
 
 model SideGame {
@@ -247,7 +251,7 @@ model SideGame {
   config    String?
   createdAt DateTime @default(now())
 
-  events    SideGameEvent[]
+  events SideGameEvent[]
 
   @@unique([matchId, kind])
   @@index([matchId])
@@ -268,21 +272,28 @@ model SideGameEvent {
 }
 
 model MatchPlayer {
-  id          String   @id @default(cuid())
-  matchId     String
-  match       Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  userId      String?
-  user        User?    @relation(fields: [userId], references: [id])
-  displayName String
-  handicap    Float
-  seat        Int
+  id           String  @id @default(cuid())
+  matchId      String
+  match        Match   @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  userId       String?
+  user         User?   @relation(fields: [userId], references: [id])
+  displayName  String
+  handicap     Float
+  seat         Int
   // Team assignment for scramble matches: 0 = Team A, 1 = Team B.
   // Null for INDIVIDUAL matches.
-  team        Int?
+  team         Int?
+  // Tee played, snapshotted at round time so a later course rating
+  // revision never rewrites this round's handicap differential. Null
+  // on rounds logged before tee selection existed -- the handicap calc
+  // falls back to the course default, then to the score-only model.
+  teeName      String?
+  courseRating Float?
+  slope        Int?
 
-  scores      ScoreEntry[]
-  wagers      Wager[]
-  oddsSnapshots OddsSnapshot[]
+  scores         ScoreEntry[]
+  wagers         Wager[]
+  oddsSnapshots  OddsSnapshot[]
   sideGameEvents SideGameEvent[]
 
   @@unique([matchId, seat])
@@ -300,14 +311,14 @@ model ScoreEntry {
 }
 
 model Wager {
-  id              String      @id @default(cuid())
-  matchId         String
-  match           Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  userId          String
-  user            User        @relation(fields: [userId], references: [id])
-  pickedPlayerId  String
-  pickedPlayer    MatchPlayer @relation(fields: [pickedPlayerId], references: [id], onDelete: Cascade)
-  createdAt       DateTime    @default(now())
+  id             String      @id @default(cuid())
+  matchId        String
+  match          Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User        @relation(fields: [userId], references: [id])
+  pickedPlayerId String
+  pickedPlayer   MatchPlayer @relation(fields: [pickedPlayerId], references: [id], onDelete: Cascade)
+  createdAt      DateTime    @default(now())
 
   @@unique([matchId, userId])
 }
@@ -325,60 +336,150 @@ model OddsSnapshot {
 }
 
 model Course {
-  id        String         @id @default(cuid())
-  name      String         @unique
-  centerLat Float?
-  centerLng Float?
-  osmFetchedAt DateTime?
-  parData   String?
-  createdAt DateTime       @default(now())
+  id              String    @id @default(cuid())
+  name            String    @unique
+  centerLat       Float?
+  centerLng       Float?
+  osmFetchedAt    DateTime?
+  parData         String?
+  // Default-tee Course Rating / Slope / total yardage. Estimated from
+  // yardage unless a measured value was entered (ratingEstimated).
+  // Drives the handicap differential for rounds without a per-player
+  // tee snapshot.
+  rating          Float?
+  slope           Int?
+  yardage         Int?
+  ratingEstimated Boolean   @default(true)
+  createdAt       DateTime  @default(now())
 
-  holes     CourseHole[]
-  hazards   CourseHazard[]
+  holes   CourseHole[]
+  hazards CourseHazard[]
+  tees    CourseTee[]
+}
+
+model CourseTee {
+  id        String  @id @default(cuid())
+  courseId  String
+  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  name      String // e.g. "Blue", "White", "Red" (tee color / set)
+  gender    String  @default("M") // "M" | "W" -- rating differs by gender, so it is part of the tee identity
+  rating    Float // Course Rating for this tee
+  slope     Int // Slope Rating for this tee
+  yardage   Int? // total yardage
+  par       Int?
+  // True when rating/slope were estimated from yardage rather than
+  // measured -- lets the UI show which tees carry an official rating.
+  estimated Boolean @default(true)
+
+  @@unique([courseId, name, gender])
+  @@index([courseId])
 }
 
 model CourseHazard {
-  id        String   @id @default(cuid())
-  courseId  String
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  hole      Int
-  kind      String
-  label     String?
-  lat       Float
-  lng       Float
+  id              String   @id @default(cuid())
+  courseId        String
+  course          Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  hole            Int
+  kind            String
+  label           String?
+  lat             Float
+  lng             Float
   contributedById String?
-  createdAt DateTime @default(now())
+  createdAt       DateTime @default(now())
 
   @@index([courseId, hole])
 }
 
 model CourseHole {
-  id        String  @id @default(cuid())
-  courseId  String
-  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  hole      Int
-  greenLat  Float?
-  greenLng  Float?
-  greenFrontLat  Float?
-  greenFrontLng  Float?
-  greenBackLat   Float?
-  greenBackLng   Float?
-  teeLat    Float?
-  teeLng    Float?
+  id                  String   @id @default(cuid())
+  courseId            String
+  course              Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  hole                Int
+  greenLat            Float?
+  greenLng            Float?
+  greenFrontLat       Float?
+  greenFrontLng       Float?
+  greenBackLat        Float?
+  greenBackLng        Float?
+  teeLat              Float?
+  teeLng              Float?
   // Per-hole alternate tee boxes from Golfbert -- JSON array of
   // { color, lat, lng, yds? } so the admin Course Editor can let
   // someone swap the active tee marker to a different colour
   // without re-importing the whole course. Populated during the
   // initial import; null on holes mapped by hand.
   teeAlternativesJson String?
-  greenPolygonJson   String?
-  fairwayPolygonJson String?
-  distanceYds Int?
-  contributedById String?
-  source    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  greenPolygonJson    String?
+  fairwayPolygonJson  String?
+  distanceYds         Int?
+  contributedById     String?
+  source              String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @default(now()) @updatedAt
 
   @@unique([courseId, hole])
   @@index([courseId])
+}
+
+// Share-my-round: an opt-in update stream for one player's live round.
+// Each row is one recipient config -- who gets emailed, at which
+// milestones, with or without scores, and an optional destination for
+// the ETA-home estimate. `token` is the public read-only share-link id
+// (/r/[token]) -- unguessable, revoked by deleting the row.
+model RoundShare {
+  id             String   @id @default(cuid())
+  matchId        String
+  match          Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  // Whose round is narrated (pace + scores). One of the match's players.
+  matchPlayerId  String
+  createdById    String
+  token          String   @unique
+  recipientEmail String?
+  includeScores  Boolean  @default(true)
+  // Comma list of milestone keys: FRONT9, EVERY6, FINISH.
+  milestones     String   @default("FRONT9,FINISH")
+  destAddress    String?
+  destLat        Float?
+  destLng        Float?
+  // Private cushion (minutes) silently baked into the projected finish
+  // and ETA the recipient sees. Never labelled on the public page.
+  bufferMin      Int      @default(0)
+  // Highest milestone already emailed (prevents duplicate sends).
+  sentMilestones String   @default("")
+  createdAt      DateTime @default(now())
+
+  subscribers RoundShareSubscriber[]
+
+  @@index([matchId])
+}
+
+// SMS opt-in for a share link. The RECIPIENT subscribes themselves on
+// the public /r/[token] page (express consent, carrier-compliant).
+// STOP replies are handled by Twilio's mandatory toll-free opt-out;
+// we additionally mark optedOutAt when a send bounces with 21610.
+model RoundShareSubscriber {
+  id           String     @id @default(cuid())
+  roundShareId String
+  roundShare   RoundShare @relation(fields: [roundShareId], references: [id], onDelete: Cascade)
+  phone        String // E.164
+  consentAt    DateTime   @default(now())
+  optedOutAt   DateTime?
+
+  @@unique([roundShareId, phone])
+}
+
+// General SMS opt-in captured on the public, always-live /sms page --
+// a stable consent form (for toll-free verification and a standing
+// consent record). Per-share RECIPIENT consent lives on
+// RoundShareSubscriber; this is the general marketing/transactional
+// opt-in the carrier reviewer can visit any time.
+model SmsConsent {
+  id          String   @id @default(cuid())
+  phone       String // E.164
+  consentText String // the exact language shown at opt-in time
+  source      String   @default("web-opt-in")
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([phone])
 }

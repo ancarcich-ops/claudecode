@@ -705,6 +705,10 @@ export const COURSE_PRESETS: CoursePreset[] = [
   { id: "el-caballero-cc", name: "El Caballero Country Club", city: "Tarzana, CA", region: "LA", access: "private", holes: 18, pars: [5, 4, 4, 4, 4, 3, 5, 3, 4, 3, 4, 5, 4, 4, 4, 3, 4, 4] },
   { id: "hacienda-gc", name: "Hacienda Golf Club", city: "La Habra Heights, CA", region: "LA", access: "private", holes: 18, pars: [4, 4, 4, 3, 4, 3, 5, 4, 4, 5, 4, 3, 4, 4, 4, 3, 5, 4] },
   { id: "annandale-gc", name: "Annandale Golf Club", city: "Pasadena, CA", region: "LA", access: "private", holes: 18, pars: [4, 4, 4, 4, 3, 5, 4, 4, 3, 4, 4, 3, 5, 4, 3, 4, 3, 5] },
+  // Parenthetical dodges the unique-name collision with the Oakmont,
+  // PA major venue already in the table. Par 71 (36/35), 6500y from
+  // the Blue tees per the club's posted scorecard.
+  { id: "oakmont-cc-glendale", name: "Oakmont Country Club (Glendale)", city: "Glendale, CA", region: "LA", access: "private", holes: 18, pars: [5, 4, 3, 4, 3, 4, 4, 5, 4, 4, 3, 4, 4, 4, 4, 3, 4, 5] },
   // Par 70, ~5800 yds. Real pars from the on-course scorecard photo
   // (Mar 2026): front 34 + back 36 = 70. Hole 2 is a par 3, par 5s
   // are at holes 6 and 12.
@@ -1121,6 +1125,11 @@ export const COURSE_PRESETS: CoursePreset[] = [
   { id: "poipu-bay", name: "Poipu Bay Golf Course", city: "Koloa, HI", region: "HI", access: "resort", holes: 18, pars: [4, 5, 3, 4, 4, 5, 3, 4, 4, 4, 3, 4, 4, 5, 4, 4, 3, 5] },
   { id: "kauai-lagoons", name: "Ocean Course at Hokuala (Kauai Lagoons)", city: "Lihue, HI", region: "HI", access: "public", holes: 18, pars: p(18, 72) },
   { id: "ko-olina", name: "Ko Olina Golf Club", city: "Kapolei, HI", region: "HI", access: "resort", holes: 18, pars: [4, 4, 4, 3, 5, 4, 4, 3, 4, 4, 4, 3, 5, 5, 4, 3, 4, 4] },
+  // Real pars + tee ratings from the course scorecard (Apr 2019):
+  // front 36 + back 36 = 72; Gold 74.3/136, Black 71.9/132,
+  // White 69.4/125, Red (ladies) 72.4/127. Tee data lives in
+  // scripts/course-ratings.csv.
+  { id: "kapolei-golf-club", name: "Kapolei Golf Club", city: "Kapolei, HI", region: "HI", access: "public", holes: 18, pars: [5, 4, 4, 4, 3, 4, 5, 3, 4, 4, 4, 3, 4, 5, 4, 3, 5, 4] },
   { id: "turtle-bay-palmer", name: "Turtle Bay Resort - Palmer Course", city: "Kahuku, HI", region: "HI", access: "resort", holes: 18, pars: p(18, 72) },
   { id: "turtle-bay-fazio", name: "Turtle Bay Resort - Fazio Course", city: "Kahuku, HI", region: "HI", access: "resort", holes: 18, pars: p(18, 71) },
 
@@ -3248,6 +3257,7 @@ export const COURSE_PRESET_COORDS: Record<string, { lat: number; lng: number }> 
   "el-caballero-cc": { lat: 34.1659, lng: -118.5485 },
   "hacienda-gc": { lat: 33.9579, lng: -117.9495 },
   "annandale-gc": { lat: 34.1464, lng: -118.1748 },
+  "oakmont-cc-glendale": { lat: 34.1936, lng: -118.2341 },
   // La Cañada Flintridge clubhouse coordinate.
   "la-canada-cc": { lat: 34.2076, lng: -118.2153 },
   "mountaingate-cc": { lat: 34.1057, lng: -118.4846 },
