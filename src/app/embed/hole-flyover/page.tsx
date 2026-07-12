@@ -71,17 +71,30 @@ export default function HoleFlyoverEmbed({
   const showHud = searchParams.hud === "1";
 
   return (
-    <FlyoverClient
-      hole={{
-        teeLat,
-        teeLng,
-        greenLat,
-        greenLng,
-        number: number,
-        par: par,
-        yards: yards,
-      }}
-      showHud={showHud}
-    />
+    <>
+      {/* Warm the Google 3D-Tiles hosts before deck.gl asks for the
+          tileset. On course cellular the TLS/DNS handshake is a real
+          chunk of the first-tile latency, so preconnecting shaves the
+          slowest part of "LOADING 3D VIEW". */}
+      <link rel="preconnect" href="https://tile.googleapis.com" crossOrigin="" />
+      <link rel="dns-prefetch" href="https://tile.googleapis.com" />
+      <link
+        rel="preconnect"
+        href="https://www.googleapis.com"
+        crossOrigin=""
+      />
+      <FlyoverClient
+        hole={{
+          teeLat,
+          teeLng,
+          greenLat,
+          greenLng,
+          number: number,
+          par: par,
+          yards: yards,
+        }}
+        showHud={showHud}
+      />
+    </>
   );
 }

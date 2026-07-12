@@ -20,7 +20,7 @@
 // resume" pill in the corner resets the counter so power users aren't
 // permanently stuck.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DeckGL } from "@deck.gl/react";
 import { Tile3DLayer } from "@deck.gl/geo-layers";
 import { ScatterplotLayer, TextLayer } from "@deck.gl/layers";
@@ -107,19 +107,50 @@ export default function HolePreview3D({
   const tileLoadCount = useRef(0);
   const [tilesLoaded, setTilesLoaded] = useState(0);
   const [capped, setCapped] = useState(false);
-  // Loading scrim gating. Earlier passes (1.5s / 10 tiles / 6s) still
-  // dropped the scrim mid-stream while parent-level low-detail tiles
-  // were still being replaced by close-in detail. Bumped: at least
-  // 3s of wall-clock AND 30 tiles loaded, ceiling 9s. The 30-tile
-  // floor roughly tracks "the close-in mesh around the establishing
-  // pose is filled in"; below that the user sees the chunky blur.
-  const MIN_LOADING_MS = 3000;
-  const MIN_TILES_FOR_READY = 30;
+  // Loading scrim gating. On-course over cellular, "see the hole now"
+  // beats "perfect establishing mesh", so we reveal sooner and let the
+  // close-in detail fill in progressively behind the (already-moving)
+  // camera: at least 1.2s of wall-clock AND 12 tiles loaded, ceiling
+  // 9s. The old 3s/30-tile floor made every hole feel like it took the
+  // full ceiling on a weak signal.
+  const MIN_LOADING_MS = 1200;
+  const MIN_TILES_FOR_READY = 12;
   const MAX_LOADING_MS = 9000;
+  // If not a single tile has arrived by this point the stream has most
+  // likely stalled (silent network failure -- no onTileError fires), so
+  // we signal the host so the native shell can drop to its 2D map
+  // instead of leaving the user on a spinner that never resolves.
+  const STALL_MS = 6000;
   const [minLoadDone, setMinLoadDone] = useState(false);
   const [maxLoadDone, setMaxLoadDone] = useState(false);
   const hideLoadingScrim =
     maxLoadDone || (minLoadDone && tilesLoaded >= MIN_TILES_FOR_READY);
+
+  // Tell the native shell how the flyover is going. Harmless in the web
+  // app (no handler registered); in the WKWebView the on-course view
+  // registers a "sticksFlyover" message handler and uses these to hide
+  // its spinner on "ready" or fall back to the 2D map on "stalled" /
+  // "error". Also mirrored onto a global for polling-based hosts.
+  const lastStatus = useRef<string>("");
+  const postFlyoverStatus = useCallback(
+    (status: "ready" | "stalled" | "error") => {
+      if (lastStatus.current === status) return;
+      lastStatus.current = status;
+      try {
+        const w = window as unknown as {
+          __sticksFlyoverStatus?: string;
+          webkit?: {
+            messageHandlers?: { sticksFlyover?: { postMessage: (m: unknown) => void } };
+          };
+        };
+        w.__sticksFlyoverStatus = status;
+        w.webkit?.messageHandlers?.sticksFlyover?.postMessage({ status });
+      } catch {
+        // Non-WebView context or blocked bridge -- nothing to do.
+      }
+    },
+    [],
+  );
 
   // Reset render-state flags when the hole changes so the spinner +
   // tile counter restart cleanly for the new hole. Also snap the
@@ -137,13 +168,28 @@ export default function HolePreview3D({
     tileLoadCount.current = 0;
     path.current = flightPathFor(hole);
     setViewState({ ...path.current[0], transitionDuration: 0 });
+    lastStatus.current = "";
     const tMin = setTimeout(() => setMinLoadDone(true), MIN_LOADING_MS);
     const tMax = setTimeout(() => setMaxLoadDone(true), MAX_LOADING_MS);
+    // Silent-stall watchdog: no tiles at all by STALL_MS => tell the host.
+    const tStall = setTimeout(() => {
+      if (tileLoadCount.current === 0) postFlyoverStatus("stalled");
+    }, STALL_MS);
     return () => {
       clearTimeout(tMin);
       clearTimeout(tMax);
+      clearTimeout(tStall);
     };
-  }, [hole]);
+  }, [hole, postFlyoverStatus]);
+
+  // Signal the host on the two terminal-ish states: first mesh painted
+  // (ready) and Google refusing the tileset (error).
+  useEffect(() => {
+    if (hasFirstTile) postFlyoverStatus("ready");
+  }, [hasFirstTile, postFlyoverStatus]);
+  useEffect(() => {
+    if (errorMsg) postFlyoverStatus("error");
+  }, [errorMsg, postFlyoverStatus]);
 
   // Cinematic intro -- gated on first-tile arrival so the camera
   // doesn't animate through empty space before mesh exists. WARMUP_MS
