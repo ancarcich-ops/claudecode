@@ -8,6 +8,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserFromBearer, unauthorized } from "@/lib/mobileAuth";
+import { canScoreMatch } from "@/lib/matchAccess";
 import { recordOddsSnapshot } from "@/lib/match";
 import { checkRoundShares } from "@/lib/roundShare";
 import { revalidatePath } from "next/cache";
@@ -46,15 +47,16 @@ export async function POST(
       id: true,
       status: true,
       createdById: true,
+      groupId: true,
       players: { select: { id: true, userId: true } },
     },
   });
   if (!match) {
     return NextResponse.json({ error: "Match not found" }, { status: 404 });
   }
-  const isCreator = match.createdById === user.id;
-  const isSeated = match.players.some((p) => p.userId === user.id);
-  if (!isCreator && !isSeated) {
+  // Creator, a linked seat, or any member of the round's group may write
+  // (matches the web scorecard gate).
+  if (!(await canScoreMatch(user.id, match))) {
     return NextResponse.json(
       { error: "Only players in this match can log scores" },
       { status: 403 },
