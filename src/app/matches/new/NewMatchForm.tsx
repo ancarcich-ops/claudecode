@@ -12,7 +12,10 @@ import {
   TEAM_VS_TEAM_RULES,
   teamVsTeamRuleBlurb,
   teamVsTeamRuleLabel,
+  STABLEFORD_WHS_POINTS,
+  STABLEFORD_MODIFIED_POINTS,
   type SideGameKind,
+  type StablefordPoints,
   type TeamVsTeamRule,
 } from "@/lib/sideGames";
 
@@ -121,6 +124,13 @@ export type MatchEditInitial = {
   // multiplier carries) vs NO_POINTS (pushed hole = 0 points).
   skinsPushRule: "CARRYOVER" | "NO_CARRY";
   wolfPushRule: "NO_POINTS" | "ROLLOVER";
+  // Stableford scale + custom point table (used only when modified).
+  stablefordModified?: boolean;
+  stablefordPoints?: StablefordPoints;
+  // BBB points per event (strings for inputs) + Snake stake/doubling.
+  bbbPoints?: { bingo: string; bango: string; bongo: string };
+  snakeStake?: string;
+  snakeDoubling?: boolean;
   notes: string;
   groupId: string;
 };
@@ -411,6 +421,23 @@ export default function NewMatchForm({
   const [sixesStake, setSixesStake] = useState(initial?.sixesStake ?? "");
   // Vegas dollar wager per Vegas point.
   const [vegasStake, setVegasStake] = useState(initial?.vegasStake ?? "");
+  // Stableford scale: false = WHS standard, true = modified (custom
+  // points, negatives allowed). Points seed from the modified preset.
+  const [stablefordModified, setStablefordModified] = useState(
+    initial?.stablefordModified ?? false,
+  );
+  const [stablefordPoints, setStablefordPoints] = useState<StablefordPoints>(
+    initial?.stablefordPoints ?? STABLEFORD_MODIFIED_POINTS,
+  );
+  // BBB points per event (default 1 each). Stored as strings for inputs.
+  const [bbbPoints, setBbbPoints] = useState(
+    initial?.bbbPoints ?? { bingo: "1", bango: "1", bongo: "1" },
+  );
+  // Snake stake + doubling.
+  const [snakeStake, setSnakeStake] = useState(initial?.snakeStake ?? "");
+  const [snakeDoubling, setSnakeDoubling] = useState(
+    initial?.snakeDoubling ?? false,
+  );
 
   // Keep sideGames in sync with the format picker. Both Teams
   // (SCRAMBLE) and Both auto-enable TEAM_VS_TEAM so the rule picker
@@ -1427,6 +1454,48 @@ export default function NewMatchForm({
                 : ""
             }
           />
+          {/* Stableford scale: modified sends a custom points table;
+              WHS sends an empty object so the default scale applies. */}
+          <input
+            type="hidden"
+            name="stablefordConfig"
+            value={
+              sideGames.has("STABLEFORD")
+                ? JSON.stringify(
+                    stablefordModified ? { points: stablefordPoints } : {},
+                  )
+                : ""
+            }
+          />
+          {/* BBB per-event points (default 1 each). */}
+          <input
+            type="hidden"
+            name="bbbConfig"
+            value={
+              sideGames.has("BBB")
+                ? JSON.stringify({
+                    points: {
+                      bingo: Number(bbbPoints.bingo) || 0,
+                      bango: Number(bbbPoints.bango) || 0,
+                      bongo: Number(bbbPoints.bongo) || 0,
+                    },
+                  })
+                : ""
+            }
+          />
+          {/* Snake stake + doubling. */}
+          <input
+            type="hidden"
+            name="snakeConfig"
+            value={
+              sideGames.has("SNAKE")
+                ? JSON.stringify({
+                    stake: Number(snakeStake) || 0,
+                    ...(snakeDoubling ? { doubling: true } : {}),
+                  })
+                : ""
+            }
+          />
           {/* Match config -- keyed by player row index so the server
               action can map to the matchPlayerIds it just created. */}
           <input
@@ -2388,6 +2457,155 @@ export default function NewMatchForm({
                         />
                         <span className="text-[10.5px] text-mute">per dot</span>
                       </div>
+                    </div>
+                  )}
+                  {g.kind === "STABLEFORD" && active && !disabled && (
+                    <div className="mt-2 ml-7 mr-1 rounded-md border border-border bg-panel2/40 p-2 space-y-2">
+                      <div className="text-[10px] uppercase tracking-wider text-mute">
+                        Scoring scale
+                      </div>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {(
+                          [
+                            [false, "Standard (WHS)"],
+                            [true, "Modified"],
+                          ] as const
+                        ).map(([mod, label]) => (
+                          <button
+                            key={label}
+                            type="button"
+                            onClick={() => {
+                              setStablefordModified(mod);
+                              if (mod)
+                                setStablefordPoints(STABLEFORD_MODIFIED_POINTS);
+                            }}
+                            className={
+                              "rounded-md border px-2 py-1.5 text-[12px] " +
+                              (stablefordModified === mod
+                                ? "border-accent bg-accent/10 text-ink"
+                                : "border-border text-mute hover:text-ink")
+                            }
+                            aria-pressed={stablefordModified === mod}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                      {stablefordModified && (
+                        <div className="grid grid-cols-3 gap-1.5 pt-1">
+                          {(
+                            [
+                              ["albatross", "Albatross+"],
+                              ["eagle", "Eagle"],
+                              ["birdie", "Birdie"],
+                              ["par", "Par"],
+                              ["bogey", "Bogey"],
+                              ["double", "Dbl+"],
+                            ] as const
+                          ).map(([k, label]) => (
+                            <label key={k} className="text-[11px]">
+                              <span className="block text-mute mb-0.5">
+                                {label}
+                              </span>
+                              <input
+                                type="number"
+                                inputMode="numeric"
+                                step={1}
+                                value={String(stablefordPoints[k])}
+                                onChange={(e) => {
+                                  const n = Number(e.target.value);
+                                  setStablefordPoints((prev) => ({
+                                    ...prev,
+                                    [k]: Number.isFinite(n)
+                                      ? Math.trunc(n)
+                                      : prev[k],
+                                  }));
+                                }}
+                                className="input w-full text-center text-sm py-1"
+                              />
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                      <p className="text-[10.5px] text-mute leading-snug">
+                        {stablefordModified
+                          ? "Points per result vs par; negatives allowed."
+                          : `WHS: birdie ${STABLEFORD_WHS_POINTS.birdie}, par ${STABLEFORD_WHS_POINTS.par}, bogey ${STABLEFORD_WHS_POINTS.bogey}, double+ ${STABLEFORD_WHS_POINTS.double}.`}
+                      </p>
+                    </div>
+                  )}
+                  {g.kind === "BBB" && active && !disabled && (
+                    <div className="mt-2 ml-7 mr-1 rounded-md border border-border bg-panel2/40 p-2 space-y-2">
+                      <div className="text-[10px] uppercase tracking-wider text-mute">
+                        Points per event
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {(
+                          [
+                            ["bingo", "Bingo"],
+                            ["bango", "Bango"],
+                            ["bongo", "Bongo"],
+                          ] as const
+                        ).map(([k, label]) => (
+                          <label key={k} className="text-[11px]">
+                            <span className="block text-mute mb-0.5">
+                              {label}
+                            </span>
+                            <input
+                              type="number"
+                              inputMode="numeric"
+                              min={0}
+                              step={1}
+                              value={bbbPoints[k]}
+                              onChange={(e) =>
+                                setBbbPoints((prev) => ({
+                                  ...prev,
+                                  [k]: e.target.value,
+                                }))
+                              }
+                              className="input w-full text-center text-sm py-1"
+                            />
+                          </label>
+                        ))}
+                      </div>
+                      <p className="text-[10.5px] text-mute leading-snug">
+                        First on the green, closest once on, first in the hole.
+                        Default 1 each.
+                      </p>
+                    </div>
+                  )}
+                  {g.kind === "SNAKE" && active && !disabled && (
+                    <div className="mt-2 ml-7 mr-1 rounded-md border border-border bg-panel2/40 p-2 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <label className="text-[11px] text-mute whitespace-nowrap">
+                          Snake stake
+                        </label>
+                        <span className="text-[12px] text-mute">$</span>
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          min={0}
+                          step={1}
+                          value={snakeStake}
+                          placeholder="0"
+                          onChange={(e) => setSnakeStake(e.target.value)}
+                          className="input w-20 text-center text-sm py-1"
+                        />
+                      </div>
+                      <label className="flex items-center gap-2 text-[12px] cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={snakeDoubling}
+                          onChange={(e) => setSnakeDoubling(e.target.checked)}
+                          className="accent-accent"
+                        />
+                        <span className="text-mute">
+                          Double the pot each time the snake is passed
+                        </span>
+                      </label>
+                      <p className="text-[10.5px] text-mute leading-snug">
+                        Last player to 3-putt holds the snake and owes the pot.
+                      </p>
                     </div>
                   )}
                   {g.kind === "TARGETS" && active && !disabled && (

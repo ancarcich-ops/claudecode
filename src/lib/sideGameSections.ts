@@ -17,6 +17,9 @@ import {
   parseTargetsConfig,
   parseMatchConfig,
   parseSixesConfig,
+  parseStablefordConfig,
+  parseBbbConfig,
+  parseSnakeConfig,
   type SideGameKind,
   type BbbEvent,
   type SnakeEvent,
@@ -111,6 +114,16 @@ export function computeSideGameSectionsForMatch(
   const sixesConfig = sixesSideGame
     ? parseSixesConfig(sixesSideGame.config)
     : null;
+  const stablefordSideGame = sideGames.find((sg) => sg.kind === "STABLEFORD");
+  const stablefordConfig = stablefordSideGame
+    ? parseStablefordConfig(stablefordSideGame.config)
+    : null;
+  const bbbSideGame = sideGames.find((sg) => sg.kind === "BBB");
+  const bbbConfig = bbbSideGame ? parseBbbConfig(bbbSideGame.config) : null;
+  const snakeSideGame = sideGames.find((sg) => sg.kind === "SNAKE");
+  const snakeConfig = snakeSideGame
+    ? parseSnakeConfig(snakeSideGame.config)
+    : null;
 
   const playerInputs = match.players.map((p) => ({
     id: p.id,
@@ -145,5 +158,8 @@ export function computeSideGameSectionsForMatch(
     matchEvents,
     sixesConfig,
     skinsConfig,
+    stablefordConfig,
+    bbbConfig,
+    snakeConfig,
   });
 }

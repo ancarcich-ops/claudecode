@@ -754,6 +754,46 @@ export async function createMatchAction(formData: FormData) {
       });
     }
   }
+  // Stableford scoring table (WHS vs modified). Persist whenever the
+  // game is on so recaps show the agreed scale.
+  if (sideGameKinds.includes("STABLEFORD")) {
+    const raw = String(formData.get("stablefordConfig") ?? "");
+    if (raw) {
+      const { parseStablefordConfig, stringifyStablefordConfig } = await import(
+        "./sideGames"
+      );
+      await prisma.sideGame.update({
+        where: { matchId_kind: { matchId: match.id, kind: "STABLEFORD" } },
+        data: { config: stringifyStablefordConfig(parseStablefordConfig(raw)) },
+      });
+    }
+  }
+  // BBB per-event stakes.
+  if (sideGameKinds.includes("BBB")) {
+    const raw = String(formData.get("bbbConfig") ?? "");
+    if (raw) {
+      const { parseBbbConfig, stringifyBbbConfig } = await import(
+        "./sideGames"
+      );
+      await prisma.sideGame.update({
+        where: { matchId_kind: { matchId: match.id, kind: "BBB" } },
+        data: { config: stringifyBbbConfig(parseBbbConfig(raw)) },
+      });
+    }
+  }
+  // Snake stake + doubling.
+  if (sideGameKinds.includes("SNAKE")) {
+    const raw = String(formData.get("snakeConfig") ?? "");
+    if (raw) {
+      const { parseSnakeConfig, stringifySnakeConfig } = await import(
+        "./sideGames"
+      );
+      await prisma.sideGame.update({
+        where: { matchId_kind: { matchId: match.id, kind: "SNAKE" } },
+        data: { config: stringifySnakeConfig(parseSnakeConfig(raw)) },
+      });
+    }
+  }
 
   await recordOddsSnapshot(match.id);
 
@@ -1180,6 +1220,39 @@ export async function editMatchAction(formData: FormData) {
       data: { config },
     });
   }
+  if (sideGameKinds.includes("STABLEFORD")) {
+    const raw = String(formData.get("stablefordConfig") ?? "");
+    const { parseStablefordConfig, stringifyStablefordConfig } = await import(
+      "./sideGames"
+    );
+    const config = raw
+      ? stringifyStablefordConfig(parseStablefordConfig(raw))
+      : null;
+    await prisma.sideGame.update({
+      where: { matchId_kind: { matchId, kind: "STABLEFORD" } },
+      data: { config },
+    });
+  }
+  if (sideGameKinds.includes("BBB")) {
+    const raw = String(formData.get("bbbConfig") ?? "");
+    const { parseBbbConfig, stringifyBbbConfig } = await import("./sideGames");
+    const config = raw ? stringifyBbbConfig(parseBbbConfig(raw)) : null;
+    await prisma.sideGame.update({
+      where: { matchId_kind: { matchId, kind: "BBB" } },
+      data: { config },
+    });
+  }
+  if (sideGameKinds.includes("SNAKE")) {
+    const raw = String(formData.get("snakeConfig") ?? "");
+    const { parseSnakeConfig, stringifySnakeConfig } = await import(
+      "./sideGames"
+    );
+    const config = raw ? stringifySnakeConfig(parseSnakeConfig(raw)) : null;
+    await prisma.sideGame.update({
+      where: { matchId_kind: { matchId, kind: "SNAKE" } },
+      data: { config },
+    });
+  }
 
   await recordOddsSnapshot(matchId);
   revalidatePath(`/matches/${matchId}`);
@@ -1356,6 +1429,44 @@ export async function editMatchSideGamesAction(formData: FormData) {
             rules: parsedRules as never,
           }),
         },
+      });
+    }
+  }
+  // Stableford / BBB / Snake stakes — same inline-config pattern as the
+  // create + full-edit flows.
+  if (sideGameKinds.includes("STABLEFORD")) {
+    const raw = String(formData.get("stablefordConfig") ?? "");
+    if (raw) {
+      const { parseStablefordConfig, stringifyStablefordConfig } = await import(
+        "./sideGames"
+      );
+      await prisma.sideGame.update({
+        where: { matchId_kind: { matchId, kind: "STABLEFORD" } },
+        data: { config: stringifyStablefordConfig(parseStablefordConfig(raw)) },
+      });
+    }
+  }
+  if (sideGameKinds.includes("BBB")) {
+    const raw = String(formData.get("bbbConfig") ?? "");
+    if (raw) {
+      const { parseBbbConfig, stringifyBbbConfig } = await import(
+        "./sideGames"
+      );
+      await prisma.sideGame.update({
+        where: { matchId_kind: { matchId, kind: "BBB" } },
+        data: { config: stringifyBbbConfig(parseBbbConfig(raw)) },
+      });
+    }
+  }
+  if (sideGameKinds.includes("SNAKE")) {
+    const raw = String(formData.get("snakeConfig") ?? "");
+    if (raw) {
+      const { parseSnakeConfig, stringifySnakeConfig } = await import(
+        "./sideGames"
+      );
+      await prisma.sideGame.update({
+        where: { matchId_kind: { matchId, kind: "SNAKE" } },
+        data: { config: stringifySnakeConfig(parseSnakeConfig(raw)) },
       });
     }
   }
