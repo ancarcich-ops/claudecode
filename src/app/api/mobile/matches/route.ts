@@ -211,6 +211,8 @@ export async function POST(req: Request) {
     players?: unknown;
     sideGames?: unknown;
     groupId?: unknown;
+    tournamentId?: unknown;
+    roundNumber?: unknown;
   };
   try {
     body = await req.json();
@@ -358,6 +360,61 @@ export async function POST(req: Request) {
     groupId = groupIdRaw;
   }
 
+  // Tournament binding: when tournamentId is given, this match becomes
+  // round N of that tournament (roundNumber auto-increments unless
+  // supplied). Mirrors the web createMatchAction: public tournaments
+  // anyone can add rounds to; group-scoped ones require membership.
+  let tournamentId: string | null = null;
+  let roundNumber: number | null = null;
+  const tournamentIdRaw = String(body.tournamentId ?? "").trim();
+  if (tournamentIdRaw) {
+    const tournament = await prisma.tournament.findUnique({
+      where: { id: tournamentIdRaw },
+      select: {
+        id: true,
+        groupId: true,
+        status: true,
+        matches: { select: { roundNumber: true } },
+      },
+    });
+    if (!tournament) {
+      return NextResponse.json(
+        { error: "Tournament not found." },
+        { status: 400 },
+      );
+    }
+    let allowed = !tournament.groupId;
+    if (!allowed && tournament.groupId) {
+      const membership = await prisma.groupMember.findUnique({
+        where: {
+          groupId_userId: { groupId: tournament.groupId, userId: user.id },
+        },
+        select: { id: true },
+      });
+      allowed = !!membership;
+    }
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "You can't add rounds to this tournament." },
+        { status: 403 },
+      );
+    }
+    tournamentId = tournament.id;
+    const suppliedRound = Number(body.roundNumber);
+    roundNumber =
+      Number.isFinite(suppliedRound) && suppliedRound > 0
+        ? Math.floor(suppliedRound)
+        : tournament.matches.reduce((m, r) => Math.max(m, r.roundNumber ?? 0), 0) +
+          1;
+    // First round landing flips the tournament to IN_PROGRESS.
+    if (tournament.status === "UPCOMING") {
+      await prisma.tournament.update({
+        where: { id: tournament.id },
+        data: { status: "IN_PROGRESS" },
+      });
+    }
+  }
+
   // Pars: catalog preset -> course master pars -> default layout.
   let pars: number[] | null =
     preset.holes === holes && Array.isArray(preset.pars)
@@ -437,6 +494,8 @@ export async function POST(req: Request) {
       startingHole,
       parData: JSON.stringify(pars),
       scoringMode,
+      tournamentId,
+      roundNumber,
       format: dbFormat,
       scrambleConfig:
         dbFormat === "SCRAMBLE"
