@@ -10,6 +10,10 @@ import {
   parseTargetsConfig,
   parseTeamVsTeamConfig,
   parseWolfConfig,
+  parseStablefordConfig,
+  parseBbbConfig,
+  parseSnakeConfig,
+  STABLEFORD_MODIFIED_POINTS,
   type SideGameKind,
   type TeamVsTeamRule,
 } from "@/lib/sideGames";
@@ -51,6 +55,15 @@ export default async function EditSideGamesPage({
   );
   const sixesCfg = parseSixesConfig(
     match.sideGames.find((sg) => sg.kind === "SIXES")?.config,
+  );
+  const stablefordCfg = parseStablefordConfig(
+    match.sideGames.find((sg) => sg.kind === "STABLEFORD")?.config,
+  );
+  const bbbCfg = parseBbbConfig(
+    match.sideGames.find((sg) => sg.kind === "BBB")?.config,
+  );
+  const snakeCfg = parseSnakeConfig(
+    match.sideGames.find((sg) => sg.kind === "SNAKE")?.config,
   );
   const tvt = parseTeamVsTeamConfig(
     match.sideGames.find((sg) => sg.kind === "TEAM_VS_TEAM")?.config,
@@ -116,6 +129,15 @@ export default async function EditSideGamesPage({
             targetsAnte: targetsCfg?.ante ? String(targetsCfg.ante) : "",
             sixesStake: sixesCfg?.stake ? String(sixesCfg.stake) : "",
             tvtRules,
+            stablefordModified: stablefordCfg.points != null,
+            stablefordPoints: stablefordCfg.points ?? STABLEFORD_MODIFIED_POINTS,
+            bbbPoints: {
+              bingo: String(bbbCfg.points?.bingo ?? 1),
+              bango: String(bbbCfg.points?.bango ?? 1),
+              bongo: String(bbbCfg.points?.bongo ?? 1),
+            },
+            snakeStake: snakeCfg.stake ? String(snakeCfg.stake) : "",
+            snakeDoubling: snakeCfg.doubling ?? false,
           }}
         />
       </form>

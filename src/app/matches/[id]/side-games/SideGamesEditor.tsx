@@ -8,8 +8,11 @@ import {
   TEAM_VS_TEAM_RULES,
   teamVsTeamRuleBlurb,
   teamVsTeamRuleLabel,
+  STABLEFORD_WHS_POINTS,
+  STABLEFORD_MODIFIED_POINTS,
   type SideGameKind,
   type SkinsPushRule,
+  type StablefordPoints,
   type TeamVsTeamRule,
   type WolfPushRule,
 } from "@/lib/sideGames";
@@ -43,6 +46,11 @@ export type SideGamesEditorProps = {
     targetsAnte: string;
     sixesStake: string;
     tvtRules: TeamVsTeamRule[];
+    stablefordModified: boolean;
+    stablefordPoints: StablefordPoints;
+    bbbPoints: { bingo: string; bango: string; bongo: string };
+    snakeStake: string;
+    snakeDoubling: boolean;
   };
 };
 
@@ -69,6 +77,15 @@ export default function SideGamesEditor({
   const [targetsTarget, setTargetsTarget] = useState(initial.targetsTarget);
   const [targetsAnte, setTargetsAnte] = useState(initial.targetsAnte);
   const [sixesStake, setSixesStake] = useState(initial.sixesStake);
+  const [stablefordModified, setStablefordModified] = useState(
+    initial.stablefordModified,
+  );
+  const [stablefordPoints, setStablefordPoints] = useState<StablefordPoints>(
+    initial.stablefordPoints,
+  );
+  const [bbbPoints, setBbbPoints] = useState(initial.bbbPoints);
+  const [snakeStake, setSnakeStake] = useState(initial.snakeStake);
+  const [snakeDoubling, setSnakeDoubling] = useState(initial.snakeDoubling);
   const [tvtRules, setTvtRules] = useState<Set<TeamVsTeamRule>>(
     () =>
       new Set(
@@ -124,6 +141,35 @@ export default function SideGamesEditor({
   const tvtConfigJson = JSON.stringify({
     rules: Array.from(tvtRules).map((r) => ({ rule: r })),
   });
+  // Stableford: only send a points table when "Modified" is chosen;
+  // WHS mode leaves config empty so the default scale applies.
+  const stablefordConfigJson = JSON.stringify(
+    stablefordModified ? { points: stablefordPoints } : {},
+  );
+  const bbbNum = (s: string, fallback: number) => {
+    const n = Number(s);
+    return Number.isFinite(n) && n >= 0 ? Math.floor(n) : fallback;
+  };
+  const bbbConfigJson = JSON.stringify({
+    points: {
+      bingo: bbbNum(bbbPoints.bingo, 1),
+      bango: bbbNum(bbbPoints.bango, 1),
+      bongo: bbbNum(bbbPoints.bongo, 1),
+    },
+  });
+  const snakeStakeNum = Number(snakeStake);
+  const snakeConfigJson = JSON.stringify({
+    ...(Number.isFinite(snakeStakeNum) && snakeStakeNum > 0
+      ? { stake: snakeStakeNum, ...(snakeDoubling ? { doubling: true } : {}) }
+      : {}),
+  });
+  const setStablefordPoint = (k: keyof StablefordPoints, v: string) => {
+    const n = Number(v);
+    setStablefordPoints((prev) => ({
+      ...prev,
+      [k]: Number.isFinite(n) ? Math.trunc(n) : prev[k],
+    }));
+  };
 
   const tvtActive = sideGames.has("TEAM_VS_TEAM");
   const tvtAvailable = format === "INDIVIDUAL";
@@ -146,6 +192,19 @@ export default function SideGamesEditor({
       )}
       {sideGames.has("SIXES") && (
         <input type="hidden" name="sixesConfig" value={sixesConfigJson} />
+      )}
+      {sideGames.has("STABLEFORD") && (
+        <input
+          type="hidden"
+          name="stablefordConfig"
+          value={stablefordConfigJson}
+        />
+      )}
+      {sideGames.has("BBB") && (
+        <input type="hidden" name="bbbConfig" value={bbbConfigJson} />
+      )}
+      {sideGames.has("SNAKE") && (
+        <input type="hidden" name="snakeConfig" value={snakeConfigJson} />
       )}
       {tvtActive && tvtAvailable && (
         <>
@@ -424,6 +483,140 @@ export default function SideGamesEditor({
                         className="input w-24 text-right"
                       />
                     </label>
+                  </div>
+                )}
+                {g.kind === "STABLEFORD" && active && !disabled && (
+                  <div className="mt-2 ml-7 mr-1 rounded-md border border-border bg-panel2/40 p-2 space-y-2">
+                    <div className="text-[10px] uppercase tracking-wider text-mute">
+                      Scoring scale
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {(
+                        [
+                          [false, "Standard (WHS)", STABLEFORD_WHS_POINTS],
+                          [true, "Modified", STABLEFORD_MODIFIED_POINTS],
+                        ] as const
+                      ).map(([mod, label, preset]) => (
+                        <button
+                          key={label}
+                          type="button"
+                          onClick={() => {
+                            setStablefordModified(mod);
+                            // Seed the editable table from the preset the
+                            // first time Modified is chosen.
+                            if (mod) setStablefordPoints(preset);
+                          }}
+                          className={
+                            "rounded-md border px-2 py-1.5 text-[12px] " +
+                            (stablefordModified === mod
+                              ? "border-accent bg-accent/10 text-ink"
+                              : "border-border text-mute hover:text-ink")
+                          }
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    {stablefordModified && (
+                      <div className="grid grid-cols-3 gap-1.5 pt-1">
+                        {(
+                          [
+                            ["albatross", "Albatross+"],
+                            ["eagle", "Eagle"],
+                            ["birdie", "Birdie"],
+                            ["par", "Par"],
+                            ["bogey", "Bogey"],
+                            ["double", "Dbl+"],
+                          ] as const
+                        ).map(([k, label]) => (
+                          <label key={k} className="text-[11px]">
+                            <span className="block text-mute mb-0.5">
+                              {label}
+                            </span>
+                            <input
+                              type="number"
+                              step="1"
+                              value={String(stablefordPoints[k])}
+                              onChange={(e) =>
+                                setStablefordPoint(k, e.target.value)
+                              }
+                              className="input w-full text-right"
+                            />
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                    <p className="text-[10.5px] text-mute">
+                      {stablefordModified
+                        ? "Points per result vs par; negatives allowed."
+                        : "WHS: birdie 3, par 2, bogey 1, double+ 0."}
+                    </p>
+                  </div>
+                )}
+                {g.kind === "BBB" && active && !disabled && (
+                  <div className="mt-2 ml-7 mr-1 rounded-md border border-border bg-panel2/40 p-2 space-y-2">
+                    <div className="text-[10px] uppercase tracking-wider text-mute">
+                      Points per event
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {(
+                        [
+                          ["bingo", "Bingo"],
+                          ["bango", "Bango"],
+                          ["bongo", "Bongo"],
+                        ] as const
+                      ).map(([k, label]) => (
+                        <label key={k} className="text-[11px]">
+                          <span className="block text-mute mb-0.5">{label}</span>
+                          <input
+                            type="number"
+                            min={0}
+                            step="1"
+                            value={bbbPoints[k]}
+                            onChange={(e) =>
+                              setBbbPoints((prev) => ({
+                                ...prev,
+                                [k]: e.target.value,
+                              }))
+                            }
+                            className="input w-full text-right"
+                          />
+                        </label>
+                      ))}
+                    </div>
+                    <p className="text-[10.5px] text-mute">
+                      First on, closest to pin, first in the hole. Default 1
+                      each.
+                    </p>
+                  </div>
+                )}
+                {g.kind === "SNAKE" && active && !disabled && (
+                  <div className="mt-2 ml-7 mr-1 rounded-md border border-border bg-panel2/40 p-2 space-y-2">
+                    <label className="flex items-center justify-between text-[12px] gap-3">
+                      <span className="text-mute">Snake stake ($)</span>
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={snakeStake}
+                        onChange={(e) => setSnakeStake(e.target.value)}
+                        className="input w-24 text-right"
+                      />
+                    </label>
+                    <label className="flex items-center justify-between text-[12px] gap-3 cursor-pointer">
+                      <span className="text-mute">
+                        Double the pot each pass
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={snakeDoubling}
+                        onChange={(e) => setSnakeDoubling(e.target.checked)}
+                        className="accent-accent"
+                      />
+                    </label>
+                    <p className="text-[10.5px] text-mute">
+                      Last player to 3-putt holds the snake and owes the pot.
+                    </p>
                   </div>
                 )}
               </div>

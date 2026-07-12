@@ -132,6 +132,155 @@ export function stringifySkinsConfig(c: SkinsConfig): string {
   return JSON.stringify(c);
 }
 
+// Per-match Stableford scoring table. Default (no config) is the WHS
+// standard scale: albatross+ 5, eagle 4, birdie 3, par 2, bogey 1,
+// double-or-worse 0. A "modified" table lets house rules reward
+// aggression -- e.g. eagle 5 / birdie 2 / par 0 / bogey -1 / double -3
+// (the classic PGA Modified Stableford), including negative points.
+// `net - par` buckets: <=-3 albatross, -2 eagle, -1 birdie, 0 par,
+// +1 bogey, >=+2 double.
+export type StablefordPoints = {
+  albatross: number;
+  eagle: number;
+  birdie: number;
+  par: number;
+  bogey: number;
+  double: number;
+};
+export type StablefordConfig = {
+  points?: StablefordPoints;
+};
+
+// WHS standard scale -- the behavior when no config is saved.
+export const STABLEFORD_WHS_POINTS: StablefordPoints = {
+  albatross: 5,
+  eagle: 4,
+  birdie: 3,
+  par: 2,
+  bogey: 1,
+  double: 0,
+};
+
+// A common modified scale, offered as a one-tap preset in the editors.
+export const STABLEFORD_MODIFIED_POINTS: StablefordPoints = {
+  albatross: 8,
+  eagle: 5,
+  birdie: 2,
+  par: 0,
+  bogey: -1,
+  double: -3,
+};
+
+export function parseStablefordConfig(
+  s: string | null | undefined,
+): StablefordConfig {
+  if (!s) return {};
+  try {
+    const v = JSON.parse(s);
+    if (typeof v !== "object" || v === null) return {};
+    const p = (v as { points?: unknown }).points;
+    if (typeof p !== "object" || p === null) return {};
+    const rec = p as Record<string, unknown>;
+    const num = (k: keyof StablefordPoints): number => {
+      const raw = Number(rec[k]);
+      // Fall back to the WHS value for any missing/NaN key so a partial
+      // config still yields a complete, sensible table.
+      return Number.isFinite(raw) ? Math.trunc(raw) : STABLEFORD_WHS_POINTS[k];
+    };
+    return {
+      points: {
+        albatross: num("albatross"),
+        eagle: num("eagle"),
+        birdie: num("birdie"),
+        par: num("par"),
+        bogey: num("bogey"),
+        double: num("double"),
+      },
+    };
+  } catch {
+    return {};
+  }
+}
+
+export function stringifyStablefordConfig(c: StablefordConfig): string {
+  return JSON.stringify(c);
+}
+
+// Per-match BBB (Bingo Bango Bongo) stakes. Default (no config) awards
+// 1 point for each of the three events. House rules sometimes value
+// them differently (e.g. the hardest to earn worth more). Points are
+// non-negative integers; a 0 effectively disables that event's payout.
+export type BbbPoints = {
+  bingo: number;
+  bango: number;
+  bongo: number;
+};
+export type BbbConfig = {
+  points?: BbbPoints;
+};
+
+export const BBB_DEFAULT_POINTS: BbbPoints = { bingo: 1, bango: 1, bongo: 1 };
+
+export function parseBbbConfig(s: string | null | undefined): BbbConfig {
+  if (!s) return {};
+  try {
+    const v = JSON.parse(s);
+    if (typeof v !== "object" || v === null) return {};
+    const p = (v as { points?: unknown }).points;
+    if (typeof p !== "object" || p === null) return {};
+    const rec = p as Record<string, unknown>;
+    const num = (k: keyof BbbPoints): number => {
+      const raw = Number(rec[k]);
+      return Number.isFinite(raw) && raw >= 0
+        ? Math.trunc(raw)
+        : BBB_DEFAULT_POINTS[k];
+    };
+    return {
+      points: {
+        bingo: num("bingo"),
+        bango: num("bango"),
+        bongo: num("bongo"),
+      },
+    };
+  } catch {
+    return {};
+  }
+}
+
+export function stringifyBbbConfig(c: BbbConfig): string {
+  return JSON.stringify(c);
+}
+
+// Per-match Snake stakes. Snake is a penalty pot -- the current holder
+// (last player to 3-putt) is "on the snake" and owes. `stake` is the
+// dollar value carried; with `doubling` on, the pot doubles every time
+// the snake is passed (each hole that produces a 3-putt), so the final
+// holder can owe a lot. Default (no config / stake 0) shows no money.
+export type SnakeConfig = {
+  stake?: number;
+  doubling?: boolean;
+};
+
+export function parseSnakeConfig(s: string | null | undefined): SnakeConfig {
+  if (!s) return {};
+  try {
+    const v = JSON.parse(s);
+    if (typeof v !== "object" || v === null) return {};
+    const rec = v as Record<string, unknown>;
+    const out: SnakeConfig = {};
+    const stake = Number(rec.stake);
+    if (Number.isFinite(stake) && stake > 0) out.stake = stake;
+    if (rec.doubling === true) out.doubling = true;
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+export function stringifySnakeConfig(c: SnakeConfig): string {
+  return JSON.stringify(c);
+}
+
 // ---- Team-vs-Team side game --------------------------------------------
 // Runs on top of any match (INDIVIDUAL or SCRAMBLE). Splits players into
 // 2 teams (assignment stored in TeamVsTeamConfig.teams as arrays of
@@ -606,15 +755,19 @@ function netStrokesForHole(
   return gross - strokesGiven(handicap, holeIndex0, totalHoles);
 }
 
-function stablefordPointsFromNet(net: number, par: number): number {
-  // WHS standard, capped at 0 for double-or-worse.
+function stablefordPointsFromNet(
+  net: number,
+  par: number,
+  points: StablefordPoints = STABLEFORD_WHS_POINTS,
+): number {
+  // Bucket by net-to-par; default table is the WHS standard scale.
   const diff = net - par;
-  if (diff <= -3) return 5;
-  if (diff === -2) return 4;
-  if (diff === -1) return 3;
-  if (diff === 0) return 2;
-  if (diff === 1) return 1;
-  return 0;
+  if (diff <= -3) return points.albatross;
+  if (diff === -2) return points.eagle;
+  if (diff === -1) return points.birdie;
+  if (diff === 0) return points.par;
+  if (diff === 1) return points.bogey;
+  return points.double;
 }
 
 function rankRows(
@@ -636,7 +789,10 @@ export function computeStableford(
   holes: number,
   scoringMode: ScoringMode,
   startingHole: number = 1,
+  config?: StablefordConfig | null,
 ): Leaderboard {
+  const table = config?.points ?? STABLEFORD_WHS_POINTS;
+  const isModified = config?.points != null;
   const rows = players.map((p) => {
     let points = 0;
     let counted = 0;
@@ -645,7 +801,7 @@ export function computeStableford(
       if (typeof gross !== "number") continue;
       const par = pars[i] ?? 4;
       const net = netStrokesForHole(gross, p.handicap, i, holes, scoringMode);
-      points += stablefordPointsFromNet(net, par);
+      points += stablefordPointsFromNet(net, par, table);
       counted++;
     }
     return {
@@ -655,12 +811,15 @@ export function computeStableford(
       value: counted === 0 ? "—" : `${points} pt${points === 1 ? "" : "s"}`,
     };
   });
+  const scaleLabel = isModified ? "Modified scale" : "WHS scale";
   return {
     key: "STABLEFORD",
     kind: "STABLEFORD",
     title: "Stableford",
     subtitle:
-      scoringMode === "GROSS" ? "Gross points" : "Net points (WHS scale)",
+      scoringMode === "GROSS"
+        ? `Gross points (${scaleLabel})`
+        : `Net points (${scaleLabel})`,
     rows: rankRows(rows, true),
   };
 }
@@ -1883,16 +2042,33 @@ export type BbbEvent = {
   matchPlayerId: string | null;
 };
 
+// Point value for a single BBB event under the active stakes table.
+function bbbEventPoints(kind: BbbEventKind, points: BbbPoints): number {
+  switch (kind) {
+    case "BINGO":
+      return points.bingo;
+    case "BANGO":
+      return points.bango;
+    case "BONGO":
+      return points.bongo;
+    default:
+      return 1;
+  }
+}
+
 export function computeBbb(
   players: LiveScorePlayer[],
   events: BbbEvent[],
+  config?: BbbConfig | null,
 ): Leaderboard {
+  const points = config?.points ?? BBB_DEFAULT_POINTS;
+  const weighted = config?.points != null;
   const counts: Record<string, number> = Object.fromEntries(
     players.map((p) => [p.id, 0]),
   );
   for (const e of events) {
     if (e.matchPlayerId && e.matchPlayerId in counts) {
-      counts[e.matchPlayerId] += 1;
+      counts[e.matchPlayerId] += bbbEventPoints(e.kind, points);
     }
   }
   const rows = players.map((p) => ({
@@ -1901,12 +2077,18 @@ export function computeBbb(
     numeric: counts[p.id] ?? 0,
     value: `${counts[p.id] ?? 0} pt${(counts[p.id] ?? 0) === 1 ? "" : "s"}`,
   }));
-  const totalAwarded = Object.values(counts).reduce((a, b) => a + b, 0);
+  const totalAwarded = events.length;
+  const subtitle =
+    totalAwarded === 0
+      ? "No events awarded yet"
+      : weighted
+        ? `Bingo ${points.bingo} · Bango ${points.bango} · Bongo ${points.bongo}`
+        : undefined;
   return {
     key: "BBB",
     kind: "BBB",
     title: "Bingo Bango Bongo",
-    subtitle: totalAwarded === 0 ? "No events awarded yet" : undefined,
+    subtitle,
     rows: rankRows(rows, true),
   };
 }
@@ -1916,7 +2098,9 @@ export function runningBbb(
   holes: number,
   events: BbbEvent[],
   startingHole: number = 1,
+  config?: BbbConfig | null,
 ): RunningSeries {
+  const points = config?.points ?? BBB_DEFAULT_POINTS;
   const lastHole = startingHole + holes - 1;
   const through = Math.min(
     lastHole,
@@ -1931,7 +2115,7 @@ export function runningBbb(
   for (let h = startingHole; h <= through; h++) {
     for (const e of events) {
       if (e.hole === h && e.matchPlayerId && e.matchPlayerId in totals) {
-        totals[e.matchPlayerId] += 1;
+        totals[e.matchPlayerId] += bbbEventPoints(e.kind, points);
       }
     }
     rows.push({ hole: h, ...totals });
@@ -1959,9 +2143,25 @@ function snakeHolders(events: SnakeEvent[]): Set<string> {
   );
 }
 
+// The dollar value currently riding on the snake. `passes` = the number
+// of distinct holes that produced a 3-putt (the snake changes hands once
+// per such hole). With doubling on, the pot doubles every pass, so after
+// k passes it's stake * 2^(k-1); otherwise it's a flat stake.
+export function snakePot(
+  events: SnakeEvent[],
+  config?: SnakeConfig | null,
+): number {
+  const stake = config?.stake ?? 0;
+  if (stake <= 0) return 0;
+  const passes = new Set(events.map((e) => e.hole)).size;
+  if (passes === 0) return 0;
+  return config?.doubling ? stake * Math.pow(2, passes - 1) : stake;
+}
+
 export function computeSnake(
   players: LiveScorePlayer[],
   events: SnakeEvent[],
+  config?: SnakeConfig | null,
 ): Leaderboard {
   const counts: Record<string, number> = Object.fromEntries(
     players.map((p) => [p.id, 0]),
@@ -1970,19 +2170,28 @@ export function computeSnake(
     if (e.matchPlayerId in counts) counts[e.matchPlayerId] += 1;
   }
   const holders = snakeHolders(events);
+  const pot = snakePot(events, config);
   const rows = players.map((p) => {
     const n = counts[p.id] ?? 0;
     const isHolder = holders.has(p.id);
+    const putts = `${n} 3-putt${n === 1 ? "" : "s"}`;
+    let value = putts;
+    if (isHolder) {
+      value = pot > 0 ? `${putts} · holder owes ${fmtMoney(pot)}` : `${putts} · holder`;
+    }
     return {
       playerId: p.id,
       player: p.displayName,
       // numeric is the 3-putt count; lower is better in this game.
       numeric: n,
-      value: isHolder
-        ? `${n} 3-putt${n === 1 ? "" : "s"} · holder`
-        : `${n} 3-putt${n === 1 ? "" : "s"}`,
+      value,
     };
   });
+  const holderNames = players
+    .filter((p) => holders.has(p.id))
+    .map((p) => p.displayName)
+    .join(", ");
+  const potNote = pot > 0 ? ` · ${fmtMoney(pot)} on the snake` : "";
   // Lower 3-putt count = better, so rank ascending (no higherIsBetter).
   return {
     key: "SNAKE",
@@ -1990,11 +2199,10 @@ export function computeSnake(
     title: "Snake",
     subtitle:
       events.length === 0
-        ? "No 3-putts yet"
-        : `Snake holder: ${players
-            .filter((p) => holders.has(p.id))
-            .map((p) => p.displayName)
-            .join(", ")}`,
+        ? config?.stake && config.stake > 0
+          ? `No 3-putts yet · ${fmtMoney(config.stake)} snake${config.doubling ? " · doubles each pass" : ""}`
+          : "No 3-putts yet"
+        : `Snake holder: ${holderNames}${potNote}`,
     rows: rankRows(rows, false),
   };
 }
@@ -2351,6 +2559,12 @@ export function computeAllSideGames(input: {
   sixesConfig?: SixesConfig | null;
   // Skins tie-handling rule. Null = CARRYOVER (default behavior).
   skinsConfig?: SkinsConfig | null;
+  // Stableford point scale. Null = WHS standard.
+  stablefordConfig?: StablefordConfig | null;
+  // BBB per-event stakes. Null = 1 point each.
+  bbbConfig?: BbbConfig | null;
+  // Snake stake + doubling. Null = no money shown.
+  snakeConfig?: SnakeConfig | null;
 }): { kind: SideGameKind; leaderboards: Leaderboard[] }[] {
   const {
     enabled,
@@ -2370,6 +2584,9 @@ export function computeAllSideGames(input: {
     matchEvents = [],
     sixesConfig = null,
     skinsConfig = null,
+    stablefordConfig = null,
+    bbbConfig = null,
+    snakeConfig = null,
   } = input;
   const out: { kind: SideGameKind; leaderboards: Leaderboard[] }[] = [];
   for (const kind of enabled) {
@@ -2377,7 +2594,14 @@ export function computeAllSideGames(input: {
       out.push({
         kind,
         leaderboards: [
-          computeStableford(players, pars, holes, scoringMode, startingHole),
+          computeStableford(
+            players,
+            pars,
+            holes,
+            scoringMode,
+            startingHole,
+            stablefordConfig,
+          ),
         ],
       });
     } else if (kind === "SKINS") {
@@ -2398,9 +2622,15 @@ export function computeAllSideGames(input: {
       const lbs = computeNassau(players, pars, holes, scoringMode);
       if (lbs.length > 0) out.push({ kind, leaderboards: lbs });
     } else if (kind === "BBB") {
-      out.push({ kind, leaderboards: [computeBbb(players, bbbEvents)] });
+      out.push({
+        kind,
+        leaderboards: [computeBbb(players, bbbEvents, bbbConfig)],
+      });
     } else if (kind === "SNAKE") {
-      out.push({ kind, leaderboards: [computeSnake(players, snakeEvents)] });
+      out.push({
+        kind,
+        leaderboards: [computeSnake(players, snakeEvents, snakeConfig)],
+      });
     } else if (kind === "WOLF") {
       out.push({
         kind,
@@ -2508,7 +2738,9 @@ export function runningStableford(
   holes: number,
   scoringMode: ScoringMode,
   startingHole: number = 1,
+  config?: StablefordConfig | null,
 ): RunningSeries {
+  const table = config?.points ?? STABLEFORD_WHS_POINTS;
   const lastHole = startingHole + holes - 1;
   const through = Math.min(lastHole, maxHolesAcross(players));
   const rows: ({ hole: number } & Record<string, number>)[] = [];
@@ -2528,7 +2760,8 @@ export function runningStableford(
           holes,
           scoringMode,
         );
-        totals[p.id] = (totals[p.id] ?? 0) + stablefordPointsFromNet(net, par);
+        totals[p.id] =
+          (totals[p.id] ?? 0) + stablefordPointsFromNet(net, par, table);
       }
     }
     rows.push({ hole: h, ...totals });

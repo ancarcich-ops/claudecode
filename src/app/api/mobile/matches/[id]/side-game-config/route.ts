@@ -6,11 +6,14 @@
 // the SideGame row. The game must already be enabled (POST /side-games).
 //
 // Config shapes (all fields optional unless noted):
-//   WOLF:    { rotation?: [matchPlayerId…], pushRule?: "CARRY"|"NO_CARRY" }
+//   WOLF:    { rotation?: [matchPlayerId…], pushRule?: "ROLLOVER"|"NO_POINTS" }
 //   SKINS:   { pushRule?: "CARRYOVER"|"NO_CARRY" }
 //   TARGETS: { stat, target (number), ante? }         // stat+target required
 //   MATCH:   { strokesMode, manualStrokes?, autoPress?, autoPressThreshold?, stake? }
 //   SIXES:   { stake? }
+//   STABLEFORD: { points?: { albatross,eagle,birdie,par,bogey,double } }
+//   BBB:     { points?: { bingo, bango, bongo } }
+//   SNAKE:   { stake?, doubling? }
 //   TEAM_VS_TEAM: { teams: {0:[…],1:[…]}, rules: [{ rule, stake?, vegas? }], teamNames? }
 // 200: { ok: true, kind, config }.
 
@@ -30,9 +33,29 @@ import {
   stringifyTargetsConfig,
   parseTeamVsTeamConfig,
   stringifyTeamVsTeamConfig,
+  parseStablefordConfig,
+  stringifyStablefordConfig,
+  parseBbbConfig,
+  stringifyBbbConfig,
+  parseSnakeConfig,
+  stringifySnakeConfig,
 } from "@/lib/sideGames";
 
 export const dynamic = "force-dynamic";
+
+// Older native builds (slice 53) sent Wolf's pushRule as "CARRY"/"NO_CARRY"
+// instead of the engine's "ROLLOVER"/"NO_POINTS", so the choice silently
+// dropped. Map the legacy values here so those clients keep working without
+// a rebuild. Newer clients send the correct values and pass through.
+function normalizeWolfRaw(config: unknown): string {
+  const c =
+    config && typeof config === "object"
+      ? { ...(config as Record<string, unknown>) }
+      : {};
+  if (c.pushRule === "CARRY") c.pushRule = "ROLLOVER";
+  else if (c.pushRule === "NO_CARRY") c.pushRule = "NO_POINTS";
+  return JSON.stringify(c);
+}
 
 // Sanitize + re-serialize a config for a given game kind using the same
 // parser the web relies on. Returns null when the game has no config or
@@ -41,7 +64,7 @@ function sanitizeConfig(kind: string, config: unknown): string | null {
   const raw = JSON.stringify(config ?? {});
   switch (kind) {
     case "WOLF":
-      return stringifyWolfConfig(parseWolfConfig(raw));
+      return stringifyWolfConfig(parseWolfConfig(normalizeWolfRaw(config)));
     case "SKINS":
       return stringifySkinsConfig(parseSkinsConfig(raw));
     case "MATCH": {
@@ -56,6 +79,12 @@ function sanitizeConfig(kind: string, config: unknown): string | null {
       const c = parseTargetsConfig(raw);
       return c ? stringifyTargetsConfig(c) : null;
     }
+    case "STABLEFORD":
+      return stringifyStablefordConfig(parseStablefordConfig(raw));
+    case "BBB":
+      return stringifyBbbConfig(parseBbbConfig(raw));
+    case "SNAKE":
+      return stringifySnakeConfig(parseSnakeConfig(raw));
     case "TEAM_VS_TEAM": {
       const c = parseTeamVsTeamConfig(raw);
       return c ? stringifyTeamVsTeamConfig(c) : null;

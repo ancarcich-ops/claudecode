@@ -35,6 +35,9 @@ import {
   shapeWolfHoles,
   parseWolfConfig,
   parseSkinsConfig,
+  parseStablefordConfig,
+  parseBbbConfig,
+  parseSnakeConfig,
   teamVsTeamHoleBreakdown,
   type SideGameKind,
   type BbbEvent,
@@ -392,6 +395,14 @@ export default async function MatchPage({
   const wolfGame = (match.sideGames ?? []).find((sg) => sg.kind === "WOLF");
   const skinsGame = (match.sideGames ?? []).find((sg) => sg.kind === "SKINS");
   const skinsConfig = parseSkinsConfig(skinsGame?.config ?? null);
+  const stablefordGame = (match.sideGames ?? []).find(
+    (sg) => sg.kind === "STABLEFORD",
+  );
+  const stablefordConfig = parseStablefordConfig(
+    stablefordGame?.config ?? null,
+  );
+  const bbbConfig = parseBbbConfig(bbbGame?.config ?? null);
+  const snakeConfig = parseSnakeConfig(snakeGame?.config ?? null);
   const wolfEvents: WolfEvent[] = (wolfGame?.events ?? [])
     .filter((e) => isWolfEventKind(e.kind))
     .map((e) => ({
@@ -481,6 +492,9 @@ export default async function MatchPage({
     matchEvents,
     sixesConfig,
     skinsConfig,
+    stablefordConfig,
+    bbbConfig,
+    snakeConfig,
   });
   const sideGameLabel: Record<SideGameKind, string> = Object.fromEntries(
     ALL_SIDE_GAMES.map((g) => [g.kind, g.label]),
@@ -504,6 +518,7 @@ export default async function MatchPage({
       match.holes,
       scoringMode,
       matchStart,
+      stablefordConfig,
     );
   }
   if (enabledKinds.includes("SKINS")) {
@@ -542,7 +557,13 @@ export default async function MatchPage({
     );
   }
   if (enabledKinds.includes("BBB")) {
-    sgSeries.bbb = runningBbb(sgPlayers, match.holes, bbbEvents, matchStart);
+    sgSeries.bbb = runningBbb(
+      sgPlayers,
+      match.holes,
+      bbbEvents,
+      matchStart,
+      bbbConfig,
+    );
   }
   if (enabledKinds.includes("SNAKE")) {
     sgSeries.snake = runningSnake(
