@@ -38,6 +38,8 @@ import {
   parseStablefordConfig,
   parseBbbConfig,
   parseSnakeConfig,
+  parseNassauConfig,
+  isNassauEventKind,
   teamVsTeamHoleBreakdown,
   type SideGameKind,
   type BbbEvent,
@@ -419,6 +421,16 @@ export default async function MatchPage({
   )
     .filter((e) => e.kind === "PRESS")
     .map((e) => ({ hole: e.hole, kind: "PRESS" as const }));
+  // Nassau press events + config (2-player auto/manual presses).
+  const nassauGame = (match.sideGames ?? []).find(
+    (sg) => sg.kind === "NASSAU",
+  );
+  const nassauEvents: { hole: number; kind: "PRESS" }[] = (
+    nassauGame?.events ?? []
+  )
+    .filter((e) => isNassauEventKind(e.kind))
+    .map((e) => ({ hole: e.hole, kind: "PRESS" as const }));
+  const nassauConfig = parseNassauConfig(nassauGame?.config ?? null);
   const wolfConfig = parseWolfConfig(wolfGame?.config ?? null);
   const seatedWolfPlayers = match.players.map((p) => ({
     id: p.id,
@@ -495,6 +507,8 @@ export default async function MatchPage({
     stablefordConfig,
     bbbConfig,
     snakeConfig,
+    nassauConfig,
+    nassauEvents,
   });
   const sideGameLabel: Record<SideGameKind, string> = Object.fromEntries(
     ALL_SIDE_GAMES.map((g) => [g.kind, g.label]),

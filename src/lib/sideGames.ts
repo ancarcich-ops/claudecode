@@ -52,6 +52,22 @@ export type MatchEvent = {
   kind: MatchEventKind;
 };
 
+// Nassau press events. Same shape as Match presses, but recorded on the
+// NASSAU side game. The press applies to whichever 9 the hole falls in
+// (front for holes 1-9, back for 10-18) and takes effect from hole+1.
+// 2-player rounds only; ignored for 3+ players.
+export const NASSAU_EVENT_KINDS = ["PRESS"] as const;
+export type NassauEventKind = (typeof NASSAU_EVENT_KINDS)[number];
+
+export function isNassauEventKind(s: string): s is NassauEventKind {
+  return (NASSAU_EVENT_KINDS as readonly string[]).includes(s);
+}
+
+export type NassauEvent = {
+  hole: number;
+  kind: NassauEventKind;
+};
+
 export const WOLF_EVENT_KINDS = [
   "PARTNER",
   "LONE_WOLF",
@@ -278,6 +294,42 @@ export function parseSnakeConfig(s: string | null | undefined): SnakeConfig {
 }
 
 export function stringifySnakeConfig(c: SnakeConfig): string {
+  return JSON.stringify(c);
+}
+
+// Per-match Nassau configuration. Nassau is three bets (front 9, back 9,
+// total). `autoPress` starts a fresh press bet whenever a side falls
+// `autoPressThreshold` holes down within the front or back match; manual
+// presses are recorded as NassauEvents. `stake` is the dollar value of
+// each bet (each press is another bet of the same size). Presses apply
+// only to 2-player rounds; 3+ players fall back to stroke-sum ranking.
+export type NassauConfig = {
+  autoPress?: boolean;
+  autoPressThreshold?: number; // default 2 when autoPress is on
+  stake?: number;
+};
+
+export function parseNassauConfig(s: string | null | undefined): NassauConfig {
+  if (!s) return {};
+  try {
+    const v = JSON.parse(s);
+    if (typeof v !== "object" || v === null) return {};
+    const rec = v as Record<string, unknown>;
+    const out: NassauConfig = {};
+    if (rec.autoPress === true) out.autoPress = true;
+    const threshold = Number(rec.autoPressThreshold);
+    if (out.autoPress && Number.isFinite(threshold) && threshold >= 1) {
+      out.autoPressThreshold = Math.floor(threshold);
+    }
+    const stake = Number(rec.stake);
+    if (Number.isFinite(stake) && stake > 0) out.stake = stake;
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+export function stringifyNassauConfig(c: NassauConfig): string {
   return JSON.stringify(c);
 }
 
@@ -1368,45 +1420,194 @@ function nassauSegment(
   };
 }
 
+// One press "line" inside a Nassau segment: a sub-bet that runs from
+// `startHole` (1-based) to the end of the segment. `diff` is holes-up
+// from p0's point of view (positive => p0 ahead).
+type NassauLine = { startHole: number; diff: number; pressed: boolean };
+
+// Head-to-head match play across a hole range for exactly 2 players,
+// with optional auto/manual presses. Mirrors the Match press engine but
+// uses the ABSOLUTE hole index (h-1) for stroke allocation so back-9
+// segments get the right strokes. Returns the base line plus any press
+// lines, and how many segment holes have been scored.
+function nassauSegmentLines(
+  p0: LiveScorePlayer,
+  p1: LiveScorePlayer,
+  scoringMode: ScoringMode,
+  totalHoles: number,
+  startHole1: number,
+  endHole1: number,
+  allowPress: boolean,
+  config: NassauConfig | null | undefined,
+  pressEvents: NassauEvent[],
+): { lines: NassauLine[]; thruCount: number } {
+  const lines: NassauLine[] = [
+    { startHole: startHole1, diff: 0, pressed: false },
+  ];
+  const threshold = Math.max(1, Math.floor(config?.autoPressThreshold ?? 2));
+  const manualPressHoles = new Set(
+    allowPress ? pressEvents.map((e) => e.hole) : [],
+  );
+  let thruCount = 0;
+  for (let h = startHole1; h <= endHole1; h++) {
+    if (
+      typeof p0.scoresByHole[h] !== "number" ||
+      typeof p1.scoresByHole[h] !== "number"
+    ) {
+      break;
+    }
+    const idx0 = h - 1; // absolute stroke index in the 18-hole round
+    const net0 = netStrokesForHole(
+      p0.scoresByHole[h] as number,
+      p0.handicap,
+      idx0,
+      totalHoles,
+      scoringMode,
+    );
+    const net1 = netStrokesForHole(
+      p1.scoresByHole[h] as number,
+      p1.handicap,
+      idx0,
+      totalHoles,
+      scoringMode,
+    );
+    let delta = 0;
+    if (net0 < net1) delta = 1;
+    else if (net1 < net0) delta = -1;
+    for (const line of lines) {
+      if (line.startHole <= h) line.diff += delta;
+    }
+    if (allowPress) {
+      // Auto-press: spawn a fresh line when an un-pressed line has
+      // crossed the threshold, provided a hole remains in the segment.
+      if (config?.autoPress) {
+        const trigger = lines
+          .filter((l) => !l.pressed && Math.abs(l.diff) >= threshold)
+          .pop();
+        if (trigger && h < endHole1) {
+          trigger.pressed = true;
+          lines.push({ startHole: h + 1, diff: 0, pressed: false });
+        }
+      }
+      // Manual press recorded at hole h -> new line from hole+1.
+      if (manualPressHoles.has(h) && h < endHole1) {
+        const target = [...lines].reverse().find((l) => !l.pressed);
+        if (target) target.pressed = true;
+        lines.push({ startHole: h + 1, diff: 0, pressed: false });
+      }
+    }
+    thruCount++;
+  }
+  return { lines, thruCount };
+}
+
+// Build the 2-row match-play board for a single Nassau line.
+function nassauLineBoard(
+  key: string,
+  title: string,
+  p0: LiveScorePlayer,
+  p1: LiveScorePlayer,
+  line: NassauLine,
+  thruCount: number,
+  stake: number,
+  subtitle: string,
+): Leaderboard {
+  const moneyFor = (up: number) =>
+    stake > 0 && up !== 0 ? ` · ${fmtMoney(up > 0 ? stake : -stake)}` : "";
+  const rows = [
+    {
+      playerId: p0.id,
+      player: p0.displayName,
+      numeric: line.diff,
+      value:
+        thruCount === 0
+          ? "—"
+          : `${formatMatchPoints(line.diff)}${moneyFor(line.diff)}`,
+    },
+    {
+      playerId: p1.id,
+      player: p1.displayName,
+      numeric: -line.diff,
+      value:
+        thruCount === 0
+          ? "—"
+          : `${formatMatchPoints(-line.diff)}${moneyFor(-line.diff)}`,
+    },
+  ];
+  return { key, kind: "NASSAU", title, subtitle, rows: rankRows(rows, true) };
+}
+
 export function computeNassau(
   players: LiveScorePlayer[],
   pars: number[],
   holes: number,
   scoringMode: ScoringMode,
+  config?: NassauConfig | null,
+  events?: NassauEvent[] | null,
 ): Leaderboard[] {
   if (holes !== 18) return [];
-  return [
-    nassauSegment(
-      players,
-      pars,
-      scoringMode,
-      1,
-      9,
-      holes,
-      "NASSAU_FRONT9",
-      "Front 9",
-    ),
-    nassauSegment(
-      players,
-      pars,
-      scoringMode,
-      10,
-      18,
-      holes,
-      "NASSAU_BACK9",
-      "Back 9",
-    ),
-    nassauSegment(
-      players,
-      pars,
-      scoringMode,
-      1,
-      18,
-      holes,
-      "NASSAU_TOTAL",
-      "Total",
-    ),
+
+  // 3+ players: presses don't apply (like Match's round-robin). Keep the
+  // long-standing stroke-sum ranking per segment.
+  if (players.length !== 2) {
+    return [
+      nassauSegment(players, pars, scoringMode, 1, 9, holes, "NASSAU_FRONT9", "Front 9"),
+      nassauSegment(players, pars, scoringMode, 10, 18, holes, "NASSAU_BACK9", "Back 9"),
+      nassauSegment(players, pars, scoringMode, 1, 18, holes, "NASSAU_TOTAL", "Total"),
+    ];
+  }
+
+  const [p0, p1] = players;
+  const stake = config?.stake ?? 0;
+  const pressEvents = (events ?? []).filter((e) => e.kind === "PRESS");
+  const stakeNote = stake > 0 ? ` · ${fmtMoney(stake)}/bet` : "";
+  const out: Leaderboard[] = [];
+
+  // Front 9 and Back 9 are pressable matches; Total is a straight bet.
+  const segments: {
+    key: string;
+    label: string;
+    start: number;
+    end: number;
+    press: boolean;
+  }[] = [
+    { key: "NASSAU_FRONT9", label: "Front 9", start: 1, end: 9, press: true },
+    { key: "NASSAU_BACK9", label: "Back 9", start: 10, end: 18, press: true },
+    { key: "NASSAU_TOTAL", label: "Total", start: 1, end: 18, press: false },
   ];
+
+  for (const seg of segments) {
+    const segPresses = pressEvents.filter(
+      (e) => e.hole >= seg.start && e.hole <= seg.end,
+    );
+    const { lines, thruCount } = nassauSegmentLines(
+      p0,
+      p1,
+      scoringMode,
+      holes,
+      seg.start,
+      seg.end,
+      seg.press,
+      config,
+      segPresses,
+    );
+    lines.forEach((line, i) => {
+      const isBase = i === 0;
+      const title = isBase ? seg.label : `${seg.label} · Press ${i}`;
+      const key = isBase ? seg.key : `${seg.key}_P${i}`;
+      const thruNote =
+        thruCount === 0 ? "not started" : `thru ${thruCount} of ${seg.end - seg.start + 1}`;
+      const subtitle = isBase
+        ? `Match play · ${thruNote}${stakeNote}`
+        : `Press from hole ${line.startHole}${
+            stake > 0 ? ` · ${fmtMoney(stake)}/bet` : ""
+          }`;
+      out.push(
+        nassauLineBoard(key, title, p0, p1, line, thruCount, stake, subtitle),
+      );
+    });
+  }
+  return out;
 }
 
 // ---- Team-vs-Team -------------------------------------------------------
@@ -2565,6 +2766,10 @@ export function computeAllSideGames(input: {
   bbbConfig?: BbbConfig | null;
   // Snake stake + doubling. Null = no money shown.
   snakeConfig?: SnakeConfig | null;
+  // Nassau auto-press / stake. Null = straight stroke-sum, no presses.
+  nassauConfig?: NassauConfig | null;
+  // Manual Nassau press events (2-player only).
+  nassauEvents?: NassauEvent[];
 }): { kind: SideGameKind; leaderboards: Leaderboard[] }[] {
   const {
     enabled,
@@ -2587,6 +2792,8 @@ export function computeAllSideGames(input: {
     stablefordConfig = null,
     bbbConfig = null,
     snakeConfig = null,
+    nassauConfig = null,
+    nassauEvents = [],
   } = input;
   const out: { kind: SideGameKind; leaderboards: Leaderboard[] }[] = [];
   for (const kind of enabled) {
@@ -2619,7 +2826,14 @@ export function computeAllSideGames(input: {
         ],
       });
     } else if (kind === "NASSAU") {
-      const lbs = computeNassau(players, pars, holes, scoringMode);
+      const lbs = computeNassau(
+        players,
+        pars,
+        holes,
+        scoringMode,
+        nassauConfig,
+        nassauEvents,
+      );
       if (lbs.length > 0) out.push({ kind, leaderboards: lbs });
     } else if (kind === "BBB") {
       out.push({

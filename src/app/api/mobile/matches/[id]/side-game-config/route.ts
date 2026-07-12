@@ -14,6 +14,7 @@
 //   STABLEFORD: { points?: { albatross,eagle,birdie,par,bogey,double } }
 //   BBB:     { points?: { bingo, bango, bongo } }
 //   SNAKE:   { stake?, doubling? }
+//   NASSAU:  { autoPress?, autoPressThreshold?, stake? }
 //   TEAM_VS_TEAM: { teams: {0:[…],1:[…]}, rules: [{ rule, stake?, vegas? }], teamNames? }
 // 200: { ok: true, kind, config }.
 
@@ -39,6 +40,8 @@ import {
   stringifyBbbConfig,
   parseSnakeConfig,
   stringifySnakeConfig,
+  parseNassauConfig,
+  stringifyNassauConfig,
 } from "@/lib/sideGames";
 
 export const dynamic = "force-dynamic";
@@ -85,6 +88,8 @@ function sanitizeConfig(kind: string, config: unknown): string | null {
       return stringifyBbbConfig(parseBbbConfig(raw));
     case "SNAKE":
       return stringifySnakeConfig(parseSnakeConfig(raw));
+    case "NASSAU":
+      return stringifyNassauConfig(parseNassauConfig(raw));
     case "TEAM_VS_TEAM": {
       const c = parseTeamVsTeamConfig(raw);
       return c ? stringifyTeamVsTeamConfig(c) : null;
