@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "./db";
 import { writeSideGameEvent } from "./sideGameEvents";
+import { canScoreMatch } from "./matchAccess";
 import { randomBytes } from "node:crypto";
 import {
   clearSession,
@@ -1610,20 +1611,20 @@ export async function logScoreAction(formData: FormData) {
   const hole = Number(formData.get("hole"));
   const strokesRaw = formData.get("strokes");
 
-  // Permission gate: only the match creator OR a player linked to one of
-  // the seats in this match can log/clear scores. Anyone else viewing the
-  // match (group members, public viewers) can read but not write.
+  // Permission gate: the match creator, a player linked to a seat, OR --
+  // when the round belongs to a group -- any member of that group (the
+  // crew playing together keeps score for each other). Others can read
+  // but not write.
   const matchPerm = await prisma.match.findUnique({
     where: { id: matchId },
     select: {
       createdById: true,
+      groupId: true,
       players: { select: { userId: true } },
     },
   });
   if (!matchPerm) throw new Error("Match not found");
-  const isCreator = matchPerm.createdById === user.id;
-  const isLinkedPlayer = matchPerm.players.some((p) => p.userId === user.id);
-  if (!isCreator && !isLinkedPlayer) {
+  if (!(await canScoreMatch(user.id, matchPerm))) {
     throw new Error("Only players in this match can log scores");
   }
 
@@ -1769,15 +1770,14 @@ export async function recordSideGameEventAction(formData: FormData) {
       match: {
         select: {
           createdById: true,
+          groupId: true,
           players: { select: { userId: true } },
         },
       },
     },
   });
   if (!sg) throw new Error("Side game not found");
-  const isCreator = sg.match.createdById === user.id;
-  const isLinkedPlayer = sg.match.players.some((p) => p.userId === user.id);
-  if (!isCreator && !isLinkedPlayer) {
+  if (!(await canScoreMatch(user.id, sg.match))) {
     throw new Error("Only players in this match can record events");
   }
 

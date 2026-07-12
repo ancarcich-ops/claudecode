@@ -14,6 +14,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserFromBearer, unauthorized } from "@/lib/mobileAuth";
+import { canScoreMatch } from "@/lib/matchAccess";
 import {
   gameKindForEventKind,
   writeSideGameEvent,
@@ -53,6 +54,7 @@ export async function POST(
     where: { id: params.id },
     select: {
       createdById: true,
+      groupId: true,
       players: { select: { id: true, userId: true } },
       sideGames: { select: { id: true, kind: true } },
     },
@@ -60,9 +62,7 @@ export async function POST(
   if (!match) {
     return NextResponse.json({ error: "Match not found" }, { status: 404 });
   }
-  const isCreator = match.createdById === user.id;
-  const isSeated = match.players.some((p) => p.userId === user.id);
-  if (!isCreator && !isSeated) {
+  if (!(await canScoreMatch(user.id, match))) {
     return NextResponse.json(
       { error: "Only players in this round can record events." },
       { status: 403 },
