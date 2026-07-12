@@ -198,6 +198,44 @@ home feed (server-side, cross-group visibility):
 } }`
 403 when the caller isn't a member; 404 unknown group.
 
+## Tournaments (multi-round events)
+
+A tournament rolls several rounds (child matches) into one cumulative
+leaderboard + win odds. Same Net/Gross applied across N planned rounds.
+
+### GET /tournaments
+200: `{ "tournaments": [ { "id", "name", "status"
+  ("UPCOMING"|"IN_PROGRESS"|"COMPLETED"), "scoringMode" ("NET"|"GROSS"),
+  "roundsPlanned", "roundsPlayed", "playerCount", "isCreator",
+  "inviteCode", "createdAt" } ] }` — created or joined, active first.
+
+### GET /tournaments/:id
+Creator or roster member only. 200: `{ "tournament": { id, name, status,
+  scoringMode, roundsPlanned, scheduledStartAt, notes, inviteCode,
+  isCreator, createdBy }, "rounds": [ { id, roundNumber, courseName,
+  status, scheduledAt, players:[{id,displayName,userId}] } ],
+  "roster": [ { id, displayName, userId, handicapAtStart } ],
+  "leaderboard": [ { rank, playerId, displayName, latestHandicap,
+    roundScores:[num|null…], total, playedRounds } ],
+  "odds": [ { rank, displayName, latestHandicap, roundScores, scoreSoFar,
+    playedRounds, roundsPlanned, projectedTotal, winProbability } ] }`.
+Each round `id` is a normal match — open it / add scores as usual.
+
+### POST /tournaments
+Body: `{ "name", "scoringMode"? ("NET"|"GROSS"), "roundsPlanned"? (1–12),
+  "scheduledStartAt"? (ISO), "notes"? }`. Creator auto-joins. 200:
+`{ "tournament": { "id", "inviteCode" } }`.
+
+### POST /tournaments/join
+Body: `{ "code": "ABC123", "handicap"? }`. Idempotent. 200:
+`{ "tournament": { "id" } }`; 404 unknown code.
+
+### Adding a round
+`POST /matches` accepts `"tournamentId"` (+ optional `"roundNumber"`);
+the new round is bound to that tournament (round auto-increments, and
+the first round flips it to IN_PROGRESS). Public tournaments: anyone
+can add rounds; group-scoped: members only.
+
 ### GET /courses?q=…&lat=…&lng=…
 Course picker for start-a-round. `q` searches the catalog by
 name/city; `lat`+`lng` with no `q` = nearest courses. Max 20.
