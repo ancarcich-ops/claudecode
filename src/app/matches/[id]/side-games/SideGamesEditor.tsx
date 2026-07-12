@@ -51,6 +51,9 @@ export type SideGamesEditorProps = {
     bbbPoints: { bingo: string; bango: string; bongo: string };
     snakeStake: string;
     snakeDoubling: boolean;
+    nassauAutoPress: boolean;
+    nassauThreshold: string;
+    nassauStake: string;
   };
 };
 
@@ -86,6 +89,13 @@ export default function SideGamesEditor({
   const [bbbPoints, setBbbPoints] = useState(initial.bbbPoints);
   const [snakeStake, setSnakeStake] = useState(initial.snakeStake);
   const [snakeDoubling, setSnakeDoubling] = useState(initial.snakeDoubling);
+  const [nassauAutoPress, setNassauAutoPress] = useState(
+    initial.nassauAutoPress,
+  );
+  const [nassauThreshold, setNassauThreshold] = useState(
+    initial.nassauThreshold,
+  );
+  const [nassauStake, setNassauStake] = useState(initial.nassauStake);
   const [tvtRules, setTvtRules] = useState<Set<TeamVsTeamRule>>(
     () =>
       new Set(
@@ -163,6 +173,22 @@ export default function SideGamesEditor({
       ? { stake: snakeStakeNum, ...(snakeDoubling ? { doubling: true } : {}) }
       : {}),
   });
+  const nassauThresholdNum = Number(nassauThreshold);
+  const nassauStakeNum = Number(nassauStake);
+  const nassauConfigJson = JSON.stringify({
+    ...(nassauAutoPress
+      ? {
+          autoPress: true,
+          autoPressThreshold:
+            Number.isFinite(nassauThresholdNum) && nassauThresholdNum >= 1
+              ? Math.floor(nassauThresholdNum)
+              : 2,
+        }
+      : {}),
+    ...(Number.isFinite(nassauStakeNum) && nassauStakeNum > 0
+      ? { stake: nassauStakeNum }
+      : {}),
+  });
   const setStablefordPoint = (k: keyof StablefordPoints, v: string) => {
     const n = Number(v);
     setStablefordPoints((prev) => ({
@@ -205,6 +231,9 @@ export default function SideGamesEditor({
       )}
       {sideGames.has("SNAKE") && (
         <input type="hidden" name="snakeConfig" value={snakeConfigJson} />
+      )}
+      {sideGames.has("NASSAU") && (
+        <input type="hidden" name="nassauConfig" value={nassauConfigJson} />
       )}
       {tvtActive && tvtAvailable && (
         <>
@@ -616,6 +645,47 @@ export default function SideGamesEditor({
                     </label>
                     <p className="text-[10.5px] text-mute">
                       Last player to 3-putt holds the snake and owes the pot.
+                    </p>
+                  </div>
+                )}
+                {g.kind === "NASSAU" && active && !disabled && (
+                  <div className="mt-2 ml-7 mr-1 rounded-md border border-border bg-panel2/40 p-2 space-y-2">
+                    <label className="flex items-center justify-between text-[12px] gap-3 cursor-pointer">
+                      <span className="text-mute">Auto-press when 2 down</span>
+                      <input
+                        type="checkbox"
+                        checked={nassauAutoPress}
+                        onChange={(e) => setNassauAutoPress(e.target.checked)}
+                        className="accent-accent"
+                      />
+                    </label>
+                    {nassauAutoPress && (
+                      <label className="flex items-center justify-between text-[12px] gap-3">
+                        <span className="text-mute">Press threshold (down)</span>
+                        <input
+                          type="number"
+                          min={1}
+                          step={1}
+                          value={nassauThreshold}
+                          onChange={(e) => setNassauThreshold(e.target.value)}
+                          className="input w-20 text-right"
+                        />
+                      </label>
+                    )}
+                    <label className="flex items-center justify-between text-[12px] gap-3">
+                      <span className="text-mute">Stake per bet ($)</span>
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={nassauStake}
+                        onChange={(e) => setNassauStake(e.target.value)}
+                        className="input w-24 text-right"
+                      />
+                    </label>
+                    <p className="text-[10.5px] text-mute">
+                      Front, back &amp; total bets. Presses apply to 2-player
+                      rounds.
                     </p>
                   </div>
                 )}

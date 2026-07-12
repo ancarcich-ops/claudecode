@@ -131,6 +131,10 @@ export type MatchEditInitial = {
   bbbPoints?: { bingo: string; bango: string; bongo: string };
   snakeStake?: string;
   snakeDoubling?: boolean;
+  // Nassau auto-press + threshold + stake.
+  nassauAutoPress?: boolean;
+  nassauThreshold?: string;
+  nassauStake?: string;
   notes: string;
   groupId: string;
 };
@@ -438,6 +442,14 @@ export default function NewMatchForm({
   const [snakeDoubling, setSnakeDoubling] = useState(
     initial?.snakeDoubling ?? false,
   );
+  // Nassau auto-press + threshold + stake.
+  const [nassauAutoPress, setNassauAutoPress] = useState(
+    initial?.nassauAutoPress ?? false,
+  );
+  const [nassauThreshold, setNassauThreshold] = useState(
+    initial?.nassauThreshold ?? "2",
+  );
+  const [nassauStake, setNassauStake] = useState(initial?.nassauStake ?? "");
 
   // Keep sideGames in sync with the format picker. Both Teams
   // (SCRAMBLE) and Both auto-enable TEAM_VS_TEAM so the rule picker
@@ -1492,6 +1504,26 @@ export default function NewMatchForm({
                 ? JSON.stringify({
                     stake: Number(snakeStake) || 0,
                     ...(snakeDoubling ? { doubling: true } : {}),
+                  })
+                : ""
+            }
+          />
+          {/* Nassau auto-press + stake. */}
+          <input
+            type="hidden"
+            name="nassauConfig"
+            value={
+              sideGames.has("NASSAU")
+                ? JSON.stringify({
+                    ...(nassauAutoPress
+                      ? {
+                          autoPress: true,
+                          autoPressThreshold: Number(nassauThreshold) || 2,
+                        }
+                      : {}),
+                    ...(Number(nassauStake) > 0
+                      ? { stake: Number(nassauStake) }
+                      : {}),
                   })
                 : ""
             }
@@ -2605,6 +2637,59 @@ export default function NewMatchForm({
                       </label>
                       <p className="text-[10.5px] text-mute leading-snug">
                         Last player to 3-putt holds the snake and owes the pot.
+                      </p>
+                    </div>
+                  )}
+                  {g.kind === "NASSAU" && active && !disabled && (
+                    <div className="mt-2 ml-7 mr-1 rounded-md border border-border bg-panel2/40 p-2 space-y-2">
+                      <label className="flex items-center gap-2 text-[12px] cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={nassauAutoPress}
+                          onChange={(e) => setNassauAutoPress(e.target.checked)}
+                          className="accent-accent"
+                        />
+                        <span className="text-mute">
+                          Auto-press when a side goes 2 down
+                        </span>
+                      </label>
+                      {nassauAutoPress && (
+                        <div className="flex items-center gap-2">
+                          <label className="text-[11px] text-mute whitespace-nowrap">
+                            Press when down
+                          </label>
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            min={1}
+                            step={1}
+                            value={nassauThreshold}
+                            onChange={(e) => setNassauThreshold(e.target.value)}
+                            className="input w-16 text-center text-sm py-1"
+                          />
+                          <span className="text-[10.5px] text-mute">holes</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <label className="text-[11px] text-mute whitespace-nowrap">
+                          Stake
+                        </label>
+                        <span className="text-[12px] text-mute">$</span>
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          min={0}
+                          step={1}
+                          value={nassauStake}
+                          placeholder="0"
+                          onChange={(e) => setNassauStake(e.target.value)}
+                          className="input w-20 text-center text-sm py-1"
+                        />
+                        <span className="text-[10.5px] text-mute">per bet</span>
+                      </div>
+                      <p className="text-[10.5px] text-mute leading-snug">
+                        Front, back &amp; total bets. Presses apply to 2-player
+                        rounds.
                       </p>
                     </div>
                   )}

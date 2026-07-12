@@ -13,6 +13,7 @@ import {
   parseStablefordConfig,
   parseBbbConfig,
   parseSnakeConfig,
+  parseNassauConfig,
   STABLEFORD_MODIFIED_POINTS,
   type SideGameKind,
   type TeamVsTeamRule,
@@ -64,6 +65,9 @@ export default async function EditSideGamesPage({
   );
   const snakeCfg = parseSnakeConfig(
     match.sideGames.find((sg) => sg.kind === "SNAKE")?.config,
+  );
+  const nassauCfg = parseNassauConfig(
+    match.sideGames.find((sg) => sg.kind === "NASSAU")?.config,
   );
   const tvt = parseTeamVsTeamConfig(
     match.sideGames.find((sg) => sg.kind === "TEAM_VS_TEAM")?.config,
@@ -138,6 +142,9 @@ export default async function EditSideGamesPage({
             },
             snakeStake: snakeCfg.stake ? String(snakeCfg.stake) : "",
             snakeDoubling: snakeCfg.doubling ?? false,
+            nassauAutoPress: nassauCfg.autoPress ?? false,
+            nassauThreshold: String(nassauCfg.autoPressThreshold ?? 2),
+            nassauStake: nassauCfg.stake ? String(nassauCfg.stake) : "",
           }}
         />
       </form>

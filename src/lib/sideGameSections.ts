@@ -20,6 +20,8 @@ import {
   parseStablefordConfig,
   parseBbbConfig,
   parseSnakeConfig,
+  parseNassauConfig,
+  isNassauEventKind,
   type SideGameKind,
   type BbbEvent,
   type SnakeEvent,
@@ -98,6 +100,16 @@ export function computeSideGameSectionsForMatch(
   )
     .filter((e) => e.kind === "PRESS")
     .map((e) => ({ hole: e.hole, kind: "PRESS" as const }));
+  // Nassau press events + config (2-player auto/manual presses).
+  const nassauGame = sideGames.find((sg) => sg.kind === "NASSAU");
+  const nassauEvents: { hole: number; kind: "PRESS" }[] = (
+    nassauGame?.events ?? []
+  )
+    .filter((e) => isNassauEventKind(e.kind))
+    .map((e) => ({ hole: e.hole, kind: "PRESS" as const }));
+  const nassauConfig = nassauGame
+    ? parseNassauConfig(nassauGame.config)
+    : null;
   const tvtSideGame = sideGames.find((sg) => sg.kind === "TEAM_VS_TEAM");
   const teamVsTeamConfig = tvtSideGame
     ? parseTeamVsTeamConfig(tvtSideGame.config)
@@ -161,5 +173,7 @@ export function computeSideGameSectionsForMatch(
     stablefordConfig,
     bbbConfig,
     snakeConfig,
+    nassauConfig,
+    nassauEvents,
   });
 }

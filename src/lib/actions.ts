@@ -794,6 +794,19 @@ export async function createMatchAction(formData: FormData) {
       });
     }
   }
+  // Nassau auto-press / stake.
+  if (sideGameKinds.includes("NASSAU")) {
+    const raw = String(formData.get("nassauConfig") ?? "");
+    if (raw) {
+      const { parseNassauConfig, stringifyNassauConfig } = await import(
+        "./sideGames"
+      );
+      await prisma.sideGame.update({
+        where: { matchId_kind: { matchId: match.id, kind: "NASSAU" } },
+        data: { config: stringifyNassauConfig(parseNassauConfig(raw)) },
+      });
+    }
+  }
 
   await recordOddsSnapshot(match.id);
 
@@ -1253,6 +1266,17 @@ export async function editMatchAction(formData: FormData) {
       data: { config },
     });
   }
+  if (sideGameKinds.includes("NASSAU")) {
+    const raw = String(formData.get("nassauConfig") ?? "");
+    const { parseNassauConfig, stringifyNassauConfig } = await import(
+      "./sideGames"
+    );
+    const config = raw ? stringifyNassauConfig(parseNassauConfig(raw)) : null;
+    await prisma.sideGame.update({
+      where: { matchId_kind: { matchId, kind: "NASSAU" } },
+      data: { config },
+    });
+  }
 
   await recordOddsSnapshot(matchId);
   revalidatePath(`/matches/${matchId}`);
@@ -1467,6 +1491,18 @@ export async function editMatchSideGamesAction(formData: FormData) {
       await prisma.sideGame.update({
         where: { matchId_kind: { matchId, kind: "SNAKE" } },
         data: { config: stringifySnakeConfig(parseSnakeConfig(raw)) },
+      });
+    }
+  }
+  if (sideGameKinds.includes("NASSAU")) {
+    const raw = String(formData.get("nassauConfig") ?? "");
+    if (raw) {
+      const { parseNassauConfig, stringifyNassauConfig } = await import(
+        "./sideGames"
+      );
+      await prisma.sideGame.update({
+        where: { matchId_kind: { matchId, kind: "NASSAU" } },
+        data: { config: stringifyNassauConfig(parseNassauConfig(raw)) },
       });
     }
   }
