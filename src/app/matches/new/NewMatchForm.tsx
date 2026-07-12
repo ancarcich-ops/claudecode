@@ -1293,15 +1293,22 @@ export default function NewMatchForm({
                 [1, "Solo"],
                 [2, "Twosome"],
                 [3, "Threesome"],
-                [4, "Foursome"],
+                [4, "Foursome+"],
               ] as const
             ).map(([n, label]) => {
-              const active = players.length === n;
+              // The top preset means "4 or more" -- it stays selected as
+              // you add players (up to 8) on the next step, and clicking
+              // it never shrinks a bigger group back down to 4.
+              const active = n === 4 ? players.length >= 4 : players.length === n;
               return (
                 <button
                   key={n}
                   type="button"
-                  onClick={() => setPlayerCount(n)}
+                  onClick={() =>
+                    n === 4
+                      ? players.length < 4 && setPlayerCount(4)
+                      : setPlayerCount(n)
+                  }
                   className={
                     "flex items-center justify-center rounded-md border px-1 py-2 transition min-h-[2.75rem] " +
                     (active
@@ -1320,7 +1327,7 @@ export default function NewMatchForm({
               ? "Solo round — no opponents, no odds. Just log your card."
               : players.length < 4
                 ? "Add more players in the next step or bump the size up to unlock team formats."
-                : "Foursome unlocks Teams (one ball per side) and Individual and Team scoring."}
+                : `${players.length} players — add up to 8 on the next step. Unlocks Teams (one ball per side) and Individual + Team scoring.`}
           </p>
           {players.length > 1 && (
             <>
