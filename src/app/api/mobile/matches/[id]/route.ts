@@ -8,6 +8,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserFromBearer, unauthorized } from "@/lib/mobileAuth";
+import { canViewMatch, isMatchParticipant } from "@/lib/matchAccess";
 import { loadMatchWithOdds } from "@/lib/match";
 import { computeSideGameSectionsForMatch } from "@/lib/sideGameSections";
 import {
@@ -35,11 +36,13 @@ export async function GET(
     return NextResponse.json({ error: "Match not found" }, { status: 404 });
   }
   const { match, odds, pars } = loaded;
-  const isCreator = match.createdById === user.id;
-  const isSeated = match.players.some((p) => p.userId === user.id);
-  if (!isCreator && !isSeated) {
+  // View access: participants AND group members (a crew round shows in
+  // the group feed, so the crew can open it read-only). Writing is gated
+  // separately -- see isMatchParticipant on the score/event routes.
+  if (!(await canViewMatch(user, match))) {
     return NextResponse.json({ error: "Not your match" }, { status: 403 });
   }
+  const isCreator = match.createdById === user.id;
 
   // Win probabilities keyed by matchPlayerId. Scramble matches price
   // teams ("team-0"/"team-1"); mirror each team's probability onto its
@@ -137,8 +140,16 @@ export async function GET(
       scoringMode: match.scoringMode,
       format: match.format,
       isCreator,
+      // Whether THIS user may enter scores (creator or an actual player).
+      // Group members viewing a crew round get false -> read-only.
+      canScore: isMatchParticipant(user, match),
       myMatchPlayerId:
-        match.players.find((p) => p.userId === user.id)?.id ?? null,
+        match.players.find(
+          (p) =>
+            p.userId === user.id ||
+            p.displayName.trim().toLowerCase() ===
+              user.username.trim().toLowerCase(),
+        )?.id ?? null,
       pars,
       players: match.players.map((p) => ({
         id: p.id,

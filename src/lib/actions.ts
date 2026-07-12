@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "./db";
 import { writeSideGameEvent } from "./sideGameEvents";
-import { canScoreMatch } from "./matchAccess";
+import { isMatchParticipant } from "./matchAccess";
 import { randomBytes } from "node:crypto";
 import {
   clearSession,
@@ -1611,20 +1611,18 @@ export async function logScoreAction(formData: FormData) {
   const hole = Number(formData.get("hole"));
   const strokesRaw = formData.get("strokes");
 
-  // Permission gate: the match creator, a player linked to a seat, OR --
-  // when the round belongs to a group -- any member of that group (the
-  // crew playing together keeps score for each other). Others can read
-  // but not write.
+  // Permission gate: only the creator or an actual player in this round
+  // (a linked seat, or a seat carrying their @username) can log/clear
+  // scores. Group members who aren't playing can view but not write.
   const matchPerm = await prisma.match.findUnique({
     where: { id: matchId },
     select: {
       createdById: true,
-      groupId: true,
-      players: { select: { userId: true } },
+      players: { select: { userId: true, displayName: true } },
     },
   });
   if (!matchPerm) throw new Error("Match not found");
-  if (!(await canScoreMatch(user.id, matchPerm))) {
+  if (!isMatchParticipant(user, matchPerm)) {
     throw new Error("Only players in this match can log scores");
   }
 
@@ -1770,14 +1768,13 @@ export async function recordSideGameEventAction(formData: FormData) {
       match: {
         select: {
           createdById: true,
-          groupId: true,
-          players: { select: { userId: true } },
+          players: { select: { userId: true, displayName: true } },
         },
       },
     },
   });
   if (!sg) throw new Error("Side game not found");
-  if (!(await canScoreMatch(user.id, sg.match))) {
+  if (!isMatchParticipant(user, sg.match)) {
     throw new Error("Only players in this match can record events");
   }
 

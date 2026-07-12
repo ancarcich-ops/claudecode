@@ -14,7 +14,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserFromBearer, unauthorized } from "@/lib/mobileAuth";
-import { canScoreMatch } from "@/lib/matchAccess";
+import { isMatchParticipant } from "@/lib/matchAccess";
 import {
   gameKindForEventKind,
   writeSideGameEvent,
@@ -54,15 +54,14 @@ export async function POST(
     where: { id: params.id },
     select: {
       createdById: true,
-      groupId: true,
-      players: { select: { id: true, userId: true } },
+      players: { select: { id: true, userId: true, displayName: true } },
       sideGames: { select: { id: true, kind: true } },
     },
   });
   if (!match) {
     return NextResponse.json({ error: "Match not found" }, { status: 404 });
   }
-  if (!(await canScoreMatch(user.id, match))) {
+  if (!isMatchParticipant(user, match)) {
     return NextResponse.json(
       { error: "Only players in this round can record events." },
       { status: 403 },
