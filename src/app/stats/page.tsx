@@ -14,6 +14,8 @@ import BaselinePicker from "./BaselinePicker";
 import RoundHistoryChart from "./RoundHistoryChart";
 import RoundsList from "./RoundsList";
 import HeroIndex from "./HeroIndex";
+import HandicapExplainer from "./HandicapExplainer";
+import { handicapBreakdown } from "@/lib/handicap";
 import { computeIndexTrend } from "@/lib/indexTrend";
 
 export const dynamic = "force-dynamic";
@@ -102,6 +104,13 @@ export default async function PersonalStatsPage({
             bestVsPar={best?.vsPar ?? null}
             bestCourse={best?.courseName ?? null}
           />
+          {handicap &&
+            (() => {
+              const hcpBreakdown = handicapBreakdown(stats.rounds);
+              return hcpBreakdown ? (
+                <HandicapExplainer breakdown={hcpBreakdown} />
+              ) : null;
+            })()}
           {/* Round-by-round vs par. Promoted to the top so the page
               opens with the chart that answers "am I getting better?"
               -- counters and side-game tallies follow as supporting

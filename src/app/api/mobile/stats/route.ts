@@ -10,6 +10,7 @@ import { prisma } from "@/lib/db";
 import { getUserFromBearer, unauthorized } from "@/lib/mobileAuth";
 import { computeUserStats } from "@/lib/userStats";
 import { computeIndexTrend } from "@/lib/indexTrend";
+import { handicapBreakdown } from "@/lib/handicap";
 import {
   BASELINE_HANDICAPS,
   expectedAvgScores,
@@ -53,6 +54,9 @@ export async function GET(req: Request) {
       // Hero
       index: stats.handicap?.index ?? null,
       indexFromRounds: stats.handicap?.fromRounds ?? 0,
+      // Full "how it's calculated" breakdown: per-round differentials,
+      // which counted, average, adjust, x0.96. Null until 3+ rounds.
+      indexBreakdown: handicapBreakdown(stats.rounds),
       indexDelta30: trend.delta30,
       indexTrajectory: trend.trajectory,
       roundsCompleted: stats.rounds.length,
