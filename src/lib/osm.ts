@@ -116,6 +116,13 @@ export async function fetchOsmGolfFeatures(
   radiusM = 700,
 ): Promise<OsmFeature[]> {
   const query = overpassQuery(lat, lng, radiusM);
+  // Overpass is a free, frequently-overloaded public API. Without a
+  // timeout a slow/unreachable instance leaves this fetch hanging until
+  // the OS socket gives up (~110s, surfacing as ETIMEDOUT) -- long enough
+  // to tie up the whole request. Abort after 8s and degrade to no
+  // features (the caller already treats an empty list as "no OSM data").
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
   try {
     const res = await fetch("https://overpass-api.de/api/interpreter", {
       method: "POST",
@@ -124,6 +131,7 @@ export async function fetchOsmGolfFeatures(
         "User-Agent": USER_AGENT,
       },
       body: "data=" + encodeURIComponent(query),
+      signal: controller.signal,
     });
     if (!res.ok) return [];
     const data = (await res.json()) as { elements?: OverpassEl[] };
@@ -171,6 +179,8 @@ export async function fetchOsmGolfFeatures(
     return out;
   } catch {
     return [];
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
