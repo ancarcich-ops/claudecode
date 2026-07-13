@@ -44,6 +44,19 @@ struct OnCourseGPSView: View {
     @State private var hasInitialized = false
     @State private var isFinishing = false
     @State private var finishError: String?
+    // Slice 59: brief "3D didn't load" toast shown when the flyover
+    // stalls/fails and the screen auto-drops back to the 2D HOLE map.
+    @State private var showFlyoverToast = false
+    @State private var flyoverToastTask: Task<Void, Never>?
+    // Slice 60: "you skipped a hole" prompt — the hole number to offer
+    // scoring for (nil = no alert), plus the holes already prompted this
+    // session so a "Not now" isn't immediately re-asked.
+    @State private var missedScoreHole: Int?
+    @State private var promptedMissedHoles: Set<Int> = []
+    // Set when initializeIfNeeded assigns the starting hole so that first
+    // programmatic jump (e.g. resuming mid-round) never reads as "you
+    // walked off a hole" — consumed by the holeIndex onChange.
+    @State private var isInitialHoleAssignment = false
 
     /// Round-scoped location source — owned by the session service so
     /// GPS updates (and the companions they feed) survive leaving this
@@ -132,6 +145,23 @@ struct OnCourseGPSView: View {
                 )
             }
         }
+        // Slice 60: moving forward off an unscored hole (GPS auto-advance,
+        // rail tap, or post-save advance — all route through holeIndex)
+        // offers to enter that score right now instead of waiting for the
+        // golfer to stumble on it in the score sheet.
+        .alert(
+            "Score hole \(missedScoreHole ?? 0)?",
+            isPresented: Binding(
+                get: { missedScoreHole != nil },
+                set: { if !$0 { missedScoreHole = nil } }
+            ),
+            presenting: missedScoreHole
+        ) { hole in
+            Button("Enter score") { openMissedScoreSheet(hole) }
+            Button("Not now", role: .cancel) { missedScoreHole = nil }
+        } message: { hole in
+            Text("You moved on without entering your score for hole \(hole).")
+        }
     }
 
     // MARK: - Map
@@ -180,11 +210,17 @@ struct OnCourseGPSView: View {
             }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            bottomPanel(detail: detail, geo: geo, anchor: anchor)
-                .padding(.horizontal, 12)
-                .padding(.bottom, 8)
+            VStack(spacing: 10) {
+                if showFlyoverToast {
+                    flyoverFallbackToast
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+                bottomPanel(detail: detail, geo: geo, anchor: anchor)
+            }
+            .padding(.horizontal, 12)
+            .padding(.bottom, 8)
         }
-        .onChange(of: holeIndex) { _, newIndex in
+        .onChange(of: holeIndex) { oldIndex, newIndex in
             aim = nil
             RoundSessionService.shared.setHole(index: newIndex, matchId: detail.id)
             // The new hole may lack the geo the current mode needs
@@ -196,25 +232,101 @@ struct OnCourseGPSView: View {
             } else {
                 snapCamera(detail, animated: true)
             }
+            // Slice 60: the very first assignment (resume/initial hole in
+            // initializeIfNeeded) is a jump, not a walk-off — never prompt.
+            if isInitialHoleAssignment {
+                isInitialHoleAssignment = false
+            } else {
+                maybePromptForMissedScore(detail, leftIndex: oldIndex, arrivedIndex: newIndex)
+            }
         }
         .onChange(of: cameraMode) { _, _ in
             snapCamera(detail, animated: true)
         }
+        // Preload the 3D flyover for the displayed hole in ANY mode —
+        // the shared WebView streams tiles in the background while the
+        // golfer reads the satellite map, so tapping 3D opens a warm
+        // (often fully loaded) scene. Re-runs on hole change and when
+        // geo arrives from the fetch.
+        .task(id: flyoverURL(detail, geo: geo)) {
+            if let url = flyoverURL(detail, geo: geo) {
+                FlyoverService.shared.prepare(url: url)
+            }
+        }
+        // Slice 59: the embed reports "stalled"/"error" (or the service
+        // watchdog fires) — while 3D is on screen, drop straight to the
+        // fast 2D map instead of leaving the golfer on a spinner.
+        .onChange(of: FlyoverService.shared.state) { _, newState in
+            if newState == .failed { fallBackTo2D() }
+        }
+        // Belt-and-suspenders: status messages need the page's JS to run.
+        // If the WebView never even loads the page, no message arrives —
+        // so give 3D ~8s after entry (or a hole change while in 3D) to
+        // report ready, then run the same fallback. The task is cancelled
+        // automatically on mode/hole change and on disappear.
+        .task(id: "\(cameraMode.rawValue)-\(holeIndex)") {
+            guard cameraMode == .threeD else { return }
+            try? await Task.sleep(for: .seconds(8))
+            guard !Task.isCancelled,
+                  FlyoverService.shared.state != .ready else { return }
+            fallBackTo2D()
+        }
+    }
+
+    /// Slice 59: the flyover stalled or failed while 3D was showing —
+    /// return to the 2D HOLE map with a brief toast. The 3D segment stays
+    /// tappable; re-entering retries the load cleanly (the service
+    /// re-prepares a failed page on attach).
+    private func fallBackTo2D() {
+        guard cameraMode == .threeD else { return }
+        withAnimation { cameraMode = .hole }
+        UINotificationFeedbackGenerator().notificationOccurred(.warning)
+        withAnimation { showFlyoverToast = true }
+        flyoverToastTask?.cancel()
+        flyoverToastTask = Task {
+            try? await Task.sleep(for: .seconds(2.5))
+            guard !Task.isCancelled else { return }
+            withAnimation { showFlyoverToast = false }
+        }
+    }
+
+    /// Non-blocking pill above the distance panel: cream label on a dark
+    /// glass capsule, auto-dismissed after ~2.5s.
+    private var flyoverFallbackToast: some View {
+        Text("3D DIDN'T LOAD — SHOWING THE 2D MAP")
+            .font(SticksFont.label(11, weight: .bold))
+            .kerning(1.4)
+            .foregroundStyle(Color.sticksCream)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(.black.opacity(0.7))
+            .background(.ultraThinMaterial)
+            .clipShape(Capsule())
+            .overlay(Capsule().stroke(.white.opacity(0.18), lineWidth: 1))
+            .environment(\.colorScheme, .dark)
+            .accessibilityLabel("3D view didn't load. Showing the 2D map.")
     }
 
     /// The 3D flyover layer: a dark backdrop + spinner behind the
     /// transparent WebView while the mesh streams in (the page paints its
-    /// own scrim over it, then the flyover fades in). No load-completion
-    /// detection needed. The WebView is created fresh each time 3D mode
-    /// is entered, so the cinematic tee→green intro re-plays.
+    /// own scrim over it, then the flyover fades in). The WebView itself
+    /// is owned by FlyoverService — preloaded before 3D is tapped and
+    /// kept alive across mode switches. Failed/stalled loads don't render
+    /// anything here — the screen auto-falls back to the 2D map (slice 59).
     private func flyoverLayer(url: URL) -> some View {
-        ZStack {
+        let state = FlyoverService.shared.state
+        return ZStack {
             Color(red: 0x0B / 255, green: 0x0F / 255, blue: 0x0D / 255)
-            ProgressView()
-                .tint(Color.sticksGreen)
-            HoleFlyoverWebView(url: url)
+            if state == .loading {
+                ProgressView()
+                    .tint(Color.sticksGreen)
+            }
+            HoleFlyoverWebView()
         }
         .ignoresSafeArea()
+        .task(id: url) {
+            FlyoverService.shared.prepare(url: url)
+        }
     }
 
     /// Builds the production flyover embed URL for the current hole from
@@ -652,12 +764,19 @@ struct OnCourseGPSView: View {
     private func initializeIfNeeded() {
         guard !hasInitialized, let detail = viewModel.detail else { return }
         hasInitialized = true
+        let startIndex: Int
         if RoundSessionService.shared.activeMatchId == detail.id {
             // Re-opening the GPS screen mid-round: resume the hole the
             // round session last showed instead of recomputing.
-            holeIndex = min(RoundSessionService.shared.holeIndex, max(detail.holes - 1, 0))
+            startIndex = min(RoundSessionService.shared.holeIndex, max(detail.holes - 1, 0))
         } else {
-            holeIndex = initialHoleIndex(detail)
+            startIndex = initialHoleIndex(detail)
+        }
+        if startIndex != holeIndex {
+            // Flag the programmatic jump so the holeIndex onChange doesn't
+            // read it as walking off an unscored hole (slice 60).
+            isInitialHoleAssignment = true
+            holeIndex = startIndex
         }
         snapCamera(detail, animated: false)
     }
@@ -793,6 +912,46 @@ struct OnCourseGPSView: View {
               hole == detail.holeNumber(at: holeIndex),
               holeIndex < detail.holes - 1 else { return }
         withAnimation { holeIndex += 1 }
+    }
+
+    // MARK: - Missed-score prompt (slice 60)
+
+    /// Fires the "Score hole N?" alert when the golfer moves FORWARD off
+    /// a hole they haven't scored themselves. One prompt per hole per
+    /// on-course session; never on finished rounds, never for spectators,
+    /// never when tapping back to an earlier hole.
+    private func maybePromptForMissedScore(_ detail: MatchDetail, leftIndex: Int, arrivedIndex: Int) {
+        // Only when actually moving forward.
+        guard arrivedIndex > leftIndex else { return }
+        // Only during a live round — no nagging on finished rounds or
+        // pre-round hole browsing.
+        guard detail.status == .inProgress else { return }
+        // Me only (v1): the prompt is about *your* score, so it needs a seat.
+        guard detail.myMatchPlayerId != nil else { return }
+        guard leftIndex >= 0, leftIndex < detail.holes else { return }
+        let leftHole = detail.holeNumber(at: leftIndex)
+        // Already scored? Nothing to do (same myScores the rail reads).
+        guard myScores(detail)[leftHole] == nil else { return }
+        // Only prompt once per hole per session.
+        guard !promptedMissedHoles.contains(leftHole) else { return }
+        promptedMissedHoles.insert(leftHole)
+        missedScoreHole = leftHole
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
+
+    /// Opens the score sheet on the MISSED hole (not the current one).
+    /// Saving there is position-safe: the sheet's advance callbacks are
+    /// guarded to the currently displayed hole, so the map stays on the
+    /// hole being played.
+    private func openMissedScoreSheet(_ hole: Int) {
+        guard let detail = viewModel.detail else { return }
+        let player = detail.players.first { $0.id == detail.myMatchPlayerId }
+            ?? viewModel.sortedPlayers.first
+        guard let player,
+              let index = (0 ..< detail.holes).first(where: { detail.holeNumber(at: $0) == hole })
+        else { return }
+        missedScoreHole = nil
+        scoreCell = ScoreCellSelection(player: player, hole: hole, par: detail.par(at: index))
     }
 
     private func openScoreSheet(_ detail: MatchDetail, hole: Int) {
