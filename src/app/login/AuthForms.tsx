@@ -331,7 +331,7 @@ export function SignUpForm({ next }: { next: string }) {
         required
         minLength={2}
         maxLength={20}
-        pattern="[A-Za-z0-9._-]+"
+        pattern="[-A-Za-z0-9._]+"
         helper="Letters, numbers, dots, underscores, hyphens."
       />
       <TextField
