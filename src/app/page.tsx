@@ -108,7 +108,11 @@ export default async function HomePage() {
     { completedAt: "desc" },
     6,
   );
-  const completedOrdered = reorderMine(completed);
+  // Past rounds are history -- strict most-recent-first. (Unlike Live /
+  // Upcoming, we do NOT float "your" rounds to the top here: a finished
+  // round you watched or played should sit in chronological order, not
+  // sink below older rounds you happen to be linked to as a player.)
+  const completedOrdered = completed;
 
   // Pull the current viewer's existing wagers across every match in view
   // in a single query so the QuickWagerButton can highlight the player
