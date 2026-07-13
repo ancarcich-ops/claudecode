@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "./db";
 import { writeSideGameEvent } from "./sideGameEvents";
-import { isMatchParticipant } from "./matchAccess";
+import { isMatchParticipant, isGroupMember } from "./matchAccess";
 import { randomBytes } from "node:crypto";
 import {
   clearSession,
@@ -1663,6 +1663,50 @@ export async function logScoreAction(formData: FormData) {
   // The home feed's LIVE card reads the same per-hole score data, so
   // it needs to refresh too -- otherwise a score logged on the match
   // page leaves the home card stale until the user navigates here.
+  revalidatePath("/");
+}
+
+// Claim an unlinked (name-only) seat in a round as yourself. Links the
+// MatchPlayer to your account so the round counts toward your stats,
+// feeds, and "your rounds" ordering. Guarded: you must be able to see
+// the round (a member of its group, or it's public), the seat must be
+// unclaimed, and you can't already hold a seat in the same round.
+export async function claimSeatAction(formData: FormData) {
+  const user = await requireUser();
+  const matchId = String(formData.get("matchId") ?? "").trim();
+  const matchPlayerId = String(formData.get("matchPlayerId") ?? "").trim();
+  if (!matchId || !matchPlayerId) throw new Error("Missing round or seat");
+
+  const match = await prisma.match.findUnique({
+    where: { id: matchId },
+    select: {
+      groupId: true,
+      players: { select: { id: true, userId: true, displayName: true } },
+    },
+  });
+  if (!match) throw new Error("Round not found");
+
+  // Only people who can see the round may claim a seat in it: a member
+  // of its group, or anyone on a public round.
+  const canClaim = match.groupId
+    ? await isGroupMember(match.groupId, user.id)
+    : true;
+  if (!canClaim) throw new Error("You can't claim a seat in this round.");
+
+  // One seat per account.
+  if (match.players.some((p) => p.userId === user.id)) {
+    throw new Error("You already have a seat in this round.");
+  }
+  const seat = match.players.find((p) => p.id === matchPlayerId);
+  if (!seat) throw new Error("Seat not found");
+  if (seat.userId) throw new Error("That seat is already claimed.");
+
+  await prisma.matchPlayer.update({
+    where: { id: seat.id },
+    data: { userId: user.id },
+  });
+  await recordOddsSnapshot(matchId);
+  revalidatePath(`/matches/${matchId}`);
   revalidatePath("/");
 }
 

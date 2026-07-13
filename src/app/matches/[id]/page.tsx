@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { autoCompleteStaleMatches } from "@/lib/autoComplete";
 import { loadMatchWithOdds } from "@/lib/match";
-import { isMatchParticipant } from "@/lib/matchAccess";
+import { isMatchParticipant, isGroupMember } from "@/lib/matchAccess";
+import ClaimSeatCard from "./ClaimSeatCard";
 import { prisma } from "@/lib/db";
 import { canViewMatch } from "@/lib/groups";
 import {
@@ -132,6 +133,15 @@ export default async function MatchPage({
     !!user && match.players.some((p) => p.userId === user.id);
   const canLogScores =
     !isCompleted && !!user && isMatchParticipant(user, match);
+  // "Claim your seat": a logged-in viewer who isn't already in the round
+  // can attach an unlinked (name-only) seat to their account. Gated to
+  // members of the round's group (or anyone on a public round).
+  const unclaimedSeats = (match.players ?? []).filter((p) => !p.userId);
+  const viewerCanClaimSeat =
+    !!user &&
+    !isLinkedPlayer &&
+    unclaimedSeats.length > 0 &&
+    (match.groupId ? await isGroupMember(match.groupId, user.id) : true);
   const roundShares = await prisma.roundShare.findMany({
     where: { matchId: match.id },
     orderBy: { createdAt: "asc" },
@@ -669,6 +679,16 @@ export default async function MatchPage({
           </div>
         )}
       </header>
+
+      {viewerCanClaimSeat && (
+        <ClaimSeatCard
+          matchId={match.id}
+          seats={unclaimedSeats.map((p) => ({
+            id: p.id,
+            displayName: p.displayName,
+          }))}
+        />
+      )}
 
       {/* The old "On course / Prep" hero card lived here -- it has
           been removed. The GPS launcher now sits at the bottom of the
