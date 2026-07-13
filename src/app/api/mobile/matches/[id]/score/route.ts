@@ -8,7 +8,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserFromBearer, unauthorized } from "@/lib/mobileAuth";
-import { canScoreMatch } from "@/lib/matchAccess";
+import { isMatchParticipant } from "@/lib/matchAccess";
 import { recordOddsSnapshot } from "@/lib/match";
 import { checkRoundShares } from "@/lib/roundShare";
 import { revalidatePath } from "next/cache";
@@ -47,16 +47,15 @@ export async function POST(
       id: true,
       status: true,
       createdById: true,
-      groupId: true,
-      players: { select: { id: true, userId: true } },
+      players: { select: { id: true, userId: true, displayName: true } },
     },
   });
   if (!match) {
     return NextResponse.json({ error: "Match not found" }, { status: 404 });
   }
-  // Creator, a linked seat, or any member of the round's group may write
-  // (matches the web scorecard gate).
-  if (!(await canScoreMatch(user.id, match))) {
+  // Only the creator or an actual player in this round may write (matches
+  // the web scorecard gate). Group members can view but not score.
+  if (!isMatchParticipant(user, match)) {
     return NextResponse.json(
       { error: "Only players in this match can log scores" },
       { status: 403 },

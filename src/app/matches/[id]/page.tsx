@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { autoCompleteStaleMatches } from "@/lib/autoComplete";
 import { loadMatchWithOdds } from "@/lib/match";
-import { isGroupMember } from "@/lib/matchAccess";
+import { isMatchParticipant } from "@/lib/matchAccess";
 import { prisma } from "@/lib/db";
 import { canViewMatch } from "@/lib/groups";
 import {
@@ -124,19 +124,14 @@ export default async function MatchPage({
     : null;
   const isCreator = !!user && match.createdById === user.id;
   const isCompleted = match.status === "COMPLETED";
-  // Score-edit permission: creator, any user linked to a seat, OR any
-  // member of the round's group (the crew keeps score for each other).
-  // Non-players see the scorecard but can't edit. logScoreAction enforces
-  // the same gate server-side.
+  // Score-edit permission: creator or an actual player in this round (a
+  // linked seat or a seat carrying their @username). Group members who
+  // aren't playing can view the scorecard but not edit. logScoreAction
+  // enforces the same gate server-side.
   const isLinkedPlayer =
     !!user && match.players.some((p) => p.userId === user.id);
-  const isScoringGroupMember =
-    !!user &&
-    !isCreator &&
-    !isLinkedPlayer &&
-    (await isGroupMember(match.groupId, user.id));
   const canLogScores =
-    !isCompleted && (isCreator || isLinkedPlayer || isScoringGroupMember);
+    !isCompleted && !!user && isMatchParticipant(user, match);
   const roundShares = await prisma.roundShare.findMany({
     where: { matchId: match.id },
     orderBy: { createdAt: "asc" },
