@@ -140,45 +140,9 @@ export async function findGroupByIdOrSlug(identifier: string) {
 // we build below are valid against `Prisma.MatchWhereInput`.
 type MatchWhere = Record<string, unknown>;
 
-export async function visibleMatchWhere(
-  userId: string | null,
-  filter: GroupFilter,
-): Promise<MatchWhere> {
-  if (filter === "public") {
-    return { groupId: null };
-  }
-
-  if (filter && filter !== "public") {
-    if (!userId) return { groupId: null };
-    try {
-      const isMember = await prisma.groupMember.findUnique({
-        where: { groupId_userId: { groupId: filter, userId } },
-      });
-      if (!isMember) return { groupId: null };
-      // Cross-group visibility: any match posted to <filter>, OR any match
-      // with at least one player linked to a user who's a member of <filter>.
-      return {
-        OR: [
-          { groupId: filter },
-          {
-            players: {
-              some: {
-                user: {
-                  groupMemberships: { some: { groupId: filter } },
-                },
-              },
-            },
-          },
-        ],
-      };
-    } catch {
-      return { groupId: null };
-    }
-  }
-
-  // Default: public + all groups the user is in + cross-group matches that
-  // include any player who's a member of one of those groups.
-  if (!userId) return { groupId: null };
+// Default feed scope: public + all groups the user is in + cross-group
+// matches that include any player who's a member of one of those groups.
+async function defaultVisibleWhere(userId: string): Promise<MatchWhere> {
   let groupIds: string[] = [];
   try {
     const memberships = await prisma.groupMember.findMany({
@@ -207,6 +171,52 @@ export async function visibleMatchWhere(
       },
     ],
   };
+}
+
+export async function visibleMatchWhere(
+  userId: string | null,
+  filter: GroupFilter,
+): Promise<MatchWhere> {
+  if (filter === "public") {
+    return { groupId: null };
+  }
+
+  if (filter && filter !== "public") {
+    if (!userId) return { groupId: null };
+    try {
+      const isMember = await prisma.groupMember.findUnique({
+        where: { groupId_userId: { groupId: filter, userId } },
+      });
+      // Stale / invalid group selection (a group the user left, that was
+      // deleted, or a cookie left over from another account on this
+      // browser) must NOT collapse the feed to public-only -- that hides
+      // every grouped round the user actually has. Fall back to their
+      // normal feed instead.
+      if (!isMember) return defaultVisibleWhere(userId);
+      // Cross-group visibility: any match posted to <filter>, OR any match
+      // with at least one player linked to a user who's a member of <filter>.
+      return {
+        OR: [
+          { groupId: filter },
+          {
+            players: {
+              some: {
+                user: {
+                  groupMemberships: { some: { groupId: filter } },
+                },
+              },
+            },
+          },
+        ],
+      };
+    } catch {
+      return defaultVisibleWhere(userId);
+    }
+  }
+
+  // Default: public + all groups the user is in + cross-group matches.
+  if (!userId) return { groupId: null };
+  return defaultVisibleWhere(userId);
 }
 
 // Match-detail access gate. Returns true if the signed-in user is allowed
