@@ -20,16 +20,34 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Sign in first." }, { status: 401 });
   }
 
-  const username = (new URL(req.url).searchParams.get("user") || "")
-    .trim()
-    .toLowerCase();
+  const raw = (new URL(req.url).searchParams.get("user") || "").trim();
+  const needle = raw.toLowerCase();
 
-  const target = username
-    ? await prisma.user.findUnique({ where: { username } })
-    : viewer;
+  // Match by username OR display name, case-insensitively. Usernames are
+  // stored lowercased; display names are as-typed ("BigPeas"), so compare
+  // in JS to avoid the Postgres-only `mode: "insensitive"`.
+  let target = raw ? null : viewer;
+  if (raw) {
+    target = await prisma.user.findUnique({ where: { username: needle } });
+    if (!target) {
+      const candidates = await prisma.user.findMany({
+        select: { id: true, username: true, displayName: true },
+        take: 1000,
+      });
+      const hit = candidates.find(
+        (u) =>
+          u.username.toLowerCase() === needle ||
+          (u.displayName ?? "").toLowerCase() === needle,
+      );
+      if (hit) target = await prisma.user.findUnique({ where: { id: hit.id } });
+    }
+  }
   if (!target) {
     return NextResponse.json(
-      { error: `No player with username "${username}".` },
+      {
+        error: `No player matches "${raw}" by username or display name.`,
+        hint: "Try their exact @username, or their display name as it appears in the app.",
+      },
       { status: 404 },
     );
   }
