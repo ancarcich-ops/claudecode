@@ -43,6 +43,12 @@ export async function GET(
     return NextResponse.json({ error: "Not your match" }, { status: 403 });
   }
   const isCreator = match.createdById === user.id;
+  // "Claim your seat": the caller isn't in the round but could attach an
+  // unlinked (name-only) seat to their account. True only when there's an
+  // unclaimed seat and the caller holds none yet.
+  const alreadySeated = match.players.some((p) => p.userId === user.id);
+  const hasUnclaimedSeat = match.players.some((p) => !p.userId);
+  const canClaimSeat = !alreadySeated && hasUnclaimedSeat;
 
   // Win probabilities keyed by matchPlayerId. Scramble matches price
   // teams ("team-0"/"team-1"); mirror each team's probability onto its
@@ -143,6 +149,9 @@ export async function GET(
       // Whether THIS user may enter scores (creator or an actual player).
       // Group members viewing a crew round get false -> read-only.
       canScore: isMatchParticipant(user, match),
+      // Whether THIS user can claim an unlinked seat (they're not in the
+      // round yet and at least one seat has no linked account).
+      canClaimSeat,
       myMatchPlayerId:
         match.players.find(
           (p) =>
