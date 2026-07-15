@@ -9,6 +9,10 @@ import {
 } from "@/lib/scoringBaseline";
 import EmptyIllustration from "@/components/EmptyIllustration";
 import RoundHistoryChart from "@/app/stats/RoundHistoryChart";
+import HeroIndex from "@/app/stats/HeroIndex";
+import HandicapExplainer from "@/app/stats/HandicapExplainer";
+import { handicapBreakdown } from "@/lib/handicap";
+import { computeIndexTrend } from "@/lib/indexTrend";
 import ShareButton from "@/components/ShareButton";
 
 export const dynamic = "force-dynamic";
@@ -60,11 +64,10 @@ export default async function PublicProfilePage({
   const avg18 = stats.avg18Gross;
   const best = stats.bestRound;
   const baselineHcp = 10; // fixed for the public view; no interactive picker
-
-  const formatIndex = (n: number) =>
-    n >= 0 ? `+${n.toFixed(1)}` : n.toFixed(1);
-  const formatVsPar = (n: number) =>
-    n === 0 ? "E" : n > 0 ? `+${n}` : `${n}`;
+  // Same index hero + trend as the owner's /stats page, so a profile
+  // reads as a trimmed, read-only version of the real thing.
+  const trend = computeIndexTrend(stats.rounds);
+  const hcpBreakdown = handicap ? handicapBreakdown(stats.rounds) : null;
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -84,41 +87,18 @@ export default async function PublicProfilePage({
         />
       </div>
 
-      <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
-        {handicap ? (
-          <Chip
-            label="Sticks idx"
-            value={formatIndex(handicap.index)}
-            tone="accent"
-          />
-        ) : (
-          <div
-            title="Index unlocks after 3+ logged rounds"
-            className="rounded-md border border-dashed border-border bg-panel2 px-2.5 py-1.5 text-center"
-          >
-            <div className="text-[9px] uppercase tracking-wider text-mute leading-none">
-              Sticks idx
-            </div>
-            <div className="font-display italic font-medium text-sm text-mute leading-tight mt-0.5">
-              pending
-            </div>
-            <div className="text-[9px] text-mute leading-none mt-0.5">
-              {Math.min(stats.rounds.length, 3)}/3 rounds
-            </div>
-          </div>
-        )}
-        {avg18 != null && (
-          <Chip label="Avg 18" value={avg18.toFixed(1)} />
-        )}
-        {best && (
-          <Chip
-            label="Best"
-            value={formatVsPar(best.vsPar)}
-            tone={best.vsPar < 0 ? "accent" : best.vsPar === 0 ? "gold" : "ink"}
-            title={`${best.courseName} · ${best.gross}`}
-          />
-        )}
-      </div>
+      <HeroIndex
+        index={handicap?.index ?? null}
+        pendingRounds={Math.min(stats.rounds.length, 3)}
+        delta30={trend.delta30}
+        trajectory={trend.trajectory}
+        roundsCompleted={stats.rounds.length}
+        ghin={null}
+        avg18={avg18}
+        bestVsPar={best?.vsPar ?? null}
+        bestCourse={best?.courseName ?? null}
+      />
+      {hcpBreakdown && <HandicapExplainer breakdown={hcpBreakdown} />}
 
       {!hasAnyData ? (
         <EmptyIllustration
@@ -206,42 +186,6 @@ export default async function PublicProfilePage({
           )}
         </>
       )}
-    </div>
-  );
-}
-
-function Chip({
-  label,
-  value,
-  tone = "ink",
-  title,
-}: {
-  label: string;
-  value: string;
-  tone?: "accent" | "gold" | "ink";
-  title?: string;
-}) {
-  const cls = (() => {
-    switch (tone) {
-      case "accent":
-        return "border-accent/30 bg-accent/10 text-accent";
-      case "gold":
-        return "border-gold/30 bg-gold/10 text-gold";
-      default:
-        return "border-border bg-panel2 text-ink";
-    }
-  })();
-  return (
-    <div
-      title={title}
-      className={"rounded-md border px-2.5 py-1.5 text-center " + cls}
-    >
-      <div className="text-[9px] uppercase tracking-wider opacity-80 leading-none">
-        {label}
-      </div>
-      <div className="font-display font-semibold text-lg tabular-nums leading-tight mt-0.5">
-        {value}
-      </div>
     </div>
   );
 }
