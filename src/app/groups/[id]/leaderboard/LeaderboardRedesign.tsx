@@ -227,7 +227,9 @@ export default function LeaderboardRedesign({
                         {wi > 0 && (
                           <span className="text-faint font-medium"> &amp; </span>
                         )}
-                        {w.displayName}
+                        <Link href={`/u/${w.username}`} className="hover:underline">
+                          {w.displayName}
+                        </Link>
                       </span>
                     ))}
                   </div>
@@ -377,7 +379,9 @@ export default function LeaderboardRedesign({
                       className={ri % 2 === 0 ? "bg-accent/[0.04]" : ""}
                     >
                       <td className="sticky left-0 bg-panel z-10 px-3 h-[44px] font-sans font-semibold text-[12.5px] text-ink whitespace-nowrap border-t border-borderSoft">
-                        {row.displayName}
+                        <Link href={`/u/${row.username}`} className="hover:underline">
+                          {row.displayName}
+                        </Link>
                       </td>
                       {headToHead.users.map((col) => {
                         if (row.userId === col.userId) {

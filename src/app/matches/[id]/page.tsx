@@ -671,7 +671,12 @@ export default async function MatchPage({
           {" · "}
           {modeLabel}
           {" · "}
-          @{match.createdBy.username}
+          <Link
+            href={`/u/${match.createdBy.username}`}
+            className="hover:text-ink hover:underline"
+          >
+            @{match.createdBy.username}
+          </Link>
         </div>
         {match.notes && (
           <div className="text-sm text-mute mt-2 italic">
