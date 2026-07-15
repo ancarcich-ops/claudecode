@@ -8,6 +8,7 @@
 // Tokens map to theme vars; medal metals are literal (brand-neutral).
 
 import { useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import PlayerAvatar, { isVariant, type AvatarVariant } from "@/components/Avatar";
 import type {
   LeaderboardRow,
@@ -315,7 +316,10 @@ export default function LeaderboardRedesign({
             }}
           >
             <Medal rank={i + 1} />
-            <span className="flex items-center gap-2.5 min-w-0 pl-1">
+            <Link
+              href={`/u/${r.username}`}
+              className="flex items-center gap-2.5 min-w-0 pl-1 -my-1 py-1 rounded-md hover:bg-panel2/60 transition-colors"
+            >
               <Avatar row={r} size={34} />
               <span className="min-w-0">
                 <span className="block font-sans font-bold text-[14.5px] text-ink truncate leading-tight">
@@ -325,7 +329,7 @@ export default function LeaderboardRedesign({
                   @{r.username}
                 </span>
               </span>
-            </span>
+            </Link>
             {metricCell(r.matchesPlayed, sortKey === "gp")}
             {metricCell(r.mainWins, sortKey === "main")}
             {metricCell(r.skinsWins, sortKey === "skins")}

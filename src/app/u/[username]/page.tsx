@@ -28,11 +28,24 @@ export default async function PublicProfilePage({
   const viewer = await getCurrentUser();
   if (!viewer) redirect("/login");
 
-  const username = params.username.toLowerCase();
-  const target = await prisma.user.findUnique({
-    where: { username },
+  // Usernames are stored as-typed (mixed case allowed, e.g. "BigPeas"),
+  // and links carry that exact case. Match the exact value first, then
+  // fall back to a case-insensitive scan so /u/bigpeas, /u/BigPeas, etc.
+  // all resolve. (JS compare avoids the Postgres-only mode:insensitive.)
+  const raw = decodeURIComponent(params.username).trim();
+  let target = await prisma.user.findUnique({
+    where: { username: raw },
     select: { id: true, username: true, displayName: true },
   });
+  if (!target) {
+    const needle = raw.toLowerCase();
+    const candidates = await prisma.user.findMany({
+      select: { id: true, username: true, displayName: true },
+      take: 1000,
+    });
+    target =
+      candidates.find((u) => u.username.toLowerCase() === needle) ?? null;
+  }
   if (!target) notFound();
 
   // Owner viewing their own profile goes to the editable /stats.
