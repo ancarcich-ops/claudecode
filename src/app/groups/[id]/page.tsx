@@ -90,28 +90,30 @@ export default async function GroupDetailPage({
             const displayName =
               m.user?.displayName ?? m.user?.username ?? "Unknown";
             const isYou = m.userId === user.id;
-            return (
-              <li
-                key={m.id}
-                className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <PlayerAvatar
-                    seed={m.user?.avatarSeed ?? m.user?.username ?? m.userId}
-                    variant={
-                      (m.user?.avatarVariant as
-                        | "beam"
-                        | "marble"
-                        | "sunset"
-                        | "pixel"
-                        | "ring"
-                        | "bauhaus"
-                        | undefined) ?? "beam"
-                    }
-                    avatarUrl={m.user?.avatarUrl ?? null}
-                    size={32}
-                  />
-                  <div className="min-w-0">
+            const username = m.user?.username ?? null;
+            // Avatar + name block. Clicking a member opens their read-only
+            // stats page (/u/[username]) -- course history, index trend,
+            // etc. That page hides the owner-only management surfaces
+            // (round delete, GHIN editor) and redirects a self-view to the
+            // editable /stats, so nobody can edit anyone else's rounds.
+            const memberInner = (
+              <>
+                <PlayerAvatar
+                  seed={m.user?.avatarSeed ?? m.user?.username ?? m.userId}
+                  variant={
+                    (m.user?.avatarVariant as
+                      | "beam"
+                      | "marble"
+                      | "sunset"
+                      | "pixel"
+                      | "ring"
+                      | "bauhaus"
+                      | undefined) ?? "beam"
+                  }
+                  avatarUrl={m.user?.avatarUrl ?? null}
+                  size={32}
+                />
+                <div className="min-w-0">
                   <div className="text-sm font-medium truncate">
                     {displayName}
                     {isYou && (
@@ -126,8 +128,26 @@ export default async function GroupDetailPage({
                       year: "numeric",
                     })}
                   </div>
-                  </div>
                 </div>
+              </>
+            );
+            return (
+              <li
+                key={m.id}
+                className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2"
+              >
+                {username ? (
+                  <Link
+                    href={`/u/${username}`}
+                    className="flex items-center gap-3 min-w-0 rounded-md -mx-1 px-1 py-0.5 hover:bg-panel2/60 transition-colors"
+                  >
+                    {memberInner}
+                  </Link>
+                ) : (
+                  <div className="flex items-center gap-3 min-w-0">
+                    {memberInner}
+                  </div>
+                )}
                 {m.role === "owner" && (
                   <span className="chip text-xs shrink-0">Owner</span>
                 )}
