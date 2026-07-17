@@ -38,6 +38,7 @@ export default function Onboarding({
   // they already used.
   hasGroup = false,
   photoUploadEnabled = false,
+  tournamentContext = false,
 }: {
   enabled: boolean;
   // Used as the avatar generator seed when the user hasn't picked one yet.
@@ -46,6 +47,11 @@ export default function Onboarding({
   // True when BLOB_READ_WRITE_TOKEN is configured server-side; gates the
   // photo-upload affordance in the avatar step.
   photoUploadEnabled?: boolean;
+  // True when the user just signed up via a tournament sign-up page (e.g.
+  // /birdie-boys). The group step then reframes itself as an optional
+  // "get your crew on Sticks" step, so nobody mistakes it for setting
+  // their tournament foursome.
+  tournamentContext?: boolean;
 }) {
   const router = useRouter();
   const [visible, setVisible] = useState(false);
@@ -56,7 +62,14 @@ export default function Onboarding({
   // disappears entirely for users who joined via an invite link. The
   // progress dots, advance() logic, and back navigation all read from
   // this filtered list -- no other branching needed.
-  const STEPS = ALL_STEPS.filter((s) => !(s === "group" && hasGroup));
+  // Tournament sign-ups skip the "Post your first round" launch step --
+  // they came for the event, not to start a round right now, so that CTA
+  // reads as confusing. The group step stays but reframes itself (below).
+  const STEPS = ALL_STEPS.filter(
+    (s) =>
+      !(s === "group" && hasGroup) &&
+      !(s === "launch" && tournamentContext),
+  );
 
   useEffect(() => {
     if (!enabled) return;
@@ -196,6 +209,7 @@ export default function Onboarding({
                         });
                       }}
                       onSkip={advance}
+                      tournamentContext={tournamentContext}
                     />
                   )}
                   {step === "card-guide" && <CardGuideStep />}
@@ -510,11 +524,13 @@ function GroupStep({
   onCreate,
   onJoin,
   onSkip,
+  tournamentContext = false,
 }: {
   pending: boolean;
   onCreate: (name: string) => void;
   onJoin: (code: string) => void;
   onSkip: () => void;
+  tournamentContext?: boolean;
 }) {
   const [mode, setMode] = useState<"create" | "join">("create");
   const [name, setName] = useState("");
@@ -523,12 +539,30 @@ function GroupStep({
   return (
     <div>
       <div className="text-center mt-2">
+        {tournamentContext && (
+          <div className="mb-3 inline-flex items-center rounded-full border border-border bg-panel2 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-mute">
+            Optional · not your tournament pairing
+          </div>
+        )}
         <h2 className="font-display text-2xl font-semibold tracking-tight">
-          Bring your foursome.
+          {tournamentContext ? "Get your crew on Sticks" : "Bring your foursome."}
         </h2>
         <p className="text-sm text-mute mt-1.5 max-w-sm mx-auto">
-          Matches you post to a group stay private to its members. Solo&apos;s
-          fine too — you can do this later.
+          {tournamentContext ? (
+            <>
+              You&rsquo;re already registered for the tournament — this is a
+              separate, optional step. Sticks is built around{" "}
+              <strong className="text-ink">groups</strong>: make one to bring
+              your regular crew onto Sticks, invite them, and keep every round
+              you play together in one place. Skip it and set it up anytime — it
+              won&rsquo;t affect the tournament.
+            </>
+          ) : (
+            <>
+              Matches you post to a group stay private to its members.
+              Solo&apos;s fine too — you can do this later.
+            </>
+          )}
         </p>
       </div>
 
@@ -604,7 +638,7 @@ function GroupStep({
           onClick={onSkip}
           className="text-xs uppercase tracking-wider text-mute hover:text-ink py-2"
         >
-          Skip for now
+          {tournamentContext ? "Skip — not needed for the tournament" : "Skip for now"}
         </button>
       </div>
     </div>

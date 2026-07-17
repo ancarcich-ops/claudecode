@@ -1,5 +1,6 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import {
   Bricolage_Grotesque,
@@ -250,6 +251,9 @@ export default async function RootLayout({
           username={user?.username}
           hasGroup={groups.length > 0}
           photoUploadEnabled={!!process.env.BLOB_READ_WRITE_TOKEN}
+          tournamentContext={
+            cookies().get("sticks_onb_tournament")?.value === "birdie-boys"
+          }
         />
         <Sounds />
         <Toaster

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "./db";
 import { writeSideGameEvent } from "./sideGameEvents";
@@ -3191,6 +3192,15 @@ export async function registerForBirdieBoysAction(
       data: { username, email, passwordHash, displayName: null },
     });
     await setSession(user.id);
+    // Tell the first-launch onboarding overlay this is a tournament
+    // sign-up: it reframes the "group" step as optional and drops the
+    // "post your first round" step (see Onboarding.tsx / layout.tsx).
+    cookies().set("sticks_onb_tournament", "birdie-boys", {
+      path: "/",
+      maxAge: 60 * 60,
+      httpOnly: true,
+      sameSite: "lax",
+    });
   }
 
   // Handicap (optional) + partner (optional -- blank is fine).

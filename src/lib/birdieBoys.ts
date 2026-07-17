@@ -30,13 +30,37 @@ export async function getBirdieBoysTournament() {
 }
 
 /**
- * Find-or-create the launch tournament. If it doesn't exist, `creatorId`
- * becomes its creator (the seed script passes the site owner; otherwise
- * the first registrant creates it). Safe to call on every registration.
+ * Resolve who should OWN the tournament (the creator -- the only one who
+ * can Finish/Delete it). Prefers the BIRDIE_BOYS_OWNER env var (a
+ * username or email of the admin running the event) so a random early
+ * registrant can never end up owning it. Falls back to `fallbackId`
+ * (the current registrant) only when no owner is configured/resolvable,
+ * which keeps local/dev testing working.
  */
-export async function ensureBirdieBoysTournament(creatorId: string) {
+async function resolveOwnerId(fallbackId: string): Promise<string> {
+  const who = process.env.BIRDIE_BOYS_OWNER?.trim();
+  if (who) {
+    const owner = await prisma.user.findFirst({
+      where: who.includes("@")
+        ? { email: who.toLowerCase() }
+        : { username: who },
+      select: { id: true },
+    });
+    if (owner) return owner.id;
+  }
+  return fallbackId;
+}
+
+/**
+ * Find-or-create the launch tournament. The creator (its only admin) is
+ * resolved via resolveOwnerId -- NOT the current registrant unless no
+ * BIRDIE_BOYS_OWNER is configured. Safe to call on every registration.
+ */
+export async function ensureBirdieBoysTournament(fallbackCreatorId: string) {
   const existing = await getBirdieBoysTournament();
   if (existing) return existing;
+
+  const createdById = await resolveOwnerId(fallbackCreatorId);
 
   // Mint a share code too, so the standard /tournaments/join?code= path
   // works for this tournament as well. Retry on the (rare) collision.
@@ -59,7 +83,7 @@ export async function ensureBirdieBoysTournament(creatorId: string) {
       roundsPlanned: BIRDIE_BOYS.roundsPlanned,
       scheduledStartAt: new Date(BIRDIE_BOYS.startsAtISO),
       notes: `${BIRDIE_BOYS.format} · ${BIRDIE_BOYS.venue}`,
-      createdById: creatorId,
+      createdById,
     },
   });
   // Re-read with the roster include for a consistent return shape.
