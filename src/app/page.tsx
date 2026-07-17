@@ -1,4 +1,5 @@
 import Link from "next/link";
+import MarketingLanding from "@/components/marketing/MarketingLanding";
 import { prisma } from "@/lib/db";
 import { computeOdds, formatPct, parseParData } from "@/lib/odds";
 import { getCurrentUser } from "@/lib/auth";
@@ -68,6 +69,11 @@ async function loadMatches(where: any, orderBy: any, take?: number) {
 
 export default async function HomePage() {
   const user = await getCurrentUser();
+  // Signed-out visitors get the real marketing landing (product,
+  // company, and legal links) instead of the app feed -- this is the
+  // page reviewers hit at the root domain, so it needs to read as an
+  // established business site, not a bare app shell.
+  if (!user) return <MarketingLanding />;
   // Close any finished-but-never-submitted rounds (all holes logged,
   // 1h+ idle) before building the feed, so they render as Final
   // instead of a permanent LIVE card.

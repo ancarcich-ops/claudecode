@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import SmsOptInForm from "./SmsOptInForm";
+import SiteFooter from "@/components/marketing/SiteFooter";
 
 export const metadata: Metadata = {
   title: "Text updates · Sticks",
@@ -46,10 +47,10 @@ export default function SmsOptInPage() {
             <strong>Opt out any time</strong> by replying <strong>STOP</strong>.
             For help, reply <strong>HELP</strong> or email us at{" "}
             <a
-              href="mailto:ancarcich@gmail.com"
+              href="mailto:support@sticksgolf.app"
               className="underline hover:text-ink"
             >
-              ancarcich@gmail.com
+              support@sticksgolf.app
             </a>
             .
           </li>
@@ -67,6 +68,8 @@ export default function SmsOptInPage() {
           </li>
         </ul>
       </section>
+
+      <SiteFooter />
     </div>
   );
 }
