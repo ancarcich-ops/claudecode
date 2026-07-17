@@ -83,8 +83,38 @@ const figtree = Figtree({
 });
 
 export const metadata: Metadata = {
-  title: "Sticks",
-  description: "All your games. One round.",
+  metadataBase: new URL("https://sticksgolf.app"),
+  title: {
+    default: "Sticks — golf scoring, GPS & side games",
+    template: "%s · Sticks",
+  },
+  description:
+    "Sticks is a golf scoring and on-course GPS app. Keep the group's scorecard, get satellite distances and hole maps, and auto-score Skins, Wolf, Nassau, and more.",
+  applicationName: "Sticks",
+  keywords: [
+    "golf",
+    "golf scoring app",
+    "golf GPS",
+    "scorecard",
+    "skins",
+    "wolf",
+    "nassau",
+    "handicap",
+  ],
+  openGraph: {
+    type: "website",
+    siteName: "Sticks",
+    url: "https://sticksgolf.app",
+    title: "Sticks — golf scoring, GPS & side games",
+    description:
+      "Keep the group's scorecard, get satellite distances and hole maps, and auto-score your side games — all on one card.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Sticks — golf scoring, GPS & side games",
+    description:
+      "Golf scoring and on-course GPS, with your side games scored automatically.",
+  },
   icons: {
     // Bone-on-pine app icon (Caddie's Notebook default). SVG is the
     // primary source; the 180px / 1024px PNG fallbacks ship for iOS

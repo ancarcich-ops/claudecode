@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import SiteFooter from "@/components/marketing/SiteFooter";
+import { BUSINESS } from "@/lib/business";
 
 export const metadata: Metadata = {
   title: "Terms of Service · Sticks",
@@ -57,14 +59,22 @@ export default function TermsPage() {
           </p>
         </Section>
 
+        <Section title="Governing law">
+          <p>
+            These terms are governed by the laws of {BUSINESS.governingLaw},
+            without regard to its conflict-of-laws rules.
+          </p>
+        </Section>
+
         <Section title="Contact">
           <p>
-            Questions? Email{" "}
+            Sticks is operated by {BUSINESS.proprietor} ({BUSINESS.entityType}),
+            based in {BUSINESS.location}. Questions? Email{" "}
             <a
-              href="mailto:ancarcich@gmail.com"
+              href={`mailto:${BUSINESS.email}`}
               className="underline hover:text-ink"
             >
-              ancarcich@gmail.com
+              {BUSINESS.email}
             </a>
             .
           </p>
@@ -80,6 +90,8 @@ export default function TermsPage() {
           </a>
         </p>
       </div>
+
+      <SiteFooter />
     </article>
   );
 }

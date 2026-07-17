@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import SiteFooter from "@/components/marketing/SiteFooter";
+import { BUSINESS } from "@/lib/business";
 
 export const metadata: Metadata = {
   title: "Privacy Policy · Sticks",
@@ -104,12 +106,21 @@ export default function PrivacyPage() {
 
         <Section title="Contact">
           <p>
-            Questions about this policy or your data? Email{" "}
+            Sticks is operated by {BUSINESS.proprietor} ({BUSINESS.entityType}),
+            based in {BUSINESS.location}. Questions about this policy or your
+            data? Email{" "}
             <a
-              href="mailto:ancarcich@gmail.com"
+              href={`mailto:${BUSINESS.email}`}
               className="underline hover:text-ink"
             >
-              ancarcich@gmail.com
+              {BUSINESS.email}
+            </a>{" "}
+            or call{" "}
+            <a
+              href={`tel:${BUSINESS.phoneHref}`}
+              className="underline hover:text-ink"
+            >
+              {BUSINESS.phone}
             </a>
             .
           </p>
@@ -125,6 +136,8 @@ export default function PrivacyPage() {
           </a>
         </p>
       </div>
+
+      <SiteFooter />
     </article>
   );
 }
