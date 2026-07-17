@@ -26,9 +26,10 @@ struct StatsView: View {
     @State private var viewModel = StatsViewModel()
     @State private var baselineSelection: BaselineSelection = .hcp(10)
     @State private var showsCreate = false
+    @State private var path = NavigationPath()
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             ZStack {
                 Color.sticksBg.ignoresSafeArea()
 
@@ -56,6 +57,19 @@ struct StatsView: View {
             }
             .navigationDestination(for: MatchSummary.self) { match in
                 MatchDetailView(match: match, session: session)
+            }
+            // Slice 63 tweaks: match detail's "created by" pushes a
+            // member profile here too. The caller's own profile just
+            // pops to root — this tab IS their editable stats.
+            .navigationDestination(for: MemberProfileDestination.self) { destination in
+                MemberProfileView(
+                    username: destination.username,
+                    fallbackName: destination.displayName,
+                    session: session,
+                    onOpenOwnStats: {
+                        path = NavigationPath()
+                    }
+                )
             }
             .toolbar(.hidden, for: .navigationBar)
         }
@@ -240,7 +254,9 @@ struct StatsView: View {
 
 // MARK: - Section card shell
 
-private struct StatsSectionCard<Content: View, Accessory: View>: View {
+/// Shared card chrome for the Stats tab AND the read-only member
+/// profile (slice 63) — keep internal.
+struct StatsSectionCard<Content: View, Accessory: View>: View {
     let title: String
     let accessory: Accessory
     let content: Content
@@ -291,7 +307,8 @@ extension StatsSectionCard where Accessory == EmptyView {
 
 /// A fixed comparison handicap, or the player's own index ("HI") —
 /// shared by the chart and the scoring analysis so both stay in sync.
-private enum BaselineSelection: Equatable {
+/// Internal: the member profile (slice 63) reuses it too.
+enum BaselineSelection: Equatable {
     case hcp(Int)
     case myIndex
 }
@@ -300,7 +317,7 @@ private enum BaselineSelection: Equatable {
 /// selected comparison handicap; tapping opens a menu of the fixed
 /// baselines plus HI (the player's own index). Selection applies
 /// instantly — the baselines are already local.
-private struct BaselinePickerControl: View {
+struct BaselinePickerControl: View {
     @Binding var selection: BaselineSelection
     let baselines: [StatsBaseline]
     let hasIndex: Bool
@@ -376,7 +393,8 @@ private struct BaselinePickerControl: View {
 /// the chart at every round's expected vs-par for the selected
 /// comparison handicap (18-hole expectation scaled to that round's
 /// holes). Control row, sparse month labels, and a legend underneath.
-private struct RoundsOverTimeCard: View {
+/// Internal: reused by the read-only member profile (slice 63).
+struct RoundsOverTimeCard: View {
     /// Chronological, capped to the last ~20 by the caller.
     let rounds: [LoggedRound]
     let index: Double?
@@ -610,7 +628,8 @@ private struct RoundsOverTimeCard: View {
 /// compared against a selectable handicap baseline. The compact VS HI
 /// picker sits in the header; "HI" compares against the player's own
 /// index. Selection is shared with the chart above.
-private struct ScoringAnalysisCard: View {
+/// Internal: reused by the read-only member profile (slice 63).
+struct ScoringAnalysisCard: View {
     let stats: PlayerStats
     let baselines: [StatsBaseline]
     @Binding var selection: BaselineSelection
@@ -945,7 +964,8 @@ private struct WinsByGameGrid: View {
 
 // MARK: - Course bests
 
-private struct CourseBestsCard: View {
+/// Internal: reused by the read-only member profile (slice 63).
+struct CourseBestsCard: View {
     let records: [StatsCourseRecord]
 
     /// The single lowest-gross record gets the gold medal glyph.
