@@ -147,10 +147,6 @@ export default async function TournamentDetailPage({
           <h2 className="font-display text-base font-semibold text-ink">
             Rounds
           </h2>
-          <p className="text-[11px] text-mute mt-0.5">
-            Each round can have multiple foursomes &mdash; everyone keeps
-            their own scorecard, the leaderboard rolls every player in.
-          </p>
         </div>
         {displayRounds.map((roundNo) => {
           const matches = matchesByRound.get(roundNo) ?? [];
@@ -169,7 +165,7 @@ export default async function TournamentDetailPage({
                     href={`/matches/new?tournament=${tournament.id}&round=${roundNo}`}
                     className="btn btn-primary text-xs shrink-0"
                   >
-                    Start your foursome →
+                    Start your round →
                   </Link>
                 )}
               </div>
