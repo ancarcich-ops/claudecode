@@ -155,6 +155,7 @@ export default function NewMatchForm({
   hiddenFields,
   prefilledPlayers,
   availableRosterPlayers,
+  defaultCourseName,
 }: {
   action: (formData: FormData) => Promise<void>;
   defaultPlayerName: string;
@@ -197,6 +198,9 @@ export default function NewMatchForm({
     handicap: string;
     userId: string | null;
   }[];
+  // Pre-selects the course on a fresh round (e.g. a tournament pins its
+  // venue). Only used in the create flow; `initial` (edit mode) wins.
+  defaultCourseName?: string;
 }) {
   // Edit mode + ?step=side-games deep link from the match detail page.
   // We resolve the param in a post-mount effect rather than via
@@ -282,7 +286,9 @@ export default function NewMatchForm({
       else next.add(kind);
       return next;
     });
-  const [courseName, setCourseName] = useState(initial?.courseName ?? "");
+  const [courseName, setCourseName] = useState(
+    initial?.courseName ?? defaultCourseName ?? "",
+  );
   const [nearby, setNearby] = useState<NearbyCourse[] | null>(null);
   // Controls visibility of the custom course-search dropdown. iOS
   // Safari's native <datalist> renders as 3 chips on the keyboard

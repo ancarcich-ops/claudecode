@@ -178,6 +178,15 @@ model Match {
 model Tournament {
   id               String    @id @default(cuid())
   name             String
+  // Optional human-friendly slug for a fixed public sign-up URL (e.g.
+  // "birdie-boys" -> /birdie-boys). Nullable + non-unique so the column
+  // adds cleanly via `prisma db push` (no --accept-data-loss); a launch
+  // tournament is created/looked up by slug in src/lib/birdieBoys.ts.
+  slug             String?
+  // Optional pinned venue. When set, starting a round for this
+  // tournament pre-selects this course (must match a course preset
+  // name) so players don't pick it each round.
+  courseName       String?
   // Share code anyone can join with -- mirrors Group.inviteCode.
   // Tournaments aren't tied to a group, so this is how the creator
   // pulls 16 players from across 4 different foursomes into the
@@ -220,6 +229,7 @@ model Tournament {
 
   @@index([groupId, createdAt])
   @@index([inviteCode])
+  @@index([slug])
 }
 
 // One entry in a tournament's roster. Same signup shape as
@@ -239,6 +249,10 @@ model TournamentPlayer {
   // Pre-tournament handicap snapshot. Null if the player has no
   // index yet (under 3 logged rounds).
   handicapAtStart Float?
+  // The playing partner this entrant named at sign-up (free text, may
+  // reference someone not yet registered). MVP for 2-man best ball --
+  // formal reciprocal team pairing comes later.
+  partnerName     String?
   createdAt       DateTime   @default(now())
 
   @@unique([tournamentId, displayName])

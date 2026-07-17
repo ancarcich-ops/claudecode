@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "./db";
 import { writeSideGameEvent } from "./sideGameEvents";
@@ -40,6 +41,7 @@ import {
 } from "./sideGames";
 import { findOrCreateCourseByName, distanceYards } from "./course";
 import { assignHoles, fetchOsmGolfFeatures, geocodeCourse } from "./osm";
+import { ensureBirdieBoysTournament } from "./birdieBoys";
 
 // Same-origin relative redirect guard (avoids open-redirect abuse).
 function safeNext(raw: string): string {
@@ -3146,6 +3148,108 @@ export async function joinTournamentAction(formData: FormData) {
 
   revalidatePath(`/tournaments/${tournament.id}`);
   redirect(`/tournaments/${tournament.id}`);
+}
+
+// One-shot registration for the public /birdie-boys sign-up page.
+// Creates the account when the visitor is signed out (same rules as
+// signUpAction), then enrolls them in the Birdie Boys tournament with
+// their handicap + optional partner. Idempotent: re-submitting updates
+// the existing roster entry. Returns { error } for inline display;
+// redirects to the page's "you're in" state on success.
+export async function registerForBirdieBoysAction(
+  _prev: AuthResult,
+  formData: FormData,
+): Promise<AuthResult> {
+  let user = await getCurrentUser();
+
+  // Signed out -> create the account first (mirrors signUpAction).
+  if (!user) {
+    const username = String(formData.get("username") ?? "").trim();
+    const email = String(formData.get("email") ?? "").trim().toLowerCase();
+    const password = String(formData.get("password") ?? "");
+    if (!USERNAME_RE.test(username)) {
+      return { error: "Username must be 2-20 chars: letters, numbers, . _ -" };
+    }
+    if (!EMAIL_RE.test(email)) return { error: "Enter a valid email address." };
+    const pwErr = passwordError(password);
+    if (pwErr) return { error: pwErr };
+
+    const existing = await prisma.user.findFirst({
+      where: { OR: [{ username }, { email }] },
+      select: { username: true, email: true },
+    });
+    if (existing) {
+      if (existing.email === email) {
+        return {
+          error: "An account with that email already exists — sign in to join.",
+        };
+      }
+      return { error: "That username is taken." };
+    }
+
+    const passwordHash = await hashPassword(password);
+    user = await prisma.user.create({
+      data: { username, email, passwordHash, displayName: null },
+    });
+    await setSession(user.id);
+    // Tell the first-launch onboarding overlay this is a tournament
+    // sign-up: it reframes the "group" step as optional and drops the
+    // "post your first round" step (see Onboarding.tsx / layout.tsx).
+    cookies().set("sticks_onb_tournament", "birdie-boys", {
+      path: "/",
+      maxAge: 60 * 60,
+      httpOnly: true,
+      sameSite: "lax",
+    });
+  }
+
+  // Handicap (optional) + partner (optional -- blank is fine).
+  const handicapRaw = String(formData.get("handicap") ?? "").trim();
+  const handicapNum = handicapRaw ? Number(handicapRaw) : null;
+  const handicapAtStart =
+    handicapNum != null && Number.isFinite(handicapNum) ? handicapNum : null;
+  const partnerName =
+    String(formData.get("partnerName") ?? "")
+      .trim()
+      .slice(0, 60) || null;
+
+  const tournament = await ensureBirdieBoysTournament(user.id);
+
+  // Upsert the caller's roster entry. Re-registering just updates the
+  // handicap/partner rather than erroring on the unique index.
+  const mine = await prisma.tournamentPlayer.findFirst({
+    where: { tournamentId: tournament.id, userId: user.id },
+    select: { id: true },
+  });
+  if (mine) {
+    await prisma.tournamentPlayer.update({
+      where: { id: mine.id },
+      data: { handicapAtStart, partnerName },
+    });
+  } else {
+    const meName = user.displayName ?? user.username;
+    const taken = new Set(
+      tournament.roster.map((r) => r.displayName.toLowerCase()),
+    );
+    let finalName = meName;
+    if (taken.has(finalName.toLowerCase())) {
+      let n = 2;
+      while (taken.has(`${finalName} (${n})`.toLowerCase())) n++;
+      finalName = `${finalName} (${n})`;
+    }
+    await prisma.tournamentPlayer.create({
+      data: {
+        tournamentId: tournament.id,
+        displayName: finalName,
+        userId: user.id,
+        handicapAtStart,
+        partnerName,
+      },
+    });
+  }
+
+  revalidatePath("/birdie-boys");
+  redirect("/birdie-boys?joined=1");
 }
 
 // Delete a tournament. Creator-only. Child Match rows are NOT deleted:
