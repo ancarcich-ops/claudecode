@@ -47,10 +47,10 @@ export default function SmsOptInPage() {
             <strong>Opt out any time</strong> by replying <strong>STOP</strong>.
             For help, reply <strong>HELP</strong> or email us at{" "}
             <a
-              href="mailto:support@sticksgolf.app"
+              href="mailto:support@sticks-golf.app"
               className="underline hover:text-ink"
             >
-              support@sticksgolf.app
+              support@sticks-golf.app
             </a>
             .
           </li>
