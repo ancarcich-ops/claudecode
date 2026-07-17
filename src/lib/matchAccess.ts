@@ -54,20 +54,9 @@ export function isMatchParticipant(
   );
 }
 
-/**
- * READ bar: may this user view the round? Any participant, plus any member
- * of the round's group (crew rounds are visible to the crew). Async only
- * because the group-membership check hits the DB when the cheap
- * participant checks miss.
- */
-export async function canViewMatch(
-  user: AccessUser,
-  match: {
-    createdById: string;
-    groupId: string | null;
-    players: { userId: string | null; displayName: string }[];
-  },
-): Promise<boolean> {
-  if (isMatchParticipant(user, match)) return true;
-  return isGroupMember(match.groupId, user.id);
-}
+// NOTE: match-VIEW access lives in one place -- canViewMatch() in
+// ./groups.ts, which mirrors the home-feed visibility (public / round's
+// group / shares a group with a player). Don't add a second view gate
+// here: a narrower copy once shipped in the mobile detail endpoint and
+// 403'd spectators the web happily showed. isMatchParticipant above is
+// the WRITE bar only.

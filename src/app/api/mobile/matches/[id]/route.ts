@@ -8,7 +8,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserFromBearer, unauthorized } from "@/lib/mobileAuth";
-import { canViewMatch, isMatchParticipant } from "@/lib/matchAccess";
+import { isMatchParticipant } from "@/lib/matchAccess";
+// Use the SAME cross-group view gate the web detail page + home feed use
+// (public / round's group / shares a group with a player), so a round
+// that appears in your feed also opens in the app -- read-only. The
+// narrower matchAccess.canViewMatch (round's-group only) 403'd spectators.
+import { canViewMatch } from "@/lib/groups";
 import { loadMatchWithOdds } from "@/lib/match";
 import { computeSideGameSectionsForMatch } from "@/lib/sideGameSections";
 import {
@@ -39,7 +44,12 @@ export async function GET(
   // View access: participants AND group members (a crew round shows in
   // the group feed, so the crew can open it read-only). Writing is gated
   // separately -- see isMatchParticipant on the score/event routes.
-  if (!(await canViewMatch(user, match))) {
+  if (
+    !(await canViewMatch(user.id, {
+      groupId: match.groupId,
+      players: match.players.map((p) => ({ userId: p.userId })),
+    }))
+  ) {
     return NextResponse.json({ error: "Not your match" }, { status: 403 });
   }
   const isCreator = match.createdById === user.id;
