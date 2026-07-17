@@ -23,6 +23,15 @@ import { useEffect, useMemo, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
+// Colour tune for the satellite basemap. Mapbox's raw imagery reads a
+// touch flat and desaturated -- turf especially -- so a modest
+// saturation + contrast lift makes fairways greener and edges crisper.
+// Kept deliberately mild: over-saturating low-res tiles just amplifies
+// JPEG noise. Range for both is -1..1 (0 = untouched). Applied to
+// whatever raster layer the style ships, so it survives a future
+// swap of the underlying imagery source.
+const IMAGERY_TUNE = { saturation: 0.3, contrast: 0.15 } as const;
+
 type Pt = { lat: number; lng: number };
 type Hazard = Pt & {
   id: string;
@@ -228,6 +237,18 @@ export default function HoleMiniMapGL({
       const cb = onAimRef.current;
       if (!cb) return;
       cb({ lat: e.lngLat.lat, lng: e.lngLat.lng });
+    });
+
+    // Punch up the imagery once the style's raster layer exists. We
+    // find it by type rather than hard-coding "satellite" so this keeps
+    // working if the source is ever swapped (Esri, etc.).
+    map.on("style.load", () => {
+      for (const layer of map.getStyle()?.layers ?? []) {
+        if (layer.type === "raster") {
+          map.setPaintProperty(layer.id, "raster-saturation", IMAGERY_TUNE.saturation);
+          map.setPaintProperty(layer.id, "raster-contrast", IMAGERY_TUNE.contrast);
+        }
+      }
     });
 
     mapRef.current = map;
