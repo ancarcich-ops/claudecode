@@ -253,7 +253,7 @@ export default async function NewMatchPage({
         availableRosterPlayers={availableRoster}
         defaultCourseName={defaultCourseName}
         submitLabel={
-          tournament ? `Start foursome →` : undefined
+          tournament ? `Start round →` : undefined
         }
       />
     </div>
