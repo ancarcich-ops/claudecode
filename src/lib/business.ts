@@ -5,7 +5,7 @@
 // for consistency).
 //
 // NOTE for the operator: `email` must be a mailbox that actually
-// receives mail on the sticksgolf.app domain (a real inbox or a
+// receives mail on the sticks-golf.app domain (a real inbox or a
 // forwarding alias to your personal inbox). A domain-matched address is
 // what carriers/reviewers expect over a personal gmail/aol address.
 
@@ -15,13 +15,13 @@ export const BUSINESS = {
   legalName: "Sticks",
   proprietor: "Andrew Carcich",
   entityType: "Sole Proprietorship",
-  email: "support@sticksgolf.app",
+  email: "support@sticks-golf.app",
   // Display + tel: href forms of the support line.
   phone: "+1 (818) 309-5011",
   phoneHref: "+18183095011",
   // City/region shown on Contact + used for the Terms governing law.
   location: "Los Angeles, California, USA",
   governingLaw: "the State of California, USA",
-  domain: "sticksgolf.app",
-  url: "https://sticksgolf.app",
+  domain: "sticks-golf.app",
+  url: "https://sticks-golf.app",
 } as const;

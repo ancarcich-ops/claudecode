@@ -83,7 +83,7 @@ const figtree = Figtree({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://sticksgolf.app"),
+  metadataBase: new URL("https://sticks-golf.app"),
   title: {
     default: "Sticks — golf scoring, GPS & side games",
     template: "%s · Sticks",
@@ -104,7 +104,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "Sticks",
-    url: "https://sticksgolf.app",
+    url: "https://sticks-golf.app",
     title: "Sticks — golf scoring, GPS & side games",
     description:
       "Keep the group's scorecard, get satellite distances and hole maps, and auto-score your side games — all on one card.",
