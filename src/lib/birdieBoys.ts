@@ -58,7 +58,18 @@ async function resolveOwnerId(fallbackId: string): Promise<string> {
  */
 export async function ensureBirdieBoysTournament(fallbackCreatorId: string) {
   const existing = await getBirdieBoysTournament();
-  if (existing) return existing;
+  if (existing) {
+    // Backfill the pinned course on a tournament created before the
+    // courseName column existed, so round-start preloads Goose Creek.
+    if (!existing.courseName) {
+      await prisma.tournament.update({
+        where: { id: existing.id },
+        data: { courseName: BIRDIE_BOYS.venue },
+      });
+      existing.courseName = BIRDIE_BOYS.venue;
+    }
+    return existing;
+  }
 
   const createdById = await resolveOwnerId(fallbackCreatorId);
 
@@ -81,6 +92,10 @@ export async function ensureBirdieBoysTournament(fallbackCreatorId: string) {
       inviteCode,
       scoringMode: BIRDIE_BOYS.scoringMode,
       roundsPlanned: BIRDIE_BOYS.roundsPlanned,
+      // Pin the venue so every tournament round opens on Goose Creek
+      // without the player having to pick a course. Must match the
+      // course-preset name exactly (see src/lib/courses.ts).
+      courseName: BIRDIE_BOYS.venue,
       scheduledStartAt: new Date(BIRDIE_BOYS.startsAtISO),
       notes: `${BIRDIE_BOYS.format} · ${BIRDIE_BOYS.venue}`,
       createdById,

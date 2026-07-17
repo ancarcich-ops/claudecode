@@ -8,6 +8,7 @@ import { getActiveGroupId, listUserGroups } from "@/lib/groups";
 import { computeUserStats } from "@/lib/userStats";
 import { isSideGameKind, type SideGameKind } from "@/lib/sideGames";
 import NewMatchForm, { type MatchTemplate } from "./NewMatchForm";
+import { BIRDIE_BOYS } from "@/lib/birdieBoys";
 
 export const dynamic = "force-dynamic";
 
@@ -196,6 +197,12 @@ export default async function NewMatchPage({
         roundNumber: String(currentRoundNumber ?? 1),
       }
     : undefined;
+  // Pin the tournament's venue so the round opens on it directly. Falls
+  // back to Goose Creek for the Birdie Boys tournament even if the
+  // courseName column wasn't backfilled on that row yet.
+  const defaultCourseName =
+    tournament?.courseName ??
+    (tournament?.slug === BIRDIE_BOYS.slug ? BIRDIE_BOYS.venue : undefined);
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -205,8 +212,10 @@ export default async function NewMatchPage({
             Round {currentRoundNumber} · {tournament.name}
           </h1>
           <p className="text-sm text-mute mb-6">
-            Pick your course and pull your foursome from the tournament
-            roster. Score rolls into the cumulative standings.
+            {defaultCourseName
+              ? `${defaultCourseName} is loaded — pull your foursome from the tournament roster and start. `
+              : "Pick your course and pull your foursome from the tournament roster. "}
+            Score rolls into the cumulative standings.
           </p>
         </>
       ) : (
@@ -242,6 +251,7 @@ export default async function NewMatchPage({
         prefilledPlayers={prefilledPlayers}
         hiddenFields={hiddenFields}
         availableRosterPlayers={availableRoster}
+        defaultCourseName={defaultCourseName}
         submitLabel={
           tournament ? `Start foursome →` : undefined
         }

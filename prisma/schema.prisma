@@ -183,6 +183,10 @@ model Tournament {
   // adds cleanly via `prisma db push` (no --accept-data-loss); a launch
   // tournament is created/looked up by slug in src/lib/birdieBoys.ts.
   slug             String?
+  // Optional pinned venue. When set, starting a round for this
+  // tournament pre-selects this course (must match a course preset
+  // name) so players don't pick it each round.
+  courseName       String?
   // Share code anyone can join with -- mirrors Group.inviteCode.
   // Tournaments aren't tied to a group, so this is how the creator
   // pulls 16 players from across 4 different foursomes into the
