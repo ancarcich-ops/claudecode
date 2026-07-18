@@ -10,7 +10,7 @@
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "use:postgres": "node scripts/use-postgres.mjs",
-    "build:vercel": "node scripts/use-postgres.mjs && prisma generate && prisma db push --skip-generate && next build",
+    "build:vercel": "node scripts/use-postgres.mjs && prisma generate && prisma db push --skip-generate && (tsx scripts/import-course-ratings.ts scripts/course-ratings.csv --skip-if-current || echo '[ratings] import step skipped (non-fatal)') && next build",
     "postinstall": "prisma generate"
   },
   "dependencies": {
