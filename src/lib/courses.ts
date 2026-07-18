@@ -694,6 +694,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
   // Baker, Casta del Sol, Salt Creek GC (closed 2018), Mission Bay
   // GC, Welk Fountains/Oaks, Cimarron Pebble, Lake Sherwood CC.
   { id: "sherwood-cc", name: "Sherwood Country Club", city: "Thousand Oaks, CA", region: "LA", access: "private", holes: 18, pars: [4, 5, 3, 4, 5, 4, 4, 4, 4, 4, 5, 3, 5, 4, 3, 5, 3, 4] },
+  { id: "los-robles-greens", name: "Los Robles Greens Golf Course", city: "Thousand Oaks, CA", region: "LA", access: "municipal", holes: 18, pars: [5, 3, 4, 4, 4, 3, 4, 3, 4, 4, 3, 5, 4, 5, 4, 3, 4, 4] },
   { id: "marshall-canyon-gc", name: "Marshall Canyon Golf Course", city: "La Verne, CA", region: "LA", access: "municipal", holes: 18, pars: [5, 3, 4, 4, 4, 4, 3, 4, 4, 5, 3, 4, 4, 4, 4, 3, 5, 4] },
   { id: "skylinks-long-beach", name: "Skylinks at Long Beach", city: "Long Beach, CA", region: "LA", access: "municipal", holes: 18, pars: [4, 5, 5, 4, 4, 3, 4, 3, 4, 4, 5, 4, 3, 4, 5, 3, 4, 4] },
   { id: "recreation-park-18", name: "Recreation Park Golf Course 18", city: "Long Beach, CA", region: "LA", access: "municipal", holes: 18, pars: [4, 4, 4, 4, 3, 4, 4, 4, 5, 4, 4, 3, 4, 5, 4, 3, 5, 4] },
@@ -3117,6 +3118,7 @@ export const COURSE_PRESETS: CoursePreset[] = [
 export const COURSE_PRESET_COORDS: Record<string, { lat: number; lng: number }> = {
   "riviera-cc": { lat: 34.0461, lng: -118.5095 },
   "bel-air-cc": { lat: 34.0928, lng: -118.4517 },
+  "los-robles-greens": { lat: 34.1957, lng: -118.8869 },
   "la-cc-north": { lat: 34.0738, lng: -118.4192 },
   "wilshire-cc": { lat: 34.0758, lng: -118.3318 },
   "brentwood-cc": { lat: 34.0533, lng: -118.4756 },
