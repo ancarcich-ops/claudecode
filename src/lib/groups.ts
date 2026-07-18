@@ -153,7 +153,20 @@ async function defaultVisibleWhere(userId: string): Promise<MatchWhere> {
   } catch {
     return { groupId: null };
   }
-  if (groupIds.length === 0) return { groupId: null };
+  const followClause = {
+    // Rounds where a player is someone I've been approved to follow.
+    players: {
+      some: {
+        user: {
+          followers: { some: { followerId: userId, status: "ACCEPTED" } },
+        },
+      },
+    },
+  };
+  if (groupIds.length === 0) {
+    // No groups, but I may still follow people -- surface public + those.
+    return { OR: [{ groupId: null }, followClause] };
+  }
   return {
     OR: [
       { groupId: null },
@@ -169,6 +182,7 @@ async function defaultVisibleWhere(userId: string): Promise<MatchWhere> {
           },
         },
       },
+      followClause,
     ],
   };
 }
@@ -244,6 +258,18 @@ export async function canViewMatch(
     .map((p) => p.userId)
     .filter((id): id is string => !!id);
   if (playerUserIds.length === 0) return false;
+
+  // Approved follow: if the viewer follows (accepted) any player in the
+  // round, they can see it -- the followee consented to being followed.
+  const followsPlayer = await prisma.follow.findFirst({
+    where: {
+      followerId: userId,
+      status: "ACCEPTED",
+      followeeId: { in: playerUserIds },
+    },
+    select: { id: true },
+  });
+  if (followsPlayer) return true;
 
   // Find a shared group: any group the viewer is in that has at least one
   // member who's a player in this match.
