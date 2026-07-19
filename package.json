@@ -1,0 +1,12 @@
+{
+  "name": "walkup-soundboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "T-ball walk-up soundboard with team sync",
+  "scripts": {
+    "dev": "node dev-server.js"
+  },
+  "dependencies": {
+    "@vercel/blob": ">=0.27.0 <2"
+  }
+}
