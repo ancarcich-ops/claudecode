@@ -26,8 +26,10 @@ Two ways to move data between devices:
 ## Enabling team sync in production
 
 In the Vercel project: **Storage** tab → **Create Database → Blob** →
-connect it to this project (this adds `BLOB_READ_WRITE_TOKEN`), then
-redeploy. Until then the app works fine and the sync sheet explains
+choose **Public** access (the sync API cannot write to Private-mode
+stores — `/api/health?deep=1` will report exactly that if you pick
+wrong) → connect it to this project (this adds `BLOB_READ_WRITE_TOKEN`),
+then redeploy. Until then the app works fine and the sync sheet explains
 what's missing.
 
 ## Deploying to Vercel (separate project — does not touch Sticks)
