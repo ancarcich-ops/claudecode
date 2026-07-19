@@ -1037,6 +1037,7 @@
         <button class="btn quiet" id="exportBtn">Export</button>
         <button class="btn quiet" id="importBtn">Import</button>
       </div>
+      <div class="sync-status" id="backupStatus"></div>
       <input type="file" id="importFile" hidden>
     </div>
 
@@ -1980,16 +1981,30 @@
     var parts = [MAGIC + String(headerBytes.length).padStart(12, "0") + "|", headerBytes];
     sounds.forEach(function (s) { parts.push(s.blob); });
     if (state.logo && logoBlob) parts.push(logoBlob);
-    var file = new File(parts, "walkup-backup.wu", { type: "application/octet-stream" });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      navigator.share({ files: [file], title: "Walk-Up! backup" }).catch(function () {});
-    } else {
+    var name = "walkup-backup-" + new Date().toISOString().slice(0, 10) + ".wu";
+    var file = new File(parts, name, { type: "application/octet-stream" });
+    function setBackupStatus(msg) {
+      var el = $("backupStatus");
+      if (el) el.textContent = msg;
+    }
+    function download() {
       var a = document.createElement("a");
       a.href = URL.createObjectURL(file);
       a.download = file.name;
       document.body.appendChild(a);
       a.click();
       setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+      setBackupStatus("Saved as " + file.name + " — check Downloads / the Files app.");
+    }
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: "Walk-Up! backup" }).then(function () {
+        setBackupStatus("Backup shared ✓");
+      }, function (err) {
+        // User cancelling is fine; anything else falls back to a download
+        if (!err || err.name !== "AbortError") download();
+      });
+    } else {
+      download();
     }
   }
 
@@ -2334,6 +2349,42 @@
     setSyncStatus("");
   }
 
+  function copyText(text, okMsg) {
+    var done = function () { setSyncStatus(okMsg); };
+    var fallback = function () {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); done(); }
+      catch (e) { setSyncStatus("Couldn't copy — long-press the code to select it", true); }
+      ta.remove();
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else {
+      fallback();
+    }
+  }
+  function inviteMessage() {
+    return "Join our Walk-Up! team soundboard ⚾ Open " + location.origin + location.pathname +
+      " on your phone and enter team code " + SYNC.code +
+      " (right on the welcome screen, or Settings → Team sync).";
+  }
+  function copyTeamCode() {
+    if (SYNC.code) copyText(SYNC.code, "Code copied ✓");
+  }
+  function shareTeamCode() {
+    if (!SYNC.code) return;
+    if (navigator.share) {
+      navigator.share({ text: inviteMessage() }).catch(function () {});
+    } else {
+      copyText(inviteMessage(), "Invite copied ✓");
+    }
+  }
+
   function renderSync() {
     var body = $("syncBody");
     if (!body) return;
@@ -2361,9 +2412,15 @@
         '<div class="sync-code" id="syncCode">' + esc(SYNC.code) + "</div>" +
         '<div class="sync-status" id="syncStatus"></div>' +
         '<div class="ed-actions">' +
+          '<button class="btn" id="syncCopy">Copy code</button>' +
+          (navigator.share ? '<button class="btn quiet" id="syncShare">Share invite&hellip;</button>' : "") +
+        "</div>" +
+        '<div class="ed-actions">' +
           '<button class="btn quiet" id="syncNow">Sync now</button>' +
           '<button class="btn quiet" id="syncLeave">Stop syncing</button>' +
         "</div>";
+      $("syncCopy").onclick = copyTeamCode;
+      if ($("syncShare")) $("syncShare").onclick = shareTeamCode;
       $("syncNow").onclick = function () { pullSync(function () { return pushSync(); }); };
       $("syncLeave").onclick = leaveTeam;
     }
