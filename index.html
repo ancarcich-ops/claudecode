@@ -29,6 +29,9 @@
     --danger: #B03A2E;
     --shadow: 0 2px 10px rgba(34,48,31,.10);
 
+    --accent-glow: rgba(201,102,58,.45);
+    --accent-glow-0: rgba(201,102,58,0);
+
     --font-display: "Avenir Next Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
     --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
@@ -233,7 +236,7 @@
     /* infield-grass stripe across the top edge */
     content: "";
     position: absolute; top: 0; left: 0; right: 0; height: 6px;
-    background: linear-gradient(90deg, var(--grass) 0 25%, var(--clay) 25% 50%, var(--grass) 50% 75%, var(--clay) 75%);
+    background: linear-gradient(90deg, var(--grass) 0 25%, var(--accent) 25% 50%, var(--grass) 50% 75%, var(--accent) 75%);
     pointer-events: none;
   }
   .order-badge {
@@ -287,8 +290,8 @@
   .play-btn svg { width: 52px; height: 52px; }
   .play-btn.playing { animation: pulse 1.1s ease-in-out infinite; }
   @keyframes pulse {
-    0%, 100% { box-shadow: 0 6px 0 var(--accent-deep), 0 0 0 0 rgba(201,102,58,.45); }
-    50%       { box-shadow: 0 6px 0 var(--accent-deep), 0 0 0 18px rgba(201,102,58,0); }
+    0%, 100% { box-shadow: 0 6px 0 var(--accent-deep), 0 0 0 0 var(--accent-glow); }
+    50%       { box-shadow: 0 6px 0 var(--accent-deep), 0 0 0 18px var(--accent-glow-0); }
   }
   @media (prefers-reduced-motion: reduce) {
     .play-btn.playing { animation: none; }
@@ -537,6 +540,36 @@
   #edControls { display: flex; flex-direction: column; gap: 12px; }
   #edControls[hidden], .ed-loading[hidden] { display: none; }
 
+  /* ── Team colors ─────────────────────────────── */
+  .colors { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+  .color-row { display: flex; align-items: center; gap: 8px; }
+  .color-row .clabel {
+    flex: none;
+    width: 74px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 11.5px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .swatches { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; align-items: center; }
+  .sw {
+    width: 31px; height: 31px;
+    border-radius: 9px;
+    border: 2px solid var(--line);
+  }
+  .sw.on { border-color: var(--ink); outline: 2px solid var(--panel); outline-offset: -4px; }
+  .sw-custom {
+    width: 31px; height: 31px;
+    padding: 0; border: 2px dashed var(--ink-soft);
+    border-radius: 9px;
+    background: none;
+    cursor: pointer;
+  }
+  .sw-custom::-webkit-color-swatch-wrapper { padding: 2px; }
+  .sw-custom::-webkit-color-swatch { border: none; border-radius: 5px; }
+
   /* ── Backup & sync ───────────────────────────── */
   .backup { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
   .backup p, .sync-body p { font-size: 13.5px; color: var(--ink-soft); line-height: 1.45; margin: 0; }
@@ -627,6 +660,18 @@
       <button class="btn" type="submit">Add</button>
     </form>
     <button class="btn quiet" id="resetGame">Restart game (top of the 1st)</button>
+    <div class="card colors">
+      <span class="eyebrow">Team colors</span>
+      <div class="color-row">
+        <span class="clabel">Primary</span>
+        <div class="swatches" id="swPrimary"></div>
+      </div>
+      <div class="color-row">
+        <span class="clabel">Secondary</span>
+        <div class="swatches" id="swSecondary"></div>
+      </div>
+      <button class="btn quiet" id="colorsReset">Back to ballpark green &amp; clay</button>
+    </div>
   </main>
 
   <!-- SOUNDS -->
@@ -726,9 +771,10 @@
   var LS_KEY = "tball-soundboard-v1";
   var state = {
     team: "",
-    players: [],   // { id, name, soundId, present }
+    players: [],   // { id, name, introId, soundId, present }
     batterIdx: 0,  // index into present-players order
-    inning: 1
+    inning: 1,
+    colors: {}     // { primary, secondary } hex, empty = ballpark default
   };
   try {
     var saved = JSON.parse(localStorage.getItem(LS_KEY));
@@ -1272,6 +1318,76 @@
     if (e.target === edOverlay) closeEditor();
   });
 
+  /* ── Team colors ─────────────────────────────── */
+  var PRESETS = [
+    ["#B3282D", "Red"], ["#D2611C", "Orange"], ["#1F4FBF", "Royal blue"],
+    ["#17325F", "Navy"], ["#206A38", "Green"], ["#5B2D8E", "Purple"],
+    ["#0E7C7B", "Teal"], ["#7A1F2B", "Maroon"], ["#1F1F23", "Black"]
+  ];
+  function hexRgb(hex) {
+    return [1, 3, 5].map(function (i) { return parseInt(hex.slice(i, i + 2), 16); });
+  }
+  function shade(hex, f) {
+    return "#" + hexRgb(hex).map(function (v) {
+      return Math.round(v * f).toString(16).padStart(2, "0");
+    }).join("");
+  }
+  function applyColors() {
+    var r = document.documentElement.style;
+    var c = state.colors || {};
+    if (c.primary) {
+      r.setProperty("--accent", c.primary);
+      r.setProperty("--accent-deep", shade(c.primary, 0.78));
+      r.setProperty("--accent-glow", "rgba(" + hexRgb(c.primary).join(",") + ",0.45)");
+      r.setProperty("--accent-glow-0", "rgba(" + hexRgb(c.primary).join(",") + ",0)");
+    } else {
+      ["--accent", "--accent-deep", "--accent-glow", "--accent-glow-0"]
+        .forEach(function (p) { r.removeProperty(p); });
+    }
+    if (c.secondary) {
+      r.setProperty("--grass", c.secondary);
+      r.setProperty("--grass-deep", shade(c.secondary, 0.76));
+    } else {
+      r.removeProperty("--grass");
+      r.removeProperty("--grass-deep");
+    }
+  }
+  function setColor(role, hex) {
+    state.colors = state.colors || {};
+    state.colors[role] = hex;
+    save();
+    applyColors();
+    renderColors();
+  }
+  function renderColors() {
+    [["swPrimary", "primary"], ["swSecondary", "secondary"]].forEach(function (pair) {
+      var holder = $(pair[0]), role = pair[1];
+      var current = (state.colors || {})[role] || null;
+      holder.innerHTML = "";
+      PRESETS.forEach(function (p) {
+        var b = document.createElement("button");
+        b.className = "sw" + (current && current.toLowerCase() === p[0].toLowerCase() ? " on" : "");
+        b.style.background = p[0];
+        b.setAttribute("aria-label", p[1] + " " + role);
+        b.onclick = function () { setColor(role, p[0]); };
+        holder.appendChild(b);
+      });
+      var custom = document.createElement("input");
+      custom.type = "color";
+      custom.className = "sw-custom";
+      custom.value = current || (role === "primary" ? "#C9663A" : "#2E7D46");
+      custom.setAttribute("aria-label", "Custom " + role + " color");
+      custom.addEventListener("change", function (e) { setColor(role, e.target.value); });
+      holder.appendChild(custom);
+    });
+  }
+  $("colorsReset").onclick = function () {
+    state.colors = {};
+    save();
+    applyColors();
+    renderColors();
+  };
+
   /* ── Backup: everything in one file ──────────── */
   // Format: "WALKUP1|" + 12-digit header length + "|" + header JSON + raw audio bytes.
   // Blob concatenation is lazy, so this never loads all audio into memory at once.
@@ -1281,6 +1397,7 @@
     var header = JSON.stringify({
       v: 1,
       team: state.team,
+      colors: state.colors || {},
       players: state.players,
       sounds: sounds.map(function (s) {
         return { id: s.id, name: s.name, edit: s.edit || null, size: s.blob.size, type: s.blob.type || "audio/mpeg" };
@@ -1327,10 +1444,13 @@
           bufCache = {};
           sounds = newSounds;
           state.team = doc.team || "";
+          state.colors = doc.colors || {};
           state.players = doc.players;
           state.batterIdx = 0;
           state.inning = 1;
           save();
+          applyColors();
+          renderColors();
           renderAll();
           alert("Backup imported.");
         });
@@ -1387,6 +1507,7 @@
       v: 1,
       updatedAt: Date.now(),
       team: state.team,
+      colors: state.colors || {},
       players: state.players,
       sounds: sounds.map(function (s) {
         return { id: s.id, name: s.name, edit: s.edit || null, size: s.blob.size, type: s.blob.type || "audio/mpeg" };
@@ -1463,6 +1584,9 @@
     SYNC.applying = true;
     stop();
     state.team = doc.team || "";
+    state.colors = doc.colors || {};
+    applyColors();
+    renderColors();
     state.players = doc.players || [];
     if (state.batterIdx >= state.players.length) state.batterIdx = 0;
     var chain = Promise.resolve();
@@ -1622,6 +1746,7 @@
   });
 
   function initSync() {
+    if (location.protocol === "file:") return; // no server to talk to
     fetch("/api/health").then(function (r) { return r.json(); }).then(function (h) {
       if (!h || !h.ok) return;
       SYNC.available = true;
@@ -1680,6 +1805,8 @@
   });
 
   /* ── Boot ────────────────────────────────────── */
+  applyColors();
+  renderColors();
   openDB().then(function (d) {
     db = d;
     return loadSounds();
