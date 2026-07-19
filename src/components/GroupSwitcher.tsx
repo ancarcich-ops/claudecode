@@ -114,6 +114,19 @@ export default function GroupSwitcher({
         aria-haspopup="menu"
         aria-expanded={open}
       >
+        <svg
+          aria-hidden
+          className="mr-1.5 shrink-0 opacity-70"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        >
+          <path d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
         <span className="mr-1.5 inline-block h-5 w-5 shrink-0 overflow-hidden rounded-full">
           <PlayerAvatar
             seed={avatarSeed ?? username}
@@ -127,7 +140,6 @@ export default function GroupSwitcher({
           />
         </span>
         <span className="truncate">{activeLabel}</span>
-        <span aria-hidden className="opacity-60">▾</span>
         {pendingFollows > 0 && (
           <span
             className="ml-1 grid h-4 min-w-[16px] place-items-center rounded-full bg-accent px-1 text-[10px] font-bold text-ink-on-accent"
