@@ -512,7 +512,7 @@
     <label class="drop" id="dropZone">
       Tap to <strong>add songs and announcements</strong> from your phone or computer.<br>
       They're saved on this device — you only do this once.
-      <input id="fileInput" type="file" accept="audio/*" multiple>
+      <input id="fileInput" type="file" accept="audio/*,audio/x-m4a,audio/mp4,audio/aac,.m4a,.mp3,.wav,.aac,.mp4,.ogg,.flac,.aif,.aiff" multiple>
     </label>
     <div class="sound-list" id="soundList"></div>
   </main>
@@ -631,7 +631,8 @@
   }
   function startTrack(id) {
     audio.src = urlFor(id);
-    audio.play();
+    var p = audio.play();
+    if (p && p.catch) p.catch(function () { /* element 'error' event advances the queue */ });
     nowPlaying = id;
     renderGame();
   }
@@ -642,11 +643,13 @@
     nowPlaying = null;
     renderGame();
   }
-  audio.addEventListener("ended", function () {
+  function advanceQueue() {
     if (queue.length) { startTrack(queue.shift()); return; }
     nowPlaying = null;
     renderGame();
-  });
+  }
+  audio.addEventListener("ended", advanceQueue);
+  audio.addEventListener("error", advanceQueue);
 
   /* ── Lineup helpers ──────────────────────────── */
   function presentPlayers() {
