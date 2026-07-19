@@ -1273,6 +1273,7 @@
   var queue = [];         // sound ids to play after the current one ends
   var playToken = 0;      // invalidates in-flight decodes/onended after stop
   var currentSrc = null;
+  var playback = null;    // { id, t0, offset, dur } while audio is audibly playing
 
   function play(id) {
     if (nowPlaying === id) { stop(); return; }
@@ -1326,15 +1327,17 @@
       src.connect(gain);
       gain.connect(ctx.destination);
       src.onended = function () {
-        if (token === playToken) { currentSrc = null; advanceQueue(); }
+        if (token === playToken) { currentSrc = null; playback = null; advanceQueue(); }
       };
       src.start(0, start, dur);
       currentSrc = src;
+      playback = { id: id, t0: ctx.currentTime, offset: start, dur: dur };
     }).catch(function () {
       if (token === playToken) advanceQueue(); // undecodable: skip to next
     });
   }
   function stopCurrent() {
+    playback = null;
     if (currentSrc) {
       try { currentSrc.onended = null; currentSrc.stop(); } catch (err) {}
       currentSrc = null;
@@ -1667,9 +1670,46 @@
   }
   function fmtSec(t) { return t.toFixed(1) + "s"; }
 
+  // Playhead: while the editor's track is previewing, sweep a line across
+  // the waveform at the current playback position.
+  var edRAF = 0, edWasPlaying = false;
+  function playheadLoop() {
+    if (!ed) { edRAF = 0; return; }
+    var active = ed.peaks && actx && playback && playback.id === ed.s.id && nowPlaying === ed.s.id;
+    if (active) {
+      drawEditor();
+      var pos = playback.offset + (actx.currentTime - playback.t0);
+      pos = Math.min(pos, playback.offset + playback.dur);
+      var c = $("edCanvas");
+      var g = c.getContext("2d");
+      var dpr = window.devicePixelRatio || 1;
+      var x = (pos / ed.dur) * c.width;
+      g.strokeStyle = cssVar("--ink");
+      g.lineWidth = 2 * dpr;
+      g.beginPath();
+      g.moveTo(x, 0);
+      g.lineTo(x, c.height);
+      g.stroke();
+      g.fillStyle = cssVar("--ink");
+      g.beginPath();
+      g.moveTo(x - 5 * dpr, 0);
+      g.lineTo(x + 5 * dpr, 0);
+      g.lineTo(x, 7 * dpr);
+      g.closePath();
+      g.fill();
+      edWasPlaying = true;
+    } else if (edWasPlaying) {
+      edWasPlaying = false;
+      if (ed.peaks) drawEditor(); // clear the last playhead frame
+    }
+    edRAF = requestAnimationFrame(playheadLoop);
+  }
+
   function openEditor(s) {
     stop();
     ed = { s: s, dur: 0, vals: null, peaks: null };
+    edWasPlaying = false;
+    if (!edRAF) playheadLoop();
     $("edName").textContent = s.name;
     $("edLoading").hidden = false;
     $("edControls").hidden = true;
@@ -1698,6 +1738,7 @@
     stop();
     ed = null;
     edOverlay.hidden = true;
+    if (edRAF) { cancelAnimationFrame(edRAF); edRAF = 0; }
   }
 
   function setupCanvas(buf) {
