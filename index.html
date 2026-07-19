@@ -2369,9 +2369,10 @@
     }
   }
   function inviteMessage() {
-    return "Join our Walk-Up! team soundboard ⚾ Open " + location.origin + location.pathname +
-      " on your phone and enter team code " + SYNC.code +
-      " (right on the welcome screen, or Settings → Team sync).";
+    return "Join our Walk-Up! team soundboard ⚾\n\n" +
+      "Open " + location.origin + location.pathname + " on your phone and enter the team code " +
+      "(right on the welcome screen, or under Settings → Team sync).\n\n" +
+      "Team code:\n" + SYNC.code;
   }
   function copyTeamCode() {
     if (SYNC.code) copyText(SYNC.code, "Code copied ✓");
