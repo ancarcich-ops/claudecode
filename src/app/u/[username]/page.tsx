@@ -14,6 +14,8 @@ import HandicapExplainer from "@/app/stats/HandicapExplainer";
 import { handicapBreakdown } from "@/lib/handicap";
 import { computeIndexTrend } from "@/lib/indexTrend";
 import ShareButton from "@/components/ShareButton";
+import { outgoingFollowState } from "@/lib/follows";
+import FollowButton from "./FollowButton";
 
 export const dynamic = "force-dynamic";
 
@@ -55,6 +57,7 @@ export default async function PublicProfilePage({
   // Owner viewing their own profile goes to the editable /stats.
   if (target.id === viewer.id) redirect("/stats");
 
+  const followState = await outgoingFollowState(viewer.id, target.id);
   const stats = await computeUserStats(target.id);
   if (!stats) notFound();
 
@@ -81,10 +84,13 @@ export default async function PublicProfilePage({
             @{target.username}
           </p>
         </div>
-        <ShareButton
-          url={`/u/${target.username}`}
-          title={`${displayName} on Sticks`}
-        />
+        <div className="flex items-center gap-2 shrink-0">
+          <FollowButton targetUserId={target.id} state={followState} />
+          <ShareButton
+            url={`/u/${target.username}`}
+            title={`${displayName} on Sticks`}
+          />
+        </div>
       </div>
 
       <HeroIndex

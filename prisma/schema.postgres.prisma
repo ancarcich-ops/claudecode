@@ -27,6 +27,9 @@ model User {
   // Personal goal handicap index -- drives the "TARGET 9.0 · 2.6 TO
   // GO" line in the stats hero. Null = no goal set.
   targetIndex   Float?
+  // When true, incoming follow requests are auto-accepted (a "public"
+  // profile). Default false -- every follower must be approved.
+  autoAcceptFollows Boolean @default(false)
   createdAt     DateTime @default(now())
 
   createdMatches     Match[]              @relation("MatchCreator")
@@ -39,6 +42,30 @@ model User {
   passkeys           Passkey[]
   createdTournaments Tournament[]         @relation("TournamentCreator")
   tournamentEntries  TournamentPlayer[]
+  // Social follow graph (one-way, approval-gated). `following` = rows
+  // where I'm the follower; `followers` = rows where I'm the followee.
+  following          Follow[]             @relation("Follower")
+  followers          Follow[]             @relation("Followee")
+}
+
+// One-way follow with approval. followerId requests to follow followeeId;
+// the followee accepts (or it auto-accepts when the followee has
+// autoAcceptFollows on). Once ACCEPTED the follower sees the followee's
+// rounds in their home feed -- see visibleMatchWhere / canViewMatch in
+// lib/groups.ts.
+model Follow {
+  id          String    @id @default(cuid())
+  followerId  String
+  follower    User      @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followeeId  String
+  followee    User      @relation("Followee", fields: [followeeId], references: [id], onDelete: Cascade)
+  status      String    @default("PENDING")
+  createdAt   DateTime  @default(now())
+  respondedAt DateTime?
+
+  @@unique([followerId, followeeId])
+  @@index([followeeId, status])
+  @@index([followerId, status])
 }
 
 // WebAuthn / passkey credentials. Each row is one device (Face ID on

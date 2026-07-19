@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { selectGroupAction, signOutAction } from "@/lib/actions";
+import PlayerAvatar, { isVariant, type AvatarVariant } from "@/components/Avatar";
 
 export type GroupOption = { id: string; name: string; slug: string | null };
 
@@ -18,10 +19,23 @@ export default function GroupSwitcher({
   groups,
   active,
   username,
+  pendingFollows = 0,
+  avatarSeed = null,
+  avatarVariant = null,
+  avatarUrl = null,
 }: {
   groups: GroupOption[];
   active: string;
   username: string;
+  // Count of incoming follow requests -- badges the trigger + the
+  // People menu item so requests are discoverable without a separate
+  // header button.
+  pendingFollows?: number;
+  // The signed-in user's avatar -- shown on the trigger so it reads as
+  // the account menu, not just a group filter.
+  avatarSeed?: string | null;
+  avatarVariant?: string | null;
+  avatarUrl?: string | null;
 }) {
   // Resolve the actively-filtered group (if any) so we can offer its
   // leaderboard right in the menu. "All my groups" / "Public only" don't
@@ -100,8 +114,40 @@ export default function GroupSwitcher({
         aria-haspopup="menu"
         aria-expanded={open}
       >
+        <svg
+          aria-hidden
+          className="mr-1.5 shrink-0 opacity-70"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        >
+          <path d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+        <span className="mr-1.5 inline-block h-5 w-5 shrink-0 overflow-hidden rounded-full">
+          <PlayerAvatar
+            seed={avatarSeed ?? username}
+            variant={
+              avatarVariant && isVariant(avatarVariant)
+                ? (avatarVariant as AvatarVariant)
+                : "beam"
+            }
+            avatarUrl={avatarUrl}
+            size={20}
+          />
+        </span>
         <span className="truncate">{activeLabel}</span>
-        <span aria-hidden className="opacity-60">▾</span>
+        {pendingFollows > 0 && (
+          <span
+            className="ml-1 grid h-4 min-w-[16px] place-items-center rounded-full bg-accent px-1 text-[10px] font-bold text-ink-on-accent"
+            aria-label={`${pendingFollows} follow request${pendingFollows === 1 ? "" : "s"}`}
+          >
+            {pendingFollows}
+          </span>
+        )}
       </button>
       <AnimatePresence>
       {open && (
@@ -167,6 +213,19 @@ export default function GroupSwitcher({
             role="menuitem"
           >
             Manage groups
+          </Link>
+          <Link
+            href="/people"
+            onClick={() => setOpen(false)}
+            className="flex items-center justify-between gap-2 w-full text-left px-3 py-2 text-sm text-ink hover:bg-panel2"
+            role="menuitem"
+          >
+            <span>People &amp; follows</span>
+            {pendingFollows > 0 && (
+              <span className="grid h-4 min-w-[16px] place-items-center rounded-full bg-accent px-1 text-[10px] font-bold text-ink-on-accent">
+                {pendingFollows}
+              </span>
+            )}
           </Link>
           <Link
             href="/settings"

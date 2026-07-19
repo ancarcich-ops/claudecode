@@ -17,6 +17,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { getCurrentUser } from "@/lib/auth";
 import { getActiveGroupId, listUserGroups } from "@/lib/groups";
+import { pendingRequestCount } from "@/lib/follows";
 import GroupSwitcher from "@/components/GroupSwitcher";
 import StickMark from "@/components/brand/StickMark";
 import MobileTabBar from "@/components/MobileTabBar";
@@ -159,6 +160,7 @@ export default async function RootLayout({
   const user = await getCurrentUser();
   const groups = user ? await listUserGroups(user.id) : [];
   const activeGroupId = getActiveGroupId();
+  const pendingFollows = user ? await pendingRequestCount(user.id) : 0;
   const fontVars = [
     bricolage.variable,
     GeistSans.variable,
@@ -228,6 +230,10 @@ export default async function RootLayout({
                     }))}
                     active={activeGroupId}
                     username={user.username}
+                    pendingFollows={pendingFollows}
+                    avatarSeed={user.avatarSeed}
+                    avatarVariant={user.avatarVariant}
+                    avatarUrl={user.avatarUrl}
                   />
                 </>
               ) : (

@@ -9,6 +9,7 @@ import HandicapCard from "./HandicapCard";
 import PasskeysCard from "./PasskeysCard";
 import ReplayOnboarding from "./ReplayOnboarding";
 import ThemeToggle from "./ThemeToggle";
+import FollowSettingsCard from "./FollowSettingsCard";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,7 @@ export default async function SettingsPage() {
       avatarVariant: true,
       avatarUrl: true,
       ghinNumber: true,
+      autoAcceptFollows: true,
     },
   });
   if (!user) redirect("/login");
@@ -72,6 +74,8 @@ export default async function SettingsPage() {
       />
 
       <PasskeysCard initialPasskeys={passkeys} />
+
+      <FollowSettingsCard initial={user.autoAcceptFollows} />
 
       <ThemeToggle />
 
