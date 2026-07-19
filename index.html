@@ -613,6 +613,56 @@
   .sw-custom::-webkit-color-swatch-wrapper { padding: 2px; }
   .sw-custom::-webkit-color-swatch { border: none; border-radius: 5px; }
 
+  /* ── Onboarding ──────────────────────────────── */
+  .onboard { align-items: center; padding: 16px; }
+  .onboard-card {
+    background: var(--panel);
+    border-radius: 18px;
+    border-top: 6px solid var(--grass);
+    width: 100%;
+    max-width: 420px;
+    max-height: 92dvh;
+    overflow-y: auto;
+    padding: 26px 22px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    box-shadow: 0 18px 48px rgba(0,0,0,.35);
+    position: relative;
+  }
+  .onboard-card .icon-btn { position: absolute; top: 10px; right: 10px; }
+  .onboard-card .wordmark { font-size: 40px; text-align: center; }
+  .tagline {
+    text-align: center;
+    font-size: 15.5px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    margin: 0;
+    text-wrap: balance;
+  }
+  .ob-steps { display: flex; flex-direction: column; gap: 12px; margin: 4px 0 2px; }
+  .ob-step { display: flex; gap: 12px; align-items: flex-start; text-align: left; }
+  .ob-num {
+    flex: none;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--accent-ink, #fff);
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ob-step .t { font-weight: 700; font-size: 15px; }
+  .ob-step .d { font-size: 13.5px; color: var(--ink-soft); line-height: 1.45; margin-top: 1px; }
+  .ob-tip {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    text-align: center;
+    margin: 0;
+    line-height: 1.45;
+  }
+
   /* ── Backup & sync ───────────────────────────── */
   .backup { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
   .backup p, .sync-body p { font-size: 13.5px; color: var(--ink-soft); line-height: 1.45; margin: 0; }
@@ -770,6 +820,8 @@
       </div>
       <input type="file" id="importFile" hidden>
     </div>
+
+    <button class="btn quiet" id="quickStart">Show the quick-start guide</button>
   </main>
 
   <nav aria-label="Sections">
@@ -790,6 +842,29 @@
       Settings
     </button>
   </nav>
+</div>
+
+<div class="overlay onboard" id="onboardOverlay" hidden>
+  <div class="onboard-card" role="dialog" aria-modal="true" aria-label="Welcome">
+    <button class="icon-btn" id="obClose" aria-label="Close welcome">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <div class="wordmark">Walk-<em>Up!</em></div>
+    <p class="tagline">Every kid gets a big-league walk-up &mdash; their announcement and song, in batting order, behind one big button.</p>
+    <div class="ob-steps">
+      <div class="ob-step"><span class="ob-num">1</span><div><div class="t">Load the sounds</div><div class="d">Songs tab: add each player's song file, plus a name announcement recorded in Voice Memos.</div></div></div>
+      <div class="ob-step"><span class="ob-num">2</span><div><div class="t">Build the lineup</div><div class="d">Lineup tab: add your players, give each their sounds, and drag today's batting order.</div></div></div>
+      <div class="ob-step"><span class="ob-num">3</span><div><div class="t">Play ball</div><div class="d">Game Day tab: tap the big button as each kid walks up. Innings count themselves.</div></div></div>
+    </div>
+    <button class="btn" id="obStart">Set up my team</button>
+    <div class="sync-divider">already have a team code?</div>
+    <div class="join-row">
+      <input id="obJoinCode" placeholder="ABCD-1234" autocomplete="off" autocapitalize="characters" aria-label="Team code">
+      <button class="btn quiet" id="obJoinBtn">Join</button>
+    </div>
+    <div class="sync-status" id="obStatus"></div>
+    <p class="ob-tip">Use the phone you'll bring to games, and add this page to your home screen (Share &rarr; Add to Home Screen) so it opens like an app.</p>
+  </div>
 </div>
 
 <div class="overlay" id="syncOverlay" hidden>
@@ -1997,7 +2072,49 @@
     setSyncStatus(SYNC.status, SYNC.error);
   }
 
+  /* ── Onboarding ──────────────────────────────── */
+  var OB_KEY = "wu-welcomed";
+  function showTab(v) { $("tab-" + v).click(); }
+  function maybeOnboard() {
+    if (localStorage.getItem(OB_KEY)) return;
+    if (state.players.length || sounds.length || SYNC.code) {
+      localStorage.setItem(OB_KEY, "1"); // existing user, don't interrupt
+      return;
+    }
+    $("onboardOverlay").hidden = false;
+  }
+  function dismissOnboard() {
+    localStorage.setItem(OB_KEY, "1");
+    $("onboardOverlay").hidden = true;
+  }
+  $("obClose").onclick = dismissOnboard;
+  $("obStart").onclick = function () {
+    dismissOnboard();
+    showTab("sounds");
+  };
+  function obJoin() {
+    var code = $("obJoinCode").value.trim().toUpperCase();
+    var status = $("obStatus");
+    if (!/^[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(code)) {
+      status.textContent = "Codes look like ABCD-1234";
+      status.className = "sync-status err";
+      return;
+    }
+    if (!SYNC.available) {
+      status.textContent = "Team codes only work on the online version of this page.";
+      status.className = "sync-status err";
+      return;
+    }
+    dismissOnboard();
+    joinTeam(code);
+    $("syncOverlay").hidden = false;
+    renderSync();
+  }
+  $("obJoinBtn").onclick = obJoin;
+  $("obJoinCode").addEventListener("keydown", function (e) { if (e.key === "Enter") obJoin(); });
+
   $("openSync").onclick = function () { $("syncOverlay").hidden = false; renderSync(); };
+  $("quickStart").onclick = function () { $("onboardOverlay").hidden = false; };
   $("syncClose").onclick = function () { $("syncOverlay").hidden = true; };
   $("syncOverlay").addEventListener("click", function (e) {
     if (e.target === $("syncOverlay")) $("syncOverlay").hidden = true;
@@ -2098,10 +2215,12 @@
   }).then(function () {
     renderAll();
     initSync();
+    maybeOnboard();
   }).catch(function () {
     // IndexedDB unavailable (e.g. some private-browsing modes): app still works, songs just won't persist.
     renderAll();
     initSync();
+    maybeOnboard();
   });
 })();
 </script>
