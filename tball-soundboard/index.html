@@ -385,6 +385,76 @@
     * { transition: none !important; }
   }
 
+  .batter-card[hidden], .controls[hidden], #ondeck[hidden] { display: none; }
+  #freeBoard { display: flex; flex-direction: column; gap: 10px; }
+  #freeBoard[hidden] { display: none; }
+  .free-head { display: flex; align-items: center; justify-content: space-between; padding: 0 2px; }
+  .free-head .btn { padding: 8px 12px; font-size: 12.5px; }
+  .free-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .free-card {
+    position: relative;
+    min-height: 92px;
+    border-radius: 16px;
+    padding: 12px 8px 10px;
+    background: var(--grass);
+    background-image: linear-gradient(155deg, rgba(255,255,255,.16), rgba(0,0,0,.06));
+    box-shadow: 0 4px 0 var(--grass-deep), var(--shadow);
+    color: var(--grass-ink, #fff);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    overflow: hidden;
+  }
+  .free-card:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--grass-deep); }
+  .free-card .fjersey {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 17px;
+    line-height: 1;
+    color: var(--bulb);
+  }
+  .free-card .fname {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 23px;
+    line-height: 1.05;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+    text-wrap: balance;
+  }
+  .free-card .fsong {
+    font-size: 11px;
+    opacity: .8;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .free-card.playing {
+    box-shadow: 0 4px 0 var(--grass-deep), 0 0 0 3px var(--accent), 0 0 0 7px var(--accent-glow);
+  }
+  .free-card.done { filter: saturate(.5); opacity: .62; }
+  .free-card.done::after {
+    content: "\2713";
+    position: absolute;
+    top: 6px; right: 6px;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--bulb);
+    color: #1C2822;
+    font-size: 14px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .free-card.noaudio { opacity: .45; }
+  .freemode { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .freemode p { font-size: 13.5px; color: var(--ink-soft); line-height: 1.45; margin: 0; }
+
   #ondeck { display: flex; gap: 10px; }
   .mini {
     flex: 1;
@@ -864,6 +934,14 @@
     </div>
 
     <div id="ondeck"></div>
+
+    <div id="freeBoard" hidden>
+      <div class="free-head">
+        <span class="eyebrow">Tap who's walking up</span>
+        <button class="btn quiet" id="freeClear">Clear &#10003;s</button>
+      </div>
+      <div class="free-grid" id="freeGrid"></div>
+    </div>
   </main>
 
   <!-- LINEUP -->
@@ -878,6 +956,11 @@
       <button class="btn" type="submit">Add</button>
     </form>
     <button class="btn quiet" id="resetGame">Restart game (top of the 1st)</button>
+    <div class="card freemode">
+      <span class="eyebrow">Free-for-all mode <span class="chip" id="freeChip" hidden>On</span></span>
+      <p>No set order? Turn Game Day into a soundboard: tap whichever kid is walking up and their announcement + song plays. A &#10003; marks who's already gone.</p>
+      <button class="btn" id="freeToggle">Turn on free-for-all</button>
+    </div>
   </main>
 
   <!-- SOUNDS -->
@@ -1067,7 +1150,9 @@
     batterIdx: 0,  // index into present-players order
     inning: 1,
     colors: {},    // { primary, secondary } hex, empty = ballpark default
-    audio: {}      // { fadeIn, fadeOut } seconds, defaults for unedited tracks
+    audio: {},     // { fadeIn, fadeOut } seconds, defaults for unedited tracks
+    freeMode: false,   // Game Day is a tap-any-player board instead of an order
+    freePlayed: []     // player ids already tapped this round (device-local)
   };
   try {
     var saved = JSON.parse(localStorage.getItem(LS_KEY));
@@ -1310,11 +1395,50 @@
     play.setAttribute("aria-label", playing ? "Stop" : "Play announcement and walk-up song");
     play.onclick = onclick || null;
   }
+  function renderFreeBoard() {
+    var pp = presentPlayers();
+    var grid = $("freeGrid");
+    if (!pp.length) {
+      grid.innerHTML = '<div class="card empty" style="grid-column:1/-1">No one to show &mdash; add players (and mark them here today) in the <strong>Lineup</strong> tab.</div>';
+      return;
+    }
+    grid.innerHTML = "";
+    pp.forEach(function (p) {
+      var intro = p.introId ? soundById(p.introId) : null;
+      var s = p.soundId ? soundById(p.soundId) : null;
+      var hasAudio = intro || s;
+      var playingP = nowPlaying && ((intro && nowPlaying === intro.id) || (s && nowPlaying === s.id));
+      var done = state.freePlayed.indexOf(p.id) !== -1;
+      var el = document.createElement("button");
+      el.className = "free-card" + (playingP ? " playing" : "") + (done ? " done" : "") + (hasAudio ? "" : " noaudio");
+      el.innerHTML =
+        (p.jersey ? '<span class="fjersey">#' + esc(p.jersey) + "</span>" : "") +
+        '<span class="fname">' + esc(p.name) + "</span>" +
+        '<span class="fsong">' + (s ? esc(s.name) : (intro ? esc(intro.name) : "No sounds yet")) + "</span>";
+      el.setAttribute("aria-label", (playingP ? "Stop " : "Play walk-up for ") + p.name);
+      el.onclick = function () {
+        if (!hasAudio) { showTab("lineup"); return; }
+        if (playingP) { stop(); return; }
+        if (state.freePlayed.indexOf(p.id) === -1) state.freePlayed.push(p.id);
+        localStorage.setItem(LS_KEY, JSON.stringify(state)); // no sync chatter for ✓ marks
+        playSequence([p.introId, p.soundId]);
+      };
+      grid.appendChild(el);
+    });
+  }
+
   function renderGame() {
     $("inningNum").textContent = state.inning;
     var card = $("batterCard");
     var pp = presentPlayers();
     var b = currentBatter();
+
+    var free = !!state.freeMode;
+    card.hidden = free;
+    document.querySelector(".controls").hidden = free;
+    $("ondeck").hidden = free;
+    $("freeBoard").hidden = !free;
+    if (free) { renderFreeBoard(); return; }
 
     if (!state.players.length) {
       card.innerHTML = '<div class="ribbon">Now batting</div>' +
@@ -1369,6 +1493,9 @@
   }
 
   function renderLineup() {
+    $("freeToggle").textContent = state.freeMode ? "Back to batting order" : "Turn on free-for-all";
+    $("freeToggle").classList.toggle("quiet", !!state.freeMode);
+    $("freeChip").hidden = !state.freeMode;
     var list = $("lineupList");
     if (!state.players.length) {
       list.innerHTML = '<div class="card empty">Add your players below &mdash; the order here is the batting order.</div>';
@@ -2336,8 +2463,19 @@
   $("prevBatter").onclick = function () { advance(-1); };
   $("resetGame").onclick = function () {
     if (confirm("Start a fresh game? (Back to batter 1, inning 1 — players and songs are kept.)")) {
-      state.batterIdx = 0; state.inning = 1; stop(); save(); renderAll();
+      state.batterIdx = 0; state.inning = 1; state.freePlayed = []; stop(); save(); renderAll();
     }
+  };
+  $("freeToggle").onclick = function () {
+    state.freeMode = !state.freeMode;
+    state.freePlayed = state.freePlayed || [];
+    save(); renderAll();
+    if (state.freeMode) showTab("game");
+  };
+  $("freeClear").onclick = function () {
+    state.freePlayed = [];
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+    renderGame();
   };
 
   $("addForm").addEventListener("submit", function (e) {
