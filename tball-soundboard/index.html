@@ -239,6 +239,15 @@
     background: linear-gradient(90deg, var(--grass) 0 25%, var(--accent) 25% 50%, var(--grass) 50% 75%, var(--accent) 75%);
     pointer-events: none;
   }
+  .batting-label { margin-bottom: 6px; }
+  .order-badge .ord {
+    font-size: 26px;
+    vertical-align: 26px;
+    letter-spacing: .02em;
+    margin-left: 2px;
+    text-shadow: none;
+    -webkit-text-stroke: 0;
+  }
   .order-badge {
     font-family: var(--font-display);
     font-weight: 800;
@@ -967,6 +976,11 @@
   var ICON_TRASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';
   var ICON_EDIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 12h3l2-7 3 14 3-10 2 3h3"/></svg>';
 
+  function ordSuffix(n) {
+    var t = n % 10, h = n % 100;
+    if (h >= 11 && h <= 13) return "th";
+    return t === 1 ? "st" : t === 2 ? "nd" : t === 3 ? "rd" : "th";
+  }
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
@@ -1003,7 +1017,8 @@
     var hasAudio = intro || s;
 
     card.innerHTML =
-      '<div class="order-badge">' + (state.batterIdx + 1) + "</div>" +
+      '<div class="eyebrow batting-label">Now batting</div>' +
+      '<div class="order-badge">' + (state.batterIdx + 1) + '<span class="ord">' + ordSuffix(state.batterIdx + 1) + "</span></div>" +
       '<div class="batter-name">' + esc(b.name) + "</div>" +
       songLine +
       '<div><button class="play-btn' + (playing ? " playing" : "") + '" id="bigPlay" ' +
