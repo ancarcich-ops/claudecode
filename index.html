@@ -2501,27 +2501,52 @@
       var have = {};
       sounds.forEach(function (s) { have[s.id] = true; });
       (state.pending || []).forEach(function (m) { have[m.id] = true; });
-      var snaps = (out.snapshots || []).filter(function (s) { return s.sounds > 0; });
-      if (!snaps.length) {
-        setSyncStatus("No saved version with songs found in history", true);
-        return;
+      function restoreMetas(missing, sourceLabel) {
+        if (!confirm("Found " + missing.length + " song(s) " + sourceLabel +
+          " that aren't currently on the team. Restore them?")) return;
+        state.pending = (state.pending || []).concat(missing);
+        localStorage.setItem(LS_KEY, JSON.stringify(state));
+        // Push first so every phone's team list regains the tracks, then download
+        return pushSync().then(retryPending).then(function () { renderSync(); });
       }
+      function salvageFromAudio() {
+        // History had nothing — but uploaded audio files are never deleted.
+        // Recover them directly and name them from lineup assignments.
+        setSyncStatus("Checking the team's audio files…");
+        return fetch("/api/track?code=" + SYNC.code + "&listall=1").then(function (r) {
+          if (!r.ok) throw new Error("listall " + r.status);
+          return r.json();
+        }).then(function (out2) {
+          var orphans = (out2.tracks || []).filter(function (t) { return !have[t.id]; });
+          // Skip the logo blob if present
+          if (state.logo) orphans = orphans.filter(function (t) { return t.id !== state.logo.rev; });
+          if (!orphans.length) {
+            setSyncStatus("No recoverable songs found on the server", true);
+            return;
+          }
+          var n = 0;
+          var missing = orphans.map(function (t) {
+            var name = null;
+            state.players.forEach(function (p) {
+              if (p.introId === t.id) name = p.name + " announcement";
+              else if (p.soundId === t.id) name = p.name + " walk-up";
+            });
+            if (!name) { n += 1; name = "Recovered track " + n; }
+            return { id: t.id, name: name, edit: null, size: t.size, type: "audio/mpeg" };
+          });
+          return restoreMetas(missing, "still on the server");
+        });
+      }
+      var snaps = (out.snapshots || []).filter(function (s) { return s.sounds > 0; });
+      if (!snaps.length) return salvageFromAudio();
       var best = snaps.reduce(function (a, b) { return b.sounds >= a.sounds ? b : a; });
       return fetch("/api/state?code=" + SYNC.code + "&at=" + best.at).then(function (r) {
         if (!r.ok) throw new Error("at " + r.status);
         return r.json();
       }).then(function (snap) {
         var missing = (snap.sounds || []).filter(function (m) { return !have[m.id]; });
-        if (!missing.length) {
-          setSyncStatus("History has no songs that aren't already here", true);
-          return;
-        }
-        if (!confirm("Found an earlier version with " + missing.length +
-          " song(s) not currently on the team. Restore them?")) return;
-        state.pending = (state.pending || []).concat(missing);
-        localStorage.setItem(LS_KEY, JSON.stringify(state));
-        // Push first so every phone's team list regains the tracks, then download
-        return pushSync().then(retryPending).then(function () { renderSync(); });
+        if (!missing.length) return salvageFromAudio();
+        return restoreMetas(missing, "in the team's history");
       });
     }).catch(function () {
       setSyncStatus("Couldn't check history — try again", true);
