@@ -1,0 +1,858 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Walk-Up! T-Ball Soundboard</title>
+<style>
+  :root {
+    --grass: #2E7D46;
+    --grass-deep: #1F5C32;
+    --clay: #C9663A;
+    --clay-deep: #A94F2A;
+    --chalk: #F6F3EA;
+    --night: #131F17;
+    --bulb: #F2B63C;
+
+    --bg: var(--chalk);
+    --panel: #FFFFFF;
+    --ink: #22301F;
+    --ink-soft: #5D6A57;
+    --line: #DCD5C2;
+    --accent: var(--clay);
+    --accent-deep: var(--clay-deep);
+    --accent-ink: #FFFFFF;
+    --board: var(--night);
+    --board-ink: var(--bulb);
+    --good: #2E7D46;
+    --danger: #B03A2E;
+    --shadow: 0 2px 10px rgba(34,48,31,.10);
+
+    --font-display: "Avenir Next Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+    --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: var(--night);
+      --panel: #1C2B20;
+      --ink: #EDEACF;
+      --ink-soft: #9BA893;
+      --line: #31432F;
+      --accent: #D9784C;
+      --accent-deep: #C9663A;
+      --board: #0C1510;
+      --shadow: 0 2px 10px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: var(--chalk);
+    --panel: #FFFFFF;
+    --ink: #22301F;
+    --ink-soft: #5D6A57;
+    --line: #DCD5C2;
+    --accent: var(--clay);
+    --accent-deep: var(--clay-deep);
+    --board: var(--night);
+    --shadow: 0 2px 10px rgba(34,48,31,.10);
+  }
+  :root[data-theme="dark"] {
+    --bg: var(--night);
+    --panel: #1C2B20;
+    --ink: #EDEACF;
+    --ink-soft: #9BA893;
+    --line: #31432F;
+    --accent: #D9784C;
+    --accent-deep: #C9663A;
+    --board: #0C1510;
+    --shadow: 0 2px 10px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    -webkit-tap-highlight-color: transparent;
+  }
+  button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+  button:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 3px solid var(--bulb); outline-offset: 2px;
+  }
+  input, select { font: inherit; color: var(--ink); }
+
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    padding: 0 14px calc(84px + env(safe-area-inset-bottom));
+  }
+
+  /* ── Header: pennant ─────────────────────────── */
+  header {
+    padding: 18px 2px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .wordmark {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 30px;
+    line-height: 1;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    color: var(--grass);
+  }
+  :root[data-theme="dark"] .wordmark { color: #7FBF93; }
+  @media (prefers-color-scheme: dark) { .wordmark { color: #7FBF93; } }
+  :root[data-theme="light"] .wordmark { color: var(--grass); }
+  .wordmark em { font-style: normal; color: var(--accent); }
+  .teamline {
+    margin-top: 3px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .teamline input {
+    border: none; background: transparent; color: inherit;
+    font: inherit; letter-spacing: inherit; text-transform: inherit;
+    border-bottom: 1px dashed var(--line);
+    width: 150px; padding: 0 0 1px;
+  }
+
+  /* ── Tabs ────────────────────────────────────── */
+  nav {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    background: var(--panel);
+    border-top: 1px solid var(--line);
+    padding: 6px 10px calc(6px + env(safe-area-inset-bottom));
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    z-index: 20;
+  }
+  nav button {
+    flex: 1; max-width: 150px;
+    padding: 10px 4px 8px;
+    border-radius: 10px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  nav button svg { width: 22px; height: 22px; }
+  nav button.on { color: var(--accent-ink); background: var(--accent); }
+
+  /* ── Shared bits ─────────────────────────────── */
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+  }
+  .eyebrow {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .empty {
+    padding: 26px 18px;
+    text-align: center;
+    color: var(--ink-soft);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .empty strong { color: var(--ink); }
+
+  main { display: none; flex-direction: column; gap: 14px; }
+  main.on { display: flex; }
+
+  /* ── Game Day ────────────────────────────────── */
+  .scoreboard {
+    background: var(--board);
+    border-radius: 14px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--shadow);
+  }
+  .scoreboard .eyebrow { color: #8B9B84; }
+  .inning-ctl { display: flex; align-items: center; gap: 8px; }
+  .inning-ctl button {
+    width: 46px; height: 46px;
+    border-radius: 10px;
+    border: 1px solid #3A4F3B;
+    color: var(--board-ink);
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .inning-ctl button:active { background: #24352A; }
+  .inning-num {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 44px;
+    color: var(--board-ink);
+    min-width: 54px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 14px rgba(242,182,60,.45);
+  }
+
+  .batter-card {
+    padding: 22px 18px 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .batter-card::before {
+    /* infield-grass stripe across the top edge */
+    content: "";
+    position: absolute; top: 0; left: 0; right: 0; height: 6px;
+    background: linear-gradient(90deg, var(--grass) 0 25%, var(--clay) 25% 50%, var(--grass) 50% 75%, var(--clay) 75%);
+    pointer-events: none;
+  }
+  .order-badge {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 64px;
+    line-height: 1;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    text-shadow:
+      -2px -2px 0 var(--panel), 2px -2px 0 var(--panel), -2px 2px 0 var(--panel), 2px 2px 0 var(--panel),
+      -4px -4px 0 var(--grass), 4px -4px 0 var(--grass), -4px 4px 0 var(--grass), 4px 4px 0 var(--grass),
+      -4px 0 0 var(--grass), 4px 0 0 var(--grass), 0 -4px 0 var(--grass), 0 4px 0 var(--grass);
+  }
+  .batter-name {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 42px;
+    line-height: 1.05;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+    margin-top: 10px;
+    text-wrap: balance;
+  }
+  .batter-song {
+    margin-top: 6px;
+    font-size: 14.5px;
+    color: var(--ink-soft);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .batter-song svg { width: 15px; height: 15px; flex: none; }
+  .batter-song.missing { color: var(--danger); font-weight: 600; }
+
+  .play-btn {
+    margin-top: 18px;
+    width: 132px; height: 132px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--accent-ink);
+    box-shadow: 0 6px 0 var(--accent-deep), var(--shadow);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform .08s ease;
+    position: relative;
+  }
+  .play-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--accent-deep); }
+  .play-btn:disabled { opacity: .4; }
+  .play-btn svg { width: 52px; height: 52px; }
+  .play-btn.playing { animation: pulse 1.1s ease-in-out infinite; }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 6px 0 var(--accent-deep), 0 0 0 0 rgba(201,102,58,.45); }
+    50%       { box-shadow: 0 6px 0 var(--accent-deep), 0 0 0 18px rgba(201,102,58,0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .play-btn.playing { animation: none; }
+    * { transition: none !important; }
+  }
+  .play-hint { margin-top: 10px; font-size: 13px; color: var(--ink-soft); min-height: 18px; }
+
+  .stepper {
+    display: flex;
+    gap: 10px;
+  }
+  .stepper button {
+    flex: 1;
+    padding: 16px 10px;
+    border-radius: 12px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    box-shadow: var(--shadow);
+  }
+  .stepper button.next {
+    flex: 2;
+    background: var(--grass);
+    border-color: var(--grass-deep);
+    color: #fff;
+    box-shadow: 0 4px 0 var(--grass-deep), var(--shadow);
+  }
+  .stepper button.next:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--grass-deep); }
+
+  .ondeck {
+    padding: 12px 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .ondeck-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-size: 16px;
+  }
+  .ondeck-row .who { font-weight: 700; }
+  .ondeck-row .tag {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    min-width: 86px;
+  }
+
+  /* ── Lineup ──────────────────────────────────── */
+  .lineup-list { display: flex; flex-direction: column; gap: 8px; }
+  .player-row {
+    display: grid;
+    grid-template-columns: 40px 1fr auto;
+    grid-template-areas: "num name actions" "num song actions";
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 4px;
+    padding: 10px 12px;
+  }
+  .player-row.out { opacity: .5; }
+  .player-row .num {
+    grid-area: num;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 26px;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+  }
+  .player-row.out .num { color: var(--ink-soft); font-size: 13px; letter-spacing: .05em; }
+  .player-row .pname {
+    grid-area: name;
+    font-weight: 700;
+    font-size: 17px;
+    border: none; background: transparent; padding: 0;
+    width: 100%;
+    color: var(--ink);
+  }
+  .player-row select {
+    grid-area: song;
+    width: 100%;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 6px 8px;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+  }
+  .player-row select.none { color: var(--danger); border-color: var(--danger); }
+  .row-actions { grid-area: actions; display: flex; gap: 4px; }
+  .icon-btn {
+    width: 42px; height: 42px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-soft);
+  }
+  .icon-btn:active { background: var(--bg); }
+  .icon-btn svg { width: 20px; height: 20px; }
+  .icon-btn.danger { color: var(--danger); }
+  .move-col { display: flex; flex-direction: column; }
+  .move-col .icon-btn { height: 26px; }
+
+  .add-row { display: flex; gap: 8px; }
+  .add-row input {
+    flex: 1;
+    padding: 13px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    font-size: 16px;
+  }
+  .add-row input::placeholder { color: var(--ink-soft); }
+  .btn {
+    padding: 13px 18px;
+    border-radius: 12px;
+    background: var(--grass);
+    color: #fff;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+  }
+  .btn.quiet { background: var(--panel); color: var(--ink-soft); border: 1px solid var(--line); }
+  .section-head { display: flex; align-items: baseline; justify-content: space-between; padding: 2px 4px; }
+  .section-head .hint { font-size: 12.5px; color: var(--ink-soft); }
+
+  /* ── Sounds ──────────────────────────────────── */
+  .drop {
+    border: 2px dashed var(--line);
+    border-radius: 14px;
+    padding: 22px 16px;
+    text-align: center;
+    color: var(--ink-soft);
+    font-size: 15px;
+    background: var(--panel);
+  }
+  .drop strong { color: var(--accent); }
+  .drop input { display: none; }
+  .sound-list { display: flex; flex-direction: column; gap: 8px; }
+  .sound-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+  }
+  .sound-row .sname { flex: 1; min-width: 0; }
+  .sound-row .sname .t {
+    font-weight: 700; font-size: 15.5px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .sound-row .sname .u { font-size: 12.5px; color: var(--ink-soft); margin-top: 1px; }
+  .sound-row .icon-btn { flex: none; }
+  .sound-row .preview { color: var(--grass); }
+  :root[data-theme="dark"] .sound-row .preview { color: #7FBF93; }
+  @media (prefers-color-scheme: dark) { .sound-row .preview { color: #7FBF93; } }
+  :root[data-theme="light"] .sound-row .preview { color: var(--grass); }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <div class="wordmark">Walk-<em>Up!</em></div>
+      <div class="teamline">
+        <input id="teamName" aria-label="Team name" placeholder="Team name">
+      </div>
+    </div>
+  </header>
+
+  <!-- GAME DAY -->
+  <main id="view-game" class="on">
+    <div class="scoreboard">
+      <span class="eyebrow">Inning</span>
+      <div class="inning-ctl">
+        <button id="inningDown" aria-label="Previous inning">&minus;</button>
+        <span class="inning-num" id="inningNum">1</span>
+        <button id="inningUp" aria-label="Next inning">+</button>
+      </div>
+    </div>
+
+    <div class="card batter-card" id="batterCard"></div>
+
+    <div class="stepper">
+      <button id="prevBatter">&#8249; Back</button>
+      <button id="nextBatter" class="next">Next batter &#8250;</button>
+    </div>
+
+    <div class="card ondeck" id="ondeck"></div>
+  </main>
+
+  <!-- LINEUP -->
+  <main id="view-lineup">
+    <div class="section-head">
+      <span class="eyebrow">Today's order</span>
+      <span class="hint">Arrows reorder &middot; tap &#9679; to sit out</span>
+    </div>
+    <div class="lineup-list" id="lineupList"></div>
+    <form class="add-row" id="addForm">
+      <input id="addName" placeholder="Add a player&hellip;" autocomplete="off" enterkeyhint="done">
+      <button class="btn" type="submit">Add</button>
+    </form>
+    <button class="btn quiet" id="resetGame">Restart game (top of the 1st)</button>
+  </main>
+
+  <!-- SOUNDS -->
+  <main id="view-sounds">
+    <label class="drop" id="dropZone">
+      Tap to <strong>add songs</strong> from your phone or computer.<br>
+      They're saved on this device — you only do this once.
+      <input id="fileInput" type="file" accept="audio/*" multiple>
+    </label>
+    <div class="sound-list" id="soundList"></div>
+  </main>
+
+  <nav aria-label="Sections">
+    <button id="tab-game" class="on">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M7.5 5.6c2 1.8 3.2 4 3.2 6.4s-1.2 4.6-3.2 6.4M16.5 5.6c-2 1.8-3.2 4-3.2 6.4s1.2 4.6 3.2 6.4"/></svg>
+      Game day
+    </button>
+    <button id="tab-lineup">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h10M4 12h10M4 18h10"/><path d="M18 5v6m0 0 2.5-2.5M18 11l-2.5-2.5M18 19v-4"/></svg>
+      Lineup
+    </button>
+    <button id="tab-sounds">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>
+      Songs
+    </button>
+  </nav>
+</div>
+
+<audio id="audio"></audio>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ── State & persistence ─────────────────────── */
+  var LS_KEY = "tball-soundboard-v1";
+  var state = {
+    team: "",
+    players: [],   // { id, name, soundId, present }
+    batterIdx: 0,  // index into present-players order
+    inning: 1
+  };
+  try {
+    var saved = JSON.parse(localStorage.getItem(LS_KEY));
+    if (saved && saved.players) state = Object.assign(state, saved);
+  } catch (e) { /* fresh start */ }
+
+  function save() { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+  function uid() { return "id-" + Math.random().toString(36).slice(2, 10); }
+
+  /* ── Sound storage (IndexedDB) ───────────────── */
+  var sounds = [];      // { id, name, blob }
+  var urls = {};        // id -> object URL
+  var db = null;
+
+  function openDB() {
+    return new Promise(function (resolve, reject) {
+      var req = indexedDB.open("tball-sounds", 1);
+      req.onupgradeneeded = function () {
+        req.result.createObjectStore("sounds", { keyPath: "id" });
+      };
+      req.onsuccess = function () { resolve(req.result); };
+      req.onerror = function () { reject(req.error); };
+    });
+  }
+  function loadSounds() {
+    return new Promise(function (resolve) {
+      var out = [];
+      var tx = db.transaction("sounds", "readonly");
+      tx.objectStore("sounds").openCursor().onsuccess = function (e) {
+        var c = e.target.result;
+        if (c) { out.push(c.value); c.continue(); }
+      };
+      tx.oncomplete = function () { resolve(out); };
+    });
+  }
+  function putSound(rec) {
+    return new Promise(function (resolve, reject) {
+      var tx = db.transaction("sounds", "readwrite");
+      tx.objectStore("sounds").put(rec);
+      tx.oncomplete = resolve;
+      tx.onerror = function () { reject(tx.error); };
+    });
+  }
+  function deleteSound(id) {
+    return new Promise(function (resolve) {
+      var tx = db.transaction("sounds", "readwrite");
+      tx.objectStore("sounds").delete(id);
+      tx.oncomplete = resolve;
+    });
+  }
+  function urlFor(id) {
+    if (!urls[id]) {
+      var s = soundById(id);
+      if (!s) return null;
+      urls[id] = URL.createObjectURL(s.blob);
+    }
+    return urls[id];
+  }
+  function soundById(id) {
+    for (var i = 0; i < sounds.length; i++) if (sounds[i].id === id) return sounds[i];
+    return null;
+  }
+  function prettyName(fileName) {
+    return fileName.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim();
+  }
+
+  /* ── Audio playback ──────────────────────────── */
+  var audio = document.getElementById("audio");
+  var nowPlaying = null; // sound id
+  function play(id) {
+    var u = urlFor(id);
+    if (!u) return;
+    if (nowPlaying === id && !audio.paused) { stop(); return; }
+    audio.src = u;
+    audio.play();
+    nowPlaying = id;
+    renderGame();
+  }
+  function stop() {
+    audio.pause();
+    audio.currentTime = 0;
+    nowPlaying = null;
+    renderGame();
+  }
+  audio.addEventListener("ended", function () { nowPlaying = null; renderGame(); });
+
+  /* ── Lineup helpers ──────────────────────────── */
+  function presentPlayers() {
+    return state.players.filter(function (p) { return p.present; });
+  }
+  function currentBatter() {
+    var pp = presentPlayers();
+    if (!pp.length) return null;
+    state.batterIdx = ((state.batterIdx % pp.length) + pp.length) % pp.length;
+    return pp[state.batterIdx];
+  }
+  function advance(dir) {
+    var pp = presentPlayers();
+    if (!pp.length) return;
+    stop();
+    var n = state.batterIdx + dir;
+    if (n >= pp.length) { n = 0; state.inning += 1; }        // lineup wrapped: new inning
+    if (n < 0) { n = pp.length - 1; if (state.inning > 1) state.inning -= 1; }
+    state.batterIdx = n;
+    save(); renderGame();
+  }
+
+  /* ── Rendering ───────────────────────────────── */
+  var $ = function (id) { return document.getElementById(id); };
+  var ICON_NOTE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>';
+  var ICON_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.87l11-6.5a1 1 0 0 0 0-1.74l-11-6.5A1 1 0 0 0 8 5.5z"/></svg>';
+  var ICON_STOP = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+  var ICON_TRASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function renderGame() {
+    $("inningNum").textContent = state.inning;
+    var card = $("batterCard");
+    var pp = presentPlayers();
+    var b = currentBatter();
+
+    if (!state.players.length) {
+      card.innerHTML = '<div class="empty">No players yet.<br><strong>Lineup</strong> tab &rarr; add your team, then <strong>Songs</strong> tab &rarr; add each kid’s track.</div>';
+      $("ondeck").innerHTML = '<div class="empty">The batting order will show here.</div>';
+      return;
+    }
+    if (!pp.length) {
+      card.innerHTML = '<div class="empty">Everyone is marked as sitting out.<br>Flip someone on in the <strong>Lineup</strong> tab.</div>';
+      $("ondeck").innerHTML = "";
+      return;
+    }
+
+    var s = b.soundId ? soundById(b.soundId) : null;
+    var songLine = s
+      ? '<span class="batter-song">' + ICON_NOTE + esc(s.name) + "</span>"
+      : '<span class="batter-song missing">No song picked yet &mdash; Lineup tab</span>';
+    var playing = s && nowPlaying === s.id && !audio.paused;
+
+    card.innerHTML =
+      '<div class="order-badge">' + (state.batterIdx + 1) + "</div>" +
+      '<div class="batter-name">' + esc(b.name) + "</div>" +
+      songLine +
+      '<div><button class="play-btn' + (playing ? " playing" : "") + '" id="bigPlay" ' +
+        (s ? "" : "disabled ") + 'aria-label="' + (playing ? "Stop" : "Play walk-up song") + '">' +
+        (playing ? ICON_STOP : ICON_PLAY) + "</button></div>" +
+      '<div class="play-hint">' + (playing ? "Playing&hellip; tap to stop" : (s ? "Tap when " + esc(b.name.split(" ")[0]) + " walks up" : "")) + "</div>";
+
+    if (s) $("bigPlay").onclick = function () { play(s.id); };
+
+    var tags = ["On deck", "In the hole"];
+    var rows = "";
+    for (var i = 1; i <= 2 && i < pp.length; i++) {
+      var p = pp[(state.batterIdx + i) % pp.length];
+      var ps = p.soundId ? soundById(p.soundId) : null;
+      rows += '<div class="ondeck-row"><span class="tag">' + tags[i - 1] + '</span>' +
+        '<span class="who">' + esc(p.name) + "</span>" +
+        (ps ? '<span style="color:var(--ink-soft);font-size:13px">' + esc(ps.name) + "</span>" : "") +
+        "</div>";
+    }
+    $("ondeck").innerHTML = rows || '<div class="empty">Only one batter today &mdash; superstar!</div>';
+  }
+
+  function renderLineup() {
+    var list = $("lineupList");
+    if (!state.players.length) {
+      list.innerHTML = '<div class="card empty">Add your players below &mdash; the order here is the batting order.</div>';
+      return;
+    }
+    list.innerHTML = "";
+    var order = 0;
+    state.players.forEach(function (p, i) {
+      if (p.present) order += 1;
+      var row = document.createElement("div");
+      row.className = "card player-row" + (p.present ? "" : " out");
+
+      var opts = '<option value="">' + (sounds.length ? "Pick a song…" : "No songs yet — Songs tab") + "</option>";
+      sounds.forEach(function (s) {
+        opts += '<option value="' + s.id + '"' + (p.soundId === s.id ? " selected" : "") + ">" + esc(s.name) + "</option>";
+      });
+
+      row.innerHTML =
+        '<div class="num">' + (p.present ? order : "OUT") + "</div>" +
+        '<input class="pname" value="' + esc(p.name) + '" aria-label="Player name">' +
+        '<select aria-label="Walk-up song for ' + esc(p.name) + '" class="' + (p.soundId ? "" : "none") + '">' + opts + "</select>" +
+        '<div class="row-actions">' +
+          '<div class="move-col">' +
+            '<button class="icon-btn up" aria-label="Move up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 14l6-6 6 6"/></svg></button>' +
+            '<button class="icon-btn down" aria-label="Move down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 10l6 6 6-6"/></svg></button>' +
+          "</div>" +
+          '<button class="icon-btn here" aria-label="' + (p.present ? "Mark sitting out" : "Mark here today") + '" style="color:' + (p.present ? "var(--good)" : "var(--ink-soft)") + '">' +
+            '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="7"/></svg></button>' +
+          '<button class="icon-btn danger remove" aria-label="Remove player">' + ICON_TRASH + "</button>" +
+        "</div>";
+
+      row.querySelector(".pname").addEventListener("change", function (e) {
+        p.name = e.target.value.trim() || p.name; save(); renderAll();
+      });
+      row.querySelector("select").addEventListener("change", function (e) {
+        p.soundId = e.target.value || null; save(); renderAll();
+      });
+      row.querySelector(".up").onclick = function () { move(i, -1); };
+      row.querySelector(".down").onclick = function () { move(i, 1); };
+      row.querySelector(".here").onclick = function () { p.present = !p.present; save(); renderAll(); };
+      row.querySelector(".remove").onclick = function () {
+        if (confirm("Remove " + p.name + " from the lineup?")) {
+          state.players.splice(i, 1); save(); renderAll();
+        }
+      };
+      list.appendChild(row);
+    });
+  }
+  function move(i, dir) {
+    var j = i + dir;
+    if (j < 0 || j >= state.players.length) return;
+    var t = state.players[i];
+    state.players[i] = state.players[j];
+    state.players[j] = t;
+    save(); renderLineup(); renderGame();
+  }
+
+  function renderSounds() {
+    var list = $("soundList");
+    if (!sounds.length) { list.innerHTML = ""; return; }
+    list.innerHTML = "";
+    sounds.forEach(function (s) {
+      var usedBy = state.players.filter(function (p) { return p.soundId === s.id; })
+        .map(function (p) { return p.name; }).join(", ");
+      var row = document.createElement("div");
+      row.className = "card sound-row";
+      row.innerHTML =
+        '<button class="icon-btn preview" aria-label="Preview">' +
+          (nowPlaying === s.id && !audio.paused ? ICON_STOP : ICON_PLAY) + "</button>" +
+        '<div class="sname"><div class="t">' + esc(s.name) + '</div>' +
+          '<div class="u">' + (usedBy ? "Walk-up for " + esc(usedBy) : "Not assigned yet") + "</div></div>" +
+        '<button class="icon-btn danger" aria-label="Delete song">' + ICON_TRASH + "</button>";
+      row.querySelector(".preview").onclick = function () {
+        play(s.id); renderSounds();
+      };
+      row.querySelector(".danger").onclick = function () {
+        if (!confirm('Delete "' + s.name + '"?')) return;
+        deleteSound(s.id).then(function () {
+          if (urls[s.id]) { URL.revokeObjectURL(urls[s.id]); delete urls[s.id]; }
+          sounds = sounds.filter(function (x) { return x.id !== s.id; });
+          state.players.forEach(function (p) { if (p.soundId === s.id) p.soundId = null; });
+          save(); renderAll();
+        });
+      };
+      list.appendChild(row);
+    });
+  }
+  audio.addEventListener("ended", renderSounds);
+  audio.addEventListener("pause", renderSounds);
+  audio.addEventListener("play", renderSounds);
+
+  function renderAll() { renderGame(); renderLineup(); renderSounds(); }
+
+  /* ── Wiring ──────────────────────────────────── */
+  var views = { game: $("view-game"), lineup: $("view-lineup"), sounds: $("view-sounds") };
+  ["game", "lineup", "sounds"].forEach(function (v) {
+    $("tab-" + v).onclick = function () {
+      Object.keys(views).forEach(function (k) {
+        views[k].classList.toggle("on", k === v);
+        $("tab-" + k).classList.toggle("on", k === v);
+      });
+    };
+  });
+
+  $("teamName").value = state.team;
+  $("teamName").addEventListener("change", function (e) { state.team = e.target.value; save(); });
+
+  $("inningUp").onclick = function () { state.inning += 1; save(); renderGame(); };
+  $("inningDown").onclick = function () { if (state.inning > 1) { state.inning -= 1; save(); renderGame(); } };
+  $("nextBatter").onclick = function () { advance(1); };
+  $("prevBatter").onclick = function () { advance(-1); };
+  $("resetGame").onclick = function () {
+    if (confirm("Start a fresh game? (Back to batter 1, inning 1 — players and songs are kept.)")) {
+      state.batterIdx = 0; state.inning = 1; stop(); save(); renderAll();
+    }
+  };
+
+  $("addForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var name = $("addName").value.trim();
+    if (!name) return;
+    state.players.push({ id: uid(), name: name, soundId: null, present: true });
+    $("addName").value = "";
+    save(); renderAll();
+  });
+
+  $("fileInput").addEventListener("change", function (e) {
+    var files = Array.prototype.slice.call(e.target.files);
+    if (!files.length) return;
+    Promise.all(files.map(function (f) {
+      var rec = { id: uid(), name: prettyName(f.name), blob: f };
+      return putSound(rec).then(function () { sounds.push(rec); });
+    })).then(function () {
+      e.target.value = "";
+      renderAll();
+    }).catch(function () {
+      alert("Couldn't save those files on this device. Try again, or use smaller audio files.");
+    });
+  });
+
+  /* ── Boot ────────────────────────────────────── */
+  openDB().then(function (d) {
+    db = d;
+    return loadSounds();
+  }).then(function (loaded) {
+    sounds = loaded;
+    renderAll();
+  }).catch(function () {
+    // IndexedDB unavailable (e.g. some private-browsing modes): app still works, songs just won't persist.
+    renderAll();
+  });
+})();
+</script>
+</body>
+</html>
