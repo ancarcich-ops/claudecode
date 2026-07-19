@@ -26,7 +26,10 @@ module.exports = async (req, res) => {
   try {
     await putObject(key, Buffer.from(JSON.stringify(doc)), "application/json");
   } catch (err) {
-    return sendJson(res, 503, { error: "store-not-connected" });
+    return sendJson(res, 503, {
+      error: "store-error",
+      detail: String((err && err.message) || err).slice(0, 300)
+    });
   }
   sendJson(res, 200, { code });
 };
