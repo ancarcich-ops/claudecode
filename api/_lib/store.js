@@ -30,13 +30,22 @@ async function putObject(key, buf, contentType) {
     return;
   }
   const { put } = await blobMod();
-  await put(key, buf, {
-    access: "public",
+  const opts = {
     contentType: contentType || "application/octet-stream",
     addRandomSuffix: false,
     allowOverwrite: true,
     cacheControlMaxAge: 60
-  });
+  };
+  try {
+    await put(key, buf, Object.assign({ access: "public" }, opts));
+  } catch (err) {
+    // Private-mode Blob stores reject public writes; retry private before failing
+    try {
+      await put(key, buf, Object.assign({ access: "private" }, opts));
+    } catch (err2) {
+      throw err; // surface the original error
+    }
+  }
 }
 
 async function getObject(key, range) {
@@ -49,7 +58,8 @@ async function getObject(key, range) {
   const { head } = await blobMod();
   let url;
   try {
-    url = (await head(key)).url;
+    const h = await head(key);
+    url = h.downloadUrl || h.url; // downloadUrl carries auth for private stores
   } catch (err) {
     return null;
   }
