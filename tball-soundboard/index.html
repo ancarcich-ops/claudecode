@@ -99,9 +99,22 @@
     padding: 18px 2px 12px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 10px;
+    gap: 12px;
   }
+  .team-logo {
+    width: 48px; height: 48px;
+    object-fit: contain;
+    border-radius: 10px;
+    flex: none;
+  }
+  .logo-preview {
+    width: 38px; height: 38px;
+    object-fit: contain;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    flex: none;
+  }
+  .color-row .btn { padding: 9px 14px; font-size: 13.5px; }
   .wordmark {
     font-family: var(--font-display);
     font-weight: 800;
@@ -109,12 +122,12 @@
     line-height: 1;
     letter-spacing: .5px;
     text-transform: uppercase;
-    color: var(--grass);
+    color: var(--grass-text, var(--grass));
   }
   :root[data-theme="dark"] .wordmark { color: #7FBF93; }
   @media (prefers-color-scheme: dark) { .wordmark { color: #7FBF93; } }
-  :root[data-theme="light"] .wordmark { color: var(--grass); }
-  .wordmark em { font-style: normal; color: var(--accent); }
+  :root[data-theme="light"] .wordmark { color: var(--grass-text, var(--grass)); }
+  .wordmark em { font-style: normal; color: var(--accent-text, var(--accent)); }
   .teamline {
     margin-top: 3px;
     font-size: 12.5px;
@@ -128,15 +141,6 @@
     font: inherit; letter-spacing: inherit; text-transform: inherit;
     border-bottom: 1px dashed var(--line);
     width: 150px; padding: 0 0 1px;
-  }
-
-  header > .icon-btn { width: 46px; height: 46px; position: relative; color: var(--ink-soft); }
-  header > .icon-btn svg { width: 26px; height: 26px; }
-  .sync-dot {
-    position: absolute; top: 7px; right: 7px;
-    width: 9px; height: 9px; border-radius: 50%;
-    background: var(--good);
-    border: 2px solid var(--bg);
   }
 
   /* ── Tabs ────────────────────────────────────── */
@@ -262,7 +266,7 @@
   }
   .batter-name .jersey {
     font-size: 22px;
-    color: var(--accent);
+    color: var(--accent-text, var(--accent));
     vertical-align: 13px;
     margin-right: 5px;
   }
@@ -337,7 +341,7 @@
     font-size: 17px;
     background: var(--grass);
     border-color: var(--grass-deep);
-    color: #fff;
+    color: var(--grass-ink, #fff);
     box-shadow: 0 4px 0 var(--grass-deep), var(--shadow);
   }
   .stepper button.next:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--grass-deep); }
@@ -361,7 +365,7 @@
     font-size: 12px;
     letter-spacing: .1em;
     text-transform: uppercase;
-    color: var(--accent);
+    color: var(--accent-text, var(--accent));
     min-width: 86px;
   }
 
@@ -382,12 +386,12 @@
     font-family: var(--font-display);
     font-weight: 800;
     font-size: 26px;
-    color: var(--accent);
+    color: var(--accent-text, var(--accent));
     font-variant-numeric: tabular-nums;
     text-align: center;
   }
   .player-row.out .num { color: var(--ink-soft); font-size: 13px; letter-spacing: .05em; }
-  .name-row { grid-area: name; display: flex; align-items: center; gap: 7px; }
+  .name-row { grid-area: name; display: flex; align-items: center; gap: 7px; min-width: 0; }
   .name-row .jnum {
     flex: none;
     width: 46px;
@@ -443,8 +447,18 @@
   .icon-btn:active { background: var(--bg); }
   .icon-btn svg { width: 20px; height: 20px; }
   .icon-btn.danger { color: var(--danger); }
-  .move-col { display: flex; flex-direction: column; }
-  .move-col .icon-btn { height: 26px; }
+  .drag-handle {
+    touch-action: none;
+    cursor: grab;
+    color: var(--ink-soft);
+  }
+  .player-row.dragging {
+    box-shadow: 0 10px 24px rgba(0,0,0,.28);
+    transform: scale(1.02);
+    position: relative;
+    z-index: 5;
+  }
+  .player-row.dragging .drag-handle { cursor: grabbing; }
 
   .add-row { display: flex; gap: 8px; }
   .add-row input {
@@ -460,7 +474,7 @@
     padding: 13px 18px;
     border-radius: 12px;
     background: var(--grass);
-    color: #fff;
+    color: var(--grass-ink, #fff);
     font-family: var(--font-display);
     font-weight: 700;
     font-size: 16px;
@@ -507,8 +521,8 @@
     font-size: 10.5px;
     letter-spacing: .08em;
     text-transform: uppercase;
-    color: var(--accent);
-    border: 1px solid var(--accent);
+    color: var(--accent-text, var(--accent));
+    border: 1px solid var(--accent-text, var(--accent));
     border-radius: 999px;
     padding: 1px 7px;
     margin-right: 5px;
@@ -609,7 +623,7 @@
     font-size: 34px;
     letter-spacing: .12em;
     text-align: center;
-    color: var(--accent);
+    color: var(--accent-text, var(--accent));
     font-variant-numeric: tabular-nums;
     padding: 8px 0 2px;
     user-select: all;
@@ -644,16 +658,13 @@
 <body>
 <div class="app">
   <header>
+    <img class="team-logo" id="teamLogo" hidden alt="Team logo">
     <div>
       <div class="wordmark">Walk-<em>Up!</em></div>
       <div class="teamline">
         <input id="teamName" aria-label="Team name" placeholder="Team name">
       </div>
     </div>
-    <button class="icon-btn" id="syncBtn" hidden aria-label="Team sync">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 18a4.5 4.5 0 1 1 .5-8.97A6 6 0 0 1 19 10.5 3.75 3.75 0 0 1 18 18H7z"/><path d="M12 15v-4M10 12.8 12 11l2 1.8"/></svg>
-      <span class="sync-dot" id="syncDot" hidden></span>
-    </button>
   </header>
 
   <!-- GAME DAY -->
@@ -681,7 +692,7 @@
   <main id="view-lineup">
     <div class="section-head">
       <span class="eyebrow">Today's order</span>
-      <span class="hint">Arrows reorder &middot; tap &#9679; to sit out</span>
+      <span class="hint">Drag &#9776; to reorder &middot; tap &#9679; to sit out</span>
     </div>
     <div class="lineup-list" id="lineupList"></div>
     <form class="add-row" id="addForm">
@@ -689,18 +700,6 @@
       <button class="btn" type="submit">Add</button>
     </form>
     <button class="btn quiet" id="resetGame">Restart game (top of the 1st)</button>
-    <div class="card colors">
-      <span class="eyebrow">Team colors</span>
-      <div class="color-row">
-        <span class="clabel">Primary</span>
-        <div class="swatches" id="swPrimary"></div>
-      </div>
-      <div class="color-row">
-        <span class="clabel">Secondary</span>
-        <div class="swatches" id="swSecondary"></div>
-      </div>
-      <button class="btn quiet" id="colorsReset">Back to ballpark green &amp; clay</button>
-    </div>
   </main>
 
   <!-- SOUNDS -->
@@ -713,8 +712,58 @@
     </label>
     <div class="sound-list" id="soundList"></div>
     <div class="card backup">
-      <span class="eyebrow">Backup</span>
-      <p>Save everything &mdash; songs, announcements, lineup, and edits &mdash; to one file you can AirDrop or text to another phone, or keep as a spare copy.</p>
+      <span class="eyebrow">Where songs come from</span>
+      <p><strong>Songs:</strong> streaming apps (Spotify, an Apple Music subscription) don't give you files you can upload &mdash; you need the actual audio file. Buying the track (e.g. the iTunes Store) and saving it to your phone's Files works great, as does anything you make in GarageBand.</p>
+      <p><strong>Announcements:</strong> record in the Voice Memos app, tap Share &rarr; <em>Save to Files</em>, then add it here. Recording a kid's name + number takes 10 seconds.</p>
+      <p><strong>Tip:</strong> you only need the good 15&ndash;20 seconds of a song &mdash; after uploading, use the trim editor to cut to the best part.</p>
+    </div>
+  </main>
+
+  <!-- SETTINGS -->
+  <main id="view-settings">
+    <div class="card colors">
+      <span class="eyebrow">Team colors</span>
+      <div class="color-row">
+        <span class="clabel">Primary</span>
+        <div class="swatches" id="swPrimary"></div>
+      </div>
+      <div class="color-row">
+        <span class="clabel">Secondary</span>
+        <div class="swatches" id="swSecondary"></div>
+      </div>
+      <button class="btn quiet" id="colorsReset">Back to ballpark green &amp; clay</button>
+      <div class="color-row">
+        <span class="clabel">Logo</span>
+        <img id="logoPreview" class="logo-preview" hidden alt="Team logo preview">
+        <button class="btn quiet" id="logoUpload">Upload logo</button>
+        <button class="icon-btn danger" id="logoRemove" hidden aria-label="Remove logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>
+        </button>
+        <input type="file" id="logoFile" accept="image/*" hidden>
+      </div>
+    </div>
+
+    <div class="card backup">
+      <span class="eyebrow">Music defaults</span>
+      <p>Applied to every track that doesn't have its own Trim &amp; fades saved &mdash; a per-track edit always wins.</p>
+      <div class="ed-row">
+        <span class="elabel">Fade in</span>
+        <input type="range" id="dFadeIn" min="0" max="8" step="0.1" aria-label="Default fade in">
+        <span class="val" id="dFadeInV"></span>
+      </div>
+      <div class="ed-row">
+        <span class="elabel">Fade out</span>
+        <input type="range" id="dFadeOut" min="0" max="8" step="0.1" aria-label="Default fade out">
+        <span class="val" id="dFadeOutV"></span>
+      </div>
+    </div>
+
+    <div class="card backup">
+      <span class="eyebrow">Sharing</span>
+      <p>Team sync keeps every coach's phone on the same lineup and songs with a team code.</p>
+      <button class="btn" id="openSync">Team sync&hellip;</button>
+      <div class="sync-status" id="shareStatus"></div>
+      <p>Or save everything &mdash; songs, announcements, lineup, colors &mdash; to one file you can AirDrop or text to another phone, or keep as a spare copy.</p>
       <div class="ed-actions">
         <button class="btn quiet" id="exportBtn">Export</button>
         <button class="btn quiet" id="importBtn">Import</button>
@@ -735,6 +784,10 @@
     <button id="tab-sounds">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>
       Songs
+    </button>
+    <button id="tab-settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.2 12c0-.4 0-.8-.1-1.2l2-1.5-2-3.4-2.3 1a7.2 7.2 0 0 0-2.1-1.2L14.3 3h-4l-.4 2.7a7.2 7.2 0 0 0-2.1 1.2l-2.3-1-2 3.4 2 1.5a7.4 7.4 0 0 0 0 2.4l-2 1.5 2 3.4 2.3-1c.6.5 1.4.9 2.1 1.2l.4 2.7h4l.4-2.7a7.2 7.2 0 0 0 2.1-1.2l2.3 1 2-3.4-2-1.5c.1-.4.1-.8.1-1.2z"/></svg>
+      Settings
     </button>
   </nav>
 </div>
@@ -803,7 +856,8 @@
     players: [],   // { id, name, introId, soundId, present }
     batterIdx: 0,  // index into present-players order
     inning: 1,
-    colors: {}     // { primary, secondary } hex, empty = ballpark default
+    colors: {},    // { primary, secondary } hex, empty = ballpark default
+    audio: {}      // { fadeIn, fadeOut } seconds, defaults for unedited tracks
   };
   try {
     var saved = JSON.parse(localStorage.getItem(LS_KEY));
@@ -822,12 +876,38 @@
 
   function openDB() {
     return new Promise(function (resolve, reject) {
-      var req = indexedDB.open("tball-sounds", 1);
+      var req = indexedDB.open("tball-sounds", 2);
       req.onupgradeneeded = function () {
-        req.result.createObjectStore("sounds", { keyPath: "id" });
+        var d = req.result;
+        if (!d.objectStoreNames.contains("sounds")) d.createObjectStore("sounds", { keyPath: "id" });
+        if (!d.objectStoreNames.contains("assets")) d.createObjectStore("assets", { keyPath: "key" });
       };
       req.onsuccess = function () { resolve(req.result); };
       req.onerror = function () { reject(req.error); };
+    });
+  }
+  function putAsset(rec) {
+    return new Promise(function (resolve, reject) {
+      var tx = db.transaction("assets", "readwrite");
+      tx.objectStore("assets").put(rec);
+      tx.oncomplete = resolve;
+      tx.onerror = function () { reject(tx.error); };
+    });
+  }
+  function getAsset(key) {
+    return new Promise(function (resolve) {
+      var tx = db.transaction("assets", "readonly");
+      var rq = tx.objectStore("assets").get(key);
+      rq.onsuccess = function () { resolve(rq.result || null); };
+      rq.onerror = function () { resolve(null); };
+    });
+  }
+  function delAsset(key) {
+    return new Promise(function (resolve) {
+      var tx = db.transaction("assets", "readwrite");
+      tx.objectStore("assets").delete(key);
+      tx.oncomplete = resolve;
+      tx.onerror = resolve;
     });
   }
   function loadSounds() {
@@ -914,7 +994,12 @@
       if (token !== playToken) return;
       var ctx = audioCtx();
       var s = soundById(id);
-      var e = editOverride || (s && s.edit) || {};
+      var e = editOverride || (s && s.edit) || null;
+      if (!e) {
+        // No per-track edit: fall back to the Settings-page default fades
+        var d = state.audio || {};
+        e = { fadeIn: d.fadeIn || 0, fadeOut: d.fadeOut || 0 };
+      }
       var D = buf.duration;
       var start = Math.min(Math.max(e.start || 0, 0), D);
       var end = e.end ? Math.min(e.end, D) : D;
@@ -1098,10 +1183,7 @@
             '<select class="song ' + (p.soundId ? "" : "none") + '">' + optsFor(p.soundId, "Pick one…") + "</select></label>" +
         "</div>" +
         '<div class="row-actions">' +
-          '<div class="move-col">' +
-            '<button class="icon-btn up" aria-label="Move up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 14l6-6 6 6"/></svg></button>' +
-            '<button class="icon-btn down" aria-label="Move down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 10l6 6 6-6"/></svg></button>' +
-          "</div>" +
+          '<button class="icon-btn drag-handle" aria-label="Drag to reorder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 8h14M5 12h14M5 16h14"/></svg></button>' +
           '<button class="icon-btn here" aria-label="' + (p.present ? "Mark sitting out" : "Mark here today") + '" style="color:' + (p.present ? "var(--good)" : "var(--ink-soft)") + '">' +
             '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="7"/></svg></button>' +
           '<button class="icon-btn danger remove" aria-label="Remove player">' + ICON_TRASH + "</button>" +
@@ -1119,8 +1201,8 @@
       row.querySelector("select.song").addEventListener("change", function (e) {
         p.soundId = e.target.value || null; save(); renderAll();
       });
-      row.querySelector(".up").onclick = function () { move(i, -1); };
-      row.querySelector(".down").onclick = function () { move(i, 1); };
+      row.dataset.pid = p.id;
+      wireDragHandle(row.querySelector(".drag-handle"), row);
       row.querySelector(".here").onclick = function () { p.present = !p.present; save(); renderAll(); };
       row.querySelector(".remove").onclick = function () {
         if (confirm("Remove " + p.name + " from the lineup?")) {
@@ -1130,13 +1212,44 @@
       list.appendChild(row);
     });
   }
-  function move(i, dir) {
-    var j = i + dir;
-    if (j < 0 || j >= state.players.length) return;
-    var t = state.players[i];
-    state.players[i] = state.players[j];
-    state.players[j] = t;
-    save(); renderLineup(); renderGame();
+  // Pointer-based drag reorder: works for touch and mouse. While dragging,
+  // the row is re-inserted live as the pointer crosses other rows' midpoints;
+  // on release the players array is rebuilt from the DOM order.
+  function wireDragHandle(handle, row) {
+    // Listeners go on document for the duration of the drag: moving the row
+    // with insertBefore re-parents it, which releases pointer capture — so
+    // capturing on the handle would silently end the drag after one reorder.
+    handle.addEventListener("pointerdown", function (e) {
+      e.preventDefault();
+      row.classList.add("dragging");
+      function onMove(ev) {
+        var list = $("lineupList");
+        var rows = Array.prototype.slice.call(list.querySelectorAll(".player-row"));
+        var target = null;
+        for (var i = 0; i < rows.length; i++) {
+          if (rows[i] === row) continue;
+          var rect = rows[i].getBoundingClientRect();
+          if (ev.clientY < rect.top + rect.height / 2) { target = rows[i]; break; }
+        }
+        if (target !== row.nextSibling) list.insertBefore(row, target);
+      }
+      function onUp() {
+        document.removeEventListener("pointermove", onMove);
+        document.removeEventListener("pointerup", onUp);
+        document.removeEventListener("pointercancel", onUp);
+        row.classList.remove("dragging");
+        var byId = {};
+        state.players.forEach(function (p) { byId[p.id] = p; });
+        var order = Array.prototype.slice.call($("lineupList").querySelectorAll(".player-row"))
+          .map(function (el) { return byId[el.dataset.pid]; })
+          .filter(Boolean);
+        if (order.length === state.players.length) state.players = order;
+        save(); renderLineup(); renderGame();
+      }
+      document.addEventListener("pointermove", onMove);
+      document.addEventListener("pointerup", onUp);
+      document.addEventListener("pointercancel", onUp);
+    });
   }
 
   function renderSounds() {
@@ -1288,7 +1401,7 @@
 
     g.clearRect(0, 0, W, H);
     var mid = H / 2;
-    var dim = cssVar("--line"), keep = cssVar("--grass"), accent = cssVar("--accent");
+    var dim = cssVar("--line"), keep = cssVar("--grass-text") || cssVar("--grass"), accent = cssVar("--accent-text") || cssVar("--accent");
     for (var x = 0; x < cols; x++) {
       var px = (x / cols) * W;
       var h = Math.max(1 * dpr, ed.peaks[x] * (H * 0.86));
@@ -1363,7 +1476,8 @@
   var PRESETS = [
     ["#B3282D", "Red"], ["#D2611C", "Orange"], ["#1F4FBF", "Royal blue"],
     ["#17325F", "Navy"], ["#206A38", "Green"], ["#5B2D8E", "Purple"],
-    ["#0E7C7B", "Teal"], ["#7A1F2B", "Maroon"], ["#1F1F23", "Black"]
+    ["#0E7C7B", "Teal"], ["#7A1F2B", "Maroon"], ["#1F1F23", "Black"],
+    ["#C7CBD1", "Silver"], ["#FFFFFF", "White"]
   ];
   function hexRgb(hex) {
     return [1, 3, 5].map(function (i) { return parseInt(hex.slice(i, i + 2), 16); });
@@ -1373,24 +1487,35 @@
       return Math.round(v * f).toString(16).padStart(2, "0");
     }).join("");
   }
+  function lumOf(hex) {
+    var c = hexRgb(hex);
+    return (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255;
+  }
   function applyColors() {
     var r = document.documentElement.style;
     var c = state.colors || {};
     if (c.primary) {
+      var pl = lumOf(c.primary);
       r.setProperty("--accent", c.primary);
       r.setProperty("--accent-deep", shade(c.primary, 0.78));
       r.setProperty("--accent-glow", "rgba(" + hexRgb(c.primary).join(",") + ",0.45)");
       r.setProperty("--accent-glow-0", "rgba(" + hexRgb(c.primary).join(",") + ",0)");
+      // Light fills need dark text on them; light hues need darkening when used AS text
+      r.setProperty("--accent-ink", pl > 0.6 ? "#1C2822" : "#FFFFFF");
+      r.setProperty("--accent-text", pl > 0.62 ? shade(c.primary, 0.5) : c.primary);
     } else {
-      ["--accent", "--accent-deep", "--accent-glow", "--accent-glow-0"]
+      ["--accent", "--accent-deep", "--accent-glow", "--accent-glow-0", "--accent-ink", "--accent-text"]
         .forEach(function (p) { r.removeProperty(p); });
     }
     if (c.secondary) {
+      var sl = lumOf(c.secondary);
       r.setProperty("--grass", c.secondary);
       r.setProperty("--grass-deep", shade(c.secondary, 0.76));
+      r.setProperty("--grass-ink", sl > 0.6 ? "#1C2822" : "#FFFFFF");
+      r.setProperty("--grass-text", sl > 0.62 ? shade(c.secondary, 0.5) : c.secondary);
     } else {
-      r.removeProperty("--grass");
-      r.removeProperty("--grass-deep");
+      ["--grass", "--grass-deep", "--grass-ink", "--grass-text"]
+        .forEach(function (p) { r.removeProperty(p); });
     }
   }
   function setColor(role, hex) {
@@ -1429,6 +1554,45 @@
     renderColors();
   };
 
+  /* ── Team logo ───────────────────────────────── */
+  var logoBlob = null, logoUrl = null;
+  function setLogoBlob(blob) {
+    if (logoUrl) { URL.revokeObjectURL(logoUrl); logoUrl = null; }
+    logoBlob = blob;
+    renderLogo();
+  }
+  function renderLogo() {
+    if (logoBlob && !logoUrl) logoUrl = URL.createObjectURL(logoBlob);
+    [$("teamLogo"), $("logoPreview")].forEach(function (img) {
+      if (!img) return;
+      if (logoBlob) { img.src = logoUrl; img.hidden = false; }
+      else { img.hidden = true; img.removeAttribute("src"); }
+    });
+    $("logoRemove").hidden = !logoBlob;
+    $("logoUpload").textContent = logoBlob ? "Replace logo" : "Upload logo";
+  }
+  $("logoUpload").onclick = function () { $("logoFile").click(); };
+  $("logoFile").addEventListener("change", function (e) {
+    var f = e.target.files[0];
+    e.target.value = "";
+    if (!f) return;
+    if (f.size > 8 * 1024 * 1024) { alert("That image is over 8 MB — please use a smaller one."); return; }
+    var rev = uid();
+    putAsset({ key: "logo", rev: rev, blob: f }).then(function () {
+      state.logo = { rev: rev, size: f.size, type: f.type || "image/png", synced: false };
+      setLogoBlob(f);
+      save();
+    }).catch(function () { alert("Couldn't save the logo on this device."); });
+  });
+  $("logoRemove").onclick = function () {
+    if (!confirm("Remove the team logo?")) return;
+    delAsset("logo").then(function () {
+      state.logo = null;
+      setLogoBlob(null);
+      save();
+    });
+  };
+
   /* ── Backup: everything in one file ──────────── */
   // Format: "WALKUP1|" + 12-digit header length + "|" + header JSON + raw audio bytes.
   // Blob concatenation is lazy, so this never loads all audio into memory at once.
@@ -1439,6 +1603,8 @@
       v: 1,
       team: state.team,
       colors: state.colors || {},
+      audio: state.audio || {},
+      logo: (state.logo && logoBlob) ? { size: logoBlob.size, type: state.logo.type } : null,
       players: state.players,
       sounds: sounds.map(function (s) {
         return { id: s.id, name: s.name, edit: s.edit || null, size: s.blob.size, type: s.blob.type || "audio/mpeg" };
@@ -1447,6 +1613,7 @@
     var headerBytes = new TextEncoder().encode(header);
     var parts = [MAGIC + String(headerBytes.length).padStart(12, "0") + "|", headerBytes];
     sounds.forEach(function (s) { parts.push(s.blob); });
+    if (state.logo && logoBlob) parts.push(logoBlob);
     var file = new File(parts, "walkup-backup.wu", { type: "application/octet-stream" });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       navigator.share({ files: [file], title: "Walk-Up! backup" }).catch(function () {});
@@ -1478,20 +1645,38 @@
           offset += m.size;
           return { id: m.id, name: m.name, blob: blob, edit: m.edit || null };
         });
+        var newLogo = null;
+        if (doc.logo) {
+          newLogo = file.slice(offset, offset + doc.logo.size, doc.logo.type);
+          offset += doc.logo.size;
+        }
         var chain = Promise.resolve();
         sounds.forEach(function (s) { chain = chain.then(function () { return deleteSound(s.id); }); });
         newSounds.forEach(function (s) { chain = chain.then(function () { return putSound(s); }); });
+        chain = chain.then(function () {
+          if (newLogo) {
+            var rev = uid();
+            state.logo = { rev: rev, size: newLogo.size, type: doc.logo.type, synced: false };
+            setLogoBlob(newLogo);
+            return putAsset({ key: "logo", rev: rev, blob: newLogo });
+          }
+          state.logo = null;
+          setLogoBlob(null);
+          return delAsset("logo");
+        });
         return chain.then(function () {
           bufCache = {};
           sounds = newSounds;
           state.team = doc.team || "";
           state.colors = doc.colors || {};
+          state.audio = doc.audio || {};
           state.players = doc.players;
           state.batterIdx = 0;
           state.inning = 1;
           save();
           applyColors();
           renderColors();
+          syncSettingsUI();
           renderAll();
           alert("Backup imported.");
         });
@@ -1534,8 +1719,13 @@
     SYNC.status = msg; SYNC.error = !!isErr;
     var el = $("syncStatus");
     if (el) { el.textContent = msg; el.className = "sync-status" + (isErr ? " err" : ""); }
-    var dot = $("syncDot");
-    if (dot) dot.hidden = !(SYNC.code && !isErr);
+    updateShareStatus();
+  }
+  function updateShareStatus() {
+    var el = $("shareStatus");
+    if (!el) return;
+    if (!SYNC.available) { el.textContent = "Sync isn't available here — use the deployed site."; return; }
+    el.textContent = SYNC.code ? "Team code " + SYNC.code + (SYNC.status ? " · " + SYNC.status : "") : "Not syncing yet";
   }
   function scheduleSync() {
     if (!SYNC.code || SYNC.applying || !SYNC.available) return;
@@ -1549,6 +1739,8 @@
       updatedAt: Date.now(),
       team: state.team,
       colors: state.colors || {},
+      audio: state.audio || {},
+      logo: state.logo ? { rev: state.logo.rev, size: state.logo.size, type: state.logo.type } : null,
       players: state.players,
       sounds: sounds.map(function (s) {
         return { id: s.id, name: s.name, edit: s.edit || null, size: s.blob.size, type: s.blob.type || "audio/mpeg" };
@@ -1556,25 +1748,29 @@
     };
   }
 
-  function uploadTrack(s) {
-    var parts = Math.max(1, Math.ceil(s.blob.size / CHUNK));
+  function uploadBlobChunks(id, blob, type, label) {
+    var parts = Math.max(1, Math.ceil(blob.size / CHUNK));
     var chain = Promise.resolve();
     for (var i = 0; i < parts; i++) {
       (function (i) {
         chain = chain.then(function () {
-          setSyncStatus("Uploading " + s.name + " (" + (i + 1) + "/" + parts + ")…");
-          return fetch("/api/track?code=" + SYNC.code + "&id=" + s.id + "&part=" + i, {
+          setSyncStatus("Uploading " + label + " (" + (i + 1) + "/" + parts + ")…");
+          return fetch("/api/track?code=" + SYNC.code + "&id=" + id + "&part=" + i, {
             method: "PUT",
-            body: s.blob.slice(i * CHUNK, Math.min((i + 1) * CHUNK, s.blob.size))
+            body: blob.slice(i * CHUNK, Math.min((i + 1) * CHUNK, blob.size))
           }).then(function (r) { if (!r.ok) throw new Error("upload " + r.status); });
         });
       })(i);
     }
     return chain.then(function () {
-      return fetch("/api/track?code=" + SYNC.code + "&id=" + s.id + "&finalize=1&parts=" + parts +
-        "&type=" + encodeURIComponent(s.blob.type || "audio/mpeg"), { method: "POST" });
+      return fetch("/api/track?code=" + SYNC.code + "&id=" + id + "&finalize=1&parts=" + parts +
+        "&type=" + encodeURIComponent(type || "application/octet-stream"), { method: "POST" });
     }).then(function (r) {
       if (!r.ok) throw new Error("finalize " + r.status);
+    });
+  }
+  function uploadTrack(s) {
+    return uploadBlobChunks(s.id, s.blob, s.blob.type || "audio/mpeg", s.name).then(function () {
       s.synced = true;
       return putSound(s);
     });
@@ -1604,6 +1800,14 @@
     var pending = sounds.filter(function (s) { return !s.synced; });
     var chain = Promise.resolve();
     pending.forEach(function (s) { chain = chain.then(function () { return uploadTrack(s); }); });
+    if (state.logo && !state.logo.synced && logoBlob) {
+      chain = chain.then(function () {
+        return uploadBlobChunks(state.logo.rev, logoBlob, state.logo.type, "logo").then(function () {
+          state.logo.synced = true;
+          localStorage.setItem(LS_KEY, JSON.stringify(state));
+        });
+      });
+    }
     return chain.then(function () {
       var doc = buildDoc();
       return fetch("/api/state?code=" + SYNC.code, {
@@ -1626,8 +1830,10 @@
     stop();
     state.team = doc.team || "";
     state.colors = doc.colors || {};
+    state.audio = doc.audio || {};
     applyColors();
     renderColors();
+    syncSettingsUI();
     state.players = doc.players || [];
     if (state.batterIdx >= state.players.length) state.batterIdx = 0;
     var chain = Promise.resolve();
@@ -1655,6 +1861,20 @@
           delete bufCache[s.id];
           sounds = sounds.filter(function (x) { return x.id !== s.id; });
         });
+      });
+    });
+    chain = chain.then(function () {
+      var dl = doc.logo;
+      if (!dl) {
+        if (state.logo) { state.logo = null; setLogoBlob(null); return delAsset("logo"); }
+        return;
+      }
+      if (state.logo && state.logo.rev === dl.rev && logoBlob) { state.logo.synced = true; return; }
+      setSyncStatus("Downloading logo…");
+      return downloadTrack({ id: dl.rev, size: dl.size, type: dl.type }).then(function (blob) {
+        state.logo = { rev: dl.rev, size: dl.size, type: dl.type, synced: true };
+        setLogoBlob(blob);
+        return putAsset({ key: "logo", rev: dl.rev, blob: blob });
       });
     });
     return chain.then(function () {
@@ -1777,7 +1997,7 @@
     setSyncStatus(SYNC.status, SYNC.error);
   }
 
-  $("syncBtn").onclick = function () { $("syncOverlay").hidden = false; renderSync(); };
+  $("openSync").onclick = function () { $("syncOverlay").hidden = false; renderSync(); };
   $("syncClose").onclick = function () { $("syncOverlay").hidden = true; };
   $("syncOverlay").addEventListener("click", function (e) {
     if (e.target === $("syncOverlay")) $("syncOverlay").hidden = true;
@@ -1787,19 +2007,37 @@
   });
 
   function initSync() {
+    updateShareStatus();
     if (location.protocol === "file:") return; // no server to talk to
     fetch("/api/health").then(function (r) { return r.json(); }).then(function (h) {
       if (!h || !h.ok) return;
       SYNC.available = true;
       SYNC.storeReady = h.store === "ready";
-      $("syncBtn").hidden = false;
+      updateShareStatus();
       if (SYNC.code && SYNC.storeReady) pullSync();
-    }).catch(function () { /* file://, artifact CSP, or offline: sync stays hidden */ });
+    }).catch(function () { updateShareStatus(); /* artifact CSP or offline */ });
   }
 
+  /* ── Settings: default fades ─────────────────── */
+  function syncSettingsUI() {
+    var a = state.audio || {};
+    $("dFadeIn").value = a.fadeIn || 0;
+    $("dFadeOut").value = a.fadeOut || 0;
+    $("dFadeInV").textContent = fmtSec(a.fadeIn || 0);
+    $("dFadeOutV").textContent = fmtSec(a.fadeOut || 0);
+  }
+  [["dFadeIn", "fadeIn"], ["dFadeOut", "fadeOut"]].forEach(function (pair) {
+    $(pair[0]).addEventListener("input", function (e) {
+      state.audio = state.audio || {};
+      state.audio[pair[1]] = parseFloat(e.target.value);
+      $(pair[0] + "V").textContent = fmtSec(state.audio[pair[1]]);
+      save();
+    });
+  });
+
   /* ── Wiring ──────────────────────────────────── */
-  var views = { game: $("view-game"), lineup: $("view-lineup"), sounds: $("view-sounds") };
-  ["game", "lineup", "sounds"].forEach(function (v) {
+  var views = { game: $("view-game"), lineup: $("view-lineup"), sounds: $("view-sounds"), settings: $("view-settings") };
+  ["game", "lineup", "sounds", "settings"].forEach(function (v) {
     $("tab-" + v).onclick = function () {
       Object.keys(views).forEach(function (k) {
         views[k].classList.toggle("on", k === v);
@@ -1848,11 +2086,16 @@
   /* ── Boot ────────────────────────────────────── */
   applyColors();
   renderColors();
+  syncSettingsUI();
   openDB().then(function (d) {
     db = d;
     return loadSounds();
   }).then(function (loaded) {
     sounds = loaded;
+    return getAsset("logo").then(function (rec) {
+      if (rec && rec.blob) setLogoBlob(rec.blob);
+    });
+  }).then(function () {
     renderAll();
     initSync();
   }).catch(function () {
