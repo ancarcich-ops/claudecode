@@ -891,6 +891,9 @@
     letter-spacing: .1em; text-transform: uppercase;
   }
   .sync-divider::before, .sync-divider::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
+  .sound-row.pending { opacity: .72; }
+  .sound-row.pending .preview { background: var(--bg); border: 1px dashed var(--line); }
+  .sound-row .t-static { font-weight: 700; font-size: 15px; }
   .sound-row .preview {
     width: 42px; height: 42px;
     border-radius: 10px;
@@ -1158,7 +1161,11 @@
     colors: {},    // { primary, secondary } hex, empty = ballpark default
     audio: {},     // { fadeIn, fadeOut } seconds, defaults for unedited tracks
     freeMode: false,   // Game Day is a tap-any-player board instead of an order
-    freePlayed: []     // player ids already tapped this round (device-local)
+    freePlayed: [],    // player ids already tapped this round (device-local)
+    pending: []        // team tracks not yet downloaded to this device:
+                       // [{id,name,edit,size,type}] — ALWAYS included in sync
+                       // pushes so a device mid-download can never delete
+                       // tracks for the whole team
   };
   try {
     var saved = JSON.parse(localStorage.getItem(LS_KEY));
@@ -1611,8 +1618,18 @@
     var list = $("soundList");
     // Don't re-render (and wipe) a name that's being edited right now
     if (document.activeElement && document.activeElement.classList.contains("t")) return;
-    if (!sounds.length) { list.innerHTML = ""; return; }
+    var pendingMetas = (state.pending || []).filter(function (m) { return !soundById(m.id); });
+    if (!sounds.length && !pendingMetas.length) { list.innerHTML = ""; return; }
     list.innerHTML = "";
+    pendingMetas.forEach(function (m) {
+      var row = document.createElement("div");
+      row.className = "card sound-row pending";
+      row.innerHTML =
+        '<span class="icon-btn preview" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 18a4.5 4.5 0 1 1 .5-8.97A6 6 0 0 1 19 10.5 3.75 3.75 0 0 1 18 18H7z"/><path d="M12 16v-5M10 13.2 12 15l2-1.8"/></svg></span>' +
+        '<div class="sname"><div class="t-static">' + esc(m.name) + "</div>" +
+          '<div class="u">On the team &mdash; not downloaded here yet. Settings &rarr; Team sync &rarr; Sync now.</div></div>';
+      list.appendChild(row);
+    });
     sounds.forEach(function (s) {
       var uses = [];
       state.players.forEach(function (p) {
@@ -2162,7 +2179,9 @@
   function buildDoc() {
     return {
       v: 1,
-      updatedAt: Date.now(),
+      // Monotonic beyond wall-clock: a push must always supersede the last
+      // doc this device applied, even across phones with skewed clocks.
+      updatedAt: Math.max(Date.now(), (SYNC.lastApplied || 0) + 1),
       team: state.team,
       colors: state.colors || {},
       audio: state.audio || {},
@@ -2170,7 +2189,11 @@
       players: state.players,
       sounds: sounds.map(function (s) {
         return { id: s.id, name: s.name, edit: s.edit || null, size: s.blob.size, type: s.blob.type || "audio/mpeg" };
-      })
+      }).concat((state.pending || []).filter(function (m) {
+        return !soundById(m.id); // tracks known to the team but not on this device yet
+      }).map(function (m) {
+        return { id: m.id, name: m.name, edit: m.edit || null, size: m.size, type: m.type };
+      }))
     };
   }
 
@@ -2262,6 +2285,7 @@
     syncSettingsUI();
     state.players = doc.players || [];
     if (state.batterIdx >= state.players.length) state.batterIdx = 0;
+    var newPending = [];
     var chain = Promise.resolve();
     (doc.sounds || []).forEach(function (meta) {
       var local = soundById(meta.id);
@@ -2275,6 +2299,10 @@
           return downloadTrack(meta).then(function (blob) {
             var rec = { id: meta.id, name: meta.name, blob: blob, edit: meta.edit || null, synced: true };
             return putSound(rec).then(function () { sounds.push(rec); });
+          }).catch(function () {
+            // Keep the track on the team even though this device couldn't
+            // fetch it — it stays pending and retries on the next sync.
+            newPending.push(meta);
           });
         });
       }
@@ -2304,15 +2332,42 @@
       });
     });
     return chain.then(function () {
+      state.pending = newPending;
       SYNC.lastApplied = doc.updatedAt;
       SYNC.applying = false;
       localStorage.setItem(LS_KEY, JSON.stringify(state)); // save() without re-triggering push
       syncPersist();
       renderAll();
-      setSyncStatus("Synced ✓");
+      setSyncStatus(newPending.length
+        ? newPending.length + " song(s) still downloading — tap Sync now to retry"
+        : "Synced ✓", !!newPending.length);
     }).catch(function () {
       SYNC.applying = false;
       setSyncStatus("Couldn't finish syncing — try Sync now", true);
+    });
+  }
+
+  function retryPending() {
+    if (!SYNC.code || !SYNC.available || !(state.pending || []).length) return Promise.resolve();
+    var still = [];
+    var chain = Promise.resolve();
+    state.pending.forEach(function (meta) {
+      chain = chain.then(function () {
+        if (soundById(meta.id)) return;
+        setSyncStatus("Downloading " + meta.name + "…");
+        return downloadTrack(meta).then(function (blob) {
+          var rec = { id: meta.id, name: meta.name, blob: blob, edit: meta.edit || null, synced: true };
+          return putSound(rec).then(function () { sounds.push(rec); });
+        }).catch(function () { still.push(meta); });
+      });
+    });
+    return chain.then(function () {
+      state.pending = still;
+      localStorage.setItem(LS_KEY, JSON.stringify(state));
+      renderAll();
+      setSyncStatus(still.length
+        ? still.length + " song(s) couldn't download — try Sync now again"
+        : "Synced ✓", !!still.length);
     });
   }
 
@@ -2324,10 +2379,11 @@
       if (!r.ok) throw new Error("state " + r.status);
       return r.json();
     }).then(function (doc) {
-      if (doc.updatedAt > SYNC.lastApplied) return applyDoc(doc);
+      if (doc.updatedAt > SYNC.lastApplied) return applyDoc(doc).then(retryPending);
       setSyncStatus("Up to date ✓");
-      // Push anything new we have locally
+      // Push anything new we have locally, and finish any interrupted downloads
       if (sounds.some(function (s) { return !s.synced; })) scheduleSync();
+      return retryPending();
     }).then(then).catch(function (err) {
       if (err && err.message === "unknown-code") {
         setSyncStatus("That team code doesn't exist", true);
@@ -2431,6 +2487,47 @@
     }
   }
 
+  // Recovery: the server keeps recent snapshots of the team doc and never
+  // deletes audio blobs. If songs vanished from the current doc (e.g. a
+  // device with a failed download pushed an incomplete list before the
+  // pending-track guard existed), pull them back from history.
+  function recoverSounds() {
+    if (!SYNC.code || !SYNC.available) return;
+    setSyncStatus("Checking the team's history…");
+    fetch("/api/state?code=" + SYNC.code + "&list=1").then(function (r) {
+      if (!r.ok) throw new Error("list " + r.status);
+      return r.json();
+    }).then(function (out) {
+      var have = {};
+      sounds.forEach(function (s) { have[s.id] = true; });
+      (state.pending || []).forEach(function (m) { have[m.id] = true; });
+      var snaps = (out.snapshots || []).filter(function (s) { return s.sounds > 0; });
+      if (!snaps.length) {
+        setSyncStatus("No saved version with songs found in history", true);
+        return;
+      }
+      var best = snaps.reduce(function (a, b) { return b.sounds >= a.sounds ? b : a; });
+      return fetch("/api/state?code=" + SYNC.code + "&at=" + best.at).then(function (r) {
+        if (!r.ok) throw new Error("at " + r.status);
+        return r.json();
+      }).then(function (snap) {
+        var missing = (snap.sounds || []).filter(function (m) { return !have[m.id]; });
+        if (!missing.length) {
+          setSyncStatus("History has no songs that aren't already here", true);
+          return;
+        }
+        if (!confirm("Found an earlier version with " + missing.length +
+          " song(s) not currently on the team. Restore them?")) return;
+        state.pending = (state.pending || []).concat(missing);
+        localStorage.setItem(LS_KEY, JSON.stringify(state));
+        // Push first so every phone's team list regains the tracks, then download
+        return pushSync().then(retryPending).then(function () { renderSync(); });
+      });
+    }).catch(function () {
+      setSyncStatus("Couldn't check history — try again", true);
+    });
+  }
+
   function renderSync() {
     var body = $("syncBody");
     if (!body) return;
@@ -2464,11 +2561,13 @@
         '<div class="ed-actions">' +
           '<button class="btn quiet" id="syncNow">Sync now</button>' +
           '<button class="btn quiet" id="syncLeave">Stop syncing</button>' +
-        "</div>";
+        "</div>" +
+        '<button class="btn quiet" id="syncRecover">Restore missing songs&hellip;</button>';
       $("syncCopy").onclick = copyTeamCode;
       if ($("syncShare")) $("syncShare").onclick = shareTeamCode;
       $("syncNow").onclick = function () { pullSync(function () { return pushSync(); }); };
       $("syncLeave").onclick = leaveTeam;
+      $("syncRecover").onclick = recoverSounds;
     }
     setSyncStatus(SYNC.status, SYNC.error);
   }
