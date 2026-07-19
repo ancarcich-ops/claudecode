@@ -1,11 +1,34 @@
 # Walk-Up! — T-Ball Soundboard
 
-A single-file soundboard for playing each player's walk-up song in batting
-order. Songs are stored in the browser (IndexedDB) on whatever device you
-use — upload them once on your phone and they stay there. The lineup
-(names, order, who's here today) is editable before every game.
+A soundboard for playing each player's announcement + walk-up song in
+batting order. Songs are stored in the browser (IndexedDB) on each
+device; the lineup (names, order, who's here today) is editable before
+every game. Tracks can be trimmed and given fade in/out (non-destructive,
+applied at playback via Web Audio).
 
-No build step, no server, no database — it's just `index.html`.
+Two ways to move data between devices:
+
+- **Backup** (Songs tab): export everything to a single `.wu` file and
+  import it on another device. Works with no server at all.
+- **Team sync** (cloud button in the header): create a team code on one
+  phone, join with it on others; lineup and songs sync through the
+  `/api` functions (last save wins). Requires a Vercel Blob store
+  connected to the project (see below).
+
+## Layout
+
+- `index.html` — the whole app (static, no build step)
+- `api/` — Vercel serverless functions for team sync
+  (`health`, `team`, `state`, `track`), backed by Vercel Blob
+- `dev-server.js` — local server mirroring the Vercel layout with
+  filesystem storage (`node dev-server.js`, no cloud needed)
+
+## Enabling team sync in production
+
+In the Vercel project: **Storage** tab → **Create Database → Blob** →
+connect it to this project (this adds `BLOB_READ_WRITE_TOKEN`), then
+redeploy. Until then the app works fine and the sync sheet explains
+what's missing.
 
 ## Deploying to Vercel (separate project — does not touch Sticks)
 

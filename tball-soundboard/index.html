@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Walk-Up! T-Ball Soundboard</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%BE%3C/text%3E%3C/svg%3E">
 <style>
   :root {
     --grass: #2E7D46;
@@ -124,6 +125,15 @@
     font: inherit; letter-spacing: inherit; text-transform: inherit;
     border-bottom: 1px dashed var(--line);
     width: 150px; padding: 0 0 1px;
+  }
+
+  header > .icon-btn { width: 46px; height: 46px; position: relative; color: var(--ink-soft); }
+  header > .icon-btn svg { width: 26px; height: 26px; }
+  .sync-dot {
+    position: absolute; top: 7px; right: 7px;
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--good);
+    border: 2px solid var(--bg);
   }
 
   /* ── Tabs ────────────────────────────────────── */
@@ -526,6 +536,43 @@
   .ed-loading { text-align: center; color: var(--ink-soft); font-size: 14px; padding: 30px 0; }
   #edControls { display: flex; flex-direction: column; gap: 12px; }
   #edControls[hidden], .ed-loading[hidden] { display: none; }
+
+  /* ── Backup & sync ───────────────────────────── */
+  .backup { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .backup p, .sync-body p { font-size: 13.5px; color: var(--ink-soft); line-height: 1.45; margin: 0; }
+  .sync-body { display: flex; flex-direction: column; gap: 12px; }
+  .sync-code {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 34px;
+    letter-spacing: .12em;
+    text-align: center;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    padding: 8px 0 2px;
+    user-select: all;
+    -webkit-user-select: all;
+  }
+  .sync-status { font-size: 13px; color: var(--ink-soft); text-align: center; min-height: 18px; }
+  .sync-status.err { color: var(--danger); }
+  .join-row { display: flex; gap: 8px; }
+  .join-row input {
+    flex: 1; min-width: 0;
+    padding: 13px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    font-size: 17px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+  }
+  .sync-divider {
+    display: flex; align-items: center; gap: 10px;
+    color: var(--ink-soft); font-size: 12px;
+    letter-spacing: .1em; text-transform: uppercase;
+  }
+  .sync-divider::before, .sync-divider::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
   .sound-row .preview { color: var(--grass); }
   :root[data-theme="dark"] .sound-row .preview { color: #7FBF93; }
   @media (prefers-color-scheme: dark) { .sound-row .preview { color: #7FBF93; } }
@@ -541,6 +588,10 @@
         <input id="teamName" aria-label="Team name" placeholder="Team name">
       </div>
     </div>
+    <button class="icon-btn" id="syncBtn" hidden aria-label="Team sync">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 18a4.5 4.5 0 1 1 .5-8.97A6 6 0 0 1 19 10.5 3.75 3.75 0 0 1 18 18H7z"/><path d="M12 15v-4M10 12.8 12 11l2 1.8"/></svg>
+      <span class="sync-dot" id="syncDot" hidden></span>
+    </button>
   </header>
 
   <!-- GAME DAY -->
@@ -587,6 +638,15 @@
       <input id="fileInput" type="file" accept="audio/*,audio/x-m4a,audio/mp4,audio/aac,.m4a,.mp3,.wav,.aac,.mp4,.ogg,.flac,.aif,.aiff" multiple>
     </label>
     <div class="sound-list" id="soundList"></div>
+    <div class="card backup">
+      <span class="eyebrow">Backup</span>
+      <p>Save everything &mdash; songs, announcements, lineup, and edits &mdash; to one file you can AirDrop or text to another phone, or keep as a spare copy.</p>
+      <div class="ed-actions">
+        <button class="btn quiet" id="exportBtn">Export</button>
+        <button class="btn quiet" id="importBtn">Import</button>
+      </div>
+      <input type="file" id="importFile" hidden>
+    </div>
   </main>
 
   <nav aria-label="Sections">
@@ -603,6 +663,18 @@
       Songs
     </button>
   </nav>
+</div>
+
+<div class="overlay" id="syncOverlay" hidden>
+  <div class="editor" role="dialog" aria-modal="true" aria-label="Team sync">
+    <div class="section-head">
+      <span class="eyebrow">Team sync</span>
+      <button class="icon-btn" id="syncClose" aria-label="Close sync">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="sync-body" id="syncBody"></div>
+  </div>
 </div>
 
 <div class="overlay" id="editorOverlay" hidden>
@@ -663,7 +735,10 @@
     if (saved && saved.players) state = Object.assign(state, saved);
   } catch (e) { /* fresh start */ }
 
-  function save() { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+  function save() {
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+    scheduleSync(); // no-op unless team sync is on
+  }
   function uid() { return "id-" + Math.random().toString(36).slice(2, 10); }
 
   /* ── Sound storage (IndexedDB) ───────────────── */
@@ -1007,7 +1082,7 @@
         var v = e.target.value.trim();
         if (!v || v === s.name) { e.target.value = s.name; return; }
         s.name = v;
-        putSound(s).then(renderAll);
+        putSound(s).then(function () { renderAll(); scheduleSync(); });
       });
       nameInput.addEventListener("keydown", function (e) {
         if (e.key === "Enter") e.target.blur();
@@ -1023,7 +1098,7 @@
             if (p.soundId === s.id) p.soundId = null;
             if (p.introId === s.id) p.introId = null;
           });
-          save(); renderAll();
+          save(); renderAll(); scheduleSync();
         });
       };
       list.appendChild(row);
@@ -1190,12 +1265,371 @@
     var v = ed.vals, s = ed.s;
     var untouched = v.start < 0.05 && v.end > ed.dur - 0.05 && !v.fadeIn && !v.fadeOut;
     s.edit = untouched ? null : { start: v.start, end: v.end, fadeIn: v.fadeIn, fadeOut: v.fadeOut };
-    putSound(s).then(function () { closeEditor(); renderAll(); });
+    putSound(s).then(function () { closeEditor(); renderAll(); scheduleSync(); });
   };
   $("edClose").onclick = closeEditor;
   edOverlay.addEventListener("click", function (e) {
     if (e.target === edOverlay) closeEditor();
   });
+
+  /* ── Backup: everything in one file ──────────── */
+  // Format: "WALKUP1|" + 12-digit header length + "|" + header JSON + raw audio bytes.
+  // Blob concatenation is lazy, so this never loads all audio into memory at once.
+  var MAGIC = "WALKUP1|";
+
+  function exportBackup() {
+    var header = JSON.stringify({
+      v: 1,
+      team: state.team,
+      players: state.players,
+      sounds: sounds.map(function (s) {
+        return { id: s.id, name: s.name, edit: s.edit || null, size: s.blob.size, type: s.blob.type || "audio/mpeg" };
+      })
+    });
+    var headerBytes = new TextEncoder().encode(header);
+    var parts = [MAGIC + String(headerBytes.length).padStart(12, "0") + "|", headerBytes];
+    sounds.forEach(function (s) { parts.push(s.blob); });
+    var file = new File(parts, "walkup-backup.wu", { type: "application/octet-stream" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: "Walk-Up! backup" }).catch(function () {});
+    } else {
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(file);
+      a.download = file.name;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+    }
+  }
+
+  function importBackup(file) {
+    var prefixLen = MAGIC.length + 13; // 12 digits + trailing |
+    file.slice(0, prefixLen).text().then(function (prefix) {
+      if (prefix.indexOf(MAGIC) !== 0) throw new Error("bad magic");
+      var headerLen = parseInt(prefix.slice(MAGIC.length, MAGIC.length + 12), 10);
+      if (!headerLen || headerLen > 10 * 1024 * 1024) throw new Error("bad header");
+      return file.slice(prefixLen, prefixLen + headerLen).text().then(function (json) {
+        var doc = JSON.parse(json);
+        if (!doc || doc.v !== 1 || !Array.isArray(doc.players) || !Array.isArray(doc.sounds)) throw new Error("bad doc");
+        if (!confirm("Import this backup? It replaces everything currently on this device (" +
+          doc.players.length + " players, " + doc.sounds.length + " tracks).")) return;
+        stop();
+        var offset = prefixLen + headerLen;
+        var newSounds = doc.sounds.map(function (m) {
+          var blob = file.slice(offset, offset + m.size, m.type);
+          offset += m.size;
+          return { id: m.id, name: m.name, blob: blob, edit: m.edit || null };
+        });
+        var chain = Promise.resolve();
+        sounds.forEach(function (s) { chain = chain.then(function () { return deleteSound(s.id); }); });
+        newSounds.forEach(function (s) { chain = chain.then(function () { return putSound(s); }); });
+        return chain.then(function () {
+          bufCache = {};
+          sounds = newSounds;
+          state.team = doc.team || "";
+          state.players = doc.players;
+          state.batterIdx = 0;
+          state.inning = 1;
+          save();
+          renderAll();
+          alert("Backup imported.");
+        });
+      });
+    }).catch(function () {
+      alert("That file doesn't look like a Walk-Up! backup.");
+    });
+  }
+
+  $("exportBtn").onclick = exportBackup;
+  $("importBtn").onclick = function () { $("importFile").click(); };
+  $("importFile").addEventListener("change", function (e) {
+    if (e.target.files[0]) importBackup(e.target.files[0]);
+    e.target.value = "";
+  });
+
+  /* ── Team sync (server-backed, via /api) ─────── */
+  // Capability model: the team code is both the identity and the key.
+  // Whole-state last-write-wins; audio files are immutable per id and
+  // transferred in chunks to stay under serverless body limits.
+  var CHUNK = 3 * 1024 * 1024;
+  var SYNC = {
+    available: false,               // /api reachable (not on artifact/file://)
+    storeReady: false,              // server storage connected
+    code: localStorage.getItem("wu-sync-code") || null,
+    lastApplied: parseInt(localStorage.getItem("wu-sync-applied") || "0", 10),
+    applying: false,
+    busy: false,
+    status: "",
+    error: false,
+    timer: null
+  };
+
+  function syncPersist() {
+    if (SYNC.code) localStorage.setItem("wu-sync-code", SYNC.code);
+    else localStorage.removeItem("wu-sync-code");
+    localStorage.setItem("wu-sync-applied", String(SYNC.lastApplied));
+  }
+  function setSyncStatus(msg, isErr) {
+    SYNC.status = msg; SYNC.error = !!isErr;
+    var el = $("syncStatus");
+    if (el) { el.textContent = msg; el.className = "sync-status" + (isErr ? " err" : ""); }
+    var dot = $("syncDot");
+    if (dot) dot.hidden = !(SYNC.code && !isErr);
+  }
+  function scheduleSync() {
+    if (!SYNC.code || SYNC.applying || !SYNC.available) return;
+    clearTimeout(SYNC.timer);
+    SYNC.timer = setTimeout(pushSync, 1500);
+  }
+
+  function buildDoc() {
+    return {
+      v: 1,
+      updatedAt: Date.now(),
+      team: state.team,
+      players: state.players,
+      sounds: sounds.map(function (s) {
+        return { id: s.id, name: s.name, edit: s.edit || null, size: s.blob.size, type: s.blob.type || "audio/mpeg" };
+      })
+    };
+  }
+
+  function uploadTrack(s) {
+    var parts = Math.max(1, Math.ceil(s.blob.size / CHUNK));
+    var chain = Promise.resolve();
+    for (var i = 0; i < parts; i++) {
+      (function (i) {
+        chain = chain.then(function () {
+          setSyncStatus("Uploading " + s.name + " (" + (i + 1) + "/" + parts + ")…");
+          return fetch("/api/track?code=" + SYNC.code + "&id=" + s.id + "&part=" + i, {
+            method: "PUT",
+            body: s.blob.slice(i * CHUNK, Math.min((i + 1) * CHUNK, s.blob.size))
+          }).then(function (r) { if (!r.ok) throw new Error("upload " + r.status); });
+        });
+      })(i);
+    }
+    return chain.then(function () {
+      return fetch("/api/track?code=" + SYNC.code + "&id=" + s.id + "&finalize=1&parts=" + parts +
+        "&type=" + encodeURIComponent(s.blob.type || "audio/mpeg"), { method: "POST" });
+    }).then(function (r) {
+      if (!r.ok) throw new Error("finalize " + r.status);
+      s.synced = true;
+      return putSound(s);
+    });
+  }
+
+  function downloadTrack(meta) {
+    var chunks = [];
+    function next(start) {
+      if (start >= meta.size) return Promise.resolve(new Blob(chunks, { type: meta.type }));
+      var len = Math.min(CHUNK, meta.size - start);
+      return fetch("/api/track?code=" + SYNC.code + "&id=" + meta.id + "&start=" + start + "&len=" + len)
+        .then(function (r) {
+          if (!r.ok) throw new Error("download " + r.status);
+          return r.arrayBuffer();
+        }).then(function (ab) {
+          chunks.push(ab);
+          return next(start + len);
+        });
+    }
+    return next(0);
+  }
+
+  function pushSync() {
+    if (!SYNC.code || SYNC.busy || !SYNC.available) return Promise.resolve();
+    SYNC.busy = true;
+    setSyncStatus("Syncing…");
+    var pending = sounds.filter(function (s) { return !s.synced; });
+    var chain = Promise.resolve();
+    pending.forEach(function (s) { chain = chain.then(function () { return uploadTrack(s); }); });
+    return chain.then(function () {
+      var doc = buildDoc();
+      return fetch("/api/state?code=" + SYNC.code, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(doc)
+      }).then(function (r) {
+        if (!r.ok) throw new Error("state " + r.status);
+        SYNC.lastApplied = doc.updatedAt;
+        syncPersist();
+        setSyncStatus("Synced ✓");
+      });
+    }).catch(function () {
+      setSyncStatus("Couldn't sync — will retry on next change", true);
+    }).then(function () { SYNC.busy = false; });
+  }
+
+  function applyDoc(doc) {
+    SYNC.applying = true;
+    stop();
+    state.team = doc.team || "";
+    state.players = doc.players || [];
+    if (state.batterIdx >= state.players.length) state.batterIdx = 0;
+    var chain = Promise.resolve();
+    (doc.sounds || []).forEach(function (meta) {
+      var local = soundById(meta.id);
+      if (local) {
+        local.name = meta.name;
+        local.edit = meta.edit || null;
+        chain = chain.then(function () { return putSound(local); });
+      } else {
+        chain = chain.then(function () {
+          setSyncStatus("Downloading " + meta.name + "…");
+          return downloadTrack(meta).then(function (blob) {
+            var rec = { id: meta.id, name: meta.name, blob: blob, edit: meta.edit || null, synced: true };
+            return putSound(rec).then(function () { sounds.push(rec); });
+          });
+        });
+      }
+    });
+    var docIds = {};
+    (doc.sounds || []).forEach(function (m) { docIds[m.id] = true; });
+    sounds.filter(function (s) { return s.synced && !docIds[s.id]; }).forEach(function (s) {
+      chain = chain.then(function () {
+        return deleteSound(s.id).then(function () {
+          delete bufCache[s.id];
+          sounds = sounds.filter(function (x) { return x.id !== s.id; });
+        });
+      });
+    });
+    return chain.then(function () {
+      SYNC.lastApplied = doc.updatedAt;
+      SYNC.applying = false;
+      localStorage.setItem(LS_KEY, JSON.stringify(state)); // save() without re-triggering push
+      syncPersist();
+      renderAll();
+      setSyncStatus("Synced ✓");
+    }).catch(function () {
+      SYNC.applying = false;
+      setSyncStatus("Couldn't finish syncing — try Sync now", true);
+    });
+  }
+
+  function pullSync(then) {
+    if (!SYNC.code || !SYNC.available) return Promise.resolve();
+    setSyncStatus("Checking for updates…");
+    return fetch("/api/state?code=" + SYNC.code).then(function (r) {
+      if (r.status === 404) throw new Error("unknown-code");
+      if (!r.ok) throw new Error("state " + r.status);
+      return r.json();
+    }).then(function (doc) {
+      if (doc.updatedAt > SYNC.lastApplied) return applyDoc(doc);
+      setSyncStatus("Up to date ✓");
+      // Push anything new we have locally
+      if (sounds.some(function (s) { return !s.synced; })) scheduleSync();
+    }).then(then).catch(function (err) {
+      if (err && err.message === "unknown-code") {
+        setSyncStatus("That team code doesn't exist", true);
+        SYNC.code = null; syncPersist(); renderSync();
+      } else {
+        setSyncStatus("Offline — using this device's copy", true);
+      }
+    });
+  }
+
+  function createTeam() {
+    setSyncStatus("Creating team code…");
+    sounds.forEach(function (s) { s.synced = false; });
+    var doc = buildDoc();
+    fetch("/api/team", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(doc)
+    }).then(function (r) {
+      if (r.status === 503) throw new Error("no-store");
+      if (!r.ok) throw new Error("team " + r.status);
+      return r.json();
+    }).then(function (out) {
+      SYNC.code = out.code;
+      SYNC.lastApplied = doc.updatedAt;
+      syncPersist();
+      renderSync();
+      return pushSync();
+    }).catch(function (err) {
+      setSyncStatus(err && err.message === "no-store"
+        ? "Server storage isn't connected yet (see Vercel project → Storage)" : "Couldn't create a team code — try again", true);
+    });
+  }
+
+  function joinTeam(code) {
+    code = code.trim().toUpperCase();
+    if (!/^[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(code)) {
+      setSyncStatus("Codes look like ABCD-1234", true);
+      return;
+    }
+    if ((state.players.length || sounds.length) &&
+        !confirm("Joining a team replaces the players and songs on this device with the team's. Continue?")) return;
+    SYNC.code = code;
+    SYNC.lastApplied = 0;
+    sounds.forEach(function (s) { s.synced = false; });
+    syncPersist();
+    renderSync();
+    pullSync();
+  }
+
+  function leaveTeam() {
+    if (!confirm("Stop syncing on this device? Your players and songs stay here; they just stop updating.")) return;
+    SYNC.code = null;
+    SYNC.lastApplied = 0;
+    syncPersist();
+    renderSync();
+    setSyncStatus("");
+  }
+
+  function renderSync() {
+    var body = $("syncBody");
+    if (!body) return;
+    if (!SYNC.storeReady) {
+      body.innerHTML =
+        '<p><strong>Almost there.</strong> Sync needs the server’s storage connected once by the site owner: ' +
+        'in the Vercel project, open the <strong>Storage</strong> tab, create a <strong>Blob</strong> store, connect it to this project, and redeploy.</p>' +
+        '<div class="sync-status" id="syncStatus"></div>';
+      return;
+    }
+    if (!SYNC.code) {
+      body.innerHTML =
+        '<p>Share one soundboard across coaches’ phones. Create a team code on the phone that has everything set up, then enter that code on the other phones.</p>' +
+        '<button class="btn" id="syncCreate">Create team code</button>' +
+        '<div class="sync-divider">or join</div>' +
+        '<div class="join-row"><input id="joinCode" placeholder="ABCD-1234" autocomplete="off" autocapitalize="characters">' +
+        '<button class="btn quiet" id="joinBtn">Join</button></div>' +
+        '<div class="sync-status" id="syncStatus"></div>';
+      $("syncCreate").onclick = createTeam;
+      $("joinBtn").onclick = function () { joinTeam($("joinCode").value); };
+      $("joinCode").addEventListener("keydown", function (e) { if (e.key === "Enter") joinTeam(e.target.value); });
+    } else {
+      body.innerHTML =
+        '<p>Anyone with this code gets this team’s lineup and songs, and changes sync both ways (last save wins). Keep it to your coaches.</p>' +
+        '<div class="sync-code" id="syncCode">' + esc(SYNC.code) + "</div>" +
+        '<div class="sync-status" id="syncStatus"></div>' +
+        '<div class="ed-actions">' +
+          '<button class="btn quiet" id="syncNow">Sync now</button>' +
+          '<button class="btn quiet" id="syncLeave">Stop syncing</button>' +
+        "</div>";
+      $("syncNow").onclick = function () { pullSync(function () { return pushSync(); }); };
+      $("syncLeave").onclick = leaveTeam;
+    }
+    setSyncStatus(SYNC.status, SYNC.error);
+  }
+
+  $("syncBtn").onclick = function () { $("syncOverlay").hidden = false; renderSync(); };
+  $("syncClose").onclick = function () { $("syncOverlay").hidden = true; };
+  $("syncOverlay").addEventListener("click", function (e) {
+    if (e.target === $("syncOverlay")) $("syncOverlay").hidden = true;
+  });
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden && SYNC.code && SYNC.available) pullSync();
+  });
+
+  function initSync() {
+    fetch("/api/health").then(function (r) { return r.json(); }).then(function (h) {
+      if (!h || !h.ok) return;
+      SYNC.available = true;
+      SYNC.storeReady = h.store === "ready";
+      $("syncBtn").hidden = false;
+      if (SYNC.code && SYNC.storeReady) pullSync();
+    }).catch(function () { /* file://, artifact CSP, or offline: sync stays hidden */ });
+  }
 
   /* ── Wiring ──────────────────────────────────── */
   var views = { game: $("view-game"), lineup: $("view-lineup"), sounds: $("view-sounds") };
@@ -1239,6 +1673,7 @@
     })).then(function () {
       e.target.value = "";
       renderAll();
+      scheduleSync();
     }).catch(function () {
       alert("Couldn't save those files on this device. Try again, or use smaller audio files.");
     });
@@ -1251,9 +1686,11 @@
   }).then(function (loaded) {
     sounds = loaded;
     renderAll();
+    initSync();
   }).catch(function () {
     // IndexedDB unavailable (e.g. some private-browsing modes): app still works, songs just won't persist.
     renderAll();
+    initSync();
   });
 })();
 </script>
