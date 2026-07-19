@@ -449,10 +449,13 @@
     padding: 10px 12px;
   }
   .sound-row .sname { flex: 1; min-width: 0; }
-  .sound-row .sname .t {
+  .sound-row .sname input.t {
+    width: 100%;
     font-weight: 700; font-size: 15.5px;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    border: none; background: transparent; padding: 0 0 1px;
+    border-bottom: 1px dashed var(--line);
   }
+  .sound-row .sname input.t:focus { border-bottom-style: solid; }
   .sound-row .sname .u { font-size: 12.5px; color: var(--ink-soft); margin-top: 1px; }
   .sound-row .icon-btn { flex: none; }
   .sound-row .preview { color: var(--grass); }
@@ -511,7 +514,8 @@
   <main id="view-sounds">
     <label class="drop" id="dropZone">
       Tap to <strong>add songs and announcements</strong> from your phone or computer.<br>
-      They're saved on this device — you only do this once.
+      They're saved on this device — you only do this once.<br>
+      Tap a track's name below to rename it.
       <input id="fileInput" type="file" accept="audio/*,audio/x-m4a,audio/mp4,audio/aac,.m4a,.mp3,.wav,.aac,.mp4,.ogg,.flac,.aif,.aiff" multiple>
     </label>
     <div class="sound-list" id="soundList"></div>
@@ -812,6 +816,8 @@
 
   function renderSounds() {
     var list = $("soundList");
+    // Don't re-render (and wipe) a name that's being edited right now
+    if (document.activeElement && document.activeElement.classList.contains("t")) return;
     if (!sounds.length) { list.innerHTML = ""; return; }
     list.innerHTML = "";
     sounds.forEach(function (s) {
@@ -826,12 +832,22 @@
       row.innerHTML =
         '<button class="icon-btn preview" aria-label="Preview">' +
           (nowPlaying === s.id && !audio.paused ? ICON_STOP : ICON_PLAY) + "</button>" +
-        '<div class="sname"><div class="t">' + esc(s.name) + '</div>' +
+        '<div class="sname"><input class="t" value="' + esc(s.name) + '" aria-label="Rename track" enterkeyhint="done">' +
           '<div class="u">' + (usedBy || "Not assigned yet") + "</div></div>" +
         '<button class="icon-btn danger" aria-label="Delete song">' + ICON_TRASH + "</button>";
       row.querySelector(".preview").onclick = function () {
         play(s.id); renderSounds();
       };
+      var nameInput = row.querySelector("input.t");
+      nameInput.addEventListener("change", function (e) {
+        var v = e.target.value.trim();
+        if (!v || v === s.name) { e.target.value = s.name; return; }
+        s.name = v;
+        putSound(s).then(renderAll);
+      });
+      nameInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") e.target.blur();
+      });
       row.querySelector(".danger").onclick = function () {
         if (!confirm('Delete "' + s.name + '"?')) return;
         deleteSound(s.id).then(function () {
