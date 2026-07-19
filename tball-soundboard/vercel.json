@@ -1,4 +1,9 @@
 {
   "framework": null,
-  "buildCommand": ""
+  "buildCommand": "",
+  "functions": {
+    "api/*.js": {
+      "maxDuration": 30
+    }
+  }
 }
