@@ -260,6 +260,12 @@
       -4px -4px 0 var(--grass), 4px -4px 0 var(--grass), -4px 4px 0 var(--grass), 4px 4px 0 var(--grass),
       -4px 0 0 var(--grass), 4px 0 0 var(--grass), 0 -4px 0 var(--grass), 0 4px 0 var(--grass);
   }
+  .batter-name .jersey {
+    font-size: 22px;
+    color: var(--accent);
+    vertical-align: 13px;
+    margin-right: 5px;
+  }
   .batter-name {
     font-family: var(--font-display);
     font-weight: 800;
@@ -313,20 +319,22 @@
     gap: 10px;
   }
   .stepper button {
-    flex: 1;
-    padding: 16px 10px;
+    flex: 1.5;
+    padding: 16px 8px;
     border-radius: 12px;
     background: var(--panel);
     border: 1px solid var(--line);
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 17px;
+    font-size: 15px;
+    white-space: nowrap;
     letter-spacing: .05em;
     text-transform: uppercase;
     box-shadow: var(--shadow);
   }
   .stepper button.next {
     flex: 2;
+    font-size: 17px;
     background: var(--grass);
     border-color: var(--grass-deep);
     color: #fff;
@@ -379,12 +387,24 @@
     text-align: center;
   }
   .player-row.out .num { color: var(--ink-soft); font-size: 13px; letter-spacing: .05em; }
+  .name-row { grid-area: name; display: flex; align-items: center; gap: 7px; }
+  .name-row .jnum {
+    flex: none;
+    width: 46px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 5px 4px;
+    font-size: 14px;
+    text-align: center;
+    color: var(--ink-soft);
+  }
   .player-row .pname {
-    grid-area: name;
+    flex: 1;
+    min-width: 0;
     font-weight: 700;
     font-size: 17px;
     border: none; background: transparent; padding: 0;
-    width: 100%;
     color: var(--ink);
   }
   .picks { grid-area: song; display: flex; flex-direction: column; gap: 4px; }
@@ -650,7 +670,7 @@
     <div class="card batter-card" id="batterCard"></div>
 
     <div class="stepper">
-      <button id="prevBatter">&#8249; Back</button>
+      <button id="prevBatter">&#8249; Previous batter</button>
       <button id="nextBatter" class="next">Next batter &#8250;</button>
     </div>
 
@@ -1019,7 +1039,7 @@
     card.innerHTML =
       '<div class="eyebrow batting-label">Now batting</div>' +
       '<div class="order-badge">' + (state.batterIdx + 1) + '<span class="ord">' + ordSuffix(state.batterIdx + 1) + "</span></div>" +
-      '<div class="batter-name">' + esc(b.name) + "</div>" +
+      '<div class="batter-name">' + (b.jersey ? '<span class="jersey">#' + esc(b.jersey) + "</span>" : "") + esc(b.name) + "</div>" +
       songLine +
       '<div><button class="play-btn' + (playing ? " playing" : "") + '" id="bigPlay" ' +
         (hasAudio ? "" : "disabled ") + 'aria-label="' + (playing ? "Stop" : "Play announcement and walk-up song") + '">' +
@@ -1037,7 +1057,7 @@
       var p = pp[(state.batterIdx + i) % pp.length];
       var ps = p.soundId ? soundById(p.soundId) : null;
       rows += '<div class="ondeck-row"><span class="tag">' + tags[i - 1] + '</span>' +
-        '<span class="who">' + esc(p.name) + "</span>" +
+        '<span class="who">' + (p.jersey ? "#" + esc(p.jersey) + " " : "") + esc(p.name) + "</span>" +
         (ps ? '<span style="color:var(--ink-soft);font-size:13px">' + esc(ps.name) + "</span>" : "") +
         "</div>";
     }
@@ -1067,7 +1087,10 @@
 
       row.innerHTML =
         '<div class="num">' + (p.present ? order : "OUT") + "</div>" +
-        '<input class="pname" value="' + esc(p.name) + '" aria-label="Player name">' +
+        '<div class="name-row">' +
+          '<input class="jnum" value="' + esc(p.jersey || "") + '" placeholder="#" maxlength="3" inputmode="numeric" aria-label="Jersey number (optional)">' +
+          '<input class="pname" value="' + esc(p.name) + '" aria-label="Player name">' +
+        "</div>" +
         '<div class="picks">' +
           '<label class="pick"><span class="plabel">Announce</span>' +
             '<select class="intro">' + optsFor(p.introId, "None") + "</select></label>" +
@@ -1086,6 +1109,9 @@
 
       row.querySelector(".pname").addEventListener("change", function (e) {
         p.name = e.target.value.trim() || p.name; save(); renderAll();
+      });
+      row.querySelector(".jnum").addEventListener("change", function (e) {
+        p.jersey = e.target.value.trim().replace(/^#/, ""); save(); renderAll();
       });
       row.querySelector("select.intro").addEventListener("change", function (e) {
         p.introId = e.target.value || null; save(); renderAll();
@@ -1799,7 +1825,7 @@
     e.preventDefault();
     var name = $("addName").value.trim();
     if (!name) return;
-    state.players.push({ id: uid(), name: name, introId: null, soundId: null, present: true });
+    state.players.push({ id: uid(), name: name, jersey: "", introId: null, soundId: null, present: true });
     $("addName").value = "";
     save(); renderAll();
   });
