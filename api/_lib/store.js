@@ -82,6 +82,26 @@ async function getObjectRetry(key, tries) {
   return null;
 }
 
+async function listObjects(prefix) {
+  if (LOCAL) {
+    const p = localPath(prefix);
+    if (!fs.existsSync(p)) return [];
+    return fs.readdirSync(p).map((f) => ({
+      key: prefix + f,
+      size: fs.statSync(path.join(p, f)).size
+    }));
+  }
+  const { list } = await blobMod();
+  const out = [];
+  let cursor;
+  do {
+    const r = await list({ prefix, cursor });
+    r.blobs.forEach((b) => out.push({ key: b.pathname, size: b.size }));
+    cursor = r.hasMore ? r.cursor : undefined;
+  } while (cursor);
+  return out;
+}
+
 async function listKeys(prefix) {
   if (LOCAL) {
     const p = localPath(prefix);
@@ -141,6 +161,6 @@ function sendJson(res, code, obj) {
 
 module.exports = {
   CODE_RE, ID_RE,
-  putObject, getObject, getObjectRetry, listKeys, deleteKeys,
+  putObject, getObject, getObjectRetry, listKeys, listObjects, deleteKeys,
   storeReady, query, readBody, sendJson
 };

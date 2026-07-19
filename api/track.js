@@ -1,7 +1,7 @@
 "use strict";
 const {
   CODE_RE, ID_RE, storeReady, query, readBody, sendJson,
-  putObject, getObject, getObjectRetry, deleteKeys
+  putObject, getObject, getObjectRetry, listObjects, deleteKeys
 } = require("./_lib/store.js");
 
 const MAX_CHUNK = 3.5 * 1024 * 1024; // stay under serverless body limits
@@ -11,9 +11,22 @@ module.exports = async (req, res) => {
   if (!storeReady()) return sendJson(res, 503, { error: "store-not-connected" });
   const q = query(req);
   const code = (q.get("code") || "").toUpperCase();
-  const id = q.get("id") || "";
-  if (!CODE_RE.test(code) || !ID_RE.test(id)) return sendJson(res, 400, { error: "bad-params" });
+  if (!CODE_RE.test(code)) return sendJson(res, 400, { error: "bad-params" });
   const base = "teams/" + code + "/";
+
+  // Salvage listing: every audio blob the team has ever uploaded (blobs are
+  // never deleted, so this recovers tracks even when the doc lost them)
+  if (req.method === "GET" && q.get("listall")) {
+    const objs = await listObjects(base + "tracks/");
+    return sendJson(res, 200, {
+      tracks: objs.map(function (o) {
+        return { id: o.key.slice((base + "tracks/").length), size: o.size };
+      }).filter(function (t) { return ID_RE.test(t.id) && t.size > 0; })
+    });
+  }
+
+  const id = q.get("id") || "";
+  if (!ID_RE.test(id)) return sendJson(res, 400, { error: "bad-params" });
   const trackKey = base + "tracks/" + id;
   const chunkKey = (i) => base + "chunks/" + id + "/" + String(i).padStart(2, "0");
 
