@@ -215,37 +215,6 @@ export default async function RootLayout({
                     Home
                   </Link>
                   <Link
-                    href="/people"
-                    className="btn btn-ghost px-2.5 relative whitespace-nowrap"
-                    aria-label={
-                      pendingFollows > 0
-                        ? `People — ${pendingFollows} follow request${pendingFollows === 1 ? "" : "s"}`
-                        : "People"
-                    }
-                  >
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden
-                    >
-                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                      <circle cx="9" cy="7" r="4" />
-                      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                    </svg>
-                    {pendingFollows > 0 && (
-                      <span className="absolute -top-1 -right-1 grid h-4 min-w-[16px] place-items-center rounded-full bg-accent px-1 text-[10px] font-bold text-ink-on-accent">
-                        {pendingFollows}
-                      </span>
-                    )}
-                  </Link>
-                  <Link
                     href="/matches/new"
                     className="btn btn-primary px-3 whitespace-nowrap"
                     aria-label="Post a new match"
@@ -261,6 +230,7 @@ export default async function RootLayout({
                     }))}
                     active={activeGroupId}
                     username={user.username}
+                    pendingFollows={pendingFollows}
                   />
                 </>
               ) : (

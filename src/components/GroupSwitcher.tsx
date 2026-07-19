@@ -18,10 +18,15 @@ export default function GroupSwitcher({
   groups,
   active,
   username,
+  pendingFollows = 0,
 }: {
   groups: GroupOption[];
   active: string;
   username: string;
+  // Count of incoming follow requests -- badges the trigger + the
+  // People menu item so requests are discoverable without a separate
+  // header button.
+  pendingFollows?: number;
 }) {
   // Resolve the actively-filtered group (if any) so we can offer its
   // leaderboard right in the menu. "All my groups" / "Public only" don't
@@ -102,6 +107,14 @@ export default function GroupSwitcher({
       >
         <span className="truncate">{activeLabel}</span>
         <span aria-hidden className="opacity-60">▾</span>
+        {pendingFollows > 0 && (
+          <span
+            className="ml-1 grid h-4 min-w-[16px] place-items-center rounded-full bg-accent px-1 text-[10px] font-bold text-ink-on-accent"
+            aria-label={`${pendingFollows} follow request${pendingFollows === 1 ? "" : "s"}`}
+          >
+            {pendingFollows}
+          </span>
+        )}
       </button>
       <AnimatePresence>
       {open && (
@@ -167,6 +180,19 @@ export default function GroupSwitcher({
             role="menuitem"
           >
             Manage groups
+          </Link>
+          <Link
+            href="/people"
+            onClick={() => setOpen(false)}
+            className="flex items-center justify-between gap-2 w-full text-left px-3 py-2 text-sm text-ink hover:bg-panel2"
+            role="menuitem"
+          >
+            <span>People &amp; follows</span>
+            {pendingFollows > 0 && (
+              <span className="grid h-4 min-w-[16px] place-items-center rounded-full bg-accent px-1 text-[10px] font-bold text-ink-on-accent">
+                {pendingFollows}
+              </span>
+            )}
           </Link>
           <Link
             href="/settings"
