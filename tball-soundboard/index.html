@@ -340,7 +340,7 @@
   .player-row {
     display: grid;
     grid-template-columns: 40px 1fr auto;
-    grid-template-areas: "num name actions" "num song actions";
+    grid-template-areas: "num name actions" "num song song";
     align-items: center;
     column-gap: 12px;
     row-gap: 4px;
@@ -365,9 +365,22 @@
     width: 100%;
     color: var(--ink);
   }
-  .player-row select {
-    grid-area: song;
+  .picks { grid-area: song; display: flex; flex-direction: column; gap: 4px; }
+  .pick { display: flex; align-items: center; gap: 6px; }
+  .pick .plabel {
+    flex: none;
+    width: 62px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 10.5px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .picks select {
+    flex: 1;
     width: 100%;
+    min-width: 0;
     border: 1px solid var(--line);
     background: var(--bg);
     border-radius: 8px;
@@ -375,7 +388,7 @@
     font-size: 13.5px;
     color: var(--ink-soft);
   }
-  .player-row select.none { color: var(--danger); border-color: var(--danger); }
+  .picks select.none { color: var(--danger); border-color: var(--danger); }
   .row-actions { grid-area: actions; display: flex; gap: 4px; }
   .icon-btn {
     width: 42px; height: 42px;
@@ -497,7 +510,7 @@
   <!-- SOUNDS -->
   <main id="view-sounds">
     <label class="drop" id="dropZone">
-      Tap to <strong>add songs</strong> from your phone or computer.<br>
+      Tap to <strong>add songs and announcements</strong> from your phone or computer.<br>
       They're saved on this device — you only do this once.
       <input id="fileInput" type="file" accept="audio/*" multiple>
     </label>
@@ -601,23 +614,39 @@
 
   /* ── Audio playback ──────────────────────────── */
   var audio = document.getElementById("audio");
-  var nowPlaying = null; // sound id
+  var nowPlaying = null; // sound id currently in the <audio> element
+  var queue = [];        // sound ids to play after the current one ends
   function play(id) {
     var u = urlFor(id);
     if (!u) return;
     if (nowPlaying === id && !audio.paused) { stop(); return; }
-    audio.src = u;
+    queue = [];
+    startTrack(id);
+  }
+  function playSequence(ids) {
+    var valid = ids.filter(function (id) { return id && urlFor(id); });
+    if (!valid.length) return;
+    queue = valid.slice(1);
+    startTrack(valid[0]);
+  }
+  function startTrack(id) {
+    audio.src = urlFor(id);
     audio.play();
     nowPlaying = id;
     renderGame();
   }
   function stop() {
+    queue = [];
     audio.pause();
     audio.currentTime = 0;
     nowPlaying = null;
     renderGame();
   }
-  audio.addEventListener("ended", function () { nowPlaying = null; renderGame(); });
+  audio.addEventListener("ended", function () {
+    if (queue.length) { startTrack(queue.shift()); return; }
+    nowPlaying = null;
+    renderGame();
+  });
 
   /* ── Lineup helpers ──────────────────────────── */
   function presentPlayers() {
@@ -670,22 +699,31 @@
       return;
     }
 
+    var intro = b.introId ? soundById(b.introId) : null;
     var s = b.soundId ? soundById(b.soundId) : null;
-    var songLine = s
-      ? '<span class="batter-song">' + ICON_NOTE + esc(s.name) + "</span>"
-      : '<span class="batter-song missing">No song picked yet &mdash; Lineup tab</span>';
-    var playing = s && nowPlaying === s.id && !audio.paused;
+    var parts = [];
+    if (intro) parts.push(esc(intro.name));
+    if (s) parts.push(esc(s.name));
+    var songLine = parts.length
+      ? '<span class="batter-song">' + ICON_NOTE + parts.join(" &nbsp;&rarr;&nbsp; ") + "</span>"
+      : '<span class="batter-song missing">Nothing picked yet &mdash; Lineup tab</span>';
+    var playing = !audio.paused && nowPlaying &&
+      ((intro && nowPlaying === intro.id) || (s && nowPlaying === s.id));
+    var hasAudio = intro || s;
 
     card.innerHTML =
       '<div class="order-badge">' + (state.batterIdx + 1) + "</div>" +
       '<div class="batter-name">' + esc(b.name) + "</div>" +
       songLine +
       '<div><button class="play-btn' + (playing ? " playing" : "") + '" id="bigPlay" ' +
-        (s ? "" : "disabled ") + 'aria-label="' + (playing ? "Stop" : "Play walk-up song") + '">' +
+        (hasAudio ? "" : "disabled ") + 'aria-label="' + (playing ? "Stop" : "Play announcement and walk-up song") + '">' +
         (playing ? ICON_STOP : ICON_PLAY) + "</button></div>" +
-      '<div class="play-hint">' + (playing ? "Playing&hellip; tap to stop" : (s ? "Tap when " + esc(b.name.split(" ")[0]) + " walks up" : "")) + "</div>";
+      '<div class="play-hint">' + (playing ? "Playing&hellip; tap to stop" : (hasAudio ? "Tap when " + esc(b.name.split(" ")[0]) + " walks up" : "")) + "</div>";
 
-    if (s) $("bigPlay").onclick = function () { play(s.id); };
+    if (hasAudio) $("bigPlay").onclick = function () {
+      if (playing) { stop(); return; }
+      playSequence([b.introId, b.soundId]);
+    };
 
     var tags = ["On deck", "In the hole"];
     var rows = "";
@@ -713,15 +751,23 @@
       var row = document.createElement("div");
       row.className = "card player-row" + (p.present ? "" : " out");
 
-      var opts = '<option value="">' + (sounds.length ? "Pick a song…" : "No songs yet — Songs tab") + "</option>";
-      sounds.forEach(function (s) {
-        opts += '<option value="' + s.id + '"' + (p.soundId === s.id ? " selected" : "") + ">" + esc(s.name) + "</option>";
-      });
+      function optsFor(chosen, placeholder) {
+        var o = '<option value="">' + (sounds.length ? placeholder : "No tracks yet — Songs tab") + "</option>";
+        sounds.forEach(function (s) {
+          o += '<option value="' + s.id + '"' + (chosen === s.id ? " selected" : "") + ">" + esc(s.name) + "</option>";
+        });
+        return o;
+      }
 
       row.innerHTML =
         '<div class="num">' + (p.present ? order : "OUT") + "</div>" +
         '<input class="pname" value="' + esc(p.name) + '" aria-label="Player name">' +
-        '<select aria-label="Walk-up song for ' + esc(p.name) + '" class="' + (p.soundId ? "" : "none") + '">' + opts + "</select>" +
+        '<div class="picks">' +
+          '<label class="pick"><span class="plabel">Announce</span>' +
+            '<select class="intro">' + optsFor(p.introId, "None") + "</select></label>" +
+          '<label class="pick"><span class="plabel">Song</span>' +
+            '<select class="song ' + (p.soundId ? "" : "none") + '">' + optsFor(p.soundId, "Pick one…") + "</select></label>" +
+        "</div>" +
         '<div class="row-actions">' +
           '<div class="move-col">' +
             '<button class="icon-btn up" aria-label="Move up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 14l6-6 6 6"/></svg></button>' +
@@ -735,7 +781,10 @@
       row.querySelector(".pname").addEventListener("change", function (e) {
         p.name = e.target.value.trim() || p.name; save(); renderAll();
       });
-      row.querySelector("select").addEventListener("change", function (e) {
+      row.querySelector("select.intro").addEventListener("change", function (e) {
+        p.introId = e.target.value || null; save(); renderAll();
+      });
+      row.querySelector("select.song").addEventListener("change", function (e) {
         p.soundId = e.target.value || null; save(); renderAll();
       });
       row.querySelector(".up").onclick = function () { move(i, -1); };
@@ -763,15 +812,19 @@
     if (!sounds.length) { list.innerHTML = ""; return; }
     list.innerHTML = "";
     sounds.forEach(function (s) {
-      var usedBy = state.players.filter(function (p) { return p.soundId === s.id; })
-        .map(function (p) { return p.name; }).join(", ");
+      var uses = [];
+      state.players.forEach(function (p) {
+        if (p.soundId === s.id) uses.push("Walk-up for " + esc(p.name));
+        if (p.introId === s.id) uses.push("Announcement for " + esc(p.name));
+      });
+      var usedBy = uses.join(" &middot; ");
       var row = document.createElement("div");
       row.className = "card sound-row";
       row.innerHTML =
         '<button class="icon-btn preview" aria-label="Preview">' +
           (nowPlaying === s.id && !audio.paused ? ICON_STOP : ICON_PLAY) + "</button>" +
         '<div class="sname"><div class="t">' + esc(s.name) + '</div>' +
-          '<div class="u">' + (usedBy ? "Walk-up for " + esc(usedBy) : "Not assigned yet") + "</div></div>" +
+          '<div class="u">' + (usedBy || "Not assigned yet") + "</div></div>" +
         '<button class="icon-btn danger" aria-label="Delete song">' + ICON_TRASH + "</button>";
       row.querySelector(".preview").onclick = function () {
         play(s.id); renderSounds();
@@ -781,7 +834,10 @@
         deleteSound(s.id).then(function () {
           if (urls[s.id]) { URL.revokeObjectURL(urls[s.id]); delete urls[s.id]; }
           sounds = sounds.filter(function (x) { return x.id !== s.id; });
-          state.players.forEach(function (p) { if (p.soundId === s.id) p.soundId = null; });
+          state.players.forEach(function (p) {
+            if (p.soundId === s.id) p.soundId = null;
+            if (p.introId === s.id) p.introId = null;
+          });
           save(); renderAll();
         });
       };
@@ -822,7 +878,7 @@
     e.preventDefault();
     var name = $("addName").value.trim();
     if (!name) return;
-    state.players.push({ id: uid(), name: name, soundId: null, present: true });
+    state.players.push({ id: uid(), name: name, introId: null, soundId: null, present: true });
     $("addName").value = "";
     save(); renderAll();
   });
