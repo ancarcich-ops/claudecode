@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { getBirdieBoysTournament, BIRDIE_BOYS } from "@/lib/birdieBoys";
 import SiteFooter from "@/components/marketing/SiteFooter";
 import BirdieBoysRegisterForm from "./BirdieBoysRegisterForm";
+import GroupNudgeCard from "./GroupNudgeCard";
 
 export const dynamic = "force-dynamic";
 
@@ -189,6 +190,11 @@ export default async function BirdieBoysPage() {
           initialPartner={myEntry?.partnerName ?? null}
           tournamentId={tournament?.id ?? null}
         />
+        {myEntry && (
+          <div className="mt-6">
+            <GroupNudgeCard />
+          </div>
+        )}
         <p className="mt-4 text-center text-xs text-mute">
           Sticks is a golf scoring &amp; on-course GPS app. Signing up creates
           your free account and enters you in the tournament — tee times and

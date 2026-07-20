@@ -24,6 +24,11 @@ model User {
   avatarVariant String?
   avatarUrl     String?
   ghinNumber    String?
+  // Optional phone number for people-search (opt-in: set it in Settings
+  // to be findable by it). Stored as the last 10 digits so formatting
+  // variants match; only ever matched EXACTLY (never returned), so it
+  // can't be enumerated. Null = not findable by phone.
+  phone         String?
   // Personal goal handicap index -- drives the "TARGET 9.0 · 2.6 TO
   // GO" line in the stats hero. Null = no goal set.
   targetIndex   Float?

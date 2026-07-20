@@ -8,6 +8,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getUserFromBearer, unauthorized } from "@/lib/mobileAuth";
+import { outgoingFollowState } from "@/lib/follows";
 import { computeUserStats } from "@/lib/userStats";
 import { computeIndexTrend } from "@/lib/indexTrend";
 import { handicapBreakdown } from "@/lib/handicap";
@@ -55,11 +56,17 @@ export async function GET(
     return NextResponse.json({ error: "No stats" }, { status: 404 });
   }
   const trend = computeIndexTrend(stats.rounds);
+  // Viewer -> target follow state, so the native profile can render the
+  // Follow / Requested / Following button. targetUserId is the id the
+  // app posts to /api/mobile/follows for follow actions.
+  const followState = await outgoingFollowState(viewer.id, target.id);
 
   return NextResponse.json({
     // isSelf lets the app send the viewer to their own editable Stats tab
     // instead of a read-only profile if they tap themselves.
     isSelf: target.id === viewer.id,
+    targetUserId: target.id,
+    followState,
     stats: {
       username: stats.username,
       displayName: stats.displayName,

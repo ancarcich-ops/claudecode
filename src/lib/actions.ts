@@ -42,6 +42,13 @@ import {
 import { findOrCreateCourseByName, distanceYards } from "./course";
 import { assignHoles, fetchOsmGolfFeatures, geocodeCourse } from "./osm";
 import { ensureBirdieBoysTournament } from "./birdieBoys";
+import {
+  requestFollow,
+  unfollow,
+  respondToFollow,
+  setAutoAccept,
+  normalizePhone,
+} from "./follows";
 
 // Same-origin relative redirect guard (avoids open-redirect abuse).
 function safeNext(raw: string): string {
@@ -3308,56 +3315,13 @@ export async function completeTournamentAction(formData: FormData) {
 }
 
 // ===== Follows (one-way, approval-gated) ==============================
-// Requester -> requestee. On accept, the requester sees the requestee's
-// rounds in their home feed (visibility lives in lib/groups.ts).
+// Thin wrappers over the shared helpers in lib/follows.ts (also used by
+// the mobile API), plus the web-surface revalidation.
 
-// Send a follow request to `targetUserId`. Auto-accepted when the target
-// has autoAcceptFollows on; otherwise left PENDING for them to approve.
-// Idempotent: re-requesting doesn't duplicate or downgrade an existing row.
 export async function requestFollowAction(formData: FormData) {
   const me = await requireUser();
   const targetUserId = String(formData.get("targetUserId") ?? "").trim();
-  if (!targetUserId || targetUserId === me.id) return;
-
-  const target = await prisma.user.findUnique({
-    where: { id: targetUserId },
-    select: { id: true, username: true, autoAcceptFollows: true },
-  });
-  if (!target) return;
-
-  const existing = await prisma.follow.findUnique({
-    where: { followerId_followeeId: { followerId: me.id, followeeId: target.id } },
-    select: { id: true, status: true },
-  });
-  if (existing) {
-    // Already following or already requested -- nothing to do.
-    revalidatePath(`/u/${target.username}`);
-    return;
-  }
-
-  const accepted = target.autoAcceptFollows;
-  await prisma.follow.create({
-    data: {
-      followerId: me.id,
-      followeeId: target.id,
-      status: accepted ? "ACCEPTED" : "PENDING",
-      respondedAt: accepted ? new Date() : null,
-    },
-  });
-  revalidatePath(`/u/${target.username}`);
-  revalidatePath("/people");
-  if (accepted) revalidatePath("/");
-}
-
-// Stop following, or cancel a still-pending request. Deletes the
-// me -> target row regardless of status.
-export async function unfollowAction(formData: FormData) {
-  const me = await requireUser();
-  const targetUserId = String(formData.get("targetUserId") ?? "").trim();
-  if (!targetUserId) return;
-  await prisma.follow.deleteMany({
-    where: { followerId: me.id, followeeId: targetUserId },
-  });
+  await requestFollow(me.id, targetUserId);
   const target = await prisma.user.findUnique({
     where: { id: targetUserId },
     select: { username: true },
@@ -3367,47 +3331,57 @@ export async function unfollowAction(formData: FormData) {
   revalidatePath("/");
 }
 
-// Approve an incoming request. `followerId` is the person who asked to
-// follow me; only I (the followee) can accept.
+export async function unfollowAction(formData: FormData) {
+  const me = await requireUser();
+  const targetUserId = String(formData.get("targetUserId") ?? "").trim();
+  await unfollow(me.id, targetUserId);
+  const target = await prisma.user.findUnique({
+    where: { id: targetUserId },
+    select: { username: true },
+  });
+  if (target) revalidatePath(`/u/${target.username}`);
+  revalidatePath("/people");
+  revalidatePath("/");
+}
+
 export async function acceptFollowAction(formData: FormData) {
   const me = await requireUser();
-  const followerId = String(formData.get("followerId") ?? "").trim();
-  if (!followerId) return;
-  await prisma.follow.updateMany({
-    where: { followerId, followeeId: me.id, status: "PENDING" },
-    data: { status: "ACCEPTED", respondedAt: new Date() },
-  });
+  await respondToFollow(
+    me.id,
+    String(formData.get("followerId") ?? "").trim(),
+    true,
+  );
   revalidatePath("/people");
+  revalidatePath("/");
 }
 
-// Decline an incoming request, or remove an existing follower. Deletes
-// the follower -> me row.
 export async function declineFollowAction(formData: FormData) {
   const me = await requireUser();
-  const followerId = String(formData.get("followerId") ?? "").trim();
-  if (!followerId) return;
-  await prisma.follow.deleteMany({
-    where: { followerId, followeeId: me.id },
-  });
+  await respondToFollow(
+    me.id,
+    String(formData.get("followerId") ?? "").trim(),
+    false,
+  );
   revalidatePath("/people");
 }
 
-// Toggle "auto-accept follow requests" (a public profile). Turning it ON
-// also approves any requests currently waiting.
 export async function setAutoAcceptFollowsAction(formData: FormData) {
   const me = await requireUser();
-  const on = String(formData.get("autoAccept") ?? "") === "on";
-  await prisma.user.update({
-    where: { id: me.id },
-    data: { autoAcceptFollows: on },
-  });
-  if (on) {
-    await prisma.follow.updateMany({
-      where: { followeeId: me.id, status: "PENDING" },
-      data: { status: "ACCEPTED", respondedAt: new Date() },
-    });
-  }
+  await setAutoAccept(me.id, String(formData.get("autoAccept") ?? "") === "on");
   revalidatePath("/settings");
   revalidatePath("/people");
   revalidatePath("/");
+}
+
+// Save or clear the caller's opt-in phone number (Settings). Stored
+// normalized (last 10 digits) so search matches formatting variants; an
+// empty value removes it; an invalid non-empty value is ignored.
+export async function setPhoneAction(formData: FormData) {
+  const me = await requireUser();
+  const raw = String(formData.get("phone") ?? "").trim();
+  let phone: string | null | undefined;
+  if (raw === "") phone = null;
+  else phone = normalizePhone(raw) ?? undefined;
+  await prisma.user.update({ where: { id: me.id }, data: { phone } });
+  revalidatePath("/settings");
 }
