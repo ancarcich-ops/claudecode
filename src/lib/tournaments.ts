@@ -3,6 +3,7 @@
 // detail / leaderboard pages can stay slim.
 
 import { prisma } from "./db";
+import { strokesGivenForHole } from "./netScoring";
 
 export type TournamentStatus = "UPCOMING" | "IN_PROGRESS" | "COMPLETED";
 export type TournamentScoringMode = "NET" | "GROSS";
@@ -109,6 +110,94 @@ export async function listTournamentsForUser(userId: string) {
 //   - A round may contain multiple foursomes (matches sharing the
 //     same roundNumber). Each player is in exactly one foursome per
 //     round, so the column collapses to one cell per round.
+// 2-man best-ball team rows. For each team (roster entries sharing a
+// `team` number), per round: for every hole, take the better of the two
+// teammates' net scores (gross minus strokes at 90% of handicap, spread
+// per the app's usual allocation), then sum. GROSS tournaments best-ball
+// the raw strokes with no allowance.
+function teamBestBallRows(
+  rounds: Array<{
+    roundNumber: number | null;
+    holes: number;
+    startingHole: number | null;
+    players: Array<{
+      displayName: string;
+      handicap: number;
+      scores: { hole: number; strokes: number }[];
+    }>;
+  }>,
+  roster: Array<{ displayName: string; team: number | null }>,
+  roundNumbers: number[],
+  useNet: boolean,
+): LeaderboardRow[] {
+  const canon = (s: string) => s.trim().toLowerCase();
+  const teamByName = new Map<string, number>();
+  const teamMembers = new Map<number, string[]>();
+  for (const r of roster) {
+    if (r.team == null) continue;
+    teamByName.set(canon(r.displayName), r.team);
+    const arr = teamMembers.get(r.team) ?? [];
+    arr.push(r.displayName);
+    teamMembers.set(r.team, arr);
+  }
+
+  // team -> roundNumber -> summed best-ball score over scored holes.
+  const teamPerRound = new Map<number, Map<number, number>>();
+
+  for (const m of rounds) {
+    const roundNo = m.roundNumber;
+    if (roundNo == null) continue;
+    const holes = m.holes;
+    const start = m.startingHole ?? 1;
+    // team -> absolute hole -> best (lowest) net among teammates so far.
+    const teamHole = new Map<number, Map<number, number>>();
+    for (const p of m.players) {
+      const team = teamByName.get(canon(p.displayName));
+      if (team == null) continue;
+      const playingHcp = useNet ? Math.round(0.9 * p.handicap) : 0;
+      for (const s of p.scores) {
+        const idx0 = s.hole - start;
+        if (idx0 < 0 || idx0 >= holes) continue;
+        const net = useNet
+          ? s.strokes - strokesGivenForHole(playingHcp, idx0, holes)
+          : s.strokes;
+        const hm = teamHole.get(team) ?? new Map<number, number>();
+        const cur = hm.get(s.hole);
+        hm.set(s.hole, cur == null ? net : Math.min(cur, net));
+        teamHole.set(team, hm);
+      }
+    }
+    for (const [team, hm] of teamHole) {
+      let sum = 0;
+      let any = false;
+      for (const [, net] of hm) {
+        sum += net;
+        any = true;
+      }
+      if (!any) continue;
+      const pr = teamPerRound.get(team) ?? new Map<number, number>();
+      pr.set(roundNo, (pr.get(roundNo) ?? 0) + sum);
+      teamPerRound.set(team, pr);
+    }
+  }
+
+  return Array.from(teamMembers.entries()).map(([team, members]) => {
+    const pr = teamPerRound.get(team);
+    const roundScores = roundNumbers.map((n) => pr?.get(n) ?? null);
+    const total = roundScores.reduce((s: number, n) => s + (n ?? 0), 0);
+    const playedRounds = roundScores.filter((n) => n != null).length;
+    return {
+      rank: 0,
+      playerId: `team-${team}`,
+      displayName: members.join(" + "),
+      latestHandicap: null,
+      roundScores,
+      total,
+      playedRounds,
+    };
+  });
+}
+
 export async function computeTournamentLeaderboard(
   tournamentId: string,
 ): Promise<LeaderboardRow[]> {
@@ -121,7 +210,7 @@ export async function computeTournamentLeaderboard(
         include: {
           players: {
             include: {
-              scores: { select: { strokes: true } },
+              scores: { select: { hole: true, strokes: true } },
             },
           },
         },
@@ -193,7 +282,14 @@ export async function computeTournamentLeaderboard(
     new Set(rounds.map((m) => m.roundNumber as number)),
   ).sort((a, b) => a - b);
 
-  const raw: LeaderboardRow[] = Array.from(byName.values()).map((w) => {
+  // 2-man best ball: once teams are formed, the board ranks TEAMS by
+  // best-ball net (each hole takes the better teammate's net at 90%
+  // allowance) instead of individuals. Falls back to per-player when no
+  // teams exist yet.
+  const hasTeams = tournament.roster.some((r) => r.team != null);
+  let raw: LeaderboardRow[] = hasTeams
+    ? teamBestBallRows(rounds, tournament.roster, roundNumbers, useNet)
+    : Array.from(byName.values()).map((w) => {
     const roundScores = roundNumbers.map(
       (n) => w.perRound.get(n) ?? null,
     );
