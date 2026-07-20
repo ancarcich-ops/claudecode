@@ -266,9 +266,11 @@ export default async function TournamentDetailPage({
             Standings
           </h2>
           <span className="text-[11px] text-mute">
-            {tournament.scoringMode === "GROSS"
-              ? "Sum of gross strokes"
-              : "Sum of net (gross − handicap)"}
+            {tournament.roster.some((r) => r.team != null)
+              ? "2-man best ball · net (better teammate per hole, 90%)"
+              : tournament.scoringMode === "GROSS"
+                ? "Sum of gross strokes"
+                : "Sum of net (gross − handicap)"}
           </span>
         </div>
         {completedRounds === 0 && odds.length === 0 ? (
