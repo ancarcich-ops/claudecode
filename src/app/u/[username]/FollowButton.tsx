@@ -1,66 +1,87 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { requestFollowAction, unfollowAction } from "@/lib/actions";
 import type { FollowState } from "@/lib/follows";
 
-// Follow control on a profile. One-way + approval-gated:
+// Follow control (used on profiles and in people-search results).
+// One-way + approval-gated:
 //   none      -> "Follow"    (sends a request; auto-accepts if they allow)
 //   pending   -> "Requested" (tap to cancel the request)
 //   accepted  -> "Following" (tap to unfollow)
+// Updates optimistically so it reflects the tap immediately even in a
+// client-rendered list that the server can't revalidate in place.
 export default function FollowButton({
   targetUserId,
   state,
+  size = "sm",
 }: {
   targetUserId: string;
   state: FollowState;
+  size?: "sm" | "xs";
 }) {
+  const [current, setCurrent] = useState<FollowState>(state);
   const [pending, start] = useTransition();
 
-  const run = (action: (fd: FormData) => Promise<void>) => {
+  // Sync when the server hands down a new state (e.g. after revalidation).
+  useEffect(() => setCurrent(state), [state]);
+
+  const act = (
+    action: (fd: FormData) => Promise<void>,
+    optimistic: FollowState,
+  ) => {
+    const prev = current;
+    setCurrent(optimistic);
     const fd = new FormData();
     fd.set("targetUserId", targetUserId);
     start(async () => {
-      await action(fd);
+      try {
+        await action(fd);
+      } catch {
+        setCurrent(prev);
+      }
     });
   };
 
-  if (state === "none") {
+  const cls =
+    (current === "none" ? "btn btn-primary" : "btn btn-ghost") +
+    (size === "xs" ? " text-xs" : " text-sm") +
+    " disabled:opacity-60 shrink-0";
+
+  if (current === "none") {
     return (
       <button
         type="button"
         disabled={pending}
-        onClick={() => run(requestFollowAction)}
-        className="btn btn-primary text-sm disabled:opacity-60"
+        onClick={() => act(requestFollowAction, "pending")}
+        className={cls}
       >
-        {pending ? "…" : "Follow"}
+        Follow
       </button>
     );
   }
-
-  if (state === "pending") {
+  if (current === "pending") {
     return (
       <button
         type="button"
         disabled={pending}
-        onClick={() => run(unfollowAction)}
-        className="btn btn-ghost text-sm disabled:opacity-60"
+        onClick={() => act(unfollowAction, "none")}
+        className={cls}
         title="Request sent — tap to cancel"
       >
-        {pending ? "…" : "Requested"}
+        Requested
       </button>
     );
   }
-
   return (
     <button
       type="button"
       disabled={pending}
-      onClick={() => run(unfollowAction)}
-      className="btn btn-ghost text-sm disabled:opacity-60"
+      onClick={() => act(unfollowAction, "none")}
+      className={cls}
       title="Following — tap to unfollow"
     >
-      {pending ? "…" : "Following ✓"}
+      Following ✓
     </button>
   );
 }
