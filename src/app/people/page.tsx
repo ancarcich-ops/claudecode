@@ -9,6 +9,7 @@ import {
   type FollowUser,
 } from "@/lib/follows";
 import PeopleActions from "./PeopleActions";
+import PeopleSearch from "./PeopleSearch";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,8 @@ export default async function PeoplePage() {
           one-way and approved by the person you follow.
         </p>
       </div>
+
+      <PeopleSearch />
 
       <Section
         title="Requests"
