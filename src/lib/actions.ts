@@ -3385,3 +3385,69 @@ export async function setPhoneAction(formData: FormData) {
   await prisma.user.update({ where: { id: me.id }, data: { phone } });
   revalidatePath("/settings");
 }
+
+// ===== Tournament teams (2-man best-ball pairing) =====================
+// Creator-only. Two roster entries sharing a `team` number are a team.
+
+export async function createTournamentTeamAction(formData: FormData) {
+  const me = await requireUser();
+  const p1 = String(formData.get("playerId1") ?? "").trim();
+  const p2 = String(formData.get("playerId2") ?? "").trim();
+  if (!p1 || !p2 || p1 === p2) return;
+
+  const players = await prisma.tournamentPlayer.findMany({
+    where: { id: { in: [p1, p2] } },
+    select: {
+      id: true,
+      tournamentId: true,
+      team: true,
+      tournament: { select: { createdById: true } },
+    },
+  });
+  if (players.length !== 2) return;
+  const [a, b] = players;
+  if (a.tournamentId !== b.tournamentId) return;
+  if (a.tournament.createdById !== me.id) {
+    throw new Error("Only the tournament creator can form teams");
+  }
+  // Skip if either is already on a team (re-team requires disband first).
+  if (a.team != null || b.team != null) return;
+
+  // Smallest unused positive team number, so labels stay compact.
+  const existing = await prisma.tournamentPlayer.findMany({
+    where: { tournamentId: a.tournamentId, team: { not: null } },
+    select: { team: true },
+  });
+  const used = new Set(existing.map((e) => e.team as number));
+  let n = 1;
+  while (used.has(n)) n++;
+
+  await prisma.tournamentPlayer.updateMany({
+    where: { id: { in: [p1, p2] } },
+    data: { team: n },
+  });
+  revalidatePath(`/tournaments/${a.tournamentId}/teams`);
+  revalidatePath(`/tournaments/${a.tournamentId}`);
+}
+
+export async function disbandTournamentTeamAction(formData: FormData) {
+  const me = await requireUser();
+  const tournamentId = String(formData.get("tournamentId") ?? "").trim();
+  const team = parseInt(String(formData.get("team") ?? ""), 10);
+  if (!tournamentId || !Number.isFinite(team)) return;
+
+  const t = await prisma.tournament.findUnique({
+    where: { id: tournamentId },
+    select: { createdById: true },
+  });
+  if (!t) return;
+  if (t.createdById !== me.id) {
+    throw new Error("Only the tournament creator can edit teams");
+  }
+  await prisma.tournamentPlayer.updateMany({
+    where: { tournamentId, team },
+    data: { team: null },
+  });
+  revalidatePath(`/tournaments/${tournamentId}/teams`);
+  revalidatePath(`/tournaments/${tournamentId}`);
+}

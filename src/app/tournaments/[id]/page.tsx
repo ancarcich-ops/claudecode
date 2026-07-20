@@ -122,16 +122,43 @@ export default async function TournamentDetailPage({
       )}
 
       <section className="card p-5">
-        <h2 className="font-display text-base font-semibold text-ink mb-3">
-          Roster
-        </h2>
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <h2 className="font-display text-base font-semibold text-ink">
+            Roster{" "}
+            <span className="font-mono text-[11px] text-mute">
+              {tournament.roster.length}
+            </span>
+          </h2>
+          {tournament.createdById === user?.id && (
+            <Link
+              href={`/tournaments/${tournament.id}/teams`}
+              className="btn btn-ghost text-xs whitespace-nowrap"
+            >
+              Form teams →
+            </Link>
+          )}
+        </div>
         <ul className="space-y-1.5">
           {tournament.roster.map((r) => (
             <li
               key={r.id}
               className="flex items-center justify-between gap-3 text-sm rounded-md border border-border px-3 py-2"
             >
-              <span>{r.displayName}</span>
+              <span className="min-w-0">
+                <span className="flex items-center gap-2">
+                  <span className="truncate">{r.displayName}</span>
+                  {r.team != null && (
+                    <span className="chip text-[10px] shrink-0">
+                      Team {r.team}
+                    </span>
+                  )}
+                </span>
+                {r.partnerName && (
+                  <span className="block text-[11px] text-mute truncate">
+                    wants: {r.partnerName}
+                  </span>
+                )}
+              </span>
               <span className="font-mono text-[11px] text-mute shrink-0">
                 {r.handicapAtStart != null
                   ? `HCP ${r.handicapAtStart.toFixed(1)}`

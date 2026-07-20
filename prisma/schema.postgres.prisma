@@ -280,9 +280,13 @@ model TournamentPlayer {
   // index yet (under 3 logged rounds).
   handicapAtStart Float?
   // The playing partner this entrant named at sign-up (free text, may
-  // reference someone not yet registered). MVP for 2-man best ball --
-  // formal reciprocal team pairing comes later.
+  // reference someone not yet registered) -- a preference the organizer
+  // reviews when forming teams.
   partnerName     String?
+  // Team number for 2-man best-ball. Two roster entries sharing a team
+  // number are a team; null = not yet assigned. Set by the organizer on
+  // the team-builder screen.
+  team            Int?
   createdAt       DateTime   @default(now())
 
   @@unique([tournamentId, displayName])
