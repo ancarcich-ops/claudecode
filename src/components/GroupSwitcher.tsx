@@ -5,7 +5,6 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { selectGroupAction, signOutAction } from "@/lib/actions";
-import PlayerAvatar, { isVariant, type AvatarVariant } from "@/components/Avatar";
 
 export type GroupOption = { id: string; name: string; slug: string | null };
 
@@ -20,9 +19,6 @@ export default function GroupSwitcher({
   active,
   username,
   pendingFollows = 0,
-  avatarSeed = null,
-  avatarVariant = null,
-  avatarUrl = null,
 }: {
   groups: GroupOption[];
   active: string;
@@ -31,11 +27,6 @@ export default function GroupSwitcher({
   // People menu item so requests are discoverable without a separate
   // header button.
   pendingFollows?: number;
-  // The signed-in user's avatar -- shown on the trigger so it reads as
-  // the account menu, not just a group filter.
-  avatarSeed?: string | null;
-  avatarVariant?: string | null;
-  avatarUrl?: string | null;
 }) {
   // Resolve the actively-filtered group (if any) so we can offer its
   // leaderboard right in the menu. "All my groups" / "Public only" don't
@@ -127,18 +118,6 @@ export default function GroupSwitcher({
         >
           <path d="M4 6h16M4 12h16M4 18h16" />
         </svg>
-        <span className="mr-1.5 inline-block h-5 w-5 shrink-0 overflow-hidden rounded-full">
-          <PlayerAvatar
-            seed={avatarSeed ?? username}
-            variant={
-              avatarVariant && isVariant(avatarVariant)
-                ? (avatarVariant as AvatarVariant)
-                : "beam"
-            }
-            avatarUrl={avatarUrl}
-            size={20}
-          />
-        </span>
         <span className="truncate">{activeLabel}</span>
         {pendingFollows > 0 && (
           <span

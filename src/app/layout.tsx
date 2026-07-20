@@ -231,9 +231,6 @@ export default async function RootLayout({
                     active={activeGroupId}
                     username={user.username}
                     pendingFollows={pendingFollows}
-                    avatarSeed={user.avatarSeed}
-                    avatarVariant={user.avatarVariant}
-                    avatarUrl={user.avatarUrl}
                   />
                 </>
               ) : (
