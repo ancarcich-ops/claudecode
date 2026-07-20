@@ -1,16 +1,20 @@
 // POST /api/mobile/auth/signup
-// Body: { username, email, password, displayName? }
+// Body: { username, email, password, displayName?, phone? }
 // 200: { token, user: { id, username, displayName } }  -- same shape as
 //   /auth/login, so the client stores the token and drops straight in.
 // 400: { error } -- validation failure or username/email already taken.
 //
 // Mirrors the web signUpAction (src/lib/actions.ts): same username /
-// email / password rules and the same uniqueness checks.
+// email / password rules and the same uniqueness checks. `phone` is
+// optional and normalized to the last-10 digits so friends can find you
+// in people-search; an unparseable number is silently dropped (the
+// account still gets created) rather than blocking sign-up.
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { hashPassword, passwordError } from "@/lib/password";
 import { createMobileSession } from "@/lib/mobileAuth";
+import { normalizePhone } from "@/lib/follows";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +28,7 @@ export async function POST(req: Request) {
     email?: unknown;
     password?: unknown;
     displayName?: unknown;
+    phone?: unknown;
   };
   try {
     body = await req.json();
@@ -35,6 +40,10 @@ export async function POST(req: Request) {
   const email = String(body.email ?? "").trim().toLowerCase();
   const password = String(body.password ?? "");
   const displayName = String(body.displayName ?? "").trim() || null;
+  // Optional. normalizePhone returns null for anything under 10 digits,
+  // so a blank or junk value just leaves the account phone-less.
+  const phoneRaw = String(body.phone ?? "").trim();
+  const phone = phoneRaw ? normalizePhone(phoneRaw) : null;
 
   if (!USERNAME_RE.test(username)) {
     return NextResponse.json(
@@ -72,7 +81,7 @@ export async function POST(req: Request) {
 
   const passwordHash = await hashPassword(password);
   const user = await prisma.user.create({
-    data: { username, email, passwordHash, displayName },
+    data: { username, email, passwordHash, displayName, phone },
   });
   const token = await createMobileSession(user.id);
 
