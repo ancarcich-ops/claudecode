@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth";
-import { getBirdieBoysTournament, BIRDIE_BOYS } from "@/lib/birdieBoys";
+import {
+  getBirdieBoysTournament,
+  reconcileBirdieBoysOwner,
+  BIRDIE_BOYS,
+} from "@/lib/birdieBoys";
 import SiteFooter from "@/components/marketing/SiteFooter";
 import BirdieBoysRegisterForm from "./BirdieBoysRegisterForm";
 import GroupNudgeCard from "./GroupNudgeCard";
@@ -27,6 +31,10 @@ const STATS: { k: string; v: string }[] = [
 ];
 
 export default async function BirdieBoysPage() {
+  // Re-home the tournament to the configured BIRDIE_BOYS_OWNER if needed
+  // (no-op once ownership is correct) so the admin can be set after the
+  // fact just by loading this page.
+  await reconcileBirdieBoysOwner();
   const [user, tournament] = await Promise.all([
     getCurrentUser(),
     getBirdieBoysTournament(),

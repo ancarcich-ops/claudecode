@@ -30,25 +30,55 @@ export async function getBirdieBoysTournament() {
 }
 
 /**
+ * Look up the admin configured via the BIRDIE_BOYS_OWNER env var (a
+ * username or email). Returns null when the var is unset or points at an
+ * account that doesn't exist yet.
+ */
+async function findConfiguredOwnerId(): Promise<string | null> {
+  const who = process.env.BIRDIE_BOYS_OWNER?.trim();
+  if (!who) return null;
+  const owner = await prisma.user.findFirst({
+    where: who.includes("@")
+      ? { email: who.toLowerCase() }
+      : { username: who },
+    select: { id: true },
+  });
+  return owner?.id ?? null;
+}
+
+/**
  * Resolve who should OWN the tournament (the creator -- the only one who
- * can Finish/Delete it). Prefers the BIRDIE_BOYS_OWNER env var (a
- * username or email of the admin running the event) so a random early
- * registrant can never end up owning it. Falls back to `fallbackId`
- * (the current registrant) only when no owner is configured/resolvable,
- * which keeps local/dev testing working.
+ * can Finish/Delete/remove players). Prefers the BIRDIE_BOYS_OWNER env
+ * var (a username or email of the admin running the event) so a random
+ * early registrant can never end up owning it. Falls back to
+ * `fallbackId` (the current registrant) only when no owner is
+ * configured/resolvable, which keeps local/dev testing working.
  */
 async function resolveOwnerId(fallbackId: string): Promise<string> {
-  const who = process.env.BIRDIE_BOYS_OWNER?.trim();
-  if (who) {
-    const owner = await prisma.user.findFirst({
-      where: who.includes("@")
-        ? { email: who.toLowerCase() }
-        : { username: who },
-      select: { id: true },
-    });
-    if (owner) return owner.id;
-  }
-  return fallbackId;
+  return (await findConfiguredOwnerId()) ?? fallbackId;
+}
+
+/**
+ * Transfer ownership of the EXISTING tournament to the configured
+ * BIRDIE_BOYS_OWNER when it differs. Ownership is normally only stamped
+ * at creation, so this lets the admin be set (or corrected) after the
+ * fact: point the env var at your account, and the next page load /
+ * registration re-homes the tournament to you. No-op when the var is
+ * unset, unresolvable, or already correct -- so it's safe to call on
+ * every render.
+ */
+export async function reconcileBirdieBoysOwner(): Promise<void> {
+  const ownerId = await findConfiguredOwnerId();
+  if (!ownerId) return;
+  const t = await prisma.tournament.findFirst({
+    where: { slug: BIRDIE_BOYS.slug },
+    select: { id: true, createdById: true },
+  });
+  if (!t || t.createdById === ownerId) return;
+  await prisma.tournament.update({
+    where: { id: t.id },
+    data: { createdById: ownerId },
+  });
 }
 
 /**
@@ -59,6 +89,9 @@ async function resolveOwnerId(fallbackId: string): Promise<string> {
 export async function ensureBirdieBoysTournament(fallbackCreatorId: string) {
   const existing = await getBirdieBoysTournament();
   if (existing) {
+    // Keep ownership pinned to the configured admin even if the row was
+    // created by an early registrant before BIRDIE_BOYS_OWNER was set.
+    await reconcileBirdieBoysOwner();
     // Backfill the pinned course on a tournament created before the
     // courseName column existed, so round-start preloads Goose Creek.
     if (!existing.courseName) {
