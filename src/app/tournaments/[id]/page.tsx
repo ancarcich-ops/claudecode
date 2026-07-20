@@ -12,6 +12,7 @@ import {
 } from "@/lib/actions";
 import CopyInvite from "@/components/CopyInvite";
 import TournamentBoardTabs from "@/components/TournamentBoardTabs";
+import RemoveRosterButton from "./RemoveRosterButton";
 
 export const dynamic = "force-dynamic";
 
@@ -159,10 +160,19 @@ export default async function TournamentDetailPage({
                   </span>
                 )}
               </span>
-              <span className="font-mono text-[11px] text-mute shrink-0">
-                {r.handicapAtStart != null
-                  ? `HCP ${r.handicapAtStart.toFixed(1)}`
-                  : "—"}
+              <span className="flex items-center gap-3 shrink-0">
+                <span className="font-mono text-[11px] text-mute">
+                  {r.handicapAtStart != null
+                    ? `HCP ${r.handicapAtStart.toFixed(1)}`
+                    : "—"}
+                </span>
+                {tournament.createdById === user.id &&
+                  r.userId !== user.id && (
+                    <RemoveRosterButton
+                      playerId={r.id}
+                      displayName={r.displayName}
+                    />
+                  )}
               </span>
             </li>
           ))}
