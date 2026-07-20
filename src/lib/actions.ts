@@ -94,9 +94,13 @@ export async function signUpAction(_prev: AuthResult, formData: FormData): Promi
     return { error: "That username is taken." };
   }
 
+  // Optional phone -- opt-in, so friends can find you by it in people
+  // search. Normalized to last-10 digits; blank/invalid stays null.
+  const phone = normalizePhone(String(formData.get("phone") ?? ""));
+
   const passwordHash = await hashPassword(password);
   const user = await prisma.user.create({
-    data: { username, email, passwordHash, displayName },
+    data: { username, email, passwordHash, displayName, phone },
   });
   await setSession(user.id);
   redirect(next);
@@ -3195,8 +3199,10 @@ export async function registerForBirdieBoysAction(
     }
 
     const passwordHash = await hashPassword(password);
+    // Optional phone so friends can find you (opt-in, exact-match search).
+    const phone = normalizePhone(String(formData.get("phone") ?? ""));
     user = await prisma.user.create({
-      data: { username, email, passwordHash, displayName: null },
+      data: { username, email, passwordHash, displayName: null, phone },
     });
     await setSession(user.id);
     // Tell the first-launch onboarding overlay this is a tournament

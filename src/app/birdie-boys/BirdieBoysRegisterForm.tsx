@@ -149,6 +149,16 @@ export default function BirdieBoysRegisterForm({
                 className={inputCls}
               />
             </Field>
+            <Field label="Phone" hint="Optional — so friends can find you">
+              <input
+                name="phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="(818) 309-5011"
+                className={inputCls}
+              />
+            </Field>
           </>
         )}
 

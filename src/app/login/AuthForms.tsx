@@ -341,6 +341,14 @@ export function SignUpForm({ next }: { next: string }) {
         autoComplete="email"
         required
       />
+      <TextField
+        label="Phone"
+        name="phone"
+        type="tel"
+        autoComplete="tel"
+        placeholder="(818) 309-5011"
+        helper="Optional — so friends can find you."
+      />
       <PasswordField autoComplete="new-password" onValue={setPw} error={isError} />
       <StrengthMeter password={pw} />
       <ErrorNote state={state} />
