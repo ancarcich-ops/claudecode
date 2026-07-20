@@ -3436,6 +3436,50 @@ export async function createTournamentTeamAction(formData: FormData) {
   revalidatePath(`/tournaments/${a.tournamentId}`);
 }
 
+// Creator-only. Removes one roster entry (e.g. a test signup) from the
+// tournament. Does NOT delete the person's account -- it just pulls them
+// out of this tournament's roster. If they were paired into a team, the
+// rest of that team is un-paired too (a half-team makes no sense for
+// best-ball), so the organizer can re-pair cleanly. Any standalone
+// rounds they already played stay on the feed as normal matches.
+export async function removeFromTournamentRosterAction(formData: FormData) {
+  const me = await requireUser();
+  const playerId = String(formData.get("playerId") ?? "").trim();
+  if (!playerId) return;
+
+  const player = await prisma.tournamentPlayer.findUnique({
+    where: { id: playerId },
+    select: {
+      id: true,
+      tournamentId: true,
+      team: true,
+      userId: true,
+      tournament: { select: { createdById: true } },
+    },
+  });
+  if (!player) return;
+  if (player.tournament.createdById !== me.id) {
+    throw new Error("Only the tournament creator can remove players");
+  }
+  // Guard: the creator can't remove their own roster entry -- they own
+  // the tournament, and orphaning it would strand the controls.
+  if (player.userId && player.userId === me.id) {
+    throw new Error("You can't remove yourself from your own tournament");
+  }
+
+  // If they were on a team, disband it so no lone half-team is left.
+  if (player.team != null) {
+    await prisma.tournamentPlayer.updateMany({
+      where: { tournamentId: player.tournamentId, team: player.team },
+      data: { team: null },
+    });
+  }
+  await prisma.tournamentPlayer.delete({ where: { id: playerId } });
+
+  revalidatePath(`/tournaments/${player.tournamentId}`);
+  revalidatePath(`/tournaments/${player.tournamentId}/teams`);
+}
+
 export async function disbandTournamentTeamAction(formData: FormData) {
   const me = await requireUser();
   const tournamentId = String(formData.get("tournamentId") ?? "").trim();
