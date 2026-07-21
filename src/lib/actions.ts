@@ -3395,6 +3395,41 @@ export async function setPhoneAction(formData: FormData) {
 // ===== Tournament teams (2-man best-ball pairing) =====================
 // Creator-only. Two roster entries sharing a `team` number are a team.
 
+// A rostered player edits their OWN entry (handicap + teammate request)
+// from the tournament page -- no need to go back to the sign-up link.
+// Gated to the caller's own roster row; can't touch anyone else's. The
+// team pairing itself stays creator-only (this only edits the request
+// text a player types, not the actual `team` assignment).
+export async function updateMyTournamentEntryAction(formData: FormData) {
+  const me = await requireUser();
+  const tournamentId = String(formData.get("tournamentId") ?? "").trim();
+  if (!tournamentId) return;
+
+  const mine = await prisma.tournamentPlayer.findFirst({
+    where: { tournamentId, userId: me.id },
+    select: { id: true },
+  });
+  if (!mine) return; // Not on this roster -- nothing to edit.
+
+  // Handicap (optional) + partner request (optional). Mirrors the
+  // sign-up parsing so both entry points behave identically.
+  const handicapRaw = String(formData.get("handicap") ?? "").trim();
+  const handicapNum = handicapRaw ? Number(handicapRaw) : null;
+  const handicapAtStart =
+    handicapNum != null && Number.isFinite(handicapNum) ? handicapNum : null;
+  const partnerName =
+    String(formData.get("partnerName") ?? "")
+      .trim()
+      .slice(0, 60) || null;
+
+  await prisma.tournamentPlayer.update({
+    where: { id: mine.id },
+    data: { handicapAtStart, partnerName },
+  });
+  revalidatePath(`/tournaments/${tournamentId}`);
+  revalidatePath("/birdie-boys");
+}
+
 export async function createTournamentTeamAction(formData: FormData) {
   const me = await requireUser();
   const p1 = String(formData.get("playerId1") ?? "").trim();
