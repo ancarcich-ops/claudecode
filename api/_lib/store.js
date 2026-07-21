@@ -16,6 +16,13 @@ function blobMod() {
   return import("@vercel/blob");
 }
 
+// Tolerate hand-pasted tokens: strip quotes/whitespace and anything after a
+// line break (dashboard copy/paste artifacts produce invalid header values).
+function blobToken() {
+  const raw = process.env.BLOB_READ_WRITE_TOKEN || "";
+  return raw.split(/[\r\n]/)[0].replace(/["']/g, "").trim();
+}
+
 function localPath(key) {
   const p = path.normalize(path.join(LOCAL, key));
   if (!p.startsWith(path.normalize(LOCAL))) throw new Error("bad key");
@@ -31,6 +38,7 @@ async function putObject(key, buf, contentType) {
   }
   const { put } = await blobMod();
   const opts = {
+    token: blobToken(),
     contentType: contentType || "application/octet-stream",
     addRandomSuffix: false,
     allowOverwrite: true,
@@ -58,7 +66,7 @@ async function getObject(key, range) {
   const { head } = await blobMod();
   let url;
   try {
-    const h = await head(key);
+    const h = await head(key, { token: blobToken() });
     url = h.downloadUrl || h.url; // downloadUrl carries auth for private stores
   } catch (err) {
     return null;
@@ -95,7 +103,7 @@ async function listObjects(prefix) {
   const out = [];
   let cursor;
   do {
-    const r = await list({ prefix, cursor });
+    const r = await list({ prefix, cursor, token: blobToken() });
     r.blobs.forEach((b) => out.push({ key: b.pathname, size: b.size }));
     cursor = r.hasMore ? r.cursor : undefined;
   } while (cursor);
@@ -112,7 +120,7 @@ async function listKeys(prefix) {
   const out = [];
   let cursor;
   do {
-    const r = await list({ prefix, cursor });
+    const r = await list({ prefix, cursor, token: blobToken() });
     r.blobs.forEach((b) => out.push(b.pathname));
     cursor = r.hasMore ? r.cursor : undefined;
   } while (cursor);
@@ -128,11 +136,11 @@ async function deleteKeys(keys) {
     return;
   }
   const { del } = await blobMod();
-  await del(keys);
+  await del(keys, { token: blobToken() });
 }
 
 function storeReady() {
-  return !!(LOCAL || process.env.BLOB_READ_WRITE_TOKEN);
+  return !!(LOCAL || blobToken());
 }
 
 function query(req) {
