@@ -13,6 +13,7 @@ import {
 import CopyInvite from "@/components/CopyInvite";
 import TournamentBoardTabs from "@/components/TournamentBoardTabs";
 import RemoveRosterButton from "./RemoveRosterButton";
+import MyEntryCard from "./MyEntryCard";
 
 export const dynamic = "force-dynamic";
 
@@ -63,9 +64,10 @@ export default async function TournamentDetailPage({
   // Roster member key (userId for linked, lowercased displayName for
   // free-typed) for matching against per-match player rows.
   const meKey = user.id;
-  const meInRoster = tournament.roster.some(
-    (r) => r.userId === meKey,
-  );
+  const myRosterEntry =
+    tournament.roster.find((r) => r.userId === meKey) ?? null;
+  const meInRoster = myRosterEntry != null;
+  const rosterNames = tournament.roster.map((r) => r.displayName);
 
   // Render rounds 1..roundsPlanned plus any extras already started.
   const maxExistingRound = distinctRoundNumbers.length
@@ -178,6 +180,15 @@ export default async function TournamentDetailPage({
           ))}
         </ul>
       </section>
+
+      {myRosterEntry && (
+        <MyEntryCard
+          tournamentId={tournament.id}
+          initialHandicap={myRosterEntry.handicapAtStart}
+          initialPartner={myRosterEntry.partnerName}
+          rosterNames={rosterNames}
+        />
+      )}
 
       <section className="card p-5 space-y-4">
         <div>
