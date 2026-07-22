@@ -342,8 +342,8 @@ function WelcomeStep() {
       <div className="mt-6 space-y-2">
         <FeatureRow
           icon={<LiveDot />}
-          title="A live betting market"
-          body="Every player's win odds blend the model, the crowd, and live scores — repricing on every shot. Tap Place your call to back who you think takes it."
+          title="A live prediction market"
+          body="Every player's win odds blend the model, the crowd, and live scores — repricing on every shot. Tap Place your pick to back who you think takes it."
         />
         <FeatureRow
           icon={<GamesIcon />}
@@ -742,10 +742,10 @@ function CardGuideStep() {
           icon={
             <span className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wider text-mute border border-border bg-panel2">
               <span aria-hidden>+</span>
-              Call
+              Pick
             </span>
           }
-          label="+ Call button"
+          label="+ Pick button"
           body="Choose who you think will win the match. Two taps to confirm — switches to a ✓ Picked badge after."
         />
 
@@ -765,7 +765,7 @@ function CardGuideStep() {
         <Legend
           icon={
             <span className="font-mono text-[9px] uppercase tracking-wider text-mute">
-              … LEADER &minus;2 THRU 12 · 1 WAGER …
+              … LEADER &minus;2 THRU 12 · 1 PICK …
             </span>
           }
           label="Header ticker"

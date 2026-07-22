@@ -2219,7 +2219,7 @@ export default function NewMatchForm({
         <p className="text-xs text-mute mt-3">
           {isSolo
             ? "Solo round — no opponents, no side games. Hit Start round to log your card."
-            : "Crowd wagers and live scoring shift the line from there. Playing solo is fine — drop everyone else to log just your round."}
+            : "Crowd picks and live scoring shift the line from there. Playing solo is fine — drop everyone else to log just your round."}
         </p>
       </div>
 
@@ -2236,6 +2236,11 @@ export default function NewMatchForm({
             Side games are <span className="text-ink">optional</span>. Pick any
             you&apos;d like to track below &mdash; or just open the market to
             get started.
+          </p>
+          <p className="text-[10.5px] text-faint mb-3 rounded-md border border-border bg-panel2/40 px-2.5 py-2">
+            Any dollar amounts just help Sticks tally who owes whom. Sticks
+            only keeps score &mdash; no money is collected, held, or paid
+            through the app. Settle up among yourselves.
           </p>
           <OpenMarketButton label="Start round →" />
           <div className="flex items-center gap-3 my-3">
@@ -2456,7 +2461,7 @@ export default function NewMatchForm({
                       )}
                       <div className="flex items-center gap-2">
                         <label className="text-[11px] text-mute whitespace-nowrap">
-                          Wager
+                          Stake
                         </label>
                         <span className="text-[12px] text-mute">$</span>
                         <input
@@ -2480,7 +2485,7 @@ export default function NewMatchForm({
                     <div className="mt-2 ml-7 mr-1 rounded-md border border-border bg-panel2/40 p-2">
                       <div className="flex items-center gap-2">
                         <label className="text-[11px] text-mute whitespace-nowrap">
-                          Wager
+                          Stake
                         </label>
                         <span className="text-[12px] text-mute">$</span>
                         <input

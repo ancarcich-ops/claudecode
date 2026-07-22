@@ -695,6 +695,12 @@ export default function SideGamesEditor({
         </div>
       </div>
 
+      <p className="text-[10.5px] text-faint mt-4 rounded-md border border-border bg-panel2/40 px-2.5 py-2">
+        Any dollar amounts just help Sticks tally who owes whom. Sticks only
+        keeps score &mdash; no money is collected, held, or paid through the
+        app. Settle up among yourselves.
+      </p>
+
       <div className="flex items-center gap-2 mt-4">
         <SaveButton disabled={tvtNeedsTeams} />
         <Link href={`/matches/${matchId}`} className="btn btn-ghost text-sm">

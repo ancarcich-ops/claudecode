@@ -55,7 +55,7 @@ export default function MarketingLanding() {
           />
           <Feature
             title="Live win odds"
-            body="A play-money market that reprices each player's chance to win as the round unfolds. Call who takes it — no real-money wagering."
+            body="A play-money market that reprices each player's chance to win as the round unfolds. Pick who takes it — just for fun, no real money."
           />
           <Feature
             title="Handicaps & stats"
