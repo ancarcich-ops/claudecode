@@ -25,6 +25,7 @@ export default function SiteFooter() {
           <div className="flex flex-col gap-1.5">
             <FooterLabel>Company</FooterLabel>
             <FooterLink href="/about">About</FooterLink>
+            <FooterLink href="/support">Support</FooterLink>
             <FooterLink href="/contact">Contact</FooterLink>
             <FooterLink href="/sms">Text updates</FooterLink>
           </div>
