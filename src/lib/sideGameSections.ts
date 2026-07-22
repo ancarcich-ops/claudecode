@@ -22,11 +22,37 @@ import {
   parseSnakeConfig,
   parseNassauConfig,
   isNassauEventKind,
+  runningStableford,
+  runningSkins,
+  runningNassauSegment,
+  runningBbb,
+  runningSnake,
+  runningWolf,
+  runningMatch,
+  runningSixes,
   type SideGameKind,
   type BbbEvent,
   type SnakeEvent,
   type WolfEvent,
 } from "./sideGames";
+
+// Per-market cumulative chart series for a match -- one entry per
+// enabled side game, each a list of per-hole rows keyed by player id.
+// Mirrors the web match page's `sgSeries` (src/app/matches/[id]/page.tsx)
+// so the mobile Live-odds graphs can match the web exactly.
+export type SgChartRow = { hole: number } & Record<string, number>;
+export type SideGameSeries = {
+  stableford?: { rows: SgChartRow[] };
+  skins?: { rows: SgChartRow[] };
+  nassauF9?: { rows: SgChartRow[] };
+  nassauB9?: { rows: SgChartRow[] };
+  nassauTotal?: { rows: SgChartRow[] };
+  bbb?: { rows: SgChartRow[] };
+  snake?: { rows: SgChartRow[] };
+  wolf?: { rows: SgChartRow[] };
+  match?: { rows: SgChartRow[] };
+  sixes?: { rows: SgChartRow[] };
+};
 
 type LoadedSideGame = {
   kind: string;
@@ -42,16 +68,18 @@ type LoadedPlayer = {
   scores: { hole: number; strokes: number }[];
 };
 
-export function computeSideGameSectionsForMatch(
-  match: {
-    holes: number;
-    startingHole: number | null;
-    scoringMode: string;
-    players: LoadedPlayer[];
-    sideGames: LoadedSideGame[] | null;
-  },
-  pars: number[],
-) {
+type MatchForSideGames = {
+  holes: number;
+  startingHole: number | null;
+  scoringMode: string;
+  players: LoadedPlayer[];
+  sideGames: LoadedSideGame[] | null;
+};
+
+// Shared input assembly for both the standings sections and the chart
+// series, so the two never drift. Parses every side-game config/event
+// and builds the player-score inputs the compute/running helpers need.
+function deriveSideGameInputs(match: MatchForSideGames, pars: number[]) {
   const scoringMode =
     match.scoringMode === "GROSS"
       ? ("GROSS" as const)
@@ -152,28 +180,167 @@ export function computeSideGameSectionsForMatch(
     scoresByHole: Object.fromEntries(p.scores.map((s) => [s.hole, s.strokes])),
   }));
 
-  return computeAllSideGames({
-    enabled: enabledKinds,
-    players: playerInputs,
-    wolfPlayers: seatedWolfPlayers,
-    pars,
-    holes: match.holes,
+  return {
     scoringMode,
-    startingHole: matchStart,
+    matchStart,
+    holes: match.holes,
+    enabledKinds,
     bbbEvents,
     snakeEvents,
     wolfEvents,
     wolfConfig,
+    skinsConfig,
+    matchEvents,
+    nassauEvents,
+    nassauConfig,
     teamVsTeamConfig,
     targetsConfig,
     matchConfig,
-    matchEvents,
     sixesConfig,
-    skinsConfig,
     stablefordConfig,
     bbbConfig,
     snakeConfig,
-    nassauConfig,
-    nassauEvents,
+    playerInputs,
+    seatedWolfPlayers,
+  };
+}
+
+// Per-market cumulative chart series for the mobile Live-odds graphs.
+// Mirrors the web match page's sgSeries block exactly (same guards:
+// Nassau/Sixes need 18 holes; Sixes needs 4 players).
+export function computeSideGameSeriesForMatch(
+  match: MatchForSideGames,
+  pars: number[],
+): SideGameSeries {
+  const d = deriveSideGameInputs(match, pars);
+  const series: SideGameSeries = {};
+
+  if (d.enabledKinds.includes("STABLEFORD")) {
+    series.stableford = runningStableford(
+      d.playerInputs,
+      pars,
+      d.holes,
+      d.scoringMode,
+      d.matchStart,
+      d.stablefordConfig,
+    );
+  }
+  if (d.enabledKinds.includes("SKINS")) {
+    series.skins = runningSkins(
+      d.playerInputs,
+      pars,
+      d.holes,
+      d.scoringMode,
+      d.matchStart,
+    );
+  }
+  if (d.enabledKinds.includes("NASSAU") && d.holes === 18) {
+    series.nassauF9 = runningNassauSegment(
+      d.playerInputs,
+      pars,
+      d.holes,
+      d.scoringMode,
+      1,
+      9,
+    );
+    series.nassauB9 = runningNassauSegment(
+      d.playerInputs,
+      pars,
+      d.holes,
+      d.scoringMode,
+      10,
+      18,
+    );
+    series.nassauTotal = runningNassauSegment(
+      d.playerInputs,
+      pars,
+      d.holes,
+      d.scoringMode,
+      1,
+      18,
+    );
+  }
+  if (d.enabledKinds.includes("BBB")) {
+    series.bbb = runningBbb(
+      d.playerInputs,
+      d.holes,
+      d.bbbEvents,
+      d.matchStart,
+      d.bbbConfig,
+    );
+  }
+  if (d.enabledKinds.includes("SNAKE")) {
+    series.snake = runningSnake(
+      d.playerInputs,
+      d.holes,
+      d.snakeEvents,
+      d.matchStart,
+    );
+  }
+  if (d.enabledKinds.includes("WOLF")) {
+    series.wolf = runningWolf(
+      d.seatedWolfPlayers,
+      d.holes,
+      d.wolfEvents,
+      d.wolfConfig,
+      d.matchStart,
+    );
+  }
+  if (d.enabledKinds.includes("MATCH")) {
+    series.match = runningMatch(
+      d.playerInputs,
+      pars,
+      d.holes,
+      d.scoringMode,
+      d.matchStart,
+      d.matchConfig,
+      d.matchEvents,
+    );
+  }
+  if (
+    d.enabledKinds.includes("SIXES") &&
+    d.holes === 18 &&
+    d.playerInputs.length === 4
+  ) {
+    series.sixes = runningSixes(
+      d.playerInputs,
+      pars,
+      d.holes,
+      d.scoringMode,
+      d.matchStart,
+    );
+  }
+
+  return series;
+}
+
+export function computeSideGameSectionsForMatch(
+  match: MatchForSideGames,
+  pars: number[],
+) {
+  const d = deriveSideGameInputs(match, pars);
+  return computeAllSideGames({
+    enabled: d.enabledKinds,
+    players: d.playerInputs,
+    wolfPlayers: d.seatedWolfPlayers,
+    pars,
+    holes: d.holes,
+    scoringMode: d.scoringMode,
+    startingHole: d.matchStart,
+    bbbEvents: d.bbbEvents,
+    snakeEvents: d.snakeEvents,
+    wolfEvents: d.wolfEvents,
+    wolfConfig: d.wolfConfig,
+    teamVsTeamConfig: d.teamVsTeamConfig,
+    targetsConfig: d.targetsConfig,
+    matchConfig: d.matchConfig,
+    matchEvents: d.matchEvents,
+    sixesConfig: d.sixesConfig,
+    skinsConfig: d.skinsConfig,
+    stablefordConfig: d.stablefordConfig,
+    bbbConfig: d.bbbConfig,
+    snakeConfig: d.snakeConfig,
+    nassauConfig: d.nassauConfig,
+    nassauEvents: d.nassauEvents,
   });
 }

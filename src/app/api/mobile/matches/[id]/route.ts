@@ -15,7 +15,10 @@ import { isMatchParticipant } from "@/lib/matchAccess";
 // narrower matchAccess.canViewMatch (round's-group only) 403'd spectators.
 import { canViewMatch } from "@/lib/groups";
 import { loadMatchWithOdds } from "@/lib/match";
-import { computeSideGameSectionsForMatch } from "@/lib/sideGameSections";
+import {
+  computeSideGameSectionsForMatch,
+  computeSideGameSeriesForMatch,
+} from "@/lib/sideGameSections";
 import {
   getCourseHolesByName,
   getCourseHazardsByName,
@@ -108,6 +111,12 @@ export async function GET(
 
   // Side-game leaderboards -- identical assembly to the web match page.
   const sideGames = computeSideGameSectionsForMatch(match, pars);
+
+  // Per-market cumulative chart series (Stableford points, Skins won,
+  // Nassau net-vs-par F9/B9/Total, etc.) so the native Live-odds view can
+  // graph each side game the same way the web match page does. Win-% has
+  // its own `odds.series` above; this covers everything else.
+  const sideGameSeries = computeSideGameSeriesForMatch(match, pars);
 
   // Raw per-hole events + config for the event-driven games, so the
   // native editors can render current toggle state (who 3-putted, who
@@ -219,6 +228,11 @@ export async function GET(
     //    [{ playerId, player, value, numeric, isLeader }] }] }]
     // Empty array when the match has no side games.
     sideGames,
+    // Per-market cumulative chart series for the Live-odds graphs, keyed
+    // by game: { stableford?, skins?, nassauF9?, nassauB9?, nassauTotal?,
+    // bbb?, snake?, wolf?, match?, sixes? }, each { rows: [{ hole,
+    // <playerId>: number, ... }] }. Absent games are omitted.
+    sideGameSeries,
     // Raw events for the event-driven editors: [{ gameKind, hole, kind,
     // matchPlayerId|null }]. gameKind is SNAKE|BBB|WOLF|MATCH.
     sideGameEvents,
