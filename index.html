@@ -1285,27 +1285,30 @@
   var silentKeeper = null;
   var SILENT_WAV = "data:audio/wav;base64,UklGRogAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YWQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
   function ensurePlaybackSession() {
-    if (silentKeeper) {
-      if (silentKeeper.paused) silentKeeper.play().catch(function () {});
-      return;
-    }
-    var a = document.createElement("audio");
-    a.setAttribute("playsinline", "");
-    a.loop = true;
-    a.preload = "auto";
-    a.src = SILENT_WAV;
-    a.style.display = "none";
-    document.body.appendChild(a);
-    a.play().catch(function () { silentKeeper = null; });
-    silentKeeper = a;
-    if ("mediaSession" in navigator && window.MediaMetadata) {
-      try {
-        navigator.mediaSession.metadata = new MediaMetadata({
-          title: state.team || "Walk-Up!",
-          artist: "Walk-Up! soundboard"
-        });
-      } catch (err) { /* cosmetic only */ }
-    }
+    // Never let the silent-switch helper break playback itself
+    try {
+      if (silentKeeper) {
+        if (silentKeeper.paused) silentKeeper.play().catch(function () {});
+        return;
+      }
+      var a = document.createElement("audio");
+      a.setAttribute("playsinline", "");
+      a.loop = true;
+      a.preload = "auto";
+      a.src = SILENT_WAV;
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.play().catch(function () { silentKeeper = null; });
+      silentKeeper = a;
+      if ("mediaSession" in navigator && window.MediaMetadata) {
+        try {
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: state.team || "Walk-Up!",
+            artist: "Walk-Up! soundboard"
+          });
+        } catch (err) { /* cosmetic only */ }
+      }
+    } catch (err) { /* keeper is best-effort; playback proceeds regardless */ }
   }
 
   var nowPlaying = null;  // sound id currently playing (or being decoded)
