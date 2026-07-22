@@ -63,9 +63,9 @@ export default function WagerForm({
               </span>
             </div>
             <div className="text-xs text-mute mt-1">
-              {active ? "Your pick" : `Tap to call ${p.displayName}`}
+              {active ? "Your pick" : `Tap to pick ${p.displayName}`}
               {" · "}
-              {p.wagerCount} call{p.wagerCount === 1 ? "" : "s"}
+              {p.wagerCount} pick{p.wagerCount === 1 ? "" : "s"}
             </div>
           </button>
         );

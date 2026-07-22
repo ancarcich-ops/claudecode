@@ -1606,7 +1606,7 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
               </div>
               <div className="mt-2 flex items-center justify-between text-xs text-mute">
                 <span>
-                  {p.wagerCount} wager{p.wagerCount === 1 ? "" : "s"}
+                  {p.wagerCount} pick{p.wagerCount === 1 ? "" : "s"}
                 </span>
                 {p.netScore !== null && (
                   <span className="font-mono">
@@ -1620,18 +1620,18 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
       </section>
       <section className="card p-4">
         <h2 className="font-display text-base font-semibold text-ink mb-3">
-          Place your call
+          Place your pick
         </h2>
         {!user ? (
           <div className="text-sm text-mute">
             <a className="text-accent" href="/login">
               Sign in
             </a>{" "}
-            to place a call on this match.
+            to place a pick on this match.
           </div>
         ) : isCompleted ? (
           <div className="text-sm text-mute">
-            Market closed. {myWager ? "Your final call is locked in." : ""}
+            Market closed. {myWager ? "Your final pick is locked in." : ""}
           </div>
         ) : (
           <WagerForm
@@ -1643,7 +1643,7 @@ function buildMatchTabs(a: BuildMatchTabsArgs): MatchTab[] {
         )}
         {match.wagers.length > 0 && (
           <div className="mt-4 text-xs text-mute">
-            <span className="uppercase tracking-wider">Recent calls:</span>{" "}
+            <span className="uppercase tracking-wider">Recent picks:</span>{" "}
             {match.wagers
               .slice(-8)
               .reverse()

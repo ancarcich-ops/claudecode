@@ -42,7 +42,7 @@ export default function QuickWagerButton({
     return (
       <span
         className="inline-flex items-center gap-1 rounded-full bg-accent/10 border border-accent/40 px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wider text-accent"
-        title="Your current call on this match"
+        title="Your current pick on this match"
       >
         <svg
           width="9"
@@ -81,7 +81,7 @@ export default function QuickWagerButton({
         router.refresh();
       } catch (err) {
         toast.error(
-          err instanceof Error ? err.message : "Couldn't place call.",
+          err instanceof Error ? err.message : "Couldn't place pick.",
         );
         setArmed(false);
       }
@@ -93,7 +93,7 @@ export default function QuickWagerButton({
       type="button"
       onClick={submit}
       disabled={pending || disabled}
-      aria-label={armed ? `Confirm call on ${playerName}` : `Call ${playerName}`}
+      aria-label={armed ? `Confirm pick on ${playerName}` : `Pick ${playerName}`}
       className={
         "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wider transition-colors border " +
         (armed
@@ -108,7 +108,7 @@ export default function QuickWagerButton({
       ) : (
         <>
           <span aria-hidden>+</span>
-          Call
+          Pick
         </>
       )}
     </button>
