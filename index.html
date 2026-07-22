@@ -1276,6 +1276,37 @@
     return bufCache[id];
   }
 
+  /* iOS silent-switch fix: the ringer switch mutes Web Audio ("sound
+     effects") but not media-element playback. Keeping a silent, looping
+     <audio> element playing reclassifies the page as media playback, so
+     walk-up songs play even with the phone on silent. Started inside the
+     first play tap (autoplay rules require a user gesture). */
+  var silentKeeper = null;
+  var SILENT_WAV = "data:audio/wav;base64,UklGRogAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YWQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+  function ensurePlaybackSession() {
+    if (silentKeeper) {
+      if (silentKeeper.paused) silentKeeper.play().catch(function () {});
+      return;
+    }
+    var a = document.createElement("audio");
+    a.setAttribute("playsinline", "");
+    a.loop = true;
+    a.preload = "auto";
+    a.src = SILENT_WAV;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.play().catch(function () { silentKeeper = null; });
+    silentKeeper = a;
+    if ("mediaSession" in navigator && window.MediaMetadata) {
+      try {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: state.team || "Walk-Up!",
+          artist: "Walk-Up! soundboard"
+        });
+      } catch (err) { /* cosmetic only */ }
+    }
+  }
+
   var nowPlaying = null;  // sound id currently playing (or being decoded)
   var queue = [];         // sound ids to play after the current one ends
   var playToken = 0;      // invalidates in-flight decodes/onended after stop
@@ -1283,11 +1314,13 @@
   var playback = null;    // { id, t0, offset, dur } while audio is audibly playing
 
   function play(id) {
+    ensurePlaybackSession();
     if (nowPlaying === id) { stop(); return; }
     queue = [];
     startTrack(id);
   }
   function playSequence(ids) {
+    ensurePlaybackSession();
     var valid = ids.filter(function (id) { return id && soundById(id); });
     if (!valid.length) return;
     valid.forEach(function (id) { bufferFor(id).catch(function () {}); }); // warm the cache
@@ -1861,6 +1894,7 @@
 
   $("edPreview").onclick = function () {
     if (!ed || !ed.vals) return;
+    ensurePlaybackSession();
     if (nowPlaying === ed.s.id) { stop(); return; }
     queue = [];
     startTrack(ed.s.id, ed.vals);
