@@ -14,6 +14,7 @@ import {
   setSession,
 } from "./auth";
 import { hashPassword, verifyPassword, passwordError } from "./password";
+import { deleteAccount } from "./account";
 import { sendEmail, passwordResetEmail, appUrl } from "./email";
 import { recordOddsSnapshot } from "./match";
 import { checkRoundShares } from "./roundShare";
@@ -3390,6 +3391,27 @@ export async function setPhoneAction(formData: FormData) {
   else phone = normalizePhone(raw) ?? undefined;
   await prisma.user.update({ where: { id: me.id }, data: { phone } });
   revalidatePath("/settings");
+}
+
+// Permanently delete the caller's account (Settings danger zone). Apple
+// App Store Guideline 5.1.1(v) requires an in-app deletion path. Guarded
+// by re-typing the exact username so a stray click can't wipe an account.
+// Clears this browser's session too, then sends them to a goodbye state.
+// Irreversible.
+export async function deleteAccountAction(
+  _prev: AuthResult,
+  formData: FormData,
+): Promise<AuthResult> {
+  const me = await requireUser();
+  const confirm = String(formData.get("confirm") ?? "").trim();
+  if (confirm !== me.username) {
+    return { error: "Type your username exactly to confirm." };
+  }
+  await deleteAccount(me.id);
+  // deleteAccount already removed every session row; clear the cookie so
+  // this browser drops to signed-out too.
+  await clearSession();
+  redirect("/?goodbye=1");
 }
 
 // ===== Tournament teams (2-man best-ball pairing) =====================

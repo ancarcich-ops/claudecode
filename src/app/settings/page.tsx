@@ -11,6 +11,7 @@ import ReplayOnboarding from "./ReplayOnboarding";
 import ThemeToggle from "./ThemeToggle";
 import FollowSettingsCard from "./FollowSettingsCard";
 import PhoneCard from "./PhoneCard";
+import DeleteAccountCard from "./DeleteAccountCard";
 
 export const dynamic = "force-dynamic";
 
@@ -82,6 +83,8 @@ export default async function SettingsPage() {
       <PhoneCard initial={user.phone} />
 
       <ThemeToggle />
+
+      <DeleteAccountCard username={user.username} />
 
       <div className="flex justify-center pt-2">
         <ReplayOnboarding />
