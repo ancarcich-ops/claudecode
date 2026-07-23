@@ -19,6 +19,10 @@ export const BUSINESS = {
   // Display + tel: href forms of the support line.
   phone: "+1 (818) 309-5011",
   phoneHref: "+18183095011",
+  // Toll-free number the SMS program sends from (Twilio TFN verification).
+  // The /sms opt-in page shows this so the opt-in example matches the
+  // exact program being verified.
+  smsNumber: "+1 (877) 419-3998",
   // City/region shown on Contact + used for the Terms governing law.
   location: "Los Angeles, California, USA",
   governingLaw: "the State of California, USA",
