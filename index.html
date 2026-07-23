@@ -1299,38 +1299,48 @@
     return bufCache[id];
   }
 
-  /* iOS silent-switch fix: the ringer switch mutes Web Audio ("sound
-     effects") but not media-element playback. Keeping a silent, looping
-     <audio> element playing reclassifies the page as media playback, so
-     walk-up songs play even with the phone on silent. Started inside the
-     first play tap (autoplay rules require a user gesture). */
-  var silentKeeper = null;
-  var SILENT_WAV = "data:audio/wav;base64,UklGRogAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YWQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+  /* iOS silent-switch + session-conflict fix: route ALL Web Audio output
+     through a single hidden media element (MediaStreamDestination -> <audio>).
+     iOS classifies media-element playback as "media" (not muted by the
+     ringer switch), and using one pipeline avoids the second audio session
+     that a separate silent-keeper element created — which could interrupt
+     the Web Audio context mid-play on iOS. */
+  var mediaSink = null; // { node, el, broken }
   function ensurePlaybackSession() {
-    // Never let the silent-switch helper break playback itself
     try {
-      if (silentKeeper) {
-        if (silentKeeper.paused) silentKeeper.play().catch(function () {});
-        return;
+      var ctx = audioCtx();
+      if (!mediaSink) {
+        if (!ctx.createMediaStreamDestination) { mediaSink = { broken: true }; return; }
+        var node = ctx.createMediaStreamDestination();
+        var el = document.createElement("audio");
+        el.setAttribute("playsinline", "");
+        el.style.display = "none";
+        el.srcObject = node.stream;
+        document.body.appendChild(el);
+        mediaSink = { node: node, el: el, broken: false };
+        if ("mediaSession" in navigator && window.MediaMetadata) {
+          try {
+            navigator.mediaSession.metadata = new MediaMetadata({
+              title: state.team || "Walk-Up!",
+              artist: "Walk-Up! soundboard"
+            });
+          } catch (err) { /* cosmetic only */ }
+        }
       }
-      var a = document.createElement("audio");
-      a.setAttribute("playsinline", "");
-      a.loop = true;
-      a.preload = "auto";
-      a.src = SILENT_WAV;
-      a.style.display = "none";
-      document.body.appendChild(a);
-      a.play().catch(function () { silentKeeper = null; });
-      silentKeeper = a;
-      if ("mediaSession" in navigator && window.MediaMetadata) {
-        try {
-          navigator.mediaSession.metadata = new MediaMetadata({
-            title: state.team || "Walk-Up!",
-            artist: "Walk-Up! soundboard"
-          });
-        } catch (err) { /* cosmetic only */ }
+      if (mediaSink.el && mediaSink.el.paused) {
+        mediaSink.el.play().catch(function () {
+          // Media path refused: fall back to direct output (loses only the
+          // silent-switch immunity, never playback itself)
+          mediaSink.broken = true;
+        });
       }
-    } catch (err) { /* keeper is best-effort; playback proceeds regardless */ }
+    } catch (err) {
+      if (mediaSink) mediaSink.broken = true;
+      else mediaSink = { broken: true };
+    }
+  }
+  function outputFor(ctx) {
+    return (mediaSink && !mediaSink.broken && mediaSink.node) ? mediaSink.node : ctx.destination;
   }
 
   var nowPlaying = null;  // sound id currently playing (or being decoded)
@@ -1391,7 +1401,7 @@
         gain.gain.linearRampToValueAtTime(0.0001, t0 + dur);
       }
       src.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(outputFor(ctx));
       src.onended = function () {
         if (token === playToken) { currentSrc = null; playback = null; advanceQueue(); }
       };
