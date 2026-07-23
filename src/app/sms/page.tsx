@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import SmsOptInForm from "./SmsOptInForm";
 import SiteFooter from "@/components/marketing/SiteFooter";
+import { BUSINESS } from "@/lib/business";
 
 export const metadata: Metadata = {
   title: "Text updates · Sticks",
@@ -22,6 +23,11 @@ export default function SmsOptInPage() {
           home, and (if they turn it on) their live scores. Sign up below to
           receive those texts.
         </p>
+        <p className="text-[13px] text-faint mt-2 leading-relaxed">
+          Texts are sent by Sticks from{" "}
+          <strong className="text-mute">{BUSINESS.smsNumber}</strong>. Opting in
+          is optional and never required to use Sticks.
+        </p>
       </header>
 
       <SmsOptInForm />
@@ -31,6 +37,10 @@ export default function SmsOptInPage() {
           What to expect
         </h2>
         <ul className="space-y-1.5 list-disc pl-5">
+          <li>
+            <strong>Who sends them:</strong> Sticks, from{" "}
+            <strong>{BUSINESS.smsNumber}</strong>.
+          </li>
           <li>
             <strong>What we send:</strong> updates about rounds you&rsquo;ve
             asked to follow — pace of play, projected finish time, ETA home, and

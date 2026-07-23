@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { recordSmsConsentAction } from "./actions";
 import { SMS_CONSENT_TEXT } from "./consent";
+import { BUSINESS } from "@/lib/business";
 
 export default function SmsOptInForm() {
   const [pending, startTransition] = useTransition();
@@ -17,8 +18,9 @@ export default function SmsOptInForm() {
           You&rsquo;re signed up.
         </p>
         <p className="text-sm text-mute mt-1">
-          Watch for a confirmation text. Reply <strong>STOP</strong> any time to
-          unsubscribe, or <strong>HELP</strong> for help.
+          Watch for a confirmation text from Sticks at{" "}
+          <strong>{BUSINESS.smsNumber}</strong>. Reply <strong>STOP</strong> any
+          time to unsubscribe, or <strong>HELP</strong> for help.
         </p>
       </div>
     );
@@ -60,14 +62,15 @@ export default function SmsOptInForm() {
       </div>
 
       <label className="flex items-start gap-3 cursor-pointer">
-        {/* Unchecked by default and `required` -- the browser blocks
-            submission until the user actively checks it (express,
-            affirmative opt-in). Server-side validation backs this up. */}
+        {/* Unchecked by default and intentionally NOT `required` -- SMS
+            consent is optional and never forced. The form still submits
+            if it's left unchecked (the server simply declines to
+            subscribe and asks the user to check the box). Opting in is an
+            express, affirmative action the user takes on purpose. */}
         <input
           type="checkbox"
           name="consent"
           value="on"
-          required
           className="mt-1 h-4 w-4 shrink-0 accent-accent"
         />
         <span className="text-[13px] leading-relaxed text-mute">
@@ -86,8 +89,10 @@ export default function SmsOptInForm() {
       </button>
 
       <p className="text-[11px] leading-relaxed text-faint">
-        Message frequency varies. Msg &amp; data rates may apply. Reply STOP to
-        cancel, HELP for help. See our{" "}
+        Checking the box is optional and is not required to use Sticks. Texts
+        are sent by <strong>Sticks</strong> from{" "}
+        <strong>{BUSINESS.smsNumber}</strong>. Message frequency varies. Msg
+        &amp; data rates may apply. Reply STOP to cancel, HELP for help. See our{" "}
         <a href="/privacy" className="underline hover:text-mute">
           Privacy Policy
         </a>{" "}
